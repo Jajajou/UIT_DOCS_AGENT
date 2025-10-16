@@ -1,0 +1,1685 @@
+ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH 
+
+TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN 
+
+----------o0o---------- 
+
+GIẢI PHÁP XÂY DỰNG VÀ BIÊN TẬP VIDEO 
+
+BÀI GIẢNG THEO ĐỀ ÁN ĐÀO TẠO 4.0 
+
+Thực hiện: 
+
+•  Đào Lộc Bình 
+
+Trưởng ban Quản lý Cơ sở 
+
+•  Lương Văn Song 
+
+Chuyên viên Ban Quản lý Cơ sở  
+
+Năm 2019 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Mục Lục 
+
+1.  Đặt vấn đề .................................................................................................................... 1 
+
+1.1.  Tổng quan .............................................................................................................. 1 
+
+1.2.  Mục tiêu nghiên cứu ............................................................................................. 2 
+
+2.  Cơ sở lý thuyết ............................................................................................................ 2 
+
+2.1.  Các khái niệm cơ bản về Video ............................................................................... 2 
+
+2.1.1.  Tỉ lệ khung hình .................................................................................................... 2 
+
+2.1.2.  Độ phân giải ........................................................................................................... 2 
+
+2.1.3.  Frame Per Second (FPS) ...................................................................................... 3 
+
+2.1.4.  Chuẩn nén video .................................................................................................... 3 
+
+2.1.4.1.  Tổng quan ........................................................................................................... 3 
+
+2.1.4.2.  Các chuẩn nén .................................................................................................... 4 
+
+2.1.4.2.1.  Chuẩn MJPEG:  ............................................................................................. 4 
+
+2.1.4.2.2.  Chuẩn MPEG-2: ............................................................................................. 4 
+
+2.1.4.2.3.  Chuẩn MPEG-4: ............................................................................................. 4 
+
+2.1.4.2.4.  Chuẩn H.264: .................................................................................................. 5 
+
+2.2.  So sánh các công nghệ xây dựng video nền tảng ................................................... 5 
+
+3.  Phương pháp nghiên cứu ........................................................................................... 5 
+
+3.1.  Tiến hành thực nghiệm ............................................................................................ 5 
+
+3.2.  Nguyên tắc lựa chọn giải pháp công nghệ .............................................................. 6 
+
+4.  Kết quả nghiên cứu .................................................................................................... 6 
+
+4.1.  Giải pháp 1: ........................................................................................................... 6 
+
+4.1.1.  Mô tả ............................................................................................................ 6 
+
+4.1.2. 
+
+Yêu cầu hệ thống ......................................................................................... 6 
+
+4.1.3. 
+
+Yêu cầu nhân sự .......................................................................................... 7 
+
+4.1.4.  Mô hình, hướng dẫn thực hiện .................................................................. 7 
+
+4.1.5. 
+
+Đánh giá hiệu quả ....................................................................................... 7 
+
+4.2.  Giải pháp 2: ........................................................................................................... 7 
+
+4.2.1.  Mô tả ............................................................................................................ 7 
+
+4.2.2. 
+
+Yêu cầu hệ thống ......................................................................................... 8 
+
+4.2.3. 
+
+Yêu cầu nhân sự .......................................................................................... 8 
+
+ 
+ 
+4.2.4.  Mô hình, hướng dẫn thực hiện .................................................................. 8 
+
+4.2.5. 
+
+Đánh giá hiệu quả ....................................................................................... 8 
+
+4.3.  Giải pháp 3: ........................................................................................................... 9 
+
+4.3.1.  Mô tả ............................................................................................................ 9 
+
+4.3.2. 
+
+Yêu cầu hệ thống ......................................................................................... 9 
+
+4.3.3. 
+
+Yêu cầu nhân sự .......................................................................................... 9 
+
+4.3.4.  Mô hình, hướng dẫn thực hiện .................................................................. 9 
+
+4.3.5. 
+
+Đánh giá hiệu quả ....................................................................................... 9 
+
+4.4.  Công đoạn xử lý hậu kỳ: .................................................................................... 10 
+
+4.4.1. 
+
+Đối với giải pháp 1 .................................................................................... 10 
+
+4.4.2. 
+
+Đối với giải pháp 2 và 3 ............................................................................ 10 
+
+4.4.3. 
+
+Yêu cầu nhân sự ........................................................................................ 11 
+
+4.4.4. 
+
+Xây dựng bộ câu hỏi, ngân hàng đề thi trong Video bài giảng ............ 11 
+
+4.4.5.  Mô hình, hướng dẫn thực hiện ................................................................ 11 
+
+5.  Kết luận đề xuất: ...................................................................................................... 11 
+
+Phụ lục 1: ........................................................................................................................... 14 
+
+Phụ lục 2: ........................................................................................................................... 16 
+
+Phụ lục 3: ........................................................................................................................... 21 
+
+Phụ lục 4: ........................................................................................................................... 28 
+
+Phụ lục 5: ........................................................................................................................... 42 
+
+Phụ lục 6: ........................................................................................................................... 44 
+
+ 
+ 
+Tóm tắt 
+
+E-learning là một trong các giải pháp ứng dụng công nghệ thông tin trong giáo dục 
+
+hiện đại. Bài báo cáo này trình bài khái quát về các kiến thức nền tảng về xây dựng video 
+
+bài giảng. Bên cạnh đó, nhóm tác giả đã tiến hành thực nghiệm tìm ra các giải pháp để ghi 
+
+hình sản xuất video bài giảng một cách đơn giản và hiệu quả nhất. Những đánh giá, so sánh 
+
+giữa các giải pháp giúp Giảng viên có thể quyết định lựa chọn các giải pháp tự ghi hình bài 
+
+giảng theo như cầu cá nhân. 
+
+1.  Đặt vấn đề 
+
+1.1. Tổng quan 
+
+Theo PGS.TS Đinh Đức Anh Vũ  - Cách thức tổ chức và phương pháp giảng dạy tại 
+
+các trường đại học phải thay đổi. Công nghệ phát triển với chi phí rẻ là điều kiện thuận lợi 
+
+để các trường đại học đầu tư cơ sở vật chất, các công cụ và phương tiện giảng dạy hiện đại. 
+
+Bên cạnh hình thức giảng dạy trực tiếp cho người học, các trường cần sử dụng nhiều hơn 
+
+các hình thức khác như đào tạo online, thiết kế môi trường ảo để người học và người dạy 
+
+có thể tương tác lẫn nhau và truyền đạt thông tin, tổ chức thực hành tại các phòng thí nghiệm 
+
+hay phòng mô phỏng ảo. Sử dụng hệ thống máy tính và dữ liệu big data để thiết kế chương 
+
+trình, tổ chức giảng dạy cho từng đối tượng một cách hiệu quả nhất (Vũ, 2017). 
+
+Việc đưa hệ thống E-learning vào hoạt động tại trường Đại học, tạo ra một kênh học 
+
+tập khác góp phần nâng cao chất lượng đào tạo. Hiện nay việc sử dụng hệ thống E-learning 
+
+đã trở thành tự giác đối với hầu hết giảng viên và sinh viên trong Trường vì những lợi ích 
+
+thiết thực mà hệ thống mang lại (Linh et al., 2013). 
+
+Video là một phương tiện truyền thông phong phú và mạnh mẽ được sử dụng trong 
+
+elearning.  Nó  có  thể  trình  bày  thông  tin  một  cách  hấp  dẫn  và  nhất  quán  (Zhang,  Zhou, 
+
+Briggs, & Nunamaker, 2006).  
+
+Để sử dụng video hiệu quả như một công cụ được tăng cường trong giáo dục cần 
+
+xem xét ba yếu tố: cách quản lý nội dung và hình thức của video; làm thế nào để video thu 
+
+hút tối đa sự tham gia của sinh viên; làm thế nào để thúc đẩy học tập tích cực từ video 
+
+(Brame, 2016).  
+
+1 
+
+ 
+ 
+Công nghệ sử dụng hội nghị web, lớp học ảo và đào tạo dựa trên máy tính đang trở 
+
+thành nền tảng phổ biến trong các cơ sở giáo dục được hiểu là công nghệ giảng dạy trực 
+
+tuyến. Việc sử dụng video khác nhau có hiệu quả trong giáo dục trực tuyến, nhưng để triển 
+
+khai hiệu quả cần phải chuẩn bị cho nhiều rào cản công nghệ phải vượt qua (II & Rudd). 
+
+1.2. Mục tiêu nghiên cứu 
+
+Tìm hiểu, đánh giá các yếu tố ảnh hưởng đến chất lượng video, so sánh và đánh giá 
+
+các chuẩn nén video. 
+
+Đưa ra các giải pháp khả thi nhất giúp giảng viên có thể tự xây dựng các video bài 
+
+giảng theo nhu cầu. 
+
+2.  Cơ sở lý thuyết 
+
+2.1. Các khái niệm cơ bản về Video 
+
+2.1.1.  Tỉ lệ khung hình 
+
+Tỉ lệ của một hình ảnh là mối quan hệ giữa chiều rộng và chiều cao của hình ảnh đó. 
+
+Để biểu diễn tỉ lệ thông thường người sử dụng hai số dương viết liền với nhau với dấu hai 
+
+chấm ở giữa, chẳng hạn như 16:9. Với một hình ảnh có tỉ lệ x: y thì x được xem là chiều 
+
+rộng, y là chiều cao và hai biến này có quan hệ tỉ lệ với nhau. Giả sử một hình ảnh có tỉ lệ 
+
+là 4:3, nếu biết chiều rộng là 400 pixes thì có thể suy ra chiều cao là 300 pixes. Tỉ lệ của 
+
+một  hình  ảnh  thường  áp  dụng  cho  một  hình  ảnh, hình  ảnh  kỹ  thuật  số,  kích  thước màn 
+
+hình tivi hay các thiết bị điện tử, khổ giấy, tranh vẽ và nhiều ứng dụng khác liên quan. 
+
+Các tỉ lệ màn hình phổ biến hiện này trong các rạp phim là 1.85:1 và 2.39:1. Hai tỉ 
+
+lệ quay phim là 4:3 (1.33:1), cũng là chuẩn video toàn cầu của thế kỷ 20, và 16:9 (1.77:1), 
+
+dùng trên thế giới cho truyền hình độ nét cao và truyền hình kỹ thuật số châu Âu. 
+
+2.1.2.  Độ phân giải 
+
+Độ phân giải màn hình, hiểu một cách đơn giản, là một chỉ số cho chúng ta biết số 
+
+lượng các các điểm ảnh (pixel) hiển thị trên màn hình. Bất kỳ màn hình nào cũng có các 
+
+điểm ảnh được sắp xếp theo một số hàng và số cột nhất định, và độ phân giải cũng thường 
+
+được thể hiện bằng cách phép nhân giữa số hàng và số cột đó, ví dụ như 1024x768 hay 
+
+1920x1080… 
+
+2 
+
+ 
+ 
+Một số chuẩn phân giải: 
+
+-  SD: Đây là tiêu chuẩn cho những màn hình có độ phân giải 720x576 pixel và 
+
+tỷ lệ khung hình 4:3. 
+
+-  HD: Đây là tiêu chuẩn cho những màn hình có độ phân giải 1280x720 pixel 
+
+và tỷ lệ khung hình 16:9. 
+
+-  Full HD hay FHD: Đây là tên gọi tiêu chuẩn dành cho những màn hình có độ 
+
+phân  giải  1920×1080  pixel.  Tỷ  lệ  khung  hình  của  những  màn  hình  này  là 
+
+16:9. 
+
+-  Quad HD (còn gọi là 2K hay QHD): Đây là tên gọi của của những màn hình 
+
+có độ phân giải 2560x1440 pixel. Sự ra đời  của độ phân giải này là nhằm 
+
+nâng cao chất lượng hiển thị trên các màn hình Full HD truyền thống, tuy 
+
+nhiên theo nhiều chuyên gia công nghệ thì điều này là một sự thừa thãi, vì 
+
+khả năng của mắt người khó có thể nhận biết được sự khác biệt cụ thể giữa 
+
+hình ảnh 2K và Full HD 1080p trên các màn hình thông thường. 
+
+-  Ultra HD hay 4K: Đây là tiêu chuẩn dành cho những màn hình có độ phân 
+
+giải 3840x2160 pixel hoặc 4096 x 2160 pixel, cao gấp 4 lần so với chuẩn Full 
+
+HD 1080p (1920x1080 pixel). 
+
+2.1.3.  Frame Per Second (FPS) 
+
+Tốc độ khung hình (Frame rate/Frame Per Second) là một trong những đại lượng cơ 
+
+bản của kỹ thuật điện ảnh, đó là số khung hình xuất hiện trước mắt khán giả trong một đơn 
+
+vị thời gian với tốc độ quay ổn định. 
+
+Ví dụ: 10fps, 30fps, 50fps, 60fps. 
+
+2.1.4.  Chuẩn nén video 
+
+2.1.4.1.  Tổng quan 
+
+Hoạt động nén video được thực hiện khi luồng dữ liệu vào được phân tích và loại bỏ 
+
+bớt những phần dữ liệu không cần thiết. Có 2 kiểu nén là bằng phần cứng hoặc bằng phần 
+
+mềm. Khi sử dụng kiểu nén bằng phần cứng thì mất ít dữ liệu và tất cả công việc được thực 
+
+hiện hoàn toàn trên mạch phần cứng của thiết bị có chức năng hỗ trợ nén. Khi sử dụng kiểu 
+
+3 
+
+ 
+nén bằng phần mềm thì yêu cầu sử dụng tài nguyên của máy tính để phục vụ chức năng 
+
+này. 
+
+2.1.4.2.  Các chuẩn nén 
+
+2.1.4.2.1. Chuẩn MJPEG:  
+
+Đây là một trong những chuẩn video cũ nhất mà hiện nay vẫn sử dụng. Chuẩn này 
+
+hiện chỉ sử dụng trong các thiết bị rẻ tiền, chất lượng thấp. Không những chất lượng hình 
+
+ảnh kém, tốn tài nguyên xử lý, cần nhiều dung lượng mà nó còn hay làm lỗi đường truyền. 
+
+2.1.4.2.2. Chuẩn MPEG-2:  
+
+Đây là một chuẩn thông dụng, đã được sử dụng rộng rãi trong hơn một thập kỉ qua. 
+
+Tuy nhiên, kích thước file lớn hơn so với những chuẩn mới xuất hiện gần đây và có thể gây 
+
+khó khăn cho việc truyền dữ liệu. Ví dụ như trong MPEG-2, nơi mà nội dung được tạo ra 
+
+từ nhiều nguồn như video  ảnh động, đồ họa, văn bản... và được tổ  hợp thành chuỗi các 
+
+khung hình phẳng, mỗi khung hình (bao gồm các đối tượng như người, đồ vật, âm thanh, 
+
+nền khung hình...) được chia thành các phần tử ảnh pixels và xử lý đồng thời, giống như 
+
+cảm nhận của con người thông qua các giác quan trong thực tế. Các pixels này được mã 
+
+hóa như thể tất cả chúng đuề là các phần tử ảnh video động. Tại phía thu của người dùng, 
+
+quá trình giải mã diễn ra ngược với quá trình mã hóa một cách đơn giản. Vì vậy có thể xem 
+
+MPEG-2 là một công cụ hiển thị tĩnh. Với MPEG-2, bạn có thể bổ sung thêm các phần tử 
+
+đồ họa và văn bản vào chương trình hiển thị cuối cùng (theo phương thức chồng lớp), nhưng 
+
+không thể xóa bớt các đồ họa và văn bản có trong chương trình gốc. Ví dụ nếu một nhà 
+
+truyền thông truyền phát lại chương trình của một đơn vị sản xuất sự kiện, thì logo của nhà 
+
+sản xuất chương trình này không thể loại bỏ trên chương trình phát lại. 
+
+2.1.4.2.3. Chuẩn MPEG-4: 
+
+MPEG-4 là chuẩn cho các ứng dụng Multimedia. MPEG-4 trở thành một tiêu chuẩn 
+
+cho nén ảnh kỹ thuật truyền hình số, các ứng dụng về đồ họa và Video tương tác hai chiều 
+
+(Games, Video conference) và các ứng dụng Multimedia tương tác hai chiều (World Wide 
+
+Web  hoặc  các  ứng  dụng  nhằm  phân  phát  dữ  liệu  Video  như  truyền  hình  cáp,  Internet 
+
+Video...). MPEG-4 đã trở thành một tiêu chuẩn công nghệ trong quá trình sản xuất, phân 
+
+phối và truy cập vào các hệ thống Video. Nó đã góp phần giải quyết vấn đề về dung lượng 
+
+4 
+
+ 
+cho các thiết bị lưu trữ, giải quyết vấn đề về băng thông của đường truyền tín hiệu Video 
+
+hoặc kết hợp cả hai vấn đề trên. Với MPEG-4, các đối tượng khác nhau trong một khung 
+
+hình có thể được mô tả, mã hóa và truyền đi một cách riêng biệt đến bộ giải mã trong các 
+
+dòng cơ bản ES (Elementary Stream) khác nhau. Cũng nhờ xác định, tách và xử lý riêng 
+
+các đối tượng nên người sử dụng có thể loại bỏ riêng từng đối tượng khỏi khuôn hình. Sự 
+
+tổng hợp lại thành khung hình hoàn chỉnh chỉ được thực hiện sau khi giải mã các đối tượng 
+
+này. 
+
+2.1.4.2.4. Chuẩn H.264: 
+
+Chuẩn H.264 là một chuẩn phức hợp, đã nổi lên dẫn đầu trong lĩnh vực công nghệ 
+
+nén hình ảnh hiện nay. H.264 cũng cho chất lượng hình ảnh tốt nhất, kích thước file nhỏ 
+
+nhất, hỗ trợ DVD và truyền với tốc độ cao so với các chuẩn trước đó. 
+
+2.2. So sánh các công nghệ xây dựng video nền tảng 
+
+Bài báo dựa trên nghiên cứu về bài giảng video trong eLearning của nhóm tác giả 
+
+thuộc  Đại  học  Illinois  tại  Urbana-Champaign,  Hoa  Kỳ  (Scagnoli,  McKinney,  &  Moore-
+
+Reynen, 2015) đã đưa ra các mô hình xây dựng  mội video bài giảng bao gồm:  
+
+Phòng ghi hình với các kỹ thuật viên trợ giúp, giảng viên chỉ tập trung vào bài giảng. 
+
+Điều này đem đến chất lượng bài giản tốt nhất về nội dung lẫn hình ảnh và âm thanh của 
+
+video. 
+
+Giảng viên hướng dẫn tự ghi lại các bài giảng video, các trường hợp được nghiên 
+
+cứu cho thấy 80% những video này có chất lượng thấp, độ sáng của hình ảnh video và âm 
+
+thanh của bản ghi không tốt bằng chất lượng đạt được như trong trường hợp sử dụng phòng 
+
+ghi hình. Tuy nhiên, việc ghi hình này được thực hiện tại văn phòng của giáo viên nên thuận 
+
+tiện. 
+
+3.  Phương pháp nghiên cứu 
+
+3.1. Tiến hành thực nghiệm 
+
+Dựa trên nền tảng lý thuyết và kinh nghiệm thực tế, nhóm tiến hành thực nghiệm 
+
+từng mô hình. Quá trình thực nghiệm được tiến hành theo các giai đoạn: 
+
+5 
+
+ 
+ 
+ 
+Lên kịch bản yêu cầu của video bài giảng. 
+
+Giai đoạn lựa chọn giải pháp công nghệ, chọn lọc phần mềm, 
+
+Giai đoạn lựa chọn phần cứng, thiết bị phù hợp. 
+
+Đánh giá, điều chỉnh thay đổi phần cứng thiết bị và điều chỉnh phần mềm. 
+
+3.2. Nguyên tắc lựa chọn giải pháp công nghệ 
+
+Đảm bảo chất lượng đầu ra của sản phẩm phải đạt độ phân giải Full HD (1920:1080). 
+
+Chất lượng âm thanh rõ, tạp âm ở mức thấp nhất. 
+
+Tính tiện lợi, đảm bảo dễ dàng cho người sử dụng, thuận tiện cho người ghi hình và 
+
+kỹ thuật viên. 
+
+Mức độ chi phí đầu tư thấp, ưu tiên sử dụng các phần mềm miễn phí để giảm chi phí 
+
+nhưng vẫn đảm bảo chất lượng và yêu cầu đề ra. 
+
+4.  Kết quả nghiên cứu 
+
+Sau quá trình nghiên cứu và chứng minh bằng thực nghiệm, nhóm đã đưa ra 3 nhóm 
+
+giải pháp đáp ứng được các nguyên tắc và yêu cầu bao gồm: 
+
+4.1. Giải pháp 1: 
+
+4.1.1.  Mô tả 
+
+Giảng viên ghi hình tại phòng phim trường với đầy đủ trang thiết bị, bộ phận kỹ 
+
+thuật hỗ trợ. Giảng viên có thể ngồi hoặc đừng giảng bài tùy theo thiết kế bài giảng. Có thể 
+
+livestream trực tuyến, tương tác với người học trực tiếp. Sau khi ghi hình xong, bộ phận kỹ 
+
+thuật sẽ biên tập, cắt ghép các đoạn lỗi, lồng thêm hiệu ứng khác khi có nhu cầu. 
+
+4.1.2.  Yêu cầu hệ thống 
+
+Đối với hệ thống chung cần có tối thiểu các trang thiết bị: 
+
+-  Máy tính có cấu hình tối thiểu: CPU: Core i5 thế hệ 4, DRAM: 8GB, HDD: 
+
+Free 100GB, Card capture HDMI, Card capture SDI, VGA, bản quyền phầm 
+
+mềm có liên quan:. 
+
+-  Micro định hướng, có chế độ lọc tạm âm,  
+
+-  Mixer âm thanh 
+
+-  Bộ bàn phím số không dây. 
+
+6 
+
+ 
+ 
+-  Bộ bảng vẽ Quacom 
+
+-  2 Camera chuyên dụng có độ phân giải Full HD (kèm phụ kiện),  
+
+-  Hệ thống chiếu sáng chuyên dụng. 
+
+-  1 Laptop có chức năng cảm ứng  
+
+-  Bộ bảng viết Lightboard 
+
+-  Phông nền trơn màu 
+
+-  Tường cách âm 
+
+-  Máy chiếu 
+
+-  Khung treo và các thiết bị vật tư phụ khác 
+
+Đối với Giảng viên thiết kế các file trình chiếu theo chuẩn 16:9 full HD, Laptop giáo 
+
+viên cần có cổng out HDMI (nếu sử dụng laptop GV). Cấu hình máy laptop đủ chạy slide 
+
+và các ứng dụng phục vụ bài giảng nếu có. 
+
+4.1.3.  Yêu cầu nhân sự 
+
+Bộ phận kỹ thuật cần có 1 người với thời gian hỗ trợ xuyên suốt cả buổi quay và hỗ 
+
+trợ biên tập hậu kỳ. 
+
+4.1.4.  Mô hình, hướng dẫn thực hiện 
+
+Link hướng dẫn chi tiết tại các phụ lục và hình ảnh thực tế tại phòng quay. 
+
+4.1.5.  Đánh giá hiệu quả 
+
+Chất lượng sản phẩm  đồng đều, độ  phân giải đạt chuẩn giảm thiểu công sức của 
+
+Giảng viên hiệu ứng phim trường ảo được phát huy tối đa. Giảng viên có nhiều thời gian 
+
+tập trung vào chất lượng nội dung bài giảng. 
+
+Tốn thêm nhân sự hỗ trợ kỹ thuật, biên tập hậu kỳ cho các bài giảng. Giảng viên 
+
+chưa chủ động hoàn toàn về không gian và thời gian. 
+
+4.2. Giải pháp 2: 
+
+4.2.1.  Mô tả 
+
+Giảng viên ghi hình tại phòng quay nhỏ, với các trang thiết bị đáp ứng được nhu cầu 
+
+xây dựng bài giảng. Giảng viên sẽ tự đăng ký lịch trống của phòng quay và chủ động sử 
+
+độc lập. Có nhân viên kỹ thuật hướng dẫn sử dụng và hỗ trợ khi có nhu cầu. Giảng viên có 
+
+7 
+
+ 
+thể  ngồi  giảng  bài  hoặc  viết  bảng  tùy  ý.  Quá  trình  ghi  hình  bài  giảng  có  thể  livestream 
+
+nhưng hạn chế tương tác với người học. 
+
+4.2.2.  Yêu cầu hệ thống 
+
+Đối với hệ thống chung cần có tối thiểu các trang thiết bị: 
+
+-  Máy tính có cấu hình tối thiểu: CPU: Core i5 thế hệ 4, DRAM: 8GB, HDD: 
+
+Free 100GB, Card capture HDMI, VGA, bản quyền phầm mềm có liên quan: 
+
+-  Micro định hướng, có chế độ lọc tạm âm,  
+
+-  Bộ bàn phím số không dây. 
+
+-  Bộ bảng vẽ Quacom 
+
+-  2 Camera (webcam) có độ phân giải Full HD,  
+
+-  2 Đèn LED chiếu sáng chuyên dụng. 
+
+-  1 màng hình LDC rời. 
+
+-  1 Laptop có chức năng cảm ứng  
+
+-  Bộ bảng viết Lightboard 
+
+-  Tường cách âm và các vật tư phụ khác có liên quan. 
+
+Thiết kế các file trình chiếu theo chuẩn 16:9 full HD, Laptop giáo viên cần có cổng 
+
+out HDMI (nếu sử dụng laptop GV). Cấu hình máy laptop đủ chạy slide và các ứng dụng 
+
+phục vụ bài giảng nếu có. 
+
+4.2.3.  Yêu cầu nhân sự 
+
+Bộ phận kỹ thuật có người hướng dẫn sử dụng và hỗ trợ khi có nhu cầu. Giảng viên 
+
+cần nắm các thao tác kỹ thuật cơ bản (có hướng dẫn) trước khi tự sử dụng. Quá trình chuyển 
+
+cảnh, chọn kịch bản, ghi hình… hoàn toàn do Giảng viên tự thao tác. 
+
+4.2.4.  Mô hình, hướng dẫn thực hiện 
+
+Link hướng dẫn chi tiết tại các phụ lục và hình ảnh thực tế tại phòng quay. 
+
+4.2.5.  Đánh giá hiệu quả 
+
+Chất lượng sản phẩm  đồng đều, độ  phân giải đạt chuẩn giảm thiểu công sức của 
+
+Giảng viên. Giảng viên có nhiều thời gian tập trung vào chất lượng nội dung bài giảng. 
+
+Giảng viên chủ động một phần về thời gian ghi hình (chỉ cần phòng trống). 
+
+8 
+
+ 
+Giảng viên cần nắm các bước thao tác cơ bản để chủ động tự vận hành hệ thống và 
+
+chủ động kiểm tra, ghi hình lại các bài giảng chưa đạt yêu cầu. Giảng viên chịu trách nhiệm 
+
+hoàn toàn về nội dung và hình thức của sản phẩm bài giảng. 
+
+4.3. Giải pháp 3: 
+
+4.3.1.  Mô tả 
+
+Giảng viên tự ghi hình tại bất cứ địa điểm nào phù hợp, trang thiết bị do Giảng viên 
+
+tự trang bị, hình thức và công nghệ tương tự giải pháp 2. 
+
+4.3.2.  Yêu cầu hệ thống 
+
+Yêu cầu máy Laptop có cấu hình tương đối cao, đáp ứng được việc chạy các ứng 
+
+dụng phục vụ nội dung bài giảng và chạy ứng dụng ghi hình. 
+
+Cần  có  Webcam  với  độ  phân  giải  đủ  chuẩn,  hệ  thống  micro  đảm  bảo  chống  ồn, 
+
+chống nhiễu. Đèn chiếu sang đúng cường độ để đạt được chất lượng hình ảnh tốt nhất. 
+
+Cần trang bị thêm 1 màng hình LCD (hoặc tivi) rời có thể kết nối được với Laptop 
+
+qua cổng VGA hoặc HDMI.  
+
+Laptop hoặc PC cần có cấu hình tối thiểu: 
+
+-  HDD: 250GB 
+
+-  CPU: Core I5 thế hệ 7 
+
+-  Dram: 8GB 
+
+-  VGA: 1GB 
+
+4.3.3.  Yêu cầu nhân sự 
+
+Giảng viên tự thực hiện, có hiểu biết về sử dụng các phần mềm xử lý video. Cán bộ 
+
+kỹ thuật sẽ hướng dẫn hoặc hỗ trợ khi cần. 
+
+4.3.4.  Mô hình, hướng dẫn thực hiện 
+
+Link hướng dẫn chi tiết tại các phụ lục 
+
+4.3.5.  Đánh giá hiệu quả 
+
+Giảng viên chủ động hoàn toàn vào thời gian, địa đểm ghi hình. 
+
+Chất lượng bài giảng không đồng đều, cường độ âm thanh có thể không đồng nhất 
+
+với các bài giảng của các Giảng viên khác 
+
+9 
+
+ 
+Yêu cầu Giảng viên phải trang bị máy tính có cấu hình đủ mạnh để có thể chạy nhiều 
+
+ứng  dụng.  Giảng  viên  phải  tốn  chi  phí  tự  đầu  tư  LCD,  webcam,  micro  để  có  được  chất 
+
+lượng tốt nhất. 
+
+Giảng viên cần nắm rõ các bước thao tác cơ bản để tự vận hành hệ thống và chủ 
+
+động kiểm tra, ghi hình lại các bài giảng chưa đạt yêu cầu. Giảng viên chịu trách nhiệm 
+
+hoàn toàn về nội dung và hình thức của sản phẩm bài giảng 
+
+4.4. Công đoạn xử lý hậu kỳ: 
+
+4.4.1.  Đối với giải pháp 1 
+
+Đối với giải pháp này, toàn bộ công tác xử lý hậu kỳ được bộ phận kỹ thuật xử lý 
+
+bằng các phần mềm chuyên dụng. Việc xử lý bao gồm cắt, ghép những đoạn bị lỗi, bổ xung 
+
+thêm các hình ảnh, hiệu ứng tùy thuộc vào kịch bản Giảng viên muốn lựa chọn. 
+
+4.4.2.  Đối với giải pháp 2 và 3 
+
+Giảng viên có thể đề nghị bộ phận xử lý hậu kỳ biên tập và xử lý giống như giải 
+
+pháp 1. Tuy nhiên có thể có một số tính năng không thể thực hiện được do quá trình ghi 
+
+hình bị lỗi hoặc không tương thích. Ngoài ra chất lượng của thành phẩm sẽ không thể được 
+
+đảm bảo tuyệt đối. 
+
+Giảng viên tự xử lý, biên tập sản phẩm video của mình sử dụng các công cụ được 
+
+cung cấp ở các phụ lục. 
+
+Tùy thuộc vào kịch bản sử dụng mà GV có thể có nhiều lựa chọn xử lý hậu kỳ khác 
+
+nhau như: 
+
+-  Phầm mềm Premiere, đây là phần mềm chuyên dụng và phổ biến nhất hiện 
+
+nay dùng để biên tập, xử lý video hậu kỳ. Trong khuôn khổ bài viết này, tác 
+
+giả chỉ giới thiệu một số công cụ cơ bản như: Cắt những đoạn thừa, ghép các 
+
+đoạn video, xử lý chèn thêm các  video animation, hình ảnh, âm thanh,…. 
+
+-  Phần  mềm  Camtasia  Studio,  đây  là  phần  mềm  hỗ  trợ  ghi  hình  màng  hình 
+
+hướng  dẫn  kết  hợp  xử  lý  hậu  kỳ  bao  gồm  cắt,  ghép  video,  chèn  video 
+
+animation, hình ảnh vào video. 
+
+10 
+
+ 
+-  Phần  mềm  VideoScribe  Tutorial  đây  là  phần  mềm  hỗ  trợ  xây  dựng  video 
+
+Animation  với  nhiều  công  cụ  và  kịch  bản  sinh  động  như:  dạng  vẽ  tay,  di 
+
+chuyển các đồ vật, chèn kho dữ liệu về hình ảnh…. 
+
+-  Sử dụng phần mềm Slide PowerPoint để thiết kế các hiệu ứng cho bài giảng, 
+
+ghi hình, lồng ghép video, âm thanh vào trực tiếp trong Slide. 
+
+4.4.3.  Yêu cầu nhân sự 
+
+Giảng viên tự thực hiện, có hiểu biết về sử dụng các phần mềm xử lý video. Cán bộ 
+
+kỹ thuật sẽ hướng dẫn hoặc hỗ trợ khi cần. 
+
+4.4.4.  Xây dựng bộ câu hỏi, ngân hàng đề thi trong Video bài giảng 
+
+Đối với Video bài giảng thì bộ câu hỏi có thể được thể hiện dưới dạng câu hỏi trắc 
+
+nghiệm hoặc câu hỏi tự luận. 
+
+Hình thức hiển thị câu hỏi lên Video có 2 dạng:  
+
+-  Hiển thị trực tiếp trong lúc giảng dạy, hình thức như một slide bài giảng, lồng 
+
+ghép trực tiếp vào kịch bản bài giảng. 
+
+-  Lồng ghép bộ câu hỏi vào Video sau đó thông qua công đoạn xử lý hậu kỳ. 
+
+Ngoài ra, trong quá trình đóng gói và phát hành video bài giảng còn có thể sử dụng 
+
+các công cụ khác để đưa các câu hỏi trắc nghiệm vào. Tuy nhiên, việc này đỏi hỏi phụ thuộc 
+
+rất nhiều vào môi trường và hệ thống sử dụng được cung cấp có tính tương thích. 
+
+4.4.5.  Mô hình, hướng dẫn thực hiện 
+
+Xem hướng dẫn chi tiết tại các phụ lục. 
+
+5.  Kết luận đề xuất: 
+
+Trong giải pháp 1 và 3 thực hiện nghiên cứu cho kết quả phù hợp với nhận định của 
+
+nhóm tác giả thuộc Đại học Illinois tại Urbana-Champaign, Hoa Kỳ (Scagnoli et al., 2015). 
+
+Trên cơ sở lý thuyết đó, nhóm đề xuất sử dụng giải pháp thứ 2 vì vừa kết hợp được tính 
+
+đồng đều, chất lượng của giải pháp 1 và đảm bảo được sự chủ động và chi phí cho giảng 
+
+viên như ở giải pháp 3. 
+
+Ở giải pháp 2 này khắc phục được nhược điểm của giải pháp 1 là phụ thuộc vào nhân 
+
+viên kỹ thuật, Giảng viên thiếu chủ động trong việc lựa chọn và ghi hình. Ngoài ra giải 
+
+11 
+
+ 
+pháp này còn cải thiện được chất lượng video, đảm bảo tính đồng nhất giữa các video được 
+
+sản xuất. 
+
+Nhìn chung tất cả các giải pháp cũng chỉ là yếu tố kỹ thuật giúp Giảng viên xây dựng 
+
+video bài giảng được tốt hơn. Giá trị cốt lõi vẫn là nội dung, hình thức và phong cách trình 
+
+bày của Giảng viên. Giảng viên cần có một kịch bản bài giảng hoàn chỉnh, trên cơ sở đó 
+
+mới lựa chọn các giải pháp phù hợp và chọn lọc các công cụ sử dụng trong quá trình xử lý 
+
+hậu kỳ. 
+
+Video bài giảng có thể xây dựng theo các kịch bảng truyền thống như chỉ có hình 
+
+Giảng viên, chỉ capture màng hình hướng dẫn hoặc kết hợp cả 2. Tuy nhiên vẫn chưa thể 
+
+hiện được mức độ tương tác tối đa với người học. 
+
+Công tác soạn thảo slide bài giảng cũng cần chú ý chừa không gian để kết hợp với 
+
+hình ảnh video Giảng viên thể hiện ngô ngữ hình thể nhằm làm tăng sự chú ý và truyền tải 
+
+hết nội dung muốn thể hiện. 
+
+Ngoài ra, trong các giải pháp 2 và giải pháp 3, Giảng viên cần phải có kiến thức về 
+
+xử lý video hậu kỳ bằng các thao tác cơ bản như cắt, ghép, nối video… 
+
+Quá trình đưa câu hỏi vào video bài giảng có thể thực hiện được trực tiếp từ lúc xây 
+
+dựng video, tuy nhiên câu hỏi sẽ được cố định, không thay đổi được và người học có thể 
+
+bỏ qua phần trả lời này. Nếu lựa chọn phương pháp bắt buộc người học phải trả lời đúng 
+
+phần câu hỏi của bài mới được sang bài khác thì phụ thuộc hoàn toàn vào nền tảng lưu trữ 
+
+sử dụng video bài giảng. Có thể sự dụng công cụ eXe để đóng gói bài giảng kèm theo các 
+
+câu hỏi, hoặc sử dụng các nền tảng Learning Management System (LMS) như Moodle… 
+
+12 
+
+ 
+ 
+ 
+Tài liệu tham khảo 
+
+Brame,  C.  J.  (2016).  Effective  Educational  Videos:  Principles  and  Guidelines  for 
+
+Maximizing  Student  Learning  from  Video  Content.  CBE  Life  Sci  Educ,  15(4). 
+
+doi:10.1187/cbe.16-03-0125 
+
+II, D. P. R., & Rudd, D. P. The value of video in online instruction. Journal of Instructional 
+
+Pedagogies.  
+
+Linh,  N.  V.,  Lan,  P.  P.,  Tân,  T.  M.,  Cường,  P.  H.,  Trâm,  V.  H.,  &  Bình,  T.  N.  (2013). 
+
+Nghiên cứu xây dựng hệ thống E-learning hỗ trợ trong đào tạo theo học chế tín chỉ. 
+
+Tạp chí Khoa học Trường Đại học Cần Thơ.  
+
+Scagnoli, N. I., McKinney, A., & Moore-Reynen, J. (2015). Video Lectures in eLearning. 
+
+In  Handbook  of  Research  on  Innovative  Technology  Integration  in  Higher 
+
+Education (pp. 115-134). 
+
+Vũ,  Đ.  Đ.  A.  (2017).  Giáo  dục  đại  học  trong  cuộc  cách  mạng  công  nghiệp  4.0.  Bản  tin 
+
+ĐHQG-HCM.  
+
+Zhang, D., Zhou, L., Briggs, R. O., & Nunamaker, J. F. (2006). Instructional video in e-
+
+learning:  Assessing  the  impact  of  interactive  video  on  learning  effectiveness. 
+
+Information & Management, 43(1), 15-27. doi:10.1016/j.im.2005.01.004 
+
+13 
+
+ 
+ 
+ 
+ 
+Phụ lục 1: 
+Hướng dẫn cài đặt và sử dụng ở giải pháp 3 
+
+Bước 1: Công tác chuẩn bị 
+
+Máy tính có cấu hình tối thiểu: 
+
+-  HDD: 250GB 
+
+-  CPU: Core I5 thế hệ 7 
+
+-  Dram: 8GB 
+
+-  VGA: 1GB 
+
+Màng hình LCD (hoặc Tivi LCD) rời có thể kết nối với máy tính 
+
+Webcam độ phân giải cao hoặc camera (có thiết bị capture) có thể kết nối trực tiếp 
+
+vào máy tính. 
+
+Micro có chức năng lọc tạp âm (có thể dùng  mic của webcam, camera, hoặc của 
+
+laptop). 
+
+Đèn chiếu sáng vừa đủ, nên chọn loại đèn dây tóc hoặc đèn led. Không dùng đèn 
+
+quỳnh quang. 
+
+Không  gian  ghi  hình  cần  tránh  thiết  bị  phản  sáng  từ  phía  sau  (cửa  kính,  khung 
+
+tranh…) để tránh tình trạng ngược sáng camera 
+
+Bước 2: Cài đặt phần mềm 
+
+Sử dụng 1 trong 2 phần mềm là OBS hoặc  Vmix. Với 2 phần mềm có tính năng 
+
+tương tự nhau, nhưng OBS được cung cấp miễn phí. 
+
+Các phần mềm chỉnh sửa, cắt ghép video. 
+
+Phần mềm, công cụ hỗ trợ bài giảng trình chiếu…. 
+
+Bước 3: Mô hình lắp đặt 
+
+Laptop lắp thêm một LCD để hiển thị cửa sổ chương trình điều khiển các kịch bản 
+
+giảng dạy và quản lý quá trình ghi hình. 
+
+Trên  trình  quản  lý  ghi  hình  ta  cài  đặt  các  cửa  sổ  kịch  bản  như:  Chỉ  có  webcam, 
+
+capture màng hình Laptop chính để phục vụ việc ghi lại màng hình, kịch bản vừa màng 
+
+hình vừa có giảng viên. Chi tiết thực hiện tại hướng dẫn ở phụ lục 2 và phụ lục 3. 
+
+14 
+
+ 
+Mục đích của mô hình lắp đặt này là để quá trình điều chình các kịch bản cũng như 
+
+quá trình ghi hình không bị ảnh hưởng bởi màng hình chính đang được ghi lại. 
+
+15 
+
+ 
+  
+ 
+ 
+Phụ lục 2: 
+Hướng dẫn sử dụng phầm mềm Vmix 
+
+Thông tin chung: Vmix là phần mềm chuyên dụng, đang là phần mềm được sử dụng nhiều 
+
+nhất hiện này gồm các chức năng chạy màn hình sự kiện, livestream, record camera …  
+
+Ưu điểm: 
+
+-  Màn hình điều khiển trực quan, dễ sử dụng, hướng tới người sử dụng. 
+
+-  Được hỗ trợ mạnh mẽ từ nhà sản xuất nên khó gặp lỗi phần mềm. 
+
+-  Tích hợp được hầu hết các thiết bị phần cứng (Card kỹ xảo âm thanh, hình 
+
+ảnh …) 
+
+Khuyết điểm: 
+
+-  Chỉ có phiên bản cho hệ điều hành windows. 
+
+-  Phí bản quyền khá cao. 
+
+Hướng dẫn sử dụng: 
+
+1.  Add Input: 
+
+16 
+
+ 
+ 
+Khi click vào Add Input, sẽ hiện ra cửa sổ tương tự. 
+
+Bước 1: Chọn Camera 
+
+Bước  2:  Lựa  chọn  thiết  bị  đầu  vào  phù  hợp  tại  mục  camera.  (Có  thể  là 
+
+webcam, USB capture, Card capture … tùy thuộc vào thiết bị ghi hình bạn sử dụng) 
+
+Bước 3: Kiểm tra một số thông số. 
+
+17 
+
+ 
+ 
+ 
+ 
+ 
+ 
+Trong mục này cần lưu ý: 
+
+o  Resolution: độ phân giải, tùy thuộc vào từng thiết bị hỗ trợ, tuy nhiên hiện 
+
+nay đa phần các thiết bị ghi hình đã hỗ trợ FHD (1920:1080) 
+
+o  Frame Rate: đối với thiết bị ghi hình được sử dụng tại Việt Nam, khuyến cáo 
+
+sử dụng 25p, 50i (tương đương với 25 fps). Tra cứu thêm về hệ PAL và NTSC 
+
+để hiểu rõ hơn. 
+
+Bước 4: Nhấn OK. Kiểm tra khu vực chứa các input đã xuất hiện thiết bị bạn mới 
+
+thêm vào hay không? 
+
+Mở rộng: 
+
+-  Video: Thêm video vào nguồn bạn cần sử dụng. Vmix hỗ trợ hầu hết các định 
+
+dạng video. 
+
+-  PowerPoint: Vmix hỗ trợ thêm PowerPoint trực tiếp, tuy nhiên hạn chế là khó 
+
+điều khiển và không hỗ trợ các PPT có hiệu ứng bất kỳ. 
+
+-  Audio Input: Nguồn đầu vào âm thanh. 
+
+-  NDI/Desktop capture: Đây là một trong những ứng dụng quan trọng cho việc 
+
+tạo bài giảng, bạn có thể thêm màn hình thứ 2 của máy tính vào Vmix một 
+
+18 
+
+ 
+ 
+ 
+cách dễ dàng, hỗ trợ tốt với mục đích: chạy thử chương trình, trình chiếu slide 
+
+độc lập … 
+
+-  Một số công cụ: tra cứu tại vmix.com. 
+
+2.  Record: 
+
+Bước 1: Click chuột vào hình bánh xe để mở cửa sổ setting record. 
+
+Cửa sổ recording setup: 
+
+-  Filename: là tên file lưu trự. 
+
+-  Size: kích thước khung hình của video. 
+
+-  Frame Rate: tùy thuộc vào các nguồn đầu vào của bạn mà ở đây chúng ta lựa 
+
+chọn tương ứng. 
+
+-  Bit  Rate:  Tùy  thuộc  nhu  cầu  sử  dụng  video  sau  này  bạn  có  thể  lưu  trữ  từ 
+
+8Mbps với video FHD. 
+
+19 
+
+ 
+ 
+20 
+
+ 
+ 
+ 
+Phụ lục 3: 
+Hướng dẫn sử dụng phầm mềm OBS 
+
+Sau khi cài đặt và mở ứng dụng thì bạn sẽ thấy OBS Studio có giao diện như sau: 
+
+Trong đó: 
+
+•  Bảng quản lý màn hình: giúp bạn tạo nhiều màn hình, với mỗi màn hình có 
+
+thể bố trí khác nhau. Điều này sẽ cho phép bạn chuyển nhanh cách bố trí màn 
+
+hình. 
+
+•  Bảng các nguồn quay: bao gồm các thiết bị/ màn hình quay như: Camera, 
+
+Browser, Display Capture… 
+
+21 
+
+ 
+ 
+ 
+•  Âm thanh/ Mics: giúp bạn bật tắt cũng như thay đổi nguồn âm thanh/ Mic. 
+
+•  Bảng điều khiển: bao gồm các nút bật/ tắt quay, cài đặt. 
+
+•  Màn hình xem trước: với mỗi nguồn quay bạn thêm vào, thì nó sẽ hiện lên 
+
+màn hình xem trước để bạn có thể căn chỉnh, bố trí màn hình trước khi bắt đầu 
+
+quay. 
+
+Cách sử dụng OBS Studio để quay màn hình máy tính 
+
+Để quay được màn hình, đầu tiên bạn cần tạo các nguồn quay và cách làm như sau 
+
+Nếu bạn chưa chọn Make source visible thì nên tích vào, vì nó giúp bạn xem trước màn 
+
+hình của nguồn được chọn. 
+
+22 
+
+ 
+ 
+Tiếp tục là lựa chọn màn hình quay, nếu bạn có hơn 1 màn hình thì ở giao diện này phần 
+
+mềm cho phép bạn chọn màn hình để quay. Chọn Capture Cursor nếu bạn muốn ghi lại 
+
+di chuyển của con trỏ chuột. 
+
+23 
+
+ 
+ 
+Kết thúc các bước thêm nguồn quay vào, bạn sẽ có được giao diện như sau. 
+
+24 
+
+ 
+ 
+ 
+Khi xem Youtube, nếu bạn thắc mắc các Youtuber làm sao có thể hiện nhiều khung giao 
+
+diện như Camera, Browser, Background… trên một màn hình thì dưới đây là cách bạn 
+
+có thể làm với OBS Studio. 
+
+Sau khi thêm Display Capture ở các bước trên, bạn thêm các nguồn khác 
+
+như  Browser, Video Capture Device. Sau đó, bạn có thể kéo để thay đổi vị trí cũng như 
+
+kích thước của các nguồn trên màn hình xem trước. 
+
+Tiếp đến là thiết lập âm thanh và Mic. Ở cài đặt này, nếu bạn không thay đổi thì mặc 
+
+định OBS Studio sẽ lựa chọn theo cài đặt mặc định của Windows. Tuy nhiên, nếu cần 
+
+thay đổi bạn có thể chọn vào “icon cài đặt” và chọn Properties. 
+
+25 
+
+ 
+ 
+Trước khi bắt đầu quay, bạn có thể vào Settings để thay đổi thư mục lưu trữ, định dạng 
+
+video và các cài đặt khác. 
+
+26 
+
+ 
+ 
+ 
+Bây giờ, bạn có thể Start Recording để bắt đầu quay màn hình theo các cài đặt trước đó. 
+
+Và để muốn kết thúc phiên quay, bạn chọn Stop Recording. 
+
+27 
+
+ 
+ 
+ 
+ 
+ 
+Phụ lục 4: 
+Hướng dẫn sử dụng phầm mềm Premiere 
+
+Giới thiệu: Phần mềm Adobe Premiere là phần mềm chuyên dụng được sử dụng để chỉnh 
+
+sửa video.  Tuy  nhiên  phần mềm này là phần mềm có bản quyền, có thể truy cập trang: 
+
+adobe.com để biết thêm thông tin. 
+
+Bước 1: Tạo Project  
+
+Giao diện phần mềm. Việc đầu tiên là chọn File -> New -> Project để tạo mới project. 
+
+28 
+
+ 
+ 
+ 
+Cửa sổ New Project mở ra, gồm các trường thông tin 
+
+-  Name: Tên project. 
+
+-  Location: Vị trí lưu trữ. 
+
+-  Các thông số khác để mặc định, riêng với Capture Format chọn HDV. 
+
+Bấm OK để tạo project. 
+
+29 
+
+ 
+ 
+ 
+ 
+ 
+Bước 2: Tạo New Sequence 
+
+Sequence trong AP là thuật ngữ để chỉ một bản dựng – nơi mà diễn ra mọi thao tác biên 
+
+tập phim trên đó. Trong một Project ta có thể tạo rất nhiều Sequence khác nhau. Có các 
+
+trường  hợp  sau  cần  tạo  một  Sequence  mới:  khi  bắt  đầu  một  Projetc  mới  và  tạo  thêm 
+
+Sequence cho Project đang sử dụng. 
+
+Các bước tạo một Sequence mới như sau: 
+
+Trên thanh công cụ Menu, chọn File > New > Sequence. Như hình sau: 
+
+30 
+
+ 
+ 
+ 
+ 
+Sau khi chọn New Sequence cửa sổ sau đây hiện ra: 
+
+31 
+
+ 
+ 
+Trong  thẻ Sequence  Presets,  lựa  chọn  một  Sequence  được  thiết  lập  trước  trong  danh 
+
+sách Available Presets. 
+
+Đặt tên cho Sequence ở mục Sequence Name. Sau đó chọn OK. Như vậy là chúng ta đã 
+
+tạo xong một Sequence mới. 
+
+32 
+
+ 
+ 
+Bước 3: Import và quản lý Import: 
+
+Import 
+
+Sau khi đã tạo Projetc cũng như Sequence, để bắt đầu công việc dựng phim, chúng ta phải 
+
+nhập (Import) các đoạn phim, âm thanh vào chương trình. Có các cách sau để import các 
+
+file nguồn vào chương trình: 
+
+Cách 1: Dùng chuột rê file video, audio thả trực tiếp vào cửa sổ Source Project. 
+
+Cách 2: Trên thanh Menu, vào File > Import, hoặc nhấn phím Ctrl + I, tìm đến thư mục 
+
+chứa file cần import, chọn các file cần import, giữ phim Ctrl để chọn import nhiều file. Sau 
+
+đó nhấn OK. 
+
+Cách 3: Tại cửa sổ Project, Click chuột phải, chọn Import, tìm đến thư mục chứa file cần 
+
+import, chọn các file cần import, giữ phim Ctrl để chọn import nhiều file. Sau đó nhấn OK. 
+
+Cách 4: Double Click chuột trái vào chỗ trống ở cửa sổ Project, tìm đến thư mục chứa 
+
+file cần import, chọn các file cần import, giữ phim Ctrl để chọn import nhiều file. Sau đó 
+
+nhấn OK. 
+
+33 
+
+ 
+ 
+ 
+2.  Quản lý file import 
+
+Tạo các thư mục theo chất liệu (video, audio, image, ...) và theo nguồn (băng quay, tư liệu,..) 
+
+Bước 4: Cắt ghép phim 
+
+1.  Cắt phim 
+
+Trong khi cắt phim, có hai công cụ được sử dụng nhiều nhất là công cụ chọn (Selection 
+
+Tool)  và  công  cụ  cắt  (Razor  Tool).  Để  biết  được  hiện  tại  AP  đang  ở  chế  độ  Select  hay 
+
+Razor, ta  cần di chuột vào vùng Timeline, nếu con trỏ chuột có hình mũi tên 
+
+ thì có nghĩa 
+
+ta đang ở chế độ Seletc, nếu con trỏ có hình một chiếc dao lam 
+
+ thì có nghĩa ta đang ở 
+
+chế  độ  cắt.  Để  chọn  chế  độ  Select  hay  Razor  ta  nhấn  chuột  trái  vào  biểu  tượng  Select 
+
+hoặc Razor trên thanh công cụ. Nếu dùng bàn phim, nhấn phím C để chọn công cụ Razor 
+
+và phím V cho công cụ Select. 
+
+34 
+
+ 
+ 
+ 
+ 
+ 
+ 
+1.1.  Cắt phim trên Timeline 
+
+Cách cắt này thường áp dụng khi chúng ta dựng các phim sự kiện -  tức là trình tự phim sẽ 
+
+đúng như trình tự của sự kiện. Cắt phim trên Timeline được thực hiện theo các bước sau: 
+
+Bước 1: Mở sequence bằng cách nhấn đúp chuột vào tên sequnce. 
+
+Bước  2: Dùng  chuột  gắp  file  video  từ  cửa  sổ  project  thả  vào  timeline.  Trên  màn  hình 
+
+Program sẽ xuất hiện hình ảnh của video. Bên dưới màn hình Program sẽ thấy các chức 
+
+năng Play, Stop, … như hình dưới: 
+
+Nhấn chuột vào nút  để chạy video trên timline. Muốn dừng ở vị trí nào thì nhấn chuột 
+
+vào nút 
+
+. Hoặc dùng phím Space trên bàn phím để Play và Stop. 
+
+Bước 3: Chuyển sang công cụ Razor bằng cách nhấn phím C trên bàn phím, muốn cắt ở vị 
+
+trí nào thì ta di chuột tới vị trí đó và nhấn chuột trái. Đoạn clip sẽ bị cắt như hình dưới: 
+
+1.2.  Cắt trên Source Monitor 
+
+Đây là cách cắt áp dụng đối với dựng các thể loại phim còn lại. Thông thường, khi sản xuất 
+
+một phóng sự, một phim giới thiệu hay một phim truyện, ta sẽ phải quay rất nhiều tư liệu, 
+
+tập hợp rất nhiều các nguồn tư liệu khác nhau. Sau đó phỉa dành ra rất nhiều thời gian để 
+
+xem lại chúng, lựa chọn những cảnh quay tốt nhất để dựng thành phim. Để dựng được phim 
+
+35 
+
+ 
+ 
+ 
+này, nếu dùng cách cắt trên timeline sẽ rất mất thời gian. Do đó ta dùng cách cắt trên màn 
+
+hình Source Monitor, các bước như sau: 
+
+B1: Mở file nguồn lên màn hình Source bằng cách nhấn đúp chuột trái vào file đó trong 
+
+cửa sổ Project hoặc dùng chuột gắp thả trực tiếp vào màn hình Source. Màn hình Source sẽ 
+
+xuất hiện file đó, bên dưới là các chức năng Playback cho màn hình Source như hình dưới: 
+
+B2: Nhấn chuột vào 
+
+ để chạy file nguồn. Khi nào chạy đến đoạn muốn lấy thì nhấn chuột 
+
+vào   để dừng. 
+
+B3: Thiết lập điểm đầu và điểm cuối của đoạn cần lấy. Dùng phím mũi tên bên phải và bên 
+
+trái để lùi hoặc tiến từng frame, khi đến vị trí cần thiết lập điểm đầu (In point), nhấn chuột 
+
+vào nút   để thiết lập điểm đầu; khi đến vị trí cần thiết lập điểm cuối cần lấy, nhấn   để thiết 
+
+lập điểm cuối. 
+
+Bước 4: Chèn đoạn cần lấy vào timeline. Để chèn đoạn cần lấy đã thiết lập in point và out 
+
+point, nhấn chuột vào nút  
+
+, đoạn clip sẽ được chèn vào Timeline. Hoặc chuyển về công 
+
+cụ Select, di chuyển vào màn hình Source, gắp đoạn clip thả vào timeline. Nếu chỉ muốn 
+
+chèn hình, di chuột đến biểu  tượng 
+
+, gắp và  thả vào track  hình  trên timeline. Nếu chỉ 
+
+muốn chèn tiếng, di chuột đến biểu tượng 
+
+, gắp và thả vào track tiếng trên timeline. 
+
+2.  Ghép phim. 
+
+Thường thì việc ghép các clip sẽ được thực hiện ngay sau khi cắt clip. Thực hiện việc ghép 
+
+các clip rất đơn giản. Chuyển về chức năng Select, dùng chuột gắp thả các clip trên timeline 
+
+lại với nhau. 
+
+36 
+
+ 
+ 
+ 
+Đối với thể loại phim sự kiện, trong khi cắt, ta sẽ phải bỏ đi những đoạn xấu hoặc không 
+
+cần thiết. Để xóa đi đoạn này, chuyển về công cụ Select, nhấn chuột vào đoạn cần xóa, đoạn 
+
+chọn sẽ như hình dưới: 
+
+Dùng phím Backspace hoặc phím Delete trên bàn phím để xóa đoạn đã chọn. Trên timeline 
+
+xuất hiện một khoảng trống: 
+
+Để bỏ đi khoảng trống này, ta nhấn chuột phải vào khoảng trống, sẽ thấy xuất hiện như hình 
+
+dưới đây: 
+
+37 
+
+ 
+ 
+ 
+Chọn Ripple Delete thì khoảng trống sẽ mất, tất cả những clips phía sau (bên phải) sẽ tự 
+
+động thu lại. 
+
+Bước 5: Xuất phim 
+
+Sau khi đã hoàn thành các công việc cắt ghép video công việc cuối cùng của dựng phim là 
+
+xuất chúng ra thành sản phẩm. 
+
+Ta chọn File -> Export -> Media 
+
+Hoặc Ctrl + M 
+
+38 
+
+ 
+ 
+Cửa sổ sau sẽ mở ra: 
+
+39 
+
+ 
+ 
+Format: H.264 
+
+Preset: Có thể chọn High Bitrace hoặc Medium bitrace. 
+
+Output Name: Click vào tên mặc định của phần mềm, chọn vị trí lưu trữ và đặt tên video 
+
+của bạn. 
+
+Sau đó click Export và chờ kết quả. 
+
+40 
+
+ 
+ 
+41 
+
+ 
+ 
+ 
+ 
+Phụ lục 5: 
+Hướng dẫn sử dụng phầm mềm VideoScribe 
+
+Phần mềm hỗ trợ làm Video ngắn dạng chữ viết tay kết hợp với các hình ảnh có sẵn 
+
+trong kho dữ liệu hoặc được tạo bởi người dùng. Phần mềm cho phép người dùng recoder 
+
+âm thanh trực tiếp hoặc chèn các đoạn nhạc. 
+
+Đây là một tiện ích đơn giản, rất dễ sử dụng, phù hợp với tất cả mọi người, dù chuyên 
+
+hay không chuyên nghiệp đều có thể làm được. 
+
+Sau khi cài đặt xong, phần mềm có giao diện như sau: 
+
+6 
+
+7 
+
+8 
+
+9 
+
+10 
+
+1 
+
+2 
+
+3 
+
+4 
+
+5 
+
+Một số tính năng cơ bản như: 
+
+1: Điều chỉnh thời gian hiển thị cho một kịch bản 
+
+2: Các kịch bản được đưa vào 
+
+3: Chèn hình ảnh từ các nguồn. 
+
+4: Điều chỉnh vị trí hiển thị video 
+
+42 
+
+ 
+ 
+5: Chèn văn bản 
+
+6: Chèn nhạc có sẵn 
+
+7: Recoder âm thanh từ micro 
+
+8: Thay đổi hình nền và điều chỉnh hiệu ứng cánh tay, cây bút… 
+
+9: Kiểm tra kịch bản 
+
+10: Xuất bản thành phẩm video 
+
+Một số tính năng khác như: Save project, copy, past…  
+
+Quá trình sử dụng phụ thuộc hoàn toàn vào kịch bản muốn xây dựng: 
+
+Bước 1: Chọn các hình ảnh từ kho thư viện online (3) 
+
+Bước 2: Chèn các đoạn văn bản và sắp xếp các vị trí theo nhu cầu (5) 
+
+Bước  3:  Chèn  âm  thanh  từ  file  video  có  sẵn  hoặc  lồng  tiếng  trực  tiếp  bằng  cách 
+
+recoder từ micro (6,7) 
+
+Bước 4: Chạy kiểm tra và chỉnh sửa (9) 
+
+Bước 5: Xuất bản video thành phẩm, có thể xuất ra file theo các chuẩn video đã được 
+
+đề cập hoặc share trực tiếp lên các mạng xã hội. 
+
+43 
+
+ 
+ 
+ 
+Phụ lục 6: 
+HƯỚNG DẪN SỬ DỤNG  
+
+PHÒNG TỰ GHI HÌNH BÀI GIẢNG. 
+
+1.  Đối với lần đầu sử dụng 
+
+Bước 1: 
+
+-  Kết nối laptop GV với máy chủ ghi hình thông qua chuẩn HDMI hoặc VGA 
+
+(nên chọn HDMI). 
+
+-  Điều chỉnh độ phân giải laptop về kích thước chuẩn tỉ lệ 16:9 
+
+Bước 2: 
+
+-  Trên  máy  chủ  ghi  hình,  tạo  thư  mục  lưu  trữ  thông  tin  của  GV  tại  địa  chỉ: 
+
+G:\My Drive\BaiGiang\TEN_GIANG_VIEN.  Lưu ý, cần phải tạo thư mục 
+
+tên giảng viên tại đúng địa chỉ được chỉ định để có thể truy xuất dữ liệu từ xa 
+
+và dễ quản lý. 
+
+-  Mở file trình điều khiển ghi hình \kichbanquay.vmix  trong thư mục G:\My 
+
+Drive\BaiGiang\kichbanquay.vmix 
+
+-  Điều chỉnh các kịch bản ghi hình, góc máy quay theo hướng dẫn ở phụ lục 2 
+
+-  Thay đổi đường dẫn lưu Video thành phẩm theo hướng dẫn ở phục lục 2 
+
+-  Lưu kịch bản ghi hình lại với tên khác tại thư mục tên giảng viên vừa được 
+
+tạo ở bước 1 “G:\My Drive\BaiGiang\TEN_GIANG_VIEN” 
+44 
+
+ 
+ 
+2.  Đối với những lần sử dụng sau 
+
+Bước 1: Thực hiện như bước 1 của lần đầu sử dụng. 
+
+Bước 2: Mở file cấu hình trình điều khiển ghi hình ở thư mục G:\My 
+
+Drive\BaiGiang\(Ten_Giang_Vien)\kichbanquay.vmix 
+
+Bước 3: Sử dụng phím tắt trên Numeric Keypad để chọn các lệnh như: 
+
+-  Phím + : Bắt đầu chương trình ghi hình 
+
+-  Phím - : Kết thúc việc ghi hình 
+
+Bước 4: Sử dụng phím tắt trên Numeric Keypad để chọn các kịch bản ghi hình bao 
+
+gồm:  
+
+-  1: Kịch bản thứ nhất gồm chỉ có hình GV. 
+
+-  2: Kịch bản 2 gồm hình ảnh capture màn hình laptop Giảng viên và hình 
+
+giảng viên dưới góc nhỏ. 
+
+-  3: Kịch bản 3 gồm chỉ có hình ảnh capture màn hình laptop Giảng viên. 
+
+-  4: Kịch bản 4 gồm hình ảnh bảng kính và giảng viên. 
+
+Bước 5: Sau khi kết thúc ghi hình giảng viên có thể truy xuất, tải file video từ xa 
+
+thông qua địa chỉ: http://live.uit.edu.vn/baigiang. 
+
+Lưu ý trong quá trình ghi hình: 
+
+-  Nên tắt đèn neon trong phòng, chỉ sử dụng đèn chuyên dụng của 
+
+phòng quay. 
+
+-  Hạn chế sử dụng trang phục màu quá sáng, có sọc hoặc caro mịn nổi 
+
+bật, dễ làm hình ảnh video bị nhòe. 
+
+-  Nếu trong kịch bản quay có sử dụng bảng kính thì phải sử dụng trang 
+
+phục đơn màu, đen hoặc màu sẩm tối. Và tắt hết các đèn phòng quay, 
+
+chỉ sử dụng đèn bảng. 
+
+-  Cần chờ dữ liệu video được đồng bộ lên drive đầy đủ mới được tắt máy 
+
+chủ ghi hình để đảm bảo có thể tuy xuất được dữ liệu từ xa. 
+
+45 
+
+ 
+
