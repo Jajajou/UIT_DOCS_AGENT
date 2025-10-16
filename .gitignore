@@ -1,6 +1,4 @@
-﻿# Data and logs
-data/
-logs/
+# Data and logs
 *.log
 
 # Docker
