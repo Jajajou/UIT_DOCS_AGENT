@@ -1,0 +1,106 @@
+name: firecrawl-selfhosted
+
+# Common environment variables for Firecrawl services
+x-firecrawl-env: &firecrawl-env
+  REDIS_URL: redis://redis:6379
+  REDIS_RATE_LIMIT_URL: redis://redis:6379
+  PLAYWRIGHT_MICROSERVICE_URL: http://playwright-service:3000/scrape
+  NUQ_DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+  USE_DB_AUTHENTICATION: false
+  BULL_AUTH_KEY: ${BULL_AUTH_KEY:-CHANGEME}
+  LOGGING_LEVEL: ${LOGGING_LEVEL:-info}
+
+services:
+  # ===== Firecrawl Core Services =====
+  
+  # Playwright service for browser automation
+  playwright-service:
+    image: ghcr.io/firecrawl/playwright-service:latest
+    environment:
+      PORT: 3000
+    networks:
+      - firecrawl-network
+    restart: unless-stopped
+
+  # Main API service
+  api:
+    image: ghcr.io/firecrawl/firecrawl:latest
+    container_name: firecrawl-api
+    environment:
+      <<: *firecrawl-env
+      HOST: "0.0.0.0"
+      PORT: 3002
+      ENV: local
+    depends_on:
+      - redis
+      - postgres
+      - playwright-service
+    ports:
+      - "3002:3002"
+    networks:
+      - firecrawl-network
+    restart: unless-stopped
+    command: node dist/src/harness.js --start-docker
+
+  # Redis for queue management
+  redis:
+    image: redis:alpine
+    networks:
+      - firecrawl-network
+    restart: unless-stopped
+    command: redis-server --bind 0.0.0.0
+
+  # PostgreSQL for Firecrawl data (with nuq schema)
+  postgres:
+    build: ../firecrawl/apps/nuq-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    networks:
+      - firecrawl-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # ===== UIT Crawler (Python wrapper) =====
+  
+  crawler:
+    build: .
+    container_name: firecrawl-uit-crawler
+    environment:
+      # Firecrawl endpoint (local)
+      FIRECRAWL_URL: http://api:3002
+      
+      # Scheduling
+      SCHEDULE_HOURS: ${SCHEDULE_HOURS:-24}
+      RUN_ONCE: ${RUN_ONCE:-false}
+      
+      # Paths
+      OUTPUT_DIR: /data
+      LOG_PATH: /logs/crawler.log
+      CONFIG_PATH: /app/config.yaml
+      
+      # Seed URLs
+      SEED_URLS: ${SEED_URLS}
+      INCLUDE_PATTERNS: ${INCLUDE_PATTERNS}
+      EXCLUDE_PATTERNS: ${EXCLUDE_PATTERNS}
+      MAX_DEPTH: ${MAX_DEPTH:-3}
+    
+    volumes:
+      - ./data:/data
+      - ./logs:/logs
+      - ./config.yaml:/app/config.yaml:ro
+    
+    depends_on:
+      - api
+    networks:
+      - firecrawl-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  firecrawl-network:
+    driver: bridge
