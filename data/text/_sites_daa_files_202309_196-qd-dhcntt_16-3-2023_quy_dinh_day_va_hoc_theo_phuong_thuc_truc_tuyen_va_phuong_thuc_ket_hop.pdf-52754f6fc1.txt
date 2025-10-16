@@ -1,0 +1,507 @@
+ĐẠI HỌC QUỐC GIA TP.HCM 
+TRƯỜNG ĐẠI HỌC 
+CÔNG NGHỆ THÔNG TIN 
+
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM 
+Độc lập -Tự do - Hạnh phúc 
+
+Số: 196/QĐ-ĐHCNTT 
+
+Tp. Hồ Chí Minh, ngày  16  tháng 03  năm 2023 
+
+QUYẾT ĐỊNH 
+Về việc ban hành Quy định dạy và học theo phương thức trực tuyến và  
+phương thức kết hợp của Trường Đại học Công nghệ Thông tin 
+
+HIỆU TRƯỞNG TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN 
+
+Căn  cứ  Quyết  định  số  134/2006/QĐ-TTg ngày  08  tháng  6  năm  2006  của  Thủ 
+tướng Chính phủ về việc thành lập Trường Đại học Công nghệ Thông tin thuộc Đại 
+học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM); 
+
+Căn cứ Quyết định số 867/QĐ-ĐHQG ngày 17 tháng 08 năm 2016 của Giám 
+đốc ĐHQG-HCM về việc ban hành Quy định tổ chức và hoạt động của trường đại học 
+thành viên và khoa trực thuộc ĐHQG-HCM; 
+
+Căn  cứ  Quyết  định  số  790/QĐ-ĐHQG  ngày  28  tháng  9  năm  2022  của  Hiệu 
+trưởng Trường Đại học Công nghệ Thông tin-ĐHQG-HCM về việc ban hành Quy chế 
+đào tạo theo học chế tín chỉ cho hệ đại học chính quy của Trường Đại học Công nghệ 
+Thông tin; 
+
+Theo đề nghị của Trưởng phòng Đào tạo Đại học. 
+
+QUYẾT ĐỊNH: 
+
+Điều 1. Ban hành kèm theo Quyết định này Quy định dạy và học theo phương 
+
+thức trực tuyến và phương thức kết hợp của Trường Đại học Công nghệ Thông tin.  
+
+Điều 2. Quyết định có hiệu lực thi hành kể từ ngày ký. 
+
+Điều  3.  Các  Ông/Bà  Trưởng  các  Phòng,  Ban,  Khoa  có  liên  quan  chịu  trách 
+
+nhiệm thi hành Quyết định này./. 
+
+Nơi nhận: 
+- Như Điều 3; 
+- Lưu: VT, ĐTĐH (Nh). 
+
+KT. HIỆU TRƯỞNG 
+PHÓ HIỆU TRƯỞNG 
+
+(Đã ký) 
+
+Nguyễn Lưu Thùy Ngân 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  ĐẠI HỌC QUỐC GIA TP.HCM 
+TRƢỜNG ĐẠI HỌC 
+CÔNG NGHỆ THÔNG TIN 
+
+CỘNG HÕA XÃ HỘI CHỦ NGHĨA VIỆT NAM 
+Độc lập - Tự do - Hạnh phúc 
+
+QUY ĐỊNH 
+DẠY VÀ HỌC THEO PHƢƠNG THỨC TRỰC TUYẾN VÀ  
+PHƢƠNG THỨC KẾT HỢP CỦA  
+TRƢỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN 
+(Ban hành theo Quyết định số 196 /QĐ-ĐHCNTT ngày  16  tháng 03  năm 2023 của 
+Hiệu trưởng Trường Đại học Công nghệ Thông tin) 
+
+                                                                MỤC LỤC 
+CHƢƠNG I – NHỮNG QUY ĐỊNH CHUNG .................................................................................... 3 
+
+Điều 1. 
+
+Phạm vi điều chỉnh và đối tƣợng áp dụng .................................................................... 3 
+
+Điều 2. 
+
+Giải thích từ ngữ ........................................................................................................... 3 
+
+Điều 3. 
+
+Mục đích của phƣơng thức DHTT và DHKH .............................................................. 3 
+
+Điều 4. 
+
+Nguyên tắc tổ chức DHTT và DHKH .......................................................................... 4 
+
+Điều 5. 
+
+Tổ chức đào tạo phƣơng thức DHTT và DHKH .......................................................... 4 
+
+Điều 6. 
+
+Trƣờng hợp, điều kiện mở lớp theo phƣơng thức DHTT và DHKH ........................... 4 
+
+Điều 7. 
+
+Đánh giá môn học ........................................................................................................ 5 
+
+CHƢƠNG II – HỌC LIỆU ĐIỆN TỬ ................................................................................................. 5 
+
+Điều 8. 
+
+Xây dựng, thẩm định học liệu điện tử .......................................................................... 5 
+
+Điều 9. 
+
+Sử dụng học liệu điện tử ............................................................................................... 5 
+
+CHƢƠNG III - HẠ TẦNG KỸ THUẬT ............................................................................................. 5 
+
+Điều 10. 
+
+Hệ thống phần mềm phục vụ DHTT và DHKH ........................................................... 5 
+
+CHƢƠNG IV - QUYỀN HẠN VÀ TRÁCH NHIỆM CỦA GIẢNG VIÊN, SINH VIÊN ................. 6 
+
+Điều 11. 
+
+Quyền hạn và trách nhiệm của đơn vị quản lý chuyên môn đối với môn học ............. 6 
+
+Điều 12. 
+
+Quyền và trách nhiệm của giảng viên .......................................................................... 6 
+
+Điều 13. 
+
+Quyền và trách nhiệm của sinh viên ............................................................................ 7 
+
+Điều 14. 
+
+Trách nhiệm của đơn vị phụ trách quản lý hạ tầng công nghệ thông tin - truyền 
+thông ............................................................................................................................. 7 
+
+Điều 15. 
+
+Những hành vi nghiêm cấm trong hoạt động dạy học trực tuyến ................................ 7 
+
+CHƢƠNG V - TỔ CHỨC THỰC HIỆN ............................................................................................. 8 
+
+ 
+ 
+ 
+ 
+2 
+
+Điều 16. 
+
+Tổ chức thực hiện ......................................................................................................... 8 
+
+ 
+ 
+ 
+ 
+ 
+ 
+3 
+
+CHƢƠNG I – NHỮNG QUY ĐỊNH CHUNG 
+
+Điều 1.  Phạm vi điều chỉnh và đối tƣợng áp dụng 
+
+1. Văn bản này quy định về việc dạy và học theo phƣơng thức trực tuyến (DHTT) 
+và  phƣơng  thức  kết  hợp  (DHKH)  cho  hệ  đại  học  chính  quy  của  Trƣờng  Đại  học 
+Công nghệ Thông tin – ĐHQG.HCM (gọi tắt là Trƣờng). 
+2. Quy định này áp dụng với các đơn vị và cá nhân có liên quan đến việc dạy và học 
+theo phƣơng thức DHTT, DHKH tại Trƣờng.  
+
+Điều 2.  Giải thích từ ngữ 
+
+1.  Học  liệu  điện  tử:  là  các  tài  liệu  học  tập  đƣợc  số  hóa  theo  các  định  dạng  đa 
+phƣơng tiện trên máy tính (văn bản, âm thanh, hình ảnh, video, đồ họa, …), đƣợc 
+cấu trúc theo kịch bản dạy và học nhất định, có nội dung đáp ứng chuẩn đầu ra của 
+một môn học. Video bài giảng là thành phần bắt buộc phải có của học liệu điện tử. 
+2. Phƣơng thức dạy học trực tiếp: là phƣơng thức dạy và học có sự gặp mặt trực tiếp 
+giữa giảng viên và sinh viên. 
+3. Phƣơng thức dạy học trực tuyến (DHTT): là phƣơng thức dạy và học thông qua 
+phần mềm ứng dụng trên môi trƣờng mạng để thực hiện việc giảng dạy và học tập, 
+qua đó sinh viên có thể tự học mọi lúc mọi nơi với các học liệu điện tử; sinh viên có 
+thể trao đổi với nhau và với giảng viên thông qua các phần mềm ứng dụng trên môi 
+trƣờng mạng. 
+4. Phƣơng thức  dạy  học  kết hợp (DHKH): là phƣơng thức dạy và học có sự phối 
+hợp một cách hợp lý, có chủ đích giữa phƣơng thức dạy học trực tuyến với phƣơng 
+thức dạy học trực tiếp. 
+5. Đơn vị quản lý môn học (ĐVQLMH): Đơn vị đƣợc Trƣờng giao quản lý chuyên 
+môn cho môn học, có thể là Khoa, Bộ môn, Trung tâm hoặc Tổ phụ trách môn học. 
+
+Điều 3. Mục đích của phƣơng thức DHTT và DHKH 
+
+Bên  cạnh phƣơng  thức  dạy  học  trực  tiếp,  Trƣờng  triển  khai  các  phƣơng  thức  dạy 
+học trực tuyến, dạy học kết hợp nhằm những mục đích sau đây: 
+1. Tăng cƣờng ứng dụng công nghệ thông tin và truyền thông trong đào tạo; Phát 
+triển năng lực tự học, tự  nghiên cứu cho sinh viên; Đáp ứng nhu cầu học tập linh 
+hoạt, đa dạng của sinh viên, phù hợp với chủ trƣơng của Nhà nƣớc, Bộ Giáo dục & 
+Đào tạo, ĐHQG-HCM và với xu hƣớng đào tạo hiện đại hiện nay trên thế giới. 
+2. Nhằm chuẩn bị sẵn sàng chuyển đổi phƣơng thức dạy và học một cách linh hoạt, 
+không làm gián đoạn công tác đào tạo khi không thể tổ chức đào tạo theo hình thức 
+trực  tiếp  do  các  nguyên  nhân  khách  quan  nhƣ  thiên  tai,  dịch  bệnh  kéo  dài  hoặc 
+những khó khăn từ thực tế khác và vẫn đảm bảo chất lƣợng đào tạo. 
+
+ 
+ 
+ 
+4 
+
+Điều 4. Nguyên tắc tổ chức DHTT và DHKH 
+
+1. Việc giảng dạy môn học theo các phƣơng thức DHTT, DHKH phải đáp ứng đầy 
+đủ yêu cầu cần đạt theo đề cƣơng môn học đƣợc phê duyệt nhƣ phƣơng thức đào tạo 
+trực tiếp.  
+2. Bảo đảm các điều kiện về hạ tầng kỹ thuật và đội ngũ giảng viên đáp ứng yêu cầu 
+tổ chức DHTT, DHKH. 
+3. Tuân thủ các quy định hiện hành về an toàn thông tin và sở hữu trí tuệ. 
+4.  Sinh viên đăng ký  học các  lớp  theo phƣơng thức  DHTT,  DHKH  đóng  học phí 
+nhƣ các lớp tổ chức theo phƣơng thức dạy học trực tiếp. 
+
+Điều 5. Tổ chức đào tạo phƣơng thức DHTT và DHKH 
+
+1. ĐVQLMH lên kế hoạch cụ thể về phƣơng thức giảng dạy đối với từng môn học, 
+đảm bảo tổng số tín chỉ các môn học giảng dạy theo phƣơng thức trực tuyến không 
+đƣợc chiếm quá 30% tổng số tín chỉ của toàn bộ chƣơng trình đào tạo. 
+2. Mỗi học kỳ, các đơn vị quản lý môn học lập thời khóa biểu các lớp học theo quy 
+trình chung của Trƣờng, ghi chú rõ phƣơng thức dạy và học trong thời khóa biểu để 
+SV nắm rõ khi đăng ký học phần (ĐKHP). ĐVQLMH chịu trách nhiệm kiểm tra, 
+đảm bảo các điều kiện mở lớp theo Điều 6 của Quy định này khi gửi đề nghị mở lớp 
+(thời khóa biểu) cho đơn vị quản lý đào tạo. Đơn vị quản lý đào tạo rà soát, duyệt 
+mở  lớp  theo  quy  định.  ĐVQLMH  mở  lớp  học  theo  phƣơng  thức  DHTT,  DHKH 
+đồng thời với lớp học theo phƣơng thức dạy học trực tiếp để sinh viên đƣợc quyền 
+lựa chọn khi ĐKHP. 
+3. Trong trƣờng hợp đặc biệt nhƣ thiên tai, dịch bệnh và tùy tình hình thực tế, Hiệu 
+trƣởng quyết định việc chuyển đổi giữa các phƣơng thức dạy và học. 
+4. Theo đề nghị của giảng viên, lớp học theo phƣơng thức DHKH đƣợc giảm tối đa 
+1/3 thời lƣợng lên lớp trực tiếp (giảm theo số buổi hoặc giảm theo số tiết). Giảng 
+viên cung cấp thông tin về kế hoạch giảng dạy cho đơn vị quản lý đào tạo và đơn vị 
+thanh tra trƣớc buổi học giảng dạy theo phƣơng thức DHTT. 
+
+Điều 6. Trƣờng hợp, điều kiện mở lớp theo phƣơng thức DHTT và DHKH 
+
+1. Phương thức DHTT (thỏa tất cả điều kiện sau):  
+
+a) Môn học phải có đầy đủ học liệu điện tử cho toàn bộ nội dung môn học theo đề 
+
+cƣơng môn học.  
+
+b) Trƣờng hợp môn học chƣa có đầy đủ học liệu điện tử, Trƣờng chỉ cho phép đối 
+với giảng viên là chuyên gia đang ở nƣớc ngoài. Trƣờng hợp này, giảng viên ở 
+nƣớc ngoài lên lớp trực tuyến qua phần mềm Microsoft Teams (xem quy định 
+tại Điều 10) theo thời khóa biểu; ĐVQLMH phải phân công thêm giảng viên 
+cùng tham gia giảng dạy hoặc phân công thêm trợ giảng lý thuyết. 
+
+c) Hiệu trƣởng duyệt mở lớp đối với phƣơng thức này. 
+
+ 
+ 
+ 
+5 
+
+2. Phương thức DHKH (thỏa tất cả điều kiện sau):  
+
+a) Kế hoạch giảng dạy kết hợp phải đƣợc xác định rõ từ đầu học kỳ; 
+b) Môn học phải có đầy đủ học liệu điện tử cho tối thiểu 1/3 nội dung môn học 
+
+theo đề cƣơng môn học; 
+
+Điều 7. Đánh giá môn học 
+
+Kiểm tra, đánh giá môn học thực hiện theo quy định trong đề cƣơng môn học.  
+
+CHƢƠNG II – HỌC LIỆU ĐIỆN TỬ 
+
+Điều 8. Xây dựng, thẩm định học liệu điện tử 
+
+1. Học liệu điện tử sử dụng trong DHTT và DHKH phải có nội dung phù hợp với 
+đề cƣơng môn học đƣợc phê duyệt (bao gồm chuẩn đầu ra môn học), bảo đảm 
+tính khoa học, sƣ phạm và đáp ứng đƣợc nhu cầu tự học của sinh viên. 
+
+2. Học liệu điện tử đƣợc sử dụng từ nguồn sẵn có của Trƣờng hoặc giảng viên chủ 
+
+động xây dựng.  
+
+3. Khi xây dựng và sử dụng học liệu điện tử, giảng viên có trách nhiệm đảm bảo 
+
+các quy định của pháp luật về Luật Sở hữu trí tuệ hiện hành. 
+
+4. Các ĐVQLMH có trách nhiệm thẩm định, đảm bảo chất lƣợng học liệu điện tử 
+phục vụ DHTT, DHKH đối với các môn học  mà đơn vị phụ trách. Trƣờng có 
+thể tổ chức thẩm định lại trong trƣờng hợp cần thiết. 
+
+Điều 9. Sử dụng học liệu điện tử 
+
+Học liệu điện tử của Trƣờng đƣợc: 
+
+1. Cung cấp cho sinh viên có đăng ký môn học để sử dụng trong học tập hoặc tham 
+
+khảo. 
+
+2. Cung cấp cho giảng viên mới công tác tại trƣờng để tham khảo nhằm mục đích 
+
+bồi dƣỡng giảng viên. 
+
+3. Cung cấp cho giảng viên đƣợc phân công dạy môn học để sử dụng trong giảng 
+
+dạy. 
+
+CHƢƠNG III - HẠ TẦNG KỸ THUẬT  
+
+Điều 10. Hệ thống phần mềm phục vụ DHTT và DHKH  
+
+Hệ  thống phần  mềm  phục vụ  DHTT,  DHKH  đƣợc  sử  dụng kết  hợp bởi  các  phần 
+mềm sau đây: 
+1. Hệ thống UIT-Elearning (https://courses.uit.edu.vn): 
+a) Giúp giảng viên tổ chức triển khai giảng bài, hƣớng dẫn, giao nhiệm vụ học tập, 
+chuyển tải học liệu điện tử đến sinh viên; 
+
+ 
+ 
+ 
+ 
+6 
+
+b) Giúp sinh viên tƣơng tác, trao đổi thông tin với giảng viên và những sinh viên 
+khác. 
+2. Phần mềm Microsoft Teams: 
+a) Giúp giảng viên tổ chức triển khai giảng bài, chia sẻ màn hình máy tính, hƣớng 
+dẫn, giao nhiệm vụ học tập; 
+b) Giúp sinh viên tƣơng tác, trao đổi thông tin với giảng viên và những sinh viên 
+khác. 
+3.  Hệ 
+thống  Cổng 
+https:/daa.uit.edu.vn): 
+a) Giúp giảng viên xem thông tin về lịch dạy, lớp học. 
+b) Giúp sinh viên xem lịch học và cung cấp các dịch vụ sinh viên khác. 
+4. Hệ thống Quản lý đào tạo: 
+Cho phép Trƣờng quản lý hồ sơ, tiến trình học tập, kết quả học tập của sinh viên và 
+các hoạt động dạy của giảng viên. 
+
+tạo  đại  học  (https:/student.uit.edu.vn/ 
+
+tin  đào 
+
+thông 
+
+CHƢƠNG IV - QUYỀN HẠN VÀ TRÁCH NHIỆM CỦA 
+GIẢNG VIÊN, SINH VIÊN 
+
+Điều 11. Quyền hạn và trách nhiệm của đơn vị quản lý chuyên môn đối với môn 
+học 
+
+1.  Xác  định  phƣơng thức giảng dạy  cho từng  môn  học  theo từng  học  kỳ,  tổ  chức 
+giảng dạy và kiểm soát chất lƣợng giảng dạy. 
+2.  Tập  huấn  kỹ  năng  cần  thiết  cho  giảng  viên  và  sinh  viên  để  triển  khai  DHTT, 
+DHKH hiệu quả. 
+
+Điều 12. Quyền và trách nhiệm của giảng viên 
+
+Ngoài những quyền và trách nhiệm của giảng viên theo các quy định hiện hành của 
+Trƣờng, giảng viên có thêm những quyền và trách nhiệm sau đây: 
+1.  Giảng  viên  đƣợc  hỗ  trợ  kinh  phí khi  tham  gia  xây  dựng  học  liệu điện  tử  theo 
+mức quy định của Trƣờng. 
+2. Giảng viên có trách nhiệm rèn luyện, nâng cao kỹ năng xây dựng học liệu điện 
+tử, kỹ năng sử dụng các công cụ, ứng dụng công nghệ thông tin trong giảng dạy và 
+đánh giá. 
+3. Giảng viên có trách nhiệm cung cấp đầy đủ học liệu điện tử cho sinh viên trong 
+DHTT,  DHKH;  chịu  trách  nhiệm  về  nội dung  bài  giảng và  các  chủ đề  thảo  luận 
+đƣa lên các hệ thống công nghệ thông tin hỗ trợ DHTT, DHKH. 
+4. Giảng viên có trách nhiệm trả lời câu hỏi, hỗ trợ sinh viên trong quá trình học 
+một  cách  nhanh  chóng.  Giảng  viên  có  thể  giao  một  phần  công  việc  này  cho  trợ 
+giảng. 
+
+ 
+ 
+ 
+7 
+
+Điều 13. Quyền và trách nhiệm của sinh viên 
+
+Ngoài những quyền và trách nhiệm của sinh viên theo các quy định hiện hành của 
+Trƣờng, sinh viên có thêm những quyền và trách nhiệm sau đây: 
+1. Sinh viên đƣợc cung cấp, tiếp cận các nguồn học liệu điện tử của môn học, đƣợc 
+giải đáp thắc mắc trong quá trình học tập một cách nhanh chóng. 
+2. Sinh viên có quyền bổ sung các thông tin khác nhƣ hình ảnh đại diện, chữ ký vào 
+hồ sơ cá nhân trên các hệ thống phần mềm học tập trực tuyến của trƣờng. Hình ảnh 
+đại diện phải nghiêm túc, có văn hóa. Nghiêm cấm sử dụng hình ảnh không phù hợp 
+với thuần phong mỹ tục của Việt Nam. 
+3. Sinh viên có trách nhiệm bảo vệ tài khoản của mình, chịu trách nhiệm về việc để 
+ngƣời  khác  sử  dụng  tài  khoản  của  mình  sai  mục  đích,  không  đúng  với  quy  định; 
+chịu trách nhiệm về các thông tin đƣa lên hệ thống từ tài khoản của mình. 
+4. Sinh viên phải hoàn thành các nhiệm vụ do giảng viên giao trên hệ thống DHTT, 
+DHKH theo đúng thời hạn quy định. 
+5. Sinh viên tham gia các hoạt động lấy ý kiến phản hồi về các học phần, phƣơng 
+pháp giảng dạy, môi trƣờng giáo dục khi đƣợc Trƣờng yêu cầu. 
+6.  Sinh  viên  tuân  thủ  Bộ  Quy  tắc  ứng  xử  trên  mạng  xã  hội  (theo  Quyết  định  số 
+874/QĐ-BTTTT ngày 17/6/2021 của Bộ Thông tin & Truyền thông). 
+
+Điều 14. Trách nhiệm của đơn vị phụ trách quản lý hạ tầng công nghệ thông tin 
+- truyền thông 
+
+1. Quản lý, vận hành và đảm bảo an ninh, an toàn: hệ thống máy chủ, cổng thông tin 
+và hạ tầng kết nối mạng phục vụ DHTT, DHKH. 
+2.  Cấp  phát  tài  khoản,  tạo  lớp  học  phần,  phân  quyền  cho  ngƣời  dùng  trên  các  hệ 
+thống; hỗ trợ kỹ thuật cho giảng viên và sinh viên trong quá trình giảng dạy và học 
+tập; hỗ trợ bộ phận chức năng thực hiện nhiệm vụ quản lý, thanh tra, kiểm tra. 
+3. Tham gia giám sát quá trình DHTT, DHKH; kịp thời phát hiện, xử lý và báo cáo 
+lãnh đạo đơn vị các hiện tƣợng bất thƣờng trong quá trình  DHTT, DHKH; lập các 
+báo cáo liên quan khi đƣợc yêu cầu. 
+4.  Tạm  ngƣng  hoặc vô hiệu  hóa  các  khóa  học,  các  nội  dung  trên  khóa học và  tài 
+khoản ngƣời dùng vi phạm các quy định của pháp luật hiện hành và các điều khoản 
+trong quy định này. 
+
+Điều 15. Những hành vi nghiêm cấm trong hoạt động dạy học trực tuyến 
+
+1.  Nghiêm  cấm  các  hành  vi  lợi  dụng  DHTT,  DHKH  để  cung  cấp  thông  tin  trên 
+mạng nhằm mục đích: 
+a) Chống lại Nhà nƣớc Cộng hòa Xã hội Chủ nghĩa Việt Nam; gây phƣơng hại đến 
+an ninh quốc gia, trật tự an toàn xã hội; phá hoại khối đại đoàn kết dân tộc; tuyên 
+
+ 
+ 
+ 
+8 
+
+truyền chiến tranh, khủng bố; gây hận thù, mâu thuẫn giữa các dân tộc, sắc tộc, tôn 
+giáo. 
+b) Tuyên truyền, kích động bạo lực, dâm ô, đồi trụy, tội ác, tệ nạn xã hội, mê tín dị 
+đoan, phá hoại thuần phong, mỹ tục của dân tộc. 
+c) Tiết lộ bí mật Nhà nƣớc, bí mật quân sự, an ninh, kinh tế, đối ngoại và những bí 
+mật khác do pháp luật quy định. 
+d)  Đƣa  thông  tin  xuyên  tạc,  vu  khống,  xúc  phạm  uy  tín  của  tổ  chức,  danh  dự  và 
+nhân phẩm của cá nhân. 
+đ) Quảng cáo, tuyên truyền, mua bán hàng hóa, dịch vụ bị cấm; truyền bá tác phẩm 
+báo chí, văn học, nghệ thuật, xuất bản phẩm bị cấm. 
+e) Giả mạo tổ chức, cá nhân và phát tán thông tin giả mạo, thông tin sai sự thật xâm 
+hại đến quyền và lợi ích hợp pháp của tổ chức, cá nhân. 
+2. Nghiêm cấm các hành vi tạo đƣờng dẫn trái phép đối với tên miền hợp pháp của 
+tổ chức, cá nhân; tạo, cài đặt, phát tán phần mềm độc hại, vi-rút máy tính; xâm nhập 
+trái phép; chiếm quyền điều khiển hệ thống thông tin, tạo lập công cụ tấn công trên 
+mạng. 
+3. Nghiêm cấm các đối tƣợng có hành vi lƣu trữ, sao chép, cắt ghép làm thay đổi 
+nội  dung  học  liệu  điện  tử,  ghi  hình  và  chỉnh  sửa  bài  giảng  trực  tiếp,  phát  tán  bài 
+giảng có trong hệ thống DHTT, DHKH dƣới mọi hình thức khi chƣa đƣợc sự đồng 
+ý của giảng viên hoặc lãnh đạo ĐVQLMH. 
+4. Các vi phạm, tùy theo mức độ, sẽ bị xử lý theo quy định hiện hành của Trƣờng 
+hoặc bị cơ quan có thẩm quyền xử lý kỷ luật, xử lý hình sự theo quy định của Pháp 
+luật. 
+
+CHƢƠNG V - TỔ CHỨC THỰC HIỆN 
+
+Điều 16. Tổ chức thực hiện 
+
+1. Phòng ĐTĐH: làm đầu mối phối hợp với đơn vị liên quan trong việc tổ chức và 
+quản lý DHTT, DHKH. 
+2. Các đơn vị quản lý môn học (Khoa, Bộ môn, Trung tâm Ngoại ngữ, Tổ phụ trách 
+môn học): xác định phƣơng thức giảng dạy cho từng môn học theo từng học kỳ, tổ 
+chức giảng dạy và kiểm soát chất lƣợng giảng dạy; tập huấn kỹ năng cần thiết cho 
+giảng viên và sinh viên để triển khai DHTT, DHKH hiệu quả. 
+3. Phòng Thanh tra - Pháp chế và Đảm bảo Chất lƣợng: tổ chức thanh tra, kiểm tra, 
+giám sát việc thực hiện nhiệm vụ giảng dạy, đánh giá theo quy định. 
+4. Phòng Dữ liệu và Công nghệ Thông tin: quản lý hạ tầng công nghệ thông tin  - 
+truyền thông phục vụ DHTT, DHKH. 
+5.  Phòng  Công  tác  Sinh  viên:  thực  hiện  công  tác  tuyên  truyền,  định  hƣớng  về  tƣ 
+tƣởng, trách nhiệm đối với sinh viên trong quá trình tham gia học trực tuyến, kịp 
+
+ 
+ 
+ 
+9 
+
+thời báo cáo Ban Giám hiệu các trƣờng hợp lợi dụng  DHTT, DHKH để thực hiện 
+hành vi vi phạm pháp luật về đƣa thông tin trên mạng Internet. 
+6. Các đơn vị và cá nhân liên quan khác có trách nhiệm phối hợp, hỗ trợ thực hiện 
+các công việc theo chức năng, nhiệm vụ của từng đơn vị, cá nhân. 
+7. Trong quá trình thực hiện, bản Quy định này có thể đƣợc sửa đổi, bổ sung phù 
+hợp với yêu cầu thực tế và theo các quy định của Nhà nƣớc, quy định của ĐHQG-
+HCM và của Trƣờng ĐHCNTT. 
+
+KT. HIỆU TRƢỞNG 
+PHÓ HIỆU TRƢỞNG 
+
+                                               (Đã ký) 
+
+Nguyễn Lƣu Thùy Ngân 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+

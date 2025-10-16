@@ -1,0 +1,477 @@
+ĐẠI HỌC 
+    TRƯỜNG ĐẠI HỌC                
+          CÔNG NGHỆ THÔNG TIN
+
+            CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+
+     Độc lập – Tự do – Hạnh phúc
+
+                      Tp.Hồ Chí Minh, ngày 15 tháng 01 năm 2009
+
+NH GIÁO DỤC ĐẠI HỌC
+
+Tên chươ  Cử nhân khoa học
+Trình độ 
+ Đại học
+Ngành đà  Khoa học máy tính
+ Chính quy
+Loại hình 
+
+Khóa đào 2007-2011 (Khóa 2)
+Số tín chỉ
+
+147
+
+Số TC
+
+LT
+
+TH
+
+5
+
+5
+
+4
+
+3
+
+3
+
+8
+
+4
+
+5
+
+4
+
+3
+
+3
+
+8
+
+1
+
+0
+
+0
+
+0
+
+0
+
+0
+
+Mã môn 
+học
+
+Học 
+phần
+Tin học 
+đại 
+cương
+
+Triết học 
+Mác-
+Lênin
+Toán 
+cao cấp 
+A1
+Kiến 
+trúc máy 
+tính 1
+Vật lý 
+đại 
+cương 
+A1
+Anh văn 
+1
+Giáo 
+dục 
+Quốc 
+phòng
+Giáo 
+dục thể 
+chất 1
+
+HK1
+
+Tổng cộng HK1
+
+20
+
+ 
+ 
+                       
+ 
+Cấu trúc 
+dữ liệu 
+& giải 
+thuật  1
+Cơ sở 
+dữ liệu
+Toán 
+cao cấp 
+A2
+Anh văn 
+2
+Giáo 
+dục thể 
+chất 2
+
+4
+
+4
+
+4
+
+8
+
+HK2
+
+Tổng cộng HK2
+
+15
+
+Lập 
+trình 
+hướng 
+đối tượng
+Mạng
+máy tính
+Toán
+cao cấp
+A3
+Vật lý 
+đại 
+cương 
+A2
+Kinh tế 
+chính trị 
+Mác-
+Lênin
+Anh văn 
+3
+Tổng cộng HK3
+
+Lập 
+trình 
+trên 
+Windows
+Cấu trúc 
+rời rạc
+
+4
+4
+
+4
+
+3
+
+4
+
+6
+19
+
+4
+
+4
+
+HK3
+
+3
+
+3
+
+4
+
+8
+
+3
+3
+
+4
+
+3
+
+4
+
+3
+
+3
+
+4
+
+1
+
+1
+
+0
+
+0
+
+1
+1
+
+0
+
+0
+
+0
+
+0
+
+1
+
+0
+
+Đường 
+lối cách 
+mạng 
+của 
+Đảng 
+CSVN
+Nhập 
+môn 
+quản trị 
+doanh 
+nghiệp
+Nhập 
+môn 
+công tác 
+kỹ sư
+Anh văn 
+4
+Tổng cộng HK4
+
+HK4
+Tổng số tín chỉ giai đoạn 1
+Trí tuệ 
+nhân tạo
+Đồ họa 
+máy tính
+Cơ sở 
+lập trình
+Cấu trúc 
+dữ liệu 
+& giải 
+thuật 
+nâng cao
+
+Xác xuất 
+thống kê
+Lý 
+thuyết 
+thông tin
+Tư 
+tưởng 
+Hồ Chí 
+Minh
+
+HK5
+
+Tổng cộng HK5
+Máy học
+Các hệ 
+cơ sở tri 
+thức
+
+3
+
+2
+
+2
+
+6
+15
+69
+
+4
+
+4
+
+4
+
+4
+
+3
+
+3
+
+2
+24
+4
+
+4
+
+3
+
+2
+
+2
+
+3
+
+3
+
+3
+
+4
+
+3
+
+3
+
+3
+
+2
+
+4
+
+4
+
+0
+
+0
+
+0
+
+0
+
+1
+
+1
+
+0
+
+1
+
+0
+
+0
+
+0
+
+0
+
+0
+
+Phân 
+tích & 
+thiết kế 
+thuật 
+toán
+Nhập 
+môn 
+công 
+nghệ 
+phần 
+mềm
+Môn 
+chuyên 
+ngành 
+bắt buộc 
+1
+Môn 
+chuyên 
+ngành tự 
+chọn 1
+Chủ 
+nghĩa xã 
+hội khoa 
+học
+Tổng cộng HK6
+Nguyên 
+lý ngôn 
+ngữ lập 
+trình
+Môn 
+chuyên 
+ngành 
+bắt buộc 
+2
+Môn 
+chuyên 
+ngành tự 
+chọn 2
+
+Các môn 
+tự chọn
+
+HK6
+
+HK7
+
+Tổng cộng HK7
+
+Khóa 
+luận tốt 
+nghiệp
+
+3
+
+3
+
+4
+
+4
+
+3
+
+4
+
+4
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+3
+
+3
+
+4
+
+4
+
+3
+25
+
+3
+
+4
+
+4
+
+8
+19
+
+(hoặc 
+các môn 
+thay thế)
+Tổng cộng HK8
+
+HK8
+Tổng số tín chỉ giai đoạn 2
+
+10
+10
+78
+
+Hiệu trưởng
+
+Hoàng Văn Kiếm
+
+
