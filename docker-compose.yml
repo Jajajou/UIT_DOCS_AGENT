@@ -1,0 +1,84 @@
+name: firecrawl
+
+x-common-service: &common-service
+  build: ./uit_crawler
+  ulimits:
+    nofile:
+      soft: 65535
+      hard: 65535
+  networks:
+    - backend
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+x-common-env: &common-env
+  # UIT Crawler specific settings
+  USE_FIRECRAWL: ${USE_FIRECRAWL:-false}
+  RESPECT_ROBOTS: ${RESPECT_ROBOTS:-false}
+  CRAWL_USER_AGENT: ${CRAWL_USER_AGENT:-firecrawl-uit-bot/1.0}
+  BANDWIDTH_BPS: ${BANDWIDTH_BPS:-0}
+  JITTER_MAX: ${JITTER_MAX:-0.5}
+  ACTIVE_WINDOW: ${ACTIVE_WINDOW:-}
+  WINDOW_TZ: ${WINDOW_TZ:-Asia/Ho_Chi_Minh}
+  CONFIG_PATH: /app/config.yaml
+  OUTPUT_DIR: /data
+  LOG_PATH: /logs/firecrawl.log
+  SCHEDULE_HOURS: ${SCHEDULE_HOURS:-24}
+  RUN_ONCE: ${RUN_ONCE:-false}
+  SEED_URLS: ${SEED_URLS}
+  INCLUDE_PATTERNS: ${INCLUDE_PATTERNS}
+  EXCLUDE_PATTERNS: ${EXCLUDE_PATTERNS}
+  MAX_DEPTH: ${MAX_DEPTH:-3}
+  CONCURRENCY: ${CONCURRENCY:-2}
+  RATE_LIMIT: ${RATE_LIMIT:-1}
+  
+  # Firecrawl API settings (optional, for future use)
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+  REDIS_RATE_LIMIT_URL: ${REDIS_URL:-redis://redis:6379}
+  PLAYWRIGHT_MICROSERVICE_URL: ${PLAYWRIGHT_MICROSERVICE_URL:-http://playwright-service:3000/scrape}
+  NUQ_DATABASE_URL: ${NUQ_DATABASE_URL:-postgres://postgres:postgres@nuq-postgres:5432/postgres}
+  USE_DB_AUTHENTICATION: ${USE_DB_AUTHENTICATION:-false}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+  MODEL_NAME: ${MODEL_NAME:-gpt-4}
+  MODEL_EMBEDDING_NAME: ${MODEL_EMBEDDING_NAME:-text-embedding-3-small}
+  OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+  SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+  BULL_AUTH_KEY: ${BULL_AUTH_KEY:-}
+  TEST_API_KEY: ${TEST_API_KEY:-}
+  POSTHOG_API_KEY: ${POSTHOG_API_KEY:-}
+  POSTHOG_HOST: ${POSTHOG_HOST:-}
+  SUPABASE_ANON_TOKEN: ${SUPABASE_ANON_TOKEN:-}
+  SUPABASE_URL: ${SUPABASE_URL:-}
+  SUPABASE_SERVICE_TOKEN: ${SUPABASE_SERVICE_TOKEN:-}
+  SELF_HOSTED_WEBHOOK_URL: ${SELF_HOSTED_WEBHOOK_URL:-}
+  SERPER_API_KEY: ${SERPER_API_KEY:-}
+  SEARCHAPI_API_KEY: ${SEARCHAPI_API_KEY:-}
+  LOGGING_LEVEL: ${LOGGING_LEVEL:-info}
+  PROXY_SERVER: ${PROXY_SERVER:-}
+  PROXY_USERNAME: ${PROXY_USERNAME:-}
+  PROXY_PASSWORD: ${PROXY_PASSWORD:-}
+  SEARXNG_ENDPOINT: ${SEARXNG_ENDPOINT:-}
+  SEARXNG_ENGINES: ${SEARXNG_ENGINES:-}
+  SEARXNG_CATEGORIES: ${SEARXNG_CATEGORIES:-}
+
+services:
+  app:
+    build: ./uit_crawler
+    container_name: firecrawl-uit
+    network_mode: host
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    environment:
+      <<: *common-env
+    volumes:
+      - ./data:/data
+      - ./logs:/logs
+      - ./uit_crawler/config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+
+networks:
+  backend:
+    driver: bridge

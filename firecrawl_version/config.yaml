@@ -1,0 +1,17 @@
+seed_urls:
+  - "https://daa.uit.edu.vn/qui-che-qui-dinh-qui-trinh"
+include_patterns:
+  - "/qui-che"
+  - "/quy-dinh"
+  - "/quy-trinh"
+  - "/thongbao"
+  - "/huong-dan"
+  - "/van-ban"
+  - "/content"
+  - "/ctdt-khoa"
+exclude_patterns:
+  - "/tin-tuc"
+  - "/news"
+max_depth: 3
+output_dir: "/data"
+log_level: "INFO"

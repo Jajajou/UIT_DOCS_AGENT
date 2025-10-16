@@ -1,58 +1,23 @@
+﻿# Data and logs
+data/
+logs/
+*.log
+
+# Docker
+.env
+
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
 
-# Virtual Environment
-venv/
-ENV/
-env/
-.venv
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-.DS_Store
-
-# Docker
-.dockerignore
-
-# Logs (git sẽ track thư mục logs/ nhưng không track nội dung)
-logs/*.log
-logs/*.txt
-
-# Temporary files
-*.tmp
-*.bak
-*.cache
 
 # OS
-Thumbs.db
 .DS_Store
-
-# Local environment variables (nếu có sensitive data)
-# .env
-
-# Note: Data directory is tracked to preserve crawled content
-# data/ directory will be committed with all crawled files
+Thumbs.db
