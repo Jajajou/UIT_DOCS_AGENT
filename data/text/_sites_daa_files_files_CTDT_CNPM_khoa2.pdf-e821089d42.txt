@@ -1,0 +1,370 @@
+           ĐẠI HỌC QUỐC GIA TPHCM
+
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+
+TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN
+
+        Độc lập - Tự do - Hạnh phúc
+
+Tp. Hồ Chí Minh, ngày          tháng           năm 2007
+
+HƯƠNG TRÌNH ĐÀO TẠO KỸ SƯ  KỸ THUẬT PHẦN MỀM
+
+Trình độ đào tạo :
+Đại học
+Ngành đào tạo :
+Kỹ thuật Phần mềm
+Loại hình đào tạo :
+Chính qui
+Khóa đào tạo :
+Khóa 2 (2007 - 2012)
+Tổng số tín chỉ của chương trình: 155 tín chỉ, 9 học kỳ
+
+Giai đoạn 1 : Các môn học chung
+
+Tổng số tín chỉ 4 học kỳ 1, 2, 3, 4:
+
+70
+
+STT
+
+Học kỳ 1
+
+Môn học
+
+Mã 
+môn 
+CARC1 Kiến trúc máy tính 
+CSC21 Tin học đại cương
+MATH1 Toán cao cấp A1
+PHIL2 Triết học Marx Lenin
+PHYS1 Vật lý đại cương A1
+MEDU1 Giáo dục Quốc phòng
+ENG01 Anh văn 1
+PDEU1 Giáo dục thể chất 1
+
+Ghi 
+chú
+
+Số tín 
+chỉ
+3
+5
+4
+5
+3
+
+Số tín 
+chỉ LT
+3
+4
+4
+5
+3
+
+Số tín 
+chỉ TH
+0
+1
+0
+0
+0
+
+Học kỳ 2
+
+Cộng:
+
+DBSS1 Cơ sở dữ liệu
+DSAL1 Cấu trúc dữ liệu và giải thuật
+MATH2 Toán cao cấp A2
+OSYS1 Hệ điều hành
+PDEU2 Giáo dục thể chất 2
+ENG02 Anh văn 2
+
+Cộng:
+
+Học kỳ 3
+
+CNET1 Mạng máy tính
+
+20
+4
+4
+4
+4
+
+16
+4
+
+3
+3
+4
+3
+
+3
+
+1
+1
+0
+1
+
+1
+
+         
+Học kỳ 4
+
+LIAL1 Đại số tuyến tính
+MLPE1 Kinh tế Chính trị Marx Lenin
+OOPT1 Lập trình hướng đối tượng
+PHYS2 Vật lý đại cương A2
+ENG03 Anh văn 3
+
+Cộng:
+
+ITEM1 Nhập môn Quản trị doanh
+ITEW1 Nhập môn Công tác Kỹ sư
+MATH4 Cấu trúc rời rạc
+VCPL1 Đường lối cách mạng của Đảng
+WINP1 Lập trình trên Windows
+ENG04 Anh văn 4
+
+Cộng:
+
+4
+4
+4
+3
+
+19
+2
+2
+4
+3
+4
+
+15
+
+4
+4
+3
+3
+
+2
+2
+4
+3
+3
+
+0
+0
+1
+0
+
+0
+0
+0
+0
+1
+
+Giai đoạn 2 : Các môn học ngành Kỹ thuật Phần mềm
+Tổng số tín chỉ 5 học kỳ  5, 6, 7, 8, 9 : 
+
+85
+
+STT
+
+Học kỳ 5
+
+Học kỳ 6
+
+Học phần
+
+Mã 
+môn 
+SE101 Phương pháp mô hình hóa
+STAT1 Xác suất thống kê
+SE102 Nhập môn phát triển Game
+SE103 Các phương pháp lập trình
+SE104 Nhập môn Công nghệ Phần mềm
+SE105 Lập trình nhúng căn bản
+
+Cộng:
+
+SE106 Đặc tả hình thức
+SE207 Phân tích thiết kế hệ thống
+SE208 Kiểm chứng phần mềm
+SE209 Phát
+ầ   ề
+SE3** Học phần tự chọn 1
+
+triển, vận hành, bảo trì
+
+SV chọn trong các môn học sau :
+
+3
+3
+3
+3
+4
+3
+19
+4
+4
+3
+3
+4
+
+SE311 Ngôn ngữ lập trình Java : 4 TC
+HCMT1 Tư tưởng Hồ Chí Minh
+
+2
+
+Số TC Số tín 
+chỉ LT
+3
+3
+2
+2
+3
+2
+
+Ghi 
+chú
+
+Số tín 
+chỉ TH
+0
+0
+1
+1
+1
+1
+
+4
+3
+2
+3
+3
+
+2
+
+0
+1
+1
+0
+1
+
+0
+
+ 
+ 
+Học kỳ 7
+
+Học kỳ 8
+
+Học kỳ 9
+
+20
+4
+4
+3
+3
+2
+4
+
+20
+2
+3
+3
+8
+
+Cộng:
+
+SE210 Quản lý dự án công nghệ thông
+SE211 Phát triển phần mềm hướng đối
+SE212 Phát triển phần mềm mã nguồn
+SE213 Xử lý phân bố
+SE417 Đồ án môn học mã nguồn mở
+SE3** Học phần tự chọn 2
+
+SV chọn trong các môn học sau :
+SE322 Công nghệ Web và ứng dụng: 2
+SE326 Chuyên đề Cơ sở dữ liệu nâng 
+
+Cộng:
+SEMT2 Phương pháp luận sáng tạo KH-
+SE501 Thực tập tốt nghiệp
+SE418 Đồ án môn học chuyên ngành
+SE3** Học phần tự chọn 3
+
+SV chọn trong các môn học sau :
+
+SE312 Công nghệ . NET : 4 TC
+SE325 Chuyên đề J2EE : 4 TC
+SE331 Chuyên đề e-Commerce: 2 TC
+SE337 Một số thuật toán thông minh: 
+
+3
+3
+2
+2
+2
+3
+
+2
+3
+3
+6
+
+1
+1
+1
+1
+0
+1
+
+0
+0
+0
+2
+
+Cộng:
+SE505 Khóa luận tốt nghiệp hoặc sinh 
+
+16
+10
+
+10
+
+0
+
+viên chọn các chuyên đề tốt 
+nghiệp với số tín chỉ tương 
+đương nếu không đủ điều kiện 
+  ố  
+
+Cộng:
+
+Tổng số tín chỉ phải tích lũy :
+Tổng số tín chỉ các môn học bắt buộc :
+Tổng số tín chỉ các môn học tự chọn :
+
+10
+
+155
+139
+16
+
+* Đối với các môn tự chọn, sinh viên có thể lựa chọn những môn học phù hợp trong nhóm các 
+    môn tự chọn của chương trình sao cho tổng số tín chỉ các môn tự chọn là 16 tín chỉ.
+
+HIỆU TRƯỞNG
+
+   
+ 
+ 
+ 
+ 
+HOÀNG VĂN KIẾM
+
+

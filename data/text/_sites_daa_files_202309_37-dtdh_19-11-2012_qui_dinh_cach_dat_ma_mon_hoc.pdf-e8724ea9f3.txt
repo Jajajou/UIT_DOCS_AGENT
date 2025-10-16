@@ -1,0 +1,366 @@
+TRƯỜNG ĐẠI HỌC  
+CÔNG NGHỆ THÔNG TIN 
+PHÒNG ĐÀO TẠO ĐẠI HỌC 
+
+Số : 37/ĐTĐH 
+(V/v hoàn chỉnh chương trình đào 
+tạo áp dụng cho các khóa tuyển từ 
+năm học 2012-2013 
+
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM 
+
+Độc lập - Tự do - Hạnh phúc 
+
+TP. HCM, ngày 19 tháng  11  năm 2012. 
+
+Kính gửi: 
+
+-  Ban chủ nhiệm Khoa; 
+-  Trưởng Bộ môn 
+
+Nhằm hoàn chỉnh chương trình giáo dục bậc đại học áp dụng cho  các khóa tuyển từ năm 
+học  2012  –  2013,  Phòng  Đào  tạo  Đại  học  thông  báo  đến  các  Khoa  và  Bộ  môn  việc  điều 
+chỉnh hệ thống mã môn học và kế hoạch thực hiện như sau: 
+
+A.  Hệ thống mã môn học: 
+
+1.  Mã môn học gồm 2 ký tự và 3 chữ số. Ví dụ: IT001 
+2.  Quy định về ký tự trong mã môn học: 
+
+a.  Đối  với  các  môn  học  thuộc  khối  kiến  thức  giáo  dục  đại  cương  và  cơ  sở 
+
+nhóm ngành: 
+
+STT 
+1 
+2 
+3 
+4 
+5 
+6 
+7 
+
+Loại môn học 
+
+Tiếng Anh 
+Nhóm ngành CNTT 
+Toán 
+Giáo dục quốc phòng 
+Giáo dục thể chất 
+Điện tử, mạch số, vật lý 
+Lý luận chính trị, kỹ năng và các môn xã hội 
+
+Mã ký tự 
+EN 
+IT 
+MA 
+ME 
+PE 
+PH 
+SS 
+
+b.  Đối với các  môn thuộc khối kiến thức chuyên ngành:  ký tự đại  diện cho 
+
+Khoa quản lý môn học đó 
+
+STT 
+
+Khoa 
+
+Kỹ thuật máy tính 
+Khoa học máy tính 
+Hệ thống thông tin 
+
+1 
+2 
+3 
+4  Mạng máy tính & truyền thông 
+5 
+
+Công nghệ phần mềm 
+
+Mã ký 
+tự 
+CE 
+CS 
+IS 
+NT 
+SE 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.  Quy định về chữ số trong mã môn học: 
+
+a.  Đối  với  các  môn  học  thuộc  khối  kiến  thức  giáo  dục  đại  cương  và  cơ  sở 
+
+nhóm ngành: bắt đầu đánh số từ 001 cho mỗi loại môn học. 
+
+b.  Đối với các môn thuộc khối kiến thức chuyên ngành 
+
+-  Chữ số đầu tiên thể hiện cấp độ của môn học 
+
++ Các môn cơ sở ngành : 1 
++ Các môn chuyên ngành bắt buộc : 2 
++ Các môn chuyên ngành tự chọn : 3 
++ Các môn chuyên đề tốt nghiệp : 4 
+
+-  Chữ số thứ 2 thể hiện sự phân loại chuyên ngành hẹp. Nếu môn học là 
+
+môn chung của ngành thì chữ số thứ 2 là 0. 
+Ví dụ: Khoa có 2 chuyên ngành hẹp thì chữ số thứ 2 có 3 giá trị là 0, 1, 2 
+
+-  Chữ số thứ 3 thể hiện thứ tự môn học theo từng cấp độ. 
+
+B.  Kế hoạch triển khai: 
+
+1.  Hoàn chỉnh chương trình đào tạo: Căn cứ vào chương trình đào tạo giai đoạn đại 
+cương và  cơ sở nhóm  ngành  đã  được  ban  hành,  các  Khoa  tiến  hành  điều  chỉnh 
+chương trình đào tạo cập nhật hệ thống mã môn học theo hướng dẫn như trên. 
+
+2.  Hoàn thiện đề cương tất cả các môn học do Khoa, Bộ môn phụ trách. 
+3.  Lập  bảng  đối  chiếu  môn  học  tương  đương  giữa  các  chương  trình  đào  tạo  theo 
+
+biểu mẫu kèm theo. 
+
+4.  Các Khoa, Bộ môn gửi chương trình đào tạo đã chỉnh sửa, toàn bộ đề cương các 
+môn học và bảng đối chiếu môn học tương đương giữa các chương trình đào tạo về 
+cho phòng Đào tạo Đại học trƣớc ngày 30/11/2012. 
+
+Trân trọng. 
+
+Nơi nhận:  
+- Như trên;  
+- Lưu:  ĐTĐH  
+
+PHỤ TRÁCH PHÒNG ĐÀO TẠO ĐẠI HỌC 
+
+(Đã ký) 
+
+TRỊNH MINH TUẤN 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ĐẠI HỌC QUỐC GIA TP. HCM 
+TRƢỜNG ĐẠI HỌC 
+CÔNG NGHỆ THÔNG TIN 
+
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM 
+Độc lập – Tự do – Hạnh phúc 
+
+Đơn vị:…………………………….. 
+
+                                 TP. Hồ Chí Minh, ngày       tháng        năm 2012           
+
+BẢNG ĐỐI CHIẾU CÁC MÔN HỌC TƢƠNG ĐƢƠNG HOẶC THAY THẾ 
+
+(Giữa các chƣơng trình đào tạo đã triển khai và chƣơng trình đào tạo áp dụng từ năm học 2012 – 2013) 
+
+I.  Đối với chương trình đào tạo áp dụng cho khóa………../ năm học……………..(A) và chương trình đào tạo áp dụng từ năm học 2012 – 2013 (B) 
+
+CHƢƠNG TRÌNH ĐÀO TẠO A 
+
+CHƢƠNG TRÌNH ĐÀO TẠO B 
+
+TT 
+
+MÃ 
+MÔN 
+HỌC 
+
+TÊN MÔN HỌC 
+
+SỐ  
+TÍN 
+CHỈ 
+
+MÃ  
+MÔN 
+HỌC 
+
+TÊN MÔN HỌC 
+
+SỐ 
+TÍN 
+CHỈ 
+
+II.  Đối với chương trình đào tạo áp dụng cho khóa………../ năm học……………..(A) và chương trình đào tạo áp dụng từ năm học 2012 – 2013 (B) 
+
+CHƢƠNG TRÌNH ĐÀO TẠO A 
+
+CHƢƠNG TRÌNH ĐÀO TẠO B 
+
+TT 
+
+MÃ 
+MÔN 
+HỌC 
+
+TÊN MÔN HỌC 
+
+SỐ  
+TÍN 
+CHỈ 
+
+MÃ  
+MÔN 
+HỌC 
+
+TÊN MÔN HỌC 
+
+SỐ 
+TÍN 
+CHỈ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+III.  Đối với chương trình đào tạo áp dụng cho khóa………../ năm học……………..(A) và chương trình đào tạo áp dụng từ năm học 2012 – 2013 (B) 
+
+CHƢƠNG TRÌNH ĐÀO TẠO A 
+
+CHƢƠNG TRÌNH ĐÀO TẠO B 
+
+TÊN MÔN HỌC 
+
+SỐ  
+TÍN 
+CHỈ 
+
+MÃ  
+MÔN 
+HỌC 
+
+TÊN MÔN HỌC 
+
+SỐ 
+TÍN 
+CHỈ 
+
+TT 
+
+MÃ 
+MÔN 
+HỌC 
+
+Ghi chú: 
+
+-  Hai môn học được gọi là tương đương khi có cùng nội dung giảng dạy nhưng có thay đổi về tên môn học, mã môn học. 
+
+-  Môn học được gọi là thay thế khi môn học cũ không có trong chương trình đào tạo mới, sinh viên có thể học môn thay thế để trả nợ môn 
+
+học cũ. 
+
+-  Mỗi bảng chỉ liệt kê các môn tương đương hoặc thay thế giữa 1 chương trình đào tạo đã ban hành trước đây và chương trình đào tạo áp 
+
+dụng từ năm học 2012 – 2013. 
+
+TRƢỞNG KHOA 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+

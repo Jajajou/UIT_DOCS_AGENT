@@ -1,0 +1,494 @@
+ĐẠI HỌC QUỐC GIA TP.HCM
+
+CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT 
+
+TRƯỜNG ĐẠI HỌC 
+
+CÔNG NGHỆ THÔNG TIN
+
+Độc lập - Tự do - Hạnh phúc
+
+Tp. Hồ Chí Minh, ngày   26   tháng  02   năm  
+
+Tên chương trình: 
+Trình độ đào tạo: 
+Ngành đào tạo: 
+Loại hình đào tạo: 
+
+CHƯƠNG TRÌNH GIÁO DỤC ĐẠI HỌC
+Chương trình đào tạo hệ Kỹ sư chính quy
+Đại học
+Kỹ Thuật Máy tính
+Chính quy
+
+Khóa đào tạo:
+
+2006-2011 (Khóa 1)
+
+Tổng số tín chỉ  của chương trình đào tạo (9 học kỳ) : 153 tín chỉ
+
+Giai đoạn 1 : Chương trình chung các khoa.
+
+Tổng số tín chỉ các học kỳ 1, 2, 3 : 61 tín chỉ
+
+STT Mã môn học
+
+Tên môn học
+
+Số TC
+
+LT
+
+TH
+
+Ghi chú
+
+Học kỳ 1
+
+CARC1
+CSC21
+MAT21
+PHIL2
+PHY01
+
+Kiến trúc máy tính
+Tin học đại cương (TE)
+Toán cao cấp A1 (TE)
+Triết học Mác-Lênin
+Vật lý đại cương A1
+Giáo dục quốc phòng
+Anh văn 1
+Giáo dục thể chất 1
+
+Cộng
+
+Học kỳ 2
+
+DBSS1
+
+Cơ sở dữ liệu
+
+DSAL1
+MAT23
+
+OOPT1
+
+PHY22
+
+Cấu trúc dữ liệu và giải 
+thuật 
+Đại số tuyến tính
+
+Lập trình hướng đối tượng
+Vật lý đại cương A2 
+(TE1)
+Giáo dục thể chất 2
+Anh văn 2
+
+Cộng
+
+Học kỳ 3
+
+CNET1
+MAT22
+
+Mạng máy tính
+Toán cao cấp A2 (TE)
+
+3
+5
+4
+5
+3
+
+4
+
+4
+4
+
+4
+
+4
+
+4
+4
+
+3
+4
+4
+5
+3
+
+20 TC 
+3
+3
+
+4
+3
+
+4
+
+20 TC 
+3
+4
+
+0
+1
+0
+0
+0
+
+1
+1
+
+0
+1
+
+0
+
+1
+0
+
+MLPE2
+OSYS1
+WINP1
+
+Kinh tế chính trị Mác-
+Lênin (TE1)
+Hệ điều hành
+Lập trình trên Windows
+
+5
+4
+4
+
+Cộng
+
+5
+
+4
+3
+21 TC
+
+0
+
+0
+1
+
+Giai đoạn 2 : Chương trình ngành Kỹ thuật máy tính
+
+Tổng số tín chỉ các học kỳ 4, 5, 6, 7, 8, 9 : 92 tín 
+
+STT Mã môn học
+
+Tên môn học
+
+Số TC
+
+LT
+
+TH
+
+Ghi chú
+
+Học kỳ 4
+Học kỳ 5
+
+Học kỳ 6
+
+CE101
+CE102
+CE108
+MAT04
+
+VCPL1
+
+Lý thuyết mạch điện
+Hệ thống số
+Hệ điều hành nâng cao
+Cấu trúc rời rạc
+Đường lối cách mạng của 
+Đảng CSVN
+
+Cộng
+
+CE103
+
+Vi xử lý-vi điều khiển
+
+CE104
+CE105
+
+CE106
+HCMT1
+
+CE107
+CE109
+
+CE110
+
+CE111
+
+CE112
+CE113
+
+CE114
+CE202
+
+Các thiết bị và mạch điện 
+tử
+Xử lý tín hiệu số
+
+Thiết kế mạch với HDL
+Tư tưởng Hồ Chí Minh
+
+Cộng
+Hệ thống nhúng
+Lập trình nhúng căn bản
+
+Lập trình hệ thống với 
+Java
+Kiến trúc máy tính nâng 
+cao
+Đồ án môn học thiết kế 
+mạch
+Điều khiển tự động
+
+Cộng
+Lập trình trên thiết bị di 
+động
+An toàn mạng máy tính
+
+CE204
+
+Thiết kế và Lập trình Web
+
+ITEW1
+
+Nhập môn công tác kỹ sư
+
+4
+4
+3
+4
+
+3
+
+4
+
+3
+4
+
+4
+2
+
+4
+3
+
+4
+
+3
+
+2
+3
+
+3
+3
+
+3
+
+2
+
+4
+3
+3
+4
+
+3
+18 TC
+3
+3
+
+3
+3
+
+2
+17 TC
+3
+2
+
+3
+
+2
+
+0
+3
+19 TC
+2
+
+3
+3
+
+2
+
+0
+1
+0
+0
+
+0
+
+1
+0
+
+1
+1
+
+0
+
+1
+1
+
+1
+
+1
+
+2
+0
+
+1
+
+0
+0
+
+0
+
+Môn tự chọn
+Môn tự chọn
+
+ 
+ 
+ 
+ 
+CE115
+
+Thiết kế Mạng 
+
+Học kỳ 7
+
+SOCI1
+
+Chủ nghĩa xã hội khoa học
+Cộng
+
+CE116
+
+KTMT
+
+CE302
+
+Thiết kế vi mạch
+
+CE301
+
+SMET2
+
+Hệ thống chứng thực số
+Phương pháp luận sáng 
+tạo KH-CN
+
+CE502
+
+Thực tập doanh nghiệp
+
+Cộng
+
+CE312
+
+Hệ thống thời gian thực
+
+Học kỳ 8
+Học kỳ 9
+
+4
+
+3
+
+2
+
+3
+
+3
+
+2
+
+3
+
+3
+
+CE314
+CE505
+
+Trình biên dịch
+Khóa luận tốt nghiệp
+
+3
+10
+
+3
+3
+
+15 TC
+0
+
+2
+
+3
+
+2
+
+0
+10 TC
+3
+
+3
+
+1
+0
+
+2
+
+1
+
+0
+
+0
+
+3
+
+0
+
+0
+
+Chuyên ngành 1
+
+Chuyên ngành 1
+
+Chuyên ngành 2
+
+Chuyên ngành 2
+
+Cộng
+
+13 TC
+
+HIỆU TRƯỞNG
+
+HOÀNG VĂN KIẾM
+
+ 
+ 
+ 
+ 
+ 
+

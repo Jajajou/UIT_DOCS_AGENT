@@ -1,0 +1,598 @@
+ĐẠI HỌC QUỐC GIA TP.HCM
+TRƯỜNG ĐẠI HỌC                
+CÔNG NGHỆ THÔNG TIN
+
+            CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+     Độc lập – Tự do – Hạnh phúc
+
+                      Tp.Hồ Chí Minh, ngày 17 tháng 09 năm 2011
+
+CHƯƠNG TRÌNH GIÁO DỤC ĐẠI HỌC
+
+Tên chương trình: Cử nhân khoa học
+Trình độ đào tạo: Đại học
+Ngành đào tạo:
+Loại hình đào tạo: Cử nhân tài năng
+Khóa đào tạo:
+Số tín chỉ:
+
+2008-2012 (Khóa 4)
+140
+
+Khoa học máy tính
+
+Mã môn học
+CSC01
+MAT01
+LIA01
+PHY01
+
+Học phần
+Tin học đại cương
+Toán cao cấp A1
+Toán cao cấp A3
+Vật lý đại cương A1
+
+Số TC
+4
+3
+3
+3
+
+LT
+3
+3
+3
+3
+
+TH
+1
+0
+0
+0
+
+ENG01
+PEDU1
+
+DSAL1
+DBSS1
+MAT02
+PHY02
+CARC1
+
+PHIL1
+
+ENG02
+PEDU2
+
+OOPT1
+OSYS1
+MAT04
+STA01
+VCPL1
+
+Anh văn 1
+Giáo dục thể chất 1
+Giáo dục quốc phòng
+
+Tổng cộng HK1
+Cấu trúc dữ liệu & giải 
+Cơ sở dữ liệu
+Toán cao cấp A2
+Vật lý đại cương A2
+Kiến trúc máy tính
+Những nguyên lý cơ bản 
+của chủ nghĩa Marx
+
+Anh văn 2
+Giáo dục thể chất 2
+
+Tổng cộng HK2
+
+Lập trình hướng đối 
+Hệ điều hành
+Cấu trúc rời rạc
+Xác suất thống kê
+Đường lối CM của Đảng 
+
+ENG03
+
+Anh văn 3
+
+WINP1
+CNET1
+
+Tổng cộng HK3
+Lập trình trên Windows
+Mạng máy tính
+
+8
+
+13
+4
+4
+4
+3
+3
+
+5
+
+8
+
+23
+4
+3
+4
+3
+3
+
+6
+17
+4
+4
+
+8
+
+3
+3
+4
+3
+3
+
+5
+
+8
+
+3
+3
+4
+3
+3
+
+3
+
+3
+3
+
+0
+
+1
+1
+0
+0
+0
+
+0
+
+0
+
+1
+0
+0
+0
+0
+
+0
+
+1
+1
+
+Ghi chú
+
+Tính 
+riêng
+
+Tính 
+riêng
+
+Tính 
+riêng
+
+HK1
+
+HK2
+
+HK3
+
+                       
+HCMT1
+
+Tư tưởng Hồ Chí Minh
+
+ENG04
+
+Anh văn 4
+
+HK4
+
+Tổng cộng HK4
+
+Tổng số tín chỉ giai đoạn 1
+
+CS106
+CS105
+CS103
+DSAL2
+CS108
+
+CS109
+CS102
+CS107
+CS210
+CS351
+
+SMET2
+CS211
+CS352
+CS371
+CS36*
+
+CS101
+CS372
+CS501
+CS36*
+
+Trí tuệ nhân tạo
+Đồ họa máy tính
+Cơ sở lập trình
+Cấu trúc dữ liệu & giải 
+Lý thuyết thông tin
+
+Tổng cộng HK5
+
+Máy học
+Phân tích & thiết kế 
+Các hệ cơ sở tri thức
+Môn chuyên ngành bắt 
+Chuyên đề nghiên cứu 
+
+Tổng cộng HK6
+
+Phương pháp luận sáng 
+Môn chuyên ngành bắt 
+Chuyên đề nghiên cứu 
+Seminar chuyên đề 1
+Các môn tự chọn
+
+Tổng cộng HK7
+Nguyên lý ngôn ngữ lập 
+Semiar chuyên đề 2
+Khóa luận tốt nghiệp
+Các môn tự chọn
+
+Tổng cộng HK8
+
+HK5
+
+HK6
+
+HK7
+
+HK8
+
+Tổng số tín chỉ giai đoạn 2
+
+  Nhóm môn học theo chuyên ngành và tự chọn
+
+2
+
+6
+10
+63
+4
+4
+4
+4
+3
+19
+4
+3
+4
+4
+4
+19
+2
+4
+4
+2
+8
+20
+3
+2
+10
+4
+19
+77
+
+Tính 
+riêng
+
+2
+
+3
+
+3
+3
+4
+3
+3
+
+4
+3
+4
+4
+4
+
+2
+4
+4
+
+3
+
+0
+
+0
+
+1
+1
+0
+1
+0
+
+0
+0
+0
+0
+0
+
+0
+0
+0
+
+0
+
+a. Các môn học bắt buộc theo chuyên ngành
+Chuyên ngành Môn học
+Hệ suy diễn mờ
+Mạng Neural và 
+thuật giải di truyền
+
+Tính toán mềm
+
+Máy học và 
+Công nghệ tri 
+thức
+
+Đồ họa và xử 
+lý ảnh
+
+Trí tuệ nhân tạo 
+nâng cao
+Biểu diễn tri thức 
+và ứng dụng
+
+Xử lý tín hiệu số
+Trực quan máy tính
+Xử lý ngôn ngữ tự 
+nhiên
+
+TC
+4
+
+LT
+0
+
+TH
+0
+
+4
+
+4
+
+4
+
+4
+4
+
+4
+
+0
+
+0
+
+0
+
+0
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+0
+
+0
+
+Xử lý Ngôn ng  
+
+Ngôn ngữ học máy 
+tính
+
+2
+
+1
+
+7
+8
+
+STT
+
+9
+10
+
+3
+4
+5
+6
+
+b. Các môn chọn chung
+Môn học
+Lý thuyết automat 
+và ứng dụng
+Fuzzy Logic: lý 
+thuyết và ứng dụng
+Trích xuất thông tin 
+(Information 
+Extraction)
+Web ngữ nghĩa
+Nhận dạng
+Mã hóa thông tin
+Ngôn ngữ lập trình 
+Java
+Công nghệ JEEE
+Ngôn ngữ lập trình 
+C#
+Hệ điều hành Linux
+Lập trình cơ sở dữ 
+liệu
+Công nghệ .NET
+Phân tích thiết kế 
+hệ thống thông tin
+Xây dựng phần 
+mềm hướng đối 
+tượng
+Phân tích thiết kế 
+hướng đối tượng 
+với UML
+Công nghệ JAVA
+Các công nghệ web 
+và ứng dụng
+Lập trình symbolic 
+trong trí tuệ nhân 
+tạo
+
+11
+12
+
+15
+16
+
+13
+
+14
+
+17
+
+18
+
+3
+
+TC
+
+0
+
+0
+
+LT
+
+TH
+
+4
+
+4
+
+4
+4
+4
+
+4
+
+4
+4
+
+4
+4
+
+4
+4
+
+4
+
+4
+
+4
+3
+
+4
+
+4
+
+0
+
+0
+
+0
+0
+0
+0
+
+3
+3
+
+3
+3
+
+3
+3
+
+3
+
+4
+
+3
+3
+
+3
+
+3
+
+0
+
+0
+
+0
+0
+0
+0
+
+1
+1
+
+1
+1
+
+1
+1
+
+1
+
+0
+
+1
+0
+
+1
+
+1
+
+Hiệu trưởng
+
+Hoàng Văn Kiếm
+
+ 
+

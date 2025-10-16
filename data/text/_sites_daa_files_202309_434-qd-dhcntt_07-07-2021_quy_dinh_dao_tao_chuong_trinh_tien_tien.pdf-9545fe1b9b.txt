@@ -1,0 +1,699 @@
+ĐẠI HỌC QUỐC GIA TP.HCM 
+TRƯỜNG ĐẠI HỌC 
+CÔNG NGHỆ THÔNG TIN 
+
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM 
+Độc lập -Tự do - Hạnh phúc 
+
+Số: 434/QĐ-ĐHCNTT 
+
+Tp.Hồ Chí Minh, ngày 07  tháng 7  năm 2021 
+
+QUYẾT ĐỊNH 
+
+Về việc ban hành Quy định đào tạo Chương trình Tiên tiến  
+của Trường Đại học Công nghệ Thông tin  
+
+HIỆU TRƯỞNG TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN 
+
+Căn cứ Quyết định số 134/2006/QĐ-TTg, ngày 08/06/2006 của Thủ tướng Chính phủ 
+về việc thành lập Trường Đại học Công nghệ Thông tin (ĐH CNTT) thuộc Đại học Quốc gia 
+Thành phố Hồ Chí Minh (ĐHQG-HCM); 
+
+Căn 
+
+cứ  Quyết 
+
+của  
+Giám đốc ĐHQG-HCM về việc ban hành quy chế tổ chức và hoạt động của Trường Đại học 
+thành viên và Khoa trực thuộc ĐHQG-HCM; 
+
+867/QĐ-ĐHQG, 
+
+17/08/2016 
+
+ngày 
+
+định 
+
+số 
+
+Căn 
+
+cứ  Quyết 
+
+của  
+Giám đốc ĐHQG-HCM về việc phê duyệt đề án đào tạo chương trình tiên tiến trình độ đại 
+học  ngành  Hệ  thống  thông  tin  của  Trường  Đại  học  Công  nghệ  Thông  tin  giai  đoạn  2018-
+2022;; 
+
+1760/QĐ-ĐHQG, 
+
+13/09/2018 
+
+ngày 
+
+định 
+
+số 
+
+Căn  cứ  Quyết  định  số  546/QĐ-ĐHCNTT-ĐTĐH,  ngày  30/08/2019  của  Hiệu  trưởng 
+Trường Đại học Công nghệ Thông tin về việc ban hành Quy chế đào tạo theo học chế tín chỉ 
+cho hệ đại học chính quy của Trường ĐH CNTT;  
+
+Theo đề nghị của Trưởng phòng Đào tạo Đại học, 
+
+QUYẾT ĐỊNH: 
+
+Điều 1. Ban hành kèm theo Quyết định này “Quy định đào tạo Chương trình Tiên 
+
+tiến của Trường Đại học Công nghệ Thông tin” 
+
+Điều 2. Quyết định này có hiệu lực kể từ ngày ký. 
+
+Điều 3. Các Ông/Bà Trưởng các Phòng, Ban, Khoa, Bộ môn, đơn vị có liên quan, Văn 
+phòng các chương trình đặc biệt, giảng viên và sinh viên chương trình Tiên tiến của Trường 
+Đại học Công nghệ Thông tin chịu trách nhiệm thi hành Quyết định này. 
+
+Nơi nhận: 
+-  Như Điều 2; 
+
+-  Lưu: VT, ĐTĐH. 
+
+KT.HIỆU TRƯỞNG 
+PHÓ HIỆU TRƯỞNG 
+(Đã ký) 
+
+Nguyễn Lưu Thùy Ngân 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ĐẠI HỌC QUỐC GIA TP.HCM 
+
+TRƯỜNG ĐẠI HỌC 
+CÔNG NGHỆ THÔNG TIN 
+
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM 
+Độc lập – Tự do – Hạnh phúc 
+
+Thành phố Hồ Chí Minh, ngày 7 tháng 7 năm 2021 
+
+QUY ĐỊNH 
+ĐÀO TẠO CHƯƠNG TRÌNH TIÊN TIẾN 
+ (Ban hành kèm theo Quyết định số 434/QĐ-ĐHCNTT, ngày 7  tháng 7  năm 2021 
+ của Hiệu trưởng Trường Đại học Công nghệ Thông tin) 
+
+Chương 1.  NHỮNG QUY ĐỊNH CHUNG .................................................................. 2 
+
+Điều 1. 
+
+Phạm vi điều chỉnh và đối tượng áp dụng ................................................... 2 
+
+Điều 2.  Giải thích từ ngữ .......................................................................................... 2 
+
+Điều 3.  Mục tiêu đào tạo .......................................................................................... 2 
+
+Điều 4.  Chương trình đào tạo ................................................................................... 3 
+
+Chương 2.  TỔ CHỨC ĐÀO TẠO ................................................................................ 4 
+
+Điều 5. 
+
+Tổ chức chương trình................................................................................... 4 
+
+Điều 6. 
+
+Tổ chức lớp .................................................................................................. 4 
+
+Điều 7.  Đội ngũ quản lý và cố vấn học tập .............................................................. 4 
+
+Điều 8.  Điều kiện và phương thức tuyển sinh .......................................................... 5 
+
+8.1.  Điều kiện xét tuyển ...................................................................................... 5 
+
+8.2.  Phương thức tuyển sinh ................................................................................ 5 
+
+Điều 9.  Chuyển đổi chương trình đào tạo ................................................................ 5 
+
+Điều 10.  Giảng viên, trợ giảng ................................................................................... 6 
+
+10.1.  Giảng viên .................................................................................................... 6 
+
+10.2.  Trợ giảng ...................................................................................................... 7 
+
+Điều 11.  Đánh giá kết quả học tập của học phần ....................................................... 7 
+
+Điều 12.  Thực tập doanh nghiệp và làm khóa luận tốt nghiệp ................................... 8 
+
+12.1.  Thực tập doanh nghiệp ................................................................................. 8 
+
+12.2.  Làm khóa luận tốt nghiệp ............................................................................. 8 
+
+Điều 13.  Tốt nghiệp .................................................................................................... 8 
+
+Chương 3.  CHẾ ĐỘ CHÍNH SÁCH ............................................................................ 9 
+
+Điều 14.  Học phí ......................................................................................................... 9 
+
+Điều 15.  Học bổng ...................................................................................................... 9 
+
+Điều 16.  Khen thưởng khác ........................................................................................ 9 
+
+Chương 4.  ĐIỀU KHOẢN THI HÀNH ..................................................................... 10 
+
+1 
+
+ 
+ 
+ 
+ 
+Chương 1. 
+
+NHỮNG QUY ĐỊNH CHUNG 
+
+Điều 1.  Phạm vi điều chỉnh và đối tượng áp dụng 
+
+Quy định này  áp dụng đối với giảng viên,  sinh viên hệ chính quy  đào tạo theo 
+
+CTTT, thực hiện theo học chế tín chỉ, giảng dạy bằng tiếng Anh (trừ các môn lý luận 
+
+chính trị, pháp luật đại cương, Giáo dục quốc phòng – an ninh, Giáo dục thể chất). 
+
+Các nội dung không nêu trong quy định này được áp dụng theo Quy chế đào tạo 
+
+theo học chế tín chỉ và các quy  định hiện hành của Trường ĐHCNTT cho hệ đại học 
+
+chính quy. 
+
+Điều 2.  Giải thích từ ngữ 
+
+Chương trình đào tạo khác là chương trình đào tạo trình độ đại học hệ chính quy 
+
+được ĐHQG-HCM cho phép triển khai đào tạo tại Trường ĐHCNTT. 
+
+Chương trình Tiên tiến (CTTT) là chương trình đào tạo kết hợp sử dụng chương 
+
+trình đào tạo nước ngoài. 
+
+Website môn học: Mỗi lớp học lý thuyết được cấp 01 website môn học vào đầu 
+
+học kỳ tại hệ thống hỗ trợ học tập của Trường (courses.uit.edu.vn). 
+
+Đơn  vị  phụ  trách  chuyên  môn  (sau  đây  gọi  tắt  là  đơn  vị  chuyên  môn):  Khoa 
+
+được giao phụ trách về mặt chuyên môn cho CTTT. 
+
+Đại  học  đối  tác  nước  ngoài  (ĐHNN):  là  đơn  vị  có  ký  kết  hợp  tác  (MOU)  với 
+
+Trường  đào  tạo  trình  độ  đại  học  gồm  cung  cấp  chương  trình  đào  tạo,  đề  cương  môn 
+
+học, hỗ trợ giảng viên tham gia giảng dạy và công nhận kết quả đào tạo tại Trường nếu 
+
+sinh viên học chuyển tiếp. 
+
+Điều 3.  Mục tiêu đào tạo 
+
+CTTT nhằm phát hiện và đào tạo những sinh viên xuất sắc, có kiến thức chuyên 
+
+môn sâu về một chuyên ngành đào tạo, có kỹ năng và ngoại ngữ tốt thông qua việc ưu 
+
+tiên đầu tư cơ sở vật chất trang thiết bị, đội ngũ giảng viên giỏi và áp dụng phương pháp 
+
+dạy và học hiện đại theo định hướng tiêu chuẩn của các đại học tiên tiến trong khu vực 
+
+và quốc tế. 
+
+Sinh viên tốt nghiệp đáp ứng các yêu cầu: 
+
+-  Có kiến thức chuyên môn vững vàng, năng lực sáng tạo cao. 
+
+-  Có trình độ tiếng Anh thành thạo về cả 04 kỹ năng: nghe, nói, đọc, viết đáp 
+
+ứng được yêu cầu giao tiếp trong môi trường làm việc quốc tế. 
+
+2 
+
+ 
+Điều 4.  Chương trình đào tạo 
+
+   Chương trình gồm các học phần thuộc 02 khối kiến thức: giáo dục đại cương 
+
+và giáo dục chuyên nghiệp, được xây dựng theo đúng quy định hiện hành của Bộ Giáo 
+
+dục và Đào tạo kết hợp với chương trình đào tạo của ĐHNN và được giảng dạy hoàn 
+
+toàn bằng tiếng Anh (trừ các môn lý luận chính trị, pháp luật, giáo  dục thể chất, giáo 
+
+dục quốc phòng) 
+
+   Chương trình đào tạo Tiên tiến được thiết kế riêng với yêu cầu về trình độ và 
+
+nội dung sâu rộng hơn theo hướng cử nhân chuẩn quốc tế; đề cao tư duy sáng tạo, khả 
+
+năng  tự  học;  tăng  cường  kỹ  năng  thực  hành,  kiến  thức  thực  tế,  khả  năng  sử  dụng  tin 
+
+học, ngoại ngữ và các kỹ năng mềm cần thiết. 
+
+   Sau giai đoạn đại cương, những sinh viên đạt các điều kiện yêu cầu về tiếng 
+
+Anh,  số  tín  chỉ  tích  lũy  và  điểm  trung  bình  tích  lũy  theo  quy  định  của  ĐHNN  và  có 
+
+nguyện vọng sẽ được chuyển tiếp sang ĐHNN. 
+
+   Sinh viên thực hiện khóa luận/đồ án tốt nghiệp theo quy định trong chương 
+
+trình đào tạo của ĐHNN. 
+
+3 
+
+ 
+Chương 2. 
+
+TỔ CHỨC ĐÀO TẠO 
+
+Điều 5.  Tổ chức chương trình 
+
+   Các lớp CTTT được ưu tiên về cơ sở vật chất cho việc học tập và nghiên cứu. 
+
+Các lớp CTTT được trang bị phòng học riêng có các thiết bị hỗ trợ giảng dạy và học tập 
+
+hiện đại; có đủ giáo trình, tài liệu tham khảo trong, ngoài nước và được cập nhật thường 
+
+xuyên; có thư viện và thư viện điện tử cho giảng viên và sinh viên tra cứu và sử dụng 
+
+trong giảng dạy, học tập và NCKH. 
+
+   Về chất lượng quản lý và giảng dạy: Các  lớp CTTT được quản lý và giảng 
+
+dạy bởi các cán bộ có chuyên môn giỏi và có kinh nghiệm trong công tác, đảm bảo chất 
+
+lượng đào tạo và dịch vụ hỗ trợ chất lượng cao cho sinh viên. 
+
+   Năm học đầu tiên sinh viên CTTT phải học tập trung tiếng Anh để đáp ứng 
+
+điều  kiện  học  các  môn  chuyên  ngành  hoàn  toàn  bằng  tiếng  Anh.  Các  lớp  tiếng  Anh 
+
+được tổ chức tối đa 30 sinh viên theo trình độ khác nhau, tạo điều kiện cho việc giảng 
+
+dạy tiếng Anh một cách tốt nhất. 
+
+   Đơn vị chuyên môn đảm bảo có tối thiểu 01 giảng viên nước ngoài tham gia 
+
+giảng dạy trong 01 khóa học. 
+
+Điều 6.  Tổ chức lớp 
+
+   Lớp học phần: 
+
+o  Quy mô lớp học không quá 50 SV/lớp đối với môn học lý thuyết, không quá 
+
+20  sinh  viên/nhóm  đối  với  lớp  thực  hành  và  không  quá  30  sinh  viên/nhóm 
+
+thảo luận và giải bài tập. 
+
+o  Lớp học phần sẽ được mở nếu số lượng SV đăng ký tối thiểu 30 SV/lớp đối 
+
+với các môn học thuộc kiến thức đại cương, tối thiểu 15 SV/lớp đối với các 
+
+môn học thuộc kiến thức cơ sở chung, cơ sở ngành và chuyên ngành, tối thiểu 
+
+10 SV/lớp đối với các môn ngoại ngữ. Các trường hợp khác do Hiệu trưởng 
+
+quyết định dựa trên tình hình thực tế triển khai. 
+
+   Lớp sinh hoạt: Sinh viên một khóa tuyển được bố trí vào 01 lớp sinh hoạt do 
+
+01 cố vấn học tập quản lý. 
+
+Điều 7.  Đội ngũ quản lý và cố vấn học tập 
+
+   CVHT: mỗi lớp sinh hoạt do một CVHT phụ trách, CVHT do đơn vị chuyên 
+
+môn đề xuất vào đầu mỗi năm học đáp ứng các tiêu chuẩn theo quy định của Trường. 
+
+CVHT làm nhiệm vụ theo quy định chung của trường, ngoài ra CVHT của CTTT dành 
+
+4 
+
+ 
+tối thiểu  04 giờ làm việc/tuần để  gặp gỡ sinh viên tại trường nhằm  nắm bắt tình hình 
+
+học tập, sinh hoạt và đề xuất hỗ trợ kịp thời đến các đơn vị liên quan. CVHT có trách 
+
+nhiệm  công  bố  giờ  và  địa  điểm  làm  việc  cho  sinh  viên  tại  trang  thông  tin  điện  tử  và 
+
+bảng thông báo của đơn vị chuyên môn. 
+
+   Cán  bộ  phụ  trách  đào  tạo  và  hỗ  trợ  sinh  viên:  phải  có  đủ  năng  lực  chuyên 
+
+môn, có kinh nghiệm trong quản lý đào tạo; sử dụng thành thạo các phần mềm quản lý 
+
+liên quan; có năng lực ngoại ngữ đáp ứng yêu cầu công việc. 
+
+Điều 8.  Điều kiện và phương thức tuyển sinh 
+
+8.1.  Điều kiện xét tuyển 
+
+Sinh viên trúng tuyển CTTT phải đạt các yêu cầu: 
+
+   Đảm bảo điều kiện đầu vào đối với hệ đại học chính quy theo quy định của 
+
+Bộ GD&ĐT và Trường ĐHCNTT. 
+
+   Hoặc có chứng chỉ quốc tế uy tín thỏa điều kiện được xác định trong đề án 
+
+tuyển sinh hàng năm của Trường. 
+
+o  Trong  đó,  trường  hợp  thí  sinh  là  người  nước  ngoài  phải  có  văn  bằng  tốt 
+
+nghiệp tối thiểu tương đương bằng tốt nghiệp trung học phổ thông của Việt 
+
+Nam, văn bằng phải được công nhận theo quy định của Bộ Giáo dục và Đào 
+
+tạo. 
+
+8.2.  Phương thức tuyển sinh 
+
+   Chỉ tiêu của CTTT nằm trong tổng chỉ tiêu tuyển sinh đại học chính quy của 
+
+toàn trường. 
+
+   Phương thức tuyển sinh được công bố trong đề án tuyển sinh hàng năm của 
+
+Trường. 
+
+Điều 9.  Chuyển đổi chương trình đào tạo 
+
+   Trong  thời  gian  học  tập,  vì  lý  do  cá  nhân  nếu  sinh  viên  muốn  chuyển  sang 
+
+học các chương trình đào tạo khác của Trường phải được sự đồng ý của Hiệu trưởng. 
+
+Sinh viên  được  chuyển  điểm  những  môn  học  tương đương giữa  hai  chương  trình  đào 
+
+tạo 
+
+   Sinh  viên  được  phép  chuyển  vào  hoặc  ra  khỏi  chương  trình  trong  vòng  03 
+
+học kỳ đầu tiên. 
+
+   Ngoài  việc  phải  thỏa  các  điều  kiện  về  chuyển  ngành/chương trình  theo  quy 
+
+chế đào tạo hiện hành, sinh viên phải thỏa thêm các điều kiện: 
+
+o  Sinh viên từ CTTT chuyển sang chương trình đào tạo khác:  
+
+5 
+
+ 
+  Điểm rèn luyện đạt từ loại Khá trở lên, 
+
+  Có  các  giấy  tờ  xác  nhận  khác  (của  cơ  quan  y  tế,  của  địa  phương…) 
+
+hợp lệ để Hiệu trưởng xem xét quyết định. 
+
+o  Sinh  viên  từ  các  chương  trình  đào  tạo  khác  có  nguyện  vọng  chuyển  vào 
+
+CTTT: 
+
+  Điểm trung bình học kỳ gần nhất không dưới 6.5. 
+
+  Các môn ngoại ngữ trong CTĐT tương ứng với tiến độ của CTTT đạt 
+
+điểm miễn hoặc điểm không dưới 7.0. 
+
+   Thời gian sinh viên học bổ sung các môn học khác biệt giữa các chương trình 
+
+đào tạo do chuyển chương trình được tính trong tổng thời gian đào tạo của khóa học. 
+
+Điều 10. Giảng viên, trợ giảng 
+
+10.1.  Giảng viên  
+
+   Giảng  viên  giảng  dạy  CTTT  bao  gồm  giảng  viên  của  các  Trường  Đại  học 
+
+thành viên của ĐHQG TP.HCM, các giáo sư, tiến sĩ của ĐHNN và một số Trường Đại 
+
+học đối tác khác có uy tín trên thế giới; 
+
+   Giảng viên phải có trình độ từ thạc sĩ trở lên, đối với các học phần thuộc khối 
+
+kiến thức chuyên nghiệp (cơ sở chung, cơ sở ngành, chuyên ngành, tốt nghiệp) thì giảng 
+
+viên phải có trình độ tiến sĩ hoặc có trình độ thạc sĩ tốt nghiệp ở các trường đại học của 
+
+các nước phát triển theo đúng ngành. 
+
+   Giảng viên giảng dạy lý thuyết phải có trình độ tiếng Anh theo quy định về 
+
+tiêu chuẩn giảng viên dạy chuyên môn bằng tiếng Anh hiện hành của Trường. 
+
+   Giảng viên có năng lực chuyên môn, NCKH đáp ứng yêu cầu của CTĐT; có 
+
+kinh nghiệm giảng dạy từ 03 năm trở lên; có phương pháp giảng dạy hiệu quả; áp dụng 
+
+tốt công nghệ thông tin trong giảng dạy và NCKH. 
+
+   Danh  sách  giảng  viên  tham  gia  giảng  dạy  CTTT  do  Hiệu  trưởng  phê  duyệt 
+
+theo đề nghị của trưởng đơn vị chuyên môn, được công bố công khai trên trang thông 
+
+tin điện tử của nhà trường. 
+
+   Để đảm bảo chất lượng giảng dạy, mỗi giảng viên được mời giảng dạy tối đa 
+
+02 môn học cho 01 khóa trong 01 học kỳ. 
+
+   Đơn vị chuyên môn có trách nhiệm phân công giảng viên giảng dạy hoặc mời 
+
+giảng viên thỉnh giảng khi cần thiết.  
+
+   Giảng viên thỉnh giảng phải cung cấp lý lịch khoa học và bằng cấp cho đơn 
+
+vị quản lý trong lần đầu tham gia giảng dạy và bổ sung khi có cập nhật, ký hợp đồng 
+
+6 
+
+ 
+giảng dạy với nhà trường, tiến hành nghiệm thu và thanh lý hợp đồng sau khi kết thúc 
+
+giảng dạy môn học. 
+
+   Giảng viên được hưởng thù lao giảng dạy theo quy định của Trường khi tham 
+
+gia giảng dạy CTTT. 
+
+10.2.  Trợ giảng  
+
+   Trợ giảng phải có đủ năng lực chuyên môn, ngoại ngữ đáp ứng yêu cầu của 
+
+học phần; sử dụng tốt các thiết bị hiện đại phục vụ giảng dạy để hỗ trợ giảng viên trong 
+
+hướng dẫn sinh viên thực hiện bài tập, hướng dẫn thực hành, thảo luận, seminar, làm đồ 
+
+án; 
+
+   Danh  sách  trợ  giảng  do  đơn  vị  chuyên  môn  phụ  trách  môn  học  phân  công 
+
+hoặc do giảng  viên lý  thuyết đề nghị. Đơn vị chuyên  môn được phép sử dụng nghiên 
+
+cứu sinh, học viên, sinh viên năm cuối có thành tích học tập đạt loại giỏi các CTĐT cử 
+
+nhân – kỹ sư tài năng, CTTT tham gia hoạt động trợ giảng. 
+
+   Mỗi lớp lý thuyết có thêm 01 trợ giảng lý thuyết đối với các lớp không có trợ 
+
+giảng thực hành. 
+
+   Trợ giảng thực hành 
+
+i.  Đối với thực hành hình thức 1: giảng dạy theo thời khóa biểu. 
+
+ii.  Đối với thực hành hình thức 2: tổ chức ít nhất 15 tiết gặp trực tiếp sinh 
+
+viên  để  hướng  dẫn  và  giải  đáp  thắc  mắc  của  sinh  viên  trong  quá  trình 
+
+thực hiện các nội dung thực hành. Thời khóa biểu các buổi thực hành này 
+
+phải được đăng ký và công bố cho sinh viên của lớp từ đầu học kỳ. 
+
+iii.  Cung cấp đầy đủ bài hướng dẫn thực hành, bài tập trên website môn học. 
+
+   Trợ giảng lý thuyết 
+
+i.  Có  mặt  tại  lớp  lý  thuyết  theo  yêu  cầu  của  giảng  viên  lý  thuyết  với  thời 
+
+lượng tối thiểu là 1/3 số tiết dạy lý thuyết. Hoặc tổ chức các buổi giải bài 
+
+tập, thảo luận theo lịch cố định hàng tuần, ngoài giờ học lý thuyết. 
+
+ii.  Làm việc theo sự phân công của giảng viên lý thuyết: chấm bài tập hàng 
+
+tuần, giải bài tập, trả lời sinh viên qua email hoặc website môn học. 
+
+Điều 11. Đánh giá kết quả học tập của học phần 
+
+   Việc lựa chọn các hình thức đánh giá và trọng số của các thành phần đánh giá 
+
+được quy định rõ trong đề cương chi tiết của môn học, giảng viên phải công bố cho sinh 
+
+viên vào đầu mỗi học kỳ. 
+
+7 
+
+ 
+   Giảng viên ra đề thi, đề kiểm tra bằng tiếng Anh. 
+
+   Sinh viên thực hiện các báo cáo môn học, seminar, bài thi giữa kỳ, cuối kỳ 
+
+bằng tiếng Anh. 
+
+   Điểm tổng hợp đánh giá môn học (gọi tắt là điểm môn học) là điểm kiểm tra 
+
+xuyên  suốt  quá  trình  học  tập  bao  gồm  điểm  quá  trình  (chuyên  cần),  điểm  thực  hành, 
+
+điểm thi giữa học phần (giữa kỳ), điểm thi kết thúc học phần (cuối kỳ). 
+
+Điều 12. Thực tập doanh nghiệp và làm khóa luận tốt nghiệp 
+
+12.1.  Thực tập doanh nghiệp 
+
+   Giảng  viên  hướng  dẫn  sinh  viên  thực  tập  phải  đáp  ứng  điều  kiện  của  giảng 
+
+viên giảng dạy lý thuyết cho chương trình. 
+
+   Sau khi kết thúc thời gian thực tập tại doanh nghiệp, sinh viên viết báo cáo cá 
+
+nhân theo biểu mẫu do đơn vị chuyên môn quy định và báo cáo trước Hội đồng bằng 
+
+tiếng Anh. 
+
+12.2.  Làm khóa luận tốt nghiệp 
+
+   Giảng viên hướng dẫn sinh viên làm khóa luận tốt nghiệp phải đáp ứng điều 
+
+kiện của giảng viên giảng dạy lý thuyết cho chương trình. 
+
+   Sinh viên thực hiện khóa luận tốt nghiệp/đồ án để được tốt nghiệp theo quy 
+
+định cụ thể của chương trình đào tạo. 
+
+   Sinh viên đăng ký làm khóa luận tốt nghiệp vào đầu mỗi học kỳ và được xét 
+
+duyệt khi thỏa các điều kiện sau: 
+
+o  Không được phép nợ quá 08 tín chỉ theo chương trình đào tạo.  
+
+o  Đã hoàn thành chương trình đào tạo tiếng Anh của CTTT theo quy định 
+
+đào tạo ngoại ngữ hiện hành của Trường. 
+
+   Sinh viên viết báo cáo và bảo vệ khóa luận hoàn toàn bằng tiếng Anh. 
+
+Điều 13. Tốt nghiệp 
+
+   Sinh viên được xét công nhận tốt nghiệp khi đạt tất cả các yêu cầu được quy 
+
+định trong quy chế đào tạo theo học chế tín chỉ của Trường. 
+
+   Sinh  viên  được  cấp  bằng  “Kỹ  sư  Chương  trình  Tiên  tiến”  (Advanced 
+
+Program) của Trường ĐH CNTT – ĐHQG HCM. 
+
+8 
+
+ 
+Chương 3. 
+
+CHẾ ĐỘ CHÍNH SÁCH 
+
+Điều 14. Học phí 
+
+   Học phí khóa học được công bố vào đầu khóa và không thay đổi trong toàn 
+
+khóa học. Học phí này không bao gồm học phí học lại, học cải thiện và học phí gia hạn. 
+
+   Đơn giá tín chỉ học lại, học cải thiện và học phí gia hạn do Hiệu trưởng quy 
+
+định vào đầu mỗi năm học. 
+
+Điều 15. Học bổng 
+
+   Sinh viên CTTT cũng được xét nhận học bổng khuyến khích học tập của Nhà 
+
+nước theo quy định của Trường như sinh viên chương trình đại trà. 
+
+   Học bổng của CTTT: 
+
+  Học bổng học tập: căn cứ trên kết  quả học tập và rèn luyện  mỗi học kỳ 
+
+của sinh viên, Trường sẽ cấp 03 suất học bổng dành cho 03 sinh viên xuất sắc nhất của 
+
+mỗi khóa (ĐTBHK >= 8.0, Điểm rèn luyện đạt loại Khá trở lên; trường hợp có nhiều 
+
+sinh viên cùng ĐTBHK thì xét theo kết quả điểm rèn luyện và ưu tiên sinh viên tham 
+
+gia đầy đủ các hoạt động do đơn vị quản lý tổ chức). Học bổng bao gồm 01 suất học 
+
+bổng toàn phần và 02 suất học bổng bán phần tương ứng mức học phí học kỳ áp dụng 
+
+cho học kỳ tiếp theo mà sinh viên phải đóng. 
+
+  Học bổng tân sinh viên: căn cứ trên kết quả và phương thức xét tuyển đại 
+
+học, Trường sẽ cấp 03 suất học bổng dành cho 03 tân sinh viên có kết quả xét tuyển cao 
+
+nhất, bao gồm 01 suất học bổng toàn phần và 02 suất học bổng bán phần tương ứng với 
+
+học phí học kỳ đầu tiên của khóa học. 
+
+Điều 16. Khen thưởng khác 
+
+Trường có chính sách khen thưởng dành cho SV CTTT đạt thành tích tốt trong 
+
+nghiên cứu khoa học hoặc đạt các giải thưởng cao trong các cuộc thi học thuật quốc gia 
+
+và quốc tế. 
+
+9 
+
+ 
+Chương 4. 
+
+ĐIỀU KHOẢN THI HÀNH 
+
+Quy định này có hiệu lực thi hành kể từ ngày  7  tháng 7  năm 2021 
+
+Quy định này áp dụng cho toàn thể giảng viên, sinh viên tham gia giảng dạy và học tập 
+
+trong CTTT của Trường ĐHCNTT. 
+
+Việc điều chỉnh, bổ sung các điều khoản của quy định do Hiệu trưởng quyết định. 
+
+KT. HIỆU TRƯỞNG 
+
+PHÓ HIỆU TRƯỞNG 
+
+(Đã ký) 
+
+Nguyễn Lưu Thùy Ngân 
+
+10 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+

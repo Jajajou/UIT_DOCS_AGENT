@@ -1,0 +1,44 @@
+Theo: https://support.office.com/vi-vn/article/c%C3%A1c-vai-tr%C3%B2-trong-cu%E1%BB%99c-
+h%E1%BB%8Dp-nh%C3%B3m-c16fa7d0-1666-4dde-8686-0a0bfe16e019 
+
+ 
+ 
+ 
+ 
+---------------------------------------------- 
+
+Các bước thực hiện cụ thể 
+
+Cấu hình mặc định chuyển sinh viên về quyền người tham dự. 
+
+Bước 1: Lên lịch cuộc họp 
+
+ 
+ 
+Bước 2: Đặt lịch dạy/họp 
+
+(Nên để trống) 
+
+(Tìm Lớp cần đặt lịch dạy) 
+
+Bước 3: Cấu hình lại cuộc họp.  Sau khi hoàn thành bước 2, trở lại nhóm để cấu hình phân quyền 
+cho người tham gia 
+
+ Bước 3: Tùy chọn cài đặt người trình bày 
+
+Bước 4: Chỉ định người trình bày 
+
+ 
+ 
+ 
+ 
+ 
+Khi sinh viên tham gia vào lớp học sẽ ở quyền người tham dự.   
+
+Khi có nhu cầu nâng quyền cho SV chia sẻ màn hình hoặc các thao tác khác thì nâng lên quyền diễn giả 
+
+ 
+ 
+ 
+ 
+
