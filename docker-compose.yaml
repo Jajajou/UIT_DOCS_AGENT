@@ -168,11 +168,22 @@ services:
   mineru-api:
     <<: *mineru-common
     profiles: ["api"]
+    env_file: .env.lightrag
     ports:
       - "8000:8000"
     entrypoint: mineru-api
     command: ["--host","0.0.0.0","--port","8000"]
-
+    
+    environment:
+      - MINERU_MODEL_SOURCE=${MINERU_MODEL_SOURCE} 
+      - MINERU_TOOLS_CONFIG_JSON=/app/config/mineru.json
+      - MINERU_DEVICE_MODE=${MINERU_DEVICE_MODE}
+      - MINERU_VIRTUAL_VRAM_SIZE=${MINERU_VIRTUAL_VRAM_SIZE}
+      
+    volumes:
+      - ${MINERU_CONFIG_FILE_PATH}:/app/config/mineru.json:ro
+      
+      - ${MODEL_VOLUME_PATH}:/app/models:ro
   mineru-gradio:
     <<: *mineru-common
     profiles: ["gradio"]
