@@ -7,15 +7,21 @@ from typing_extensions import NotRequired
 
 
 class IndexingState(TypedDict):
-    """State for the document indexing pipeline/graph."""
-
-    input_source: Union[str, List[str]]
-    source_type: Literal["file", "text", "scan", "batch"]
-    description: Optional[str]
-    api_payload: Optional[Dict[str, Any]]
-    api_response: Optional[Dict[str, Any]]
-    status_message: str
-    error: Optional[str]
+    """State for the document indexing pipeline/graph with Chat UI support."""
+    
+    # Messages field for Chat UI support
+    messages: Annotated[list[AnyMessage], add_messages]
+    
+    # Indexing parameters - all optional now since we can extract from messages
+    input_source: NotRequired[Union[str, List[str]]]
+    source_type: NotRequired[Literal["file", "text", "scan", "batch"]]
+    description: NotRequired[str]
+    
+    # API interaction fields
+    api_payload: NotRequired[Dict[str, Any]]
+    api_response: NotRequired[Dict[str, Any]]
+    status_message: NotRequired[str]
+    error: NotRequired[str]
 
 
 class QueryState(TypedDict):
