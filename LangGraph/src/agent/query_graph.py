@@ -11,18 +11,42 @@ from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 # Reuse a single API client (reads env for URL, API key, token)
 api_client = LightRAGAPIClient()
 
+def _content_to_text(content: Any) -> str:
+    # content may be a str OR a list of message parts like [{"type":"text", "text":"..."}]
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "text":
+                txt = (part.get("text") or "").strip()
+                if txt:
+                    return txt
+    return ""
+
+def _last_human_text(messages: List[AnyMessage]) -> str:
+    for msg in reversed(messages or []):
+        # LangChain HumanMessage OR any object with type 'human'
+        if isinstance(msg, HumanMessage) or getattr(msg, "type", None) == "human":
+            return _content_to_text(getattr(msg, "content", ""))
+    return ""
+
 
 # ---------------------- Graph Nodes ----------------------
 def prepare_payload(state: QueryState) -> QueryState:
     """Validate inputs and assemble payload for LightRAG /query."""
     query = state.get("query")
+    
+    # If no direct query, extract from messages (for Chat UI)
+    if not query:
+        query = _last_human_text(state.get("messages", []))
+    
     mode = state.get("mode", "mix")
     top_k = state.get("top_k", 5)
 
     if not query or not isinstance(query, str):
         state["error"] = "query must be a non-empty string"
-        state["final_answer"] = None
-        state["api_payload"] = None
+        state["final_answer"] = None # type: ignore
+        state["api_payload"] = None # type: ignore
         return state
 
     # Map legacy/custom mode names if needed (keep passthrough for valid modes)
@@ -38,7 +62,7 @@ def prepare_payload(state: QueryState) -> QueryState:
         "top_k": top_k,
     }
     state["api_payload"] = payload
-    state["error"] = None
+    state["error"] = None # type: ignore
     return state
 
 # ---------------------- Helpers ----------------------
@@ -80,7 +104,7 @@ def call_query_api(state: QueryState) -> QueryState:
             state["api_response"] = resp
             answer = resp.get("response") or resp.get("answer")
 
-        state["final_answer"] = answer
+        state["final_answer"] = answer # type: ignore
 
         # Append assistant message so Studio Chat shows the answer
         if answer:
@@ -90,8 +114,8 @@ def call_query_api(state: QueryState) -> QueryState:
 
     except Exception as e:
         state["error"] = str(e)
-        state["api_response"] = None
-        state["final_answer"] = None
+        state["api_response"] = None # type: ignore
+        state["final_answer"] = None # type: ignore
 
     return state
 

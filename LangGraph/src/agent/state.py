@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TypedDict, Literal, Optional, List, Dict, Any, Union
-from langgraph.graph import StateGraph, END, MessagesState
-from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
-from typing import Any, Dict, Optional, List, cast
+from typing import TypedDict, Literal, Optional, List, Dict, Any, Union, Annotated
+from langgraph.graph.message import add_messages
+from langchain_core.messages import AnyMessage
+from typing_extensions import NotRequired
+
 
 class IndexingState(TypedDict):
     """State for the document indexing pipeline/graph."""
@@ -17,25 +18,30 @@ class IndexingState(TypedDict):
     error: Optional[str]
 
 
-class QueryState(MessagesState):
+class QueryState(TypedDict):
     """State for the querying pipeline/graph."""
-
-    query: str
-    mode: Literal["default", "naive", "local", "global", "hybrid", "mix"]
-    only_need_context: bool
-    only_need_prompt: bool
-    response_type: Optional[str]
-    top_k: int
-    chunk_top_k: int
-    max_entity_tokens: int
-    max_relation_tokens: int
-    max_total_tokens: int
-    conversation_history: Optional[List[Dict[str, Any]]]
-    user_prompt: Optional[str]
-    enable_rerank: bool
-    include_references: bool    
-    stream: bool
-    api_payload: Optional[Dict[str, Any]]    
-    api_response: Optional[Dict[str, Any]]    
-    final_answer: Optional[str]    
-    error: Optional[str]
+    # Messages field with reducer - REQUIRED for Chat UI
+    messages: Annotated[list[AnyMessage], add_messages]
+    
+    # Query parameters - all optional
+    query: NotRequired[str]
+    mode: NotRequired[Literal["default", "naive", "local", "global", "hybrid", "mix"]]
+    only_need_context: NotRequired[bool]
+    only_need_prompt: NotRequired[bool]
+    response_type: NotRequired[str]
+    top_k: NotRequired[int]
+    chunk_top_k: NotRequired[int]
+    max_entity_tokens: NotRequired[int]
+    max_relation_tokens: NotRequired[int]
+    max_total_tokens: NotRequired[int]
+    conversation_history: NotRequired[List[Dict[str, Any]]]
+    user_prompt: NotRequired[str]
+    enable_rerank: NotRequired[bool]
+    include_references: NotRequired[bool]
+    stream: NotRequired[bool]
+    
+    # API interaction fields
+    api_payload: NotRequired[Dict[str, Any]]
+    api_response: NotRequired[Dict[str, Any]]
+    final_answer: NotRequired[str]
+    error: NotRequired[str]
