@@ -273,11 +273,11 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
         
         # Store results
         state["source_type"] = "file"
-        state["input_source"] = None
+        state["input_source"] = None # type: ignore
         state["description"] = f"Uploaded from path: {path}"
         state["api_response"] = {"results": upload_results}
         state["status_message"] = "Upload complete"
-        state["error"] = None if failed_count == 0 else f"{failed_count} file(s) failed"
+        state["error"] = None if failed_count == 0 else f"{failed_count} file(s) failed" # type: ignore
         
         # Build response message
         response_lines = []
@@ -319,7 +319,7 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
     # Handle scan command
     elif command == "scan":
         state["source_type"] = "scan"
-        state["input_source"] = None
+        state["input_source"] = None # type: ignore
         state["description"] = "Manual scan triggered"
     
     # Handle text insert
@@ -339,7 +339,7 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
         state["status_message"] = "Error: Unknown command"
         return state
     
-    state["error"] = None
+    state["error"] = None # type: ignore
     return state
 
 
@@ -372,7 +372,7 @@ def ingestion_router(state: IndexingState) -> Literal["call_api", "error_handler
 
 def call_api(state: IndexingState) -> IndexingState:
     """Call LightRAG ingestion endpoints for scan and text."""
-    source_type: str = cast(str, state["source_type"])
+    source_type: str = cast(str, state["source_type"]) # type: ignore
     input_source: Union[str, List[str], None] = state.get("input_source")
 
     try:
@@ -389,7 +389,7 @@ def call_api(state: IndexingState) -> IndexingState:
             raise ValueError(f"Unexpected source_type in call_api: {source_type}")
 
         state["status_message"] = "Operation successful"
-        state["error"] = None
+        state["error"] = None # type: ignore
         
         # Add success message
         response_text = ""
@@ -408,7 +408,7 @@ def call_api(state: IndexingState) -> IndexingState:
         return state
 
     except Exception as e:
-        state["api_response"] = None
+        state["api_response"] = None # type: ignore
         state["status_message"] = "Operation failed"
         state["error"] = str(e)
         
