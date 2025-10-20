@@ -1,6 +1,7 @@
 [submodule "firecrawl"]
 	path = firecrawl
 	url = https://github.com/firecrawl/firecrawl
-[submodule "LightRAG"]
-	path = LightRAG
-	url = https://github.com/HKUDS/LightRAG.git
+
+[submodule "LightRAG_UIT"]
+	path = LightRAG_UIT
+	url = https://github.com/Jajajou/LightRAG_UIT
