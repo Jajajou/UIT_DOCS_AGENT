@@ -111,8 +111,8 @@ services:
   lightrag_docs:
     image: ghcr.io/hkuds/lightrag:latest
     build:
-      context: LightRAG
-      dockerfile: LightRAG/Dockerfile
+      context: LightRAG_UIT/LightRAG
+      dockerfile: LightRAG_UIT/LightRAG/Dockerfile
       tags:
         - ghcr.io/hkuds/lightrag:latest
     env_file: .env.lightrag
@@ -123,11 +123,10 @@ services:
       qdrant_docs:
         condition: service_started
     volumes:
-      - ./LightRAG/data/rag_storage_docs:/app/data/rag_storage
-      - ./LightRAG/data/inputs_docs:/app/data/inputs
-      - ./LightRAG/data/tiktoken_doc:/app/data/tiktoken
+      - ./LightRAG_UIT/LightRAG/data/rag_storage_docs:/app/data/rag_storage
+      - ./LightRAG_UIT/LightRAG/data/inputs_docs:/app/data/inputs
+      - ./LightRAG_UIT/LightRAG/data/tiktoken_doc:/app/data/tiktoken
       - ./config.ini:/app/config.ini
-      - ./.env:/app/.env
     environment:
       - TIKTOKEN_CACHE_DIR_DOC=/app/data/tiktoken
 
@@ -138,7 +137,7 @@ services:
       POSTGRES_DB: KB_DOCS
     ports: ["5433:5432"]
     volumes:
-      - ./LightRAG/data/pg_data_docs:/var/lib/postgresql/data_docs
+      - ./LightRAG_UIT/LightRAG/data/pg_data_docs:/var/lib/postgresql/data_docs
 
   qdrant_docs:
     image: qdrant/qdrant:latest
@@ -146,51 +145,13 @@ services:
       - "6336:6333"
       - "6337:6334"
     volumes:
-      - ./LightRAG/data/qdrant_data_docs:/qdrant/storage_docs
+      - ./LightRAG_UIT/LightRAG/data/qdrant_data_docs:/qdrant/storage_docs
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://localhost:6336/readyz || curl -fsS http://localhost:6336/readyz || wget -q -O- http://localhost:6336/healthz || curl -fsS http://localhost:6336/healthz || exit 1"]
       interval: 3s
       timeout: 2s
       retries: 40
       start_period: 5s
-
-  # MinerU – nhóm các dịch vụ dùng chung image mineru-vllm
-  # mineru-vllm-server:
-  #   <<: *mineru-common
-  #   profiles: ["vllm-server"]
-  #   ports:
-  #     - "30000:30000"
-  #   entrypoint: mineru-vllm-server
-  #   command: ["--host","0.0.0.0","--port","30000"]
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "curl -f http://localhost:30000/health || exit 1"]
-
-  # mineru-api:
-  #   <<: *mineru-common
-  #   profiles: ["api"]
-  #   env_file: .env.mineru
-  #   ports:
-  #     - "8000:8000"
-  #   entrypoint: mineru-api
-  #   command: ["--host","0.0.0.0","--port","8000"]
-    
-  #   environment:
-  #     - MINERU_MODEL_SOURCE=${MINERU_MODEL_SOURCE} 
-  #     - MINERU_TOOLS_CONFIG_JSON=${MINERU_TOOLS_CONFIG_JSON}
-  #     - MINERU_DEVICE_MODE=${MINERU_DEVICE_MODE}
-  #     - MINERU_VIRTUAL_VRAM_SIZE=${MINERU_VIRTUAL_VRAM_SIZE}
-      
-  #   volumes:
-  #     - ${MINERU_CONFIG_FILE_PATH}:/app/config/mineru.json:ro
-      
-  #     - ${MODEL_VOLUME_PATH}:/app/models:ro
-  # mineru-gradio:
-  #   <<: *mineru-common
-  #   profiles: ["gradio"]
-  #   ports:
-  #     - "7860:7860"
-  #   entrypoint: mineru-gradio
-  #   command: ["--server-name","0.0.0.0","--server-port","7860","--enable-vllm-engine","true"]
 
 networks:
   backend:
