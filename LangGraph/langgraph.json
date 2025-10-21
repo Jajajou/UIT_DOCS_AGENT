@@ -1,9 +1,9 @@
 {
-  "$schema": "https://langgra.ph/schema.json",
+  "$schema": "https://langgraph/schema.json",
   "dependencies": ["."],
-  "env": ".env",
+  "env": "./LangGraph/.env",
   "graphs": {
-    "index": "./src/agent/indexing_graph.py:graph",
-    "retrieval": "./src/agent/query_graph.py:graph"
+    "index": "./LangGraph/src/agent/indexing_graph.py:graph",
+    "retrieval": "./LangGraph/src/agent/query_graph.py:graph"
   }
 }
