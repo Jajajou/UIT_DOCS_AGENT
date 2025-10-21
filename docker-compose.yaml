@@ -41,6 +41,23 @@ x-common-env: &common-env
   SEARXNG_ENGINES: ${SEARXNG_ENGINES}
   SEARXNG_CATEGORIES: ${SEARXNG_CATEGORIES}
 
+# x-mineru-common: &mineru-common
+#   image: mineru-vllm:latest
+#   restart: always
+#   environment:
+#     MINERU_MODEL_SOURCE: local
+#   ulimits:
+#     memlock: -1
+#     stack: 67108864
+#   ipc: host
+#   deploy:
+#     resources:
+#       reservations:
+#         devices:
+#           - driver: nvidia
+#             device_ids: ["0"]
+#             capabilities: [gpu]
+
 services:
   playwright-service:
     # Nếu không muốn build local, có thể dùng image có sẵn:
@@ -94,8 +111,8 @@ services:
   lightrag_docs:
     image: ghcr.io/hkuds/lightrag:latest
     build:
-      context: LightRAG
-      dockerfile: LightRAG/Dockerfile
+      context: LightRAG_UIT/LightRAG
+      dockerfile: LightRAG_UIT/LightRAG/Dockerfile
       tags:
         - ghcr.io/hkuds/lightrag:latest
     env_file: .env.lightrag
@@ -106,11 +123,10 @@ services:
       qdrant_docs:
         condition: service_started
     volumes:
-      - ./LightRAG/data/rag_storage_docs:/app/data/rag_storage
-      - ./LightRAG/data/inputs_docs:/app/data/inputs
-      - ./LightRAG/data/tiktoken_doc:/app/data/tiktoken
+      - ./LightRAG_UIT/LightRAG/data/rag_storage_docs:/app/data/rag_storage
+      - ./LightRAG_UIT/LightRAG/data/inputs_docs:/app/data/inputs
+      - ./LightRAG_UIT/LightRAG/data/tiktoken_doc:/app/data/tiktoken
       - ./config.ini:/app/config.ini
-      - ./.env:/app/.env
     environment:
       - TIKTOKEN_CACHE_DIR_DOC=/app/data/tiktoken
 
@@ -121,7 +137,7 @@ services:
       POSTGRES_DB: KB_DOCS
     ports: ["5433:5432"]
     volumes:
-      - ./LightRAG/data/pg_data_docs:/var/lib/postgresql/data_docs
+      - ./LightRAG_UIT/LightRAG/data/pg_data_docs:/var/lib/postgresql/data_docs
 
   qdrant_docs:
     image: qdrant/qdrant:latest
@@ -129,7 +145,7 @@ services:
       - "6336:6333"
       - "6337:6334"
     volumes:
-      - ./LightRAG/data/qdrant_data_docs:/qdrant/storage_docs
+      - ./LightRAG_UIT/LightRAG/data/qdrant_data_docs:/qdrant/storage_docs
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://localhost:6336/readyz || curl -fsS http://localhost:6336/readyz || wget -q -O- http://localhost:6336/healthz || curl -fsS http://localhost:6336/healthz || exit 1"]
       interval: 3s
@@ -137,7 +153,6 @@ services:
       retries: 40
       start_period: 5s
 
-  
 networks:
   backend:
     driver: bridge
