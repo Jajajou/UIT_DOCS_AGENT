@@ -17,6 +17,22 @@ class IndexingState(TypedDict):
     source_type: NotRequired[Literal["file", "text", "scan", "batch"]]
     description: NotRequired[str]
     
+    # File processing fields (for batch uploads)
+    file_list: NotRequired[List[str]]  # List of all file paths to process
+    current_file_index: NotRequired[int]  # Index of current file being processed
+    current_file_path: NotRequired[str]  # Path of current file
+    all_files_processed: NotRequired[bool]  # Flag when all files are done
+    upload_results: NotRequired[List[Dict[str, Any]]]  # Results for each file
+    
+    # PDF detection fields
+    is_pdf: NotRequired[bool]  # Whether current file is PDF
+    
+    # MinerU parsing fields
+    parsed_content: NotRequired[str]  # Markdown content from MinerU
+    mineru_output_dir: NotRequired[str]  # Output directory from MinerU
+    mineru_success: NotRequired[bool]  # Whether MinerU parsing succeeded
+    mineru_error: NotRequired[str]  # Error message if MinerU failed
+    
     # API interaction fields
     api_payload: NotRequired[Dict[str, Any]]
     api_response: NotRequired[Dict[str, Any]]

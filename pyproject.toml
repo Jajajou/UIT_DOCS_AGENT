@@ -5,6 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.119.1",
+    "langchain-openai>=1.0.0",
+    "langgraph>=1.0.0",
     "langgraph-cli[inmem]>=0.4.4",
+    "mineru[core]>=2.5.4",
     "psycopg2-binary>=2.9.11",
+    "python-multipart>=0.0.20",
 ]
