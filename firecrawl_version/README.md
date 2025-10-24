@@ -1,197 +1,392 @@
-# 🔥 UIT Crawler - Firecrawl Self-Hosted Version
+# UIT Crawler - Firecrawl Self-Hosted# 🔥 UIT Crawler - Firecrawl Self-Hosted Version
 
-> This version uses **Firecrawl self-hosted** (runs locally) instead of cloud API.
 
-## 🆚 Comparison with Custom Crawler
 
-| Feature | Custom Crawler | Firecrawl Self-Hosted |
-|---------|---------------|----------------------|
-| **Complexity** | Simple (1 container) | Complex (5 containers) |
-| **Dependencies** | requests, BeautifulSoup | Full Firecrawl stack |
-| **Cost** | Free | **Free** (no API key) |
-| **Anti-bot** | Basic (SSL bypass) | Advanced (Playwright) |
-| **JavaScript rendering** | No | **Yes** (Playwright) |
-| **Setup** | Quick (2 mins) | Longer (5-10 mins) |
-| **Resource usage** | 512MB RAM | **2-3GB RAM** |
-| **Best for** | Internal sites, low resource | Complex sites, have resources |
+> Self-hosted web crawler using Firecrawl stack for UIT website data collection> This version uses **Firecrawl self-hosted** (runs locally) instead of cloud API.
 
-## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│           Firecrawl Self-Hosted Stack                   │
-│                                                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐   │
-│  │   Redis     │  │ PostgreSQL  │  │  Playwright  │   │
-│  │   (Queue)   │  │   (Data)    │  │  (Browser)   │   │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘   │
-│         │                 │                 │           │
-│         └─────────────┬───┴─────────────────┘           │
+
+## Architecture## 🆚 Comparison with Custom Crawler
+
+
+
+```| Feature | Custom Crawler | Firecrawl Self-Hosted |
+
+┌─────────────────────────────────────────────────────────┐|---------|---------------|----------------------|
+
+│           Firecrawl Self-Hosted Stack                   │| **Complexity** | Simple (1 container) | Complex (5 containers) |
+
+│                                                          │| **Dependencies** | requests, BeautifulSoup | Full Firecrawl stack |
+
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐   │| **Cost** | Free | **Free** (no API key) |
+
+│  │   Redis     │  │ PostgreSQL  │  │  Playwright  │   │| **Anti-bot** | Basic (SSL bypass) | Advanced (Playwright) |
+
+│  │   (Queue)   │  │   (Data)    │  │  (Browser)   │   │| **JavaScript rendering** | No | **Yes** (Playwright) |
+
+│  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘   │| **Setup** | Quick (2 mins) | Longer (5-10 mins) |
+
+│         │                 │                 │           │| **Resource usage** | 512MB RAM | **2-3GB RAM** |
+
+│         └─────────────┬───┴─────────────────┘           │| **Best for** | Internal sites, low resource | Complex sites, have resources |
+
 │                       ▼                                 │
-│              ┌─────────────────┐                        │
+
+│              ┌─────────────────┐                        │## 🏗️ Architecture
+
 │              │  Firecrawl API  │                        │
+
+│              │   (Node.js)     │                        │```
+
+│              └────────┬────────┘                        │┌─────────────────────────────────────────────────────────┐
+
+│                       │                                 ││           Firecrawl Self-Hosted Stack                   │
+
+└───────────────────────┼─────────────────────────────────┘│                                                          │
+
+                        │ HTTP (port 3002)│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐   │
+
+                        ▼│  │   Redis     │  │ PostgreSQL  │  │  Playwright  │   │
+
+              ┌─────────────────┐│  │   (Queue)   │  │   (Data)    │  │  (Browser)   │   │
+
+              │  UIT Crawler    ││  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘   │
+
+              │   (Python)      ││         │                 │                 │           │
+
+              └─────────────────┘│         └─────────────┬───┴─────────────────┘           │
+
+```│                       ▼                                 │
+
+│              ┌─────────────────┐                        │
+
+## Features│              │  Firecrawl API  │                        │
+
 │              │   (Node.js)     │                        │
-│              └────────┬────────┘                        │
-│                       │                                 │
-└───────────────────────┼─────────────────────────────────┘
-                        │ HTTP (port 3002)
-                        ▼
-              ┌─────────────────┐
-              │  UIT Crawler    │
+
+- **Parallel Crawling**: Concurrent processing of multiple seeds│              └────────┬────────┘                        │
+
+- **Checkpoint System**: Auto-recovery from crashes│                       │                                 │
+
+- **Health Check**: Wait for all services before crawling└───────────────────────┼─────────────────────────────────┘
+
+- **Statistics**: Real-time metrics and performance tracking                        │ HTTP (port 3002)
+
+- **Error Categorization**: Structured error logging                        ▼
+
+- **Incremental Crawling**: Skip recently crawled content              ┌─────────────────┐
+
+- **Content Categorization**: Smart folder organization              │  UIT Crawler    │
+
               │   (Python)      │
-              │  Orchestrator   │
+
+## Quick Start              │  Orchestrator   │
+
               └─────────────────┘
-                        │
+
+### Prerequisites                        │
+
                         ▼
-                  ┌──────────┐
-                  │   Data   │
-                  │ (Output) │
+
+- Docker with 4GB+ RAM                  ┌──────────┐
+
+- 8GB+ total system RAM                  │   Data   │
+
+- 10GB+ free disk space                  │ (Output) │
+
                   └──────────┘
+
+### Setup```
+
+
+
+1. Copy environment configuration:## 🚀 Quick Start
+
+```bash
+
+cp .env.example .env### 1. Prerequisites
+
 ```
-
-## 🚀 Quick Start
-
-### 1. Prerequisites
 
 - **Docker** with **4GB+ RAM** allocated
-- **8GB+ total system RAM** recommended
-- **10GB+ free disk space**
 
-### 2. Configure
+2. Edit `.env` if needed (defaults work):- **8GB+ total system RAM** recommended
+
+```bash- **10GB+ free disk space**
+
+SCHEDULE_HOURS=24
+
+MAX_WORKERS=3### 2. Configure
+
+```
 
 Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
+
+3. Start services:```bash
+
+```bashcp .env.example .env
+
+docker compose up -d```
+
 ```
 
 Edit `.env` (optional - defaults work fine):
-```bash
+
+First run takes 5-10 minutes to initialize all services.```bash
+
 # No API key needed!
-SCHEDULE_HOURS=24
+
+### Monitor ProgressSCHEDULE_HOURS=24
+
 BULL_AUTH_KEY=CHANGEME
+
+```bash```
+
+# Check services
+
+docker compose ps### 3. Run
+
+
+
+# View crawler logs```bash
+
+docker logs firecrawl-uit-crawler -fdocker compose up -d
+
 ```
 
-### 3. Run
+# View API logs
 
-```bash
-docker compose up -d
-```
+docker logs firecrawl-api -f**First run takes 5-10 minutes** to:
 
-**First run takes 5-10 minutes** to:
-- Pull Firecrawl images (~2GB)
+```- Pull Firecrawl images (~2GB)
+
 - Start 5 containers
-- Initialize PostgreSQL database
+
+## Configuration- Initialize PostgreSQL database
+
 - Wait for all services to be ready
-
-### 4. Monitor
-
-Check services status:
-```bash
-docker compose ps
-```
-
-View logs:
-```bash
-# Firecrawl API logs
-docker logs firecrawl-api -f
-
-# Crawler logs
-docker logs firecrawl-uit-crawler -f
-
-# All logs
-docker compose logs -f
-```
-
-### 5. Access Bull Queue UI
-
-Open browser: http://localhost:3002/admin/CHANGEME/queues
-
-(Change `CHANGEME` to your `BULL_AUTH_KEY` value)
-
-## � Resource Requirements
-
-### Firecrawl Self-Hosted:
-- **RAM**: 2-3GB (5 containers)
-- **CPU**: 2+ cores recommended
-- **Disk**: 10GB+ for Docker images
-- **Cost**: **$0** (runs locally)
-
-### For UIT use case (~100 pages):
-- **Custom crawler**: 512MB RAM, $0
-- **Firecrawl self-hosted**: 2-3GB RAM, $0
-- **Firecrawl cloud API**: 512MB RAM, $20/month
-
-## 📊 Service Breakdown
-
-| Service | Purpose | RAM | Port |
-|---------|---------|-----|------|
-| **api** | Main Firecrawl API | 512MB | 3002 |
-| **playwright-service** | Browser automation | 1GB | 3000 |
-| **redis** | Job queue | 256MB | 6379 |
-| **postgres** | Database | 512MB | 5432 |
-| **crawler** | UIT orchestrator | 256MB | - |
-| **Total** | | **~2.5GB** | |
-
-## ⚙️ Configuration
 
 ### Environment Variables
 
+### 4. Monitor
+
 ```bash
-# Required
-FIRECRAWL_API_KEY=fc-xxx          # Get from firecrawl.dev
 
-# Optional
-SCHEDULE_HOURS=24                  # Crawl every 24 hours
-RUN_ONCE=false                     # Set true for one-time run
-SEED_URLS=url1,url2,url3          # URLs to crawl
+# SchedulingCheck services status:
+
+SCHEDULE_HOURS=24          # Crawl interval (hours)```bash
+
+RUN_ONCE=false            # Set true for one-time executiondocker compose ps
+
+MAX_WORKERS=3             # Parallel workers```
+
+
+
+# URL Configuration (optional, uses config.yaml by default)View logs:
+
+SEED_URLS=url1,url2```bash
+
+INCLUDE_PATTERNS=/path1,/path2# Firecrawl API logs
+
+EXCLUDE_PATTERNS=/news,/blogdocker logs firecrawl-api -f
+
+MAX_DEPTH=3
+
+```# Crawler logs
+
+docker logs firecrawl-uit-crawler -f
+
+### config.yaml
+
+# All logs
+
+```yamldocker compose logs -f
+
+seed_urls:```
+
+  - https://daa.uit.edu.vn/qui-che-qui-dinh-qui-trinh
+
+  - https://daa.uit.edu.vn/thongbaochinhquy### 5. Access Bull Queue UI
+
+  # ... more URLs
+
+Open browser: http://localhost:3002/admin/CHANGEME/queues
+
+max_depth: 3
+
+(Change `CHANGEME` to your `BULL_AUTH_KEY` value)
+
+include_patterns:
+
+  - /qui-dinh## � Resource Requirements
+
+  - /thong-bao
+
+### Firecrawl Self-Hosted:
+
+exclude_patterns:- **RAM**: 2-3GB (5 containers)
+
+  - /news- **CPU**: 2+ cores recommended
+
+  - /blog- **Disk**: 10GB+ for Docker images
+
+```- **Cost**: **$0** (runs locally)
+
+
+
+## Output Structure### For UIT use case (~100 pages):
+
+- **Custom crawler**: 512MB RAM, $0
+
+```- **Firecrawl self-hosted**: 2-3GB RAM, $0
+
+data/- **Firecrawl cloud API**: 512MB RAM, $20/month
+
+├── content/
+
+│   ├── daa/## 📊 Service Breakdown
+
+│   │   ├── quy-dinh/
+
+│   │   ├── quy-trinh/| Service | Purpose | RAM | Port |
+
+│   │   ├── thong-bao/|---------|---------|-----|------|
+
+│   │   └── huong-dan/| **api** | Main Firecrawl API | 512MB | 3002 |
+
+│   └── khac/| **playwright-service** | Browser automation | 1GB | 3000 |
+
+├── metadata.json         # All crawled pages metadata| **redis** | Job queue | 256MB | 6379 |
+
+├── metadata.jsonl        # Line-delimited metadata| **postgres** | Database | 512MB | 5432 |
+
+├── crawl_stats.json      # Performance statistics| **crawler** | UIT orchestrator | 256MB | - |
+
+├── checkpoint.json       # Recovery checkpoint| **Total** | | **~2.5GB** | |
+
+└── failed_urls.jsonl     # Failed URL log
+
+```## ⚙️ Configuration
+
+
+
+## Resource Requirements### Environment Variables
+
+
+
+| Service | RAM | Purpose |```bash
+
+|---------|-----|---------|# Required
+
+| api | 512MB | Firecrawl API |FIRECRAWL_API_KEY=fc-xxx          # Get from firecrawl.dev
+
+| playwright-service | 1GB | Browser automation |
+
+| redis | 256MB | Job queue |# Optional
+
+| postgres | 512MB | Database |SCHEDULE_HOURS=24                  # Crawl every 24 hours
+
+| crawler | 256MB | Orchestrator |RUN_ONCE=false                     # Set true for one-time run
+
+| **Total** | **~2.5GB** | |SEED_URLS=url1,url2,url3          # URLs to crawl
+
 INCLUDE_PATTERNS=/path1,/path2     # Include only these paths
-EXCLUDE_PATTERNS=/news,/blog       # Exclude these paths
+
+## TroubleshootingEXCLUDE_PATTERNS=/news,/blog       # Exclude these paths
+
 MAX_DEPTH=3                        # Maximum crawl depth
+
+### Services not starting```
+
+```bash
+
+# Check logs## 📁 Output Structure
+
+docker logs firecrawl-api
+
 ```
 
-## 📁 Output Structure
+# Restart servicesdata/
 
-```
-data/
-├── html/              # Raw HTML files
+docker compose restart├── html/              # Raw HTML files
+
 ├── markdown/          # Converted markdown
-├── metadata.json      # All metadata
-└── metadata.jsonl     # Line-delimited metadata
 
-logs/
-└── firecrawl.log      # Application logs
-```
+# Ensure Docker has 4GB+ RAM allocated├── metadata.json      # All metadata
+
+```└── metadata.jsonl     # Line-delimited metadata
+
+
+
+### Connection refusedlogs/
+
+- Wait 5-10 minutes for first startup└── firecrawl.log      # Application logs
+
+- Check all services: `docker compose ps````
+
+- Services must show "healthy" status
 
 ## ✅ Advantages
 
-1. **Advanced features**:
-   - ✅ JavaScript rendering (Playwright)
-   - ✅ Browser automation
+### Out of memory
+
+- Increase Docker memory to 4GB+1. **Advanced features**:
+
+- Reduce MAX_WORKERS to 2 or 1   - ✅ JavaScript rendering (Playwright)
+
+- Close other applications   - ✅ Browser automation
+
    - ✅ Screenshot capture
-   - ✅ LLM-ready markdown
+
+## Development   - ✅ LLM-ready markdown
+
    - ✅ Professional UI (Bull Queue)
 
-2. **No cost**:
-   - ✅ Free forever (no API key)
-   - ✅ All features unlocked
-   - ✅ No rate limits
+### Project Structure
 
-3. **Full control**:
-   - ✅ Runs on your infrastructure
-   - ✅ No external dependencies
-   - ✅ Data stays local
+2. **No cost**:
+
+```   - ✅ Free forever (no API key)
+
+.   - ✅ All features unlocked
+
+├── main.py              # Main crawler logic   - ✅ No rate limits
+
+├── config.yaml          # Crawl configuration
+
+├── docker-compose.yml   # Service orchestration3. **Full control**:
+
+├── Dockerfile          # Crawler container   - ✅ Runs on your infrastructure
+
+├── .env.example        # Environment template   - ✅ No external dependencies
+
+└── README.md           # Documentation   - ✅ Data stays local
+
+```
 
 ## ❌ Disadvantages
 
-1. **Resource intensive**:
-   - ❌ Requires 2-3GB RAM
-   - ❌ 5 containers to manage
-   - ❌ Slower startup (5-10 mins)
+### Key Components
 
-2. **Complex setup**:
+1. **Resource intensive**:
+
+- **CrawlStats**: Performance metrics tracking   - ❌ Requires 2-3GB RAM
+
+- **Checkpoint System**: Crash recovery   - ❌ 5 containers to manage
+
+- **Health Check**: Service readiness verification   - ❌ Slower startup (5-10 mins)
+
+- **Parallel Execution**: ThreadPoolExecutor-based crawling
+
+- **Content Categorization**: Smart folder organization2. **Complex setup**:
+
    - ❌ More moving parts
-   - ❌ Harder to debug
+
+## License   - ❌ Harder to debug
+
    - ❌ Need Docker expertise
+
+MIT
 
 3. **Overkill for UIT**:
    - ❌ UIT website is simple

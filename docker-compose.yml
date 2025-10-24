@@ -12,7 +12,6 @@ x-common-service: &common-service
     - "host.docker.internal:host-gateway"
 
 x-common-env: &common-env
-  # UIT Crawler specific settings
   USE_FIRECRAWL: ${USE_FIRECRAWL:-false}
   RESPECT_ROBOTS: ${RESPECT_ROBOTS:-false}
   CRAWL_USER_AGENT: ${CRAWL_USER_AGENT:-firecrawl-uit-bot/1.0}
@@ -31,8 +30,6 @@ x-common-env: &common-env
   MAX_DEPTH: ${MAX_DEPTH:-3}
   CONCURRENCY: ${CONCURRENCY:-2}
   RATE_LIMIT: ${RATE_LIMIT:-1}
-  
-  # Firecrawl API settings (optional, for future use)
   REDIS_URL: ${REDIS_URL:-redis://redis:6379}
   REDIS_RATE_LIMIT_URL: ${REDIS_URL:-redis://redis:6379}
   PLAYWRIGHT_MICROSERVICE_URL: ${PLAYWRIGHT_MICROSERVICE_URL:-http://playwright-service:3000/scrape}
