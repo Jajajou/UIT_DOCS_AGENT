@@ -1,550 +1,508 @@
-# 🔥 UIT Documentation Crawler# 🔥 UIT Documentation CrawlerUIT_DOCS_AGENT
+# UIT Crawler - Firecrawl Self-Hosted# 🔥 UIT Crawler - Firecrawl Self-Hosted Version
 
 
 
-> Crawl và extract nội dung từ website daa.uit.edu.vn
-
-> **Local web crawler** for UIT (University of Information Technology) documentation website with smart crawling features, SSL bypass for internal networks, and comprehensive data extraction.
-
-## 📚 Tổng quan
-
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-
-Project này cung cấp **2 phiên bản crawler**:[![Python](https://img.shields.io/badge/Python-3.11-green.svg)](https://www.python.org/)
-
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-1. **Custom Crawler** (`uit_crawler/`) - ⭐ **KHUYÊN DÙNG**
-
-   - Đơn giản, nhẹ nhàng (512MB RAM)## 📋 Table of Contents
-
-   - 1 container, dễ maintain
-
-   - Đủ tính năng cho UIT- [Features](#-features)
-
-- [Quick Start](#-quick-start)
-
-2. **Firecrawl Self-Hosted** (`firecrawl_version/`)- [Project Structure](#-project-structure)
-
-   - Chuyên nghiệp, nhiều tính năng- [Configuration](#-configuration)
-
-   - 5 containers, JavaScript rendering- [Usage](#-usage)
-
-   - Nặng hơn (2-3GB RAM)- [Output Data](#-output-data)
-
-- [Advanced Configuration](#-advanced-configuration)
-
-## 🚀 Quick Start- [Troubleshooting](#-troubleshooting)
+> Self-hosted web crawler using Firecrawl stack for UIT website data collection> This version uses **Firecrawl self-hosted** (runs locally) instead of cloud API.
 
 
 
-### Option 1: Custom Crawler (Recommended)## ✨ Features
+## Architecture## 🆚 Comparison with Custom Crawler
 
 
 
-```bash### Core Capabilities
+```| Feature | Custom Crawler | Firecrawl Self-Hosted |
 
-# 1. Edit seed URLs (optional)- 🌐 **Local-only crawler** - No external API dependencies
+┌─────────────────────────────────────────────────────────┐|---------|---------------|----------------------|
 
-nano .env- 🔒 **SSL verification bypass** - Works with internal UIT network (self-signed certificates)
+│           Firecrawl Self-Hosted Stack                   │| **Complexity** | Simple (1 container) | Complex (5 containers) |
 
-- 🤖 **robots.txt compliance** - Respects crawl-delay and disallow rules (configurable)
+│                                                          │| **Dependencies** | requests, BeautifulSoup | Full Firecrawl stack |
 
-# 2. Start crawler- 📊 **Multiple data formats** - HTML, PDF, DOCX, text extraction
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐   │| **Cost** | Free | **Free** (no API key) |
 
-docker compose up -d --build- 🔄 **Smart scheduling** - Automatic recurring crawls every 24 hours
+│  │   Redis     │  │ PostgreSQL  │  │  Playwright  │   │| **Anti-bot** | Basic (SSL bypass) | Advanced (Playwright) |
 
-- 🚦 **Rate limiting** - Configurable request delays and bandwidth throttling
+│  │   (Queue)   │  │   (Data)    │  │  (Browser)   │   │| **JavaScript rendering** | No | **Yes** (Playwright) |
 
-# 3. Monitor logs- 📝 **Comprehensive logging** - Track all crawling activities
+│  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘   │| **Setup** | Quick (2 mins) | Longer (5-10 mins) |
 
-docker logs firecrawl-uit -f
+│         │                 │                 │           │| **Resource usage** | 512MB RAM | **2-3GB RAM** |
 
-### Advanced Features
+│         └─────────────┬───┴─────────────────┘           │| **Best for** | Internal sites, low resource | Complex sites, have resources |
 
-# 4. Check results- ⏰ **Time windows** - Run only during specified hours (e.g., off-peak times)
+│                       ▼                                 │
 
-ls -lh data/- 🔀 **Jittered pacing** - Random delays to appear more human-like
+│              ┌─────────────────┐                        │## 🏗️ Architecture
 
-```- 🔁 **Backoff on errors** - Automatic retry with exponential backoff on 429/503
+│              │  Firecrawl API  │                        │
 
-- 🎯 **Pattern matching** - Include/exclude URL patterns for targeted crawling
+│              │   (Node.js)     │                        │```
 
-### Option 2: Firecrawl Self-Hosted- 📏 **Depth control** - Limit crawling depth (default: 3 levels)
+│              └────────┬────────┘                        │┌─────────────────────────────────────────────────────────┐
 
-- 🌐 **Host network mode** - Access internal UIT servers (10.204.2.x)
+│                       │                                 ││           Firecrawl Self-Hosted Stack                   │
+
+└───────────────────────┼─────────────────────────────────┘│                                                          │
+
+                        │ HTTP (port 3002)│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐   │
+
+                        ▼│  │   Redis     │  │ PostgreSQL  │  │  Playwright  │   │
+
+              ┌─────────────────┐│  │   (Queue)   │  │   (Data)    │  │  (Browser)   │   │
+
+              │  UIT Crawler    ││  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘   │
+
+              │   (Python)      ││         │                 │                 │           │
+
+              └─────────────────┘│         └─────────────┬───┴─────────────────┘           │
+
+```│                       ▼                                 │
+
+│              ┌─────────────────┐                        │
+
+## Features│              │  Firecrawl API  │                        │
+
+│              │   (Node.js)     │                        │
+
+- **Parallel Crawling**: Concurrent processing of multiple seeds│              └────────┬────────┘                        │
+
+- **Checkpoint System**: Auto-recovery from crashes│                       │                                 │
+
+- **Health Check**: Wait for all services before crawling└───────────────────────┼─────────────────────────────────┘
+
+- **Statistics**: Real-time metrics and performance tracking                        │ HTTP (port 3002)
+
+- **Error Categorization**: Structured error logging                        ▼
+
+- **Incremental Crawling**: Skip recently crawled content              ┌─────────────────┐
+
+- **Content Categorization**: Smart folder organization              │  UIT Crawler    │
+
+              │   (Python)      │
+
+## Quick Start              │  Orchestrator   │
+
+              └─────────────────┘
+
+### Prerequisites                        │
+
+                        ▼
+
+- Docker with 4GB+ RAM                  ┌──────────┐
+
+- 8GB+ total system RAM                  │   Data   │
+
+- 10GB+ free disk space                  │ (Output) │
+
+                  └──────────┘
+
+### Setup```
+
+
+
+1. Copy environment configuration:## 🚀 Quick Start
 
 ```bash
 
-# 1. Go to firecrawl_version## 🚀 Quick Start
-
-cd firecrawl_version
-
-### Prerequisites
-
-# 2. Configure (optional)- Docker Desktop installed and running
-
-cp .env.example .env- Git (for cloning the repository)
-
-- Access to UIT internal network (for internal URLs)
-
-# 3. Start (takes 5-10 mins first time)
-
-docker compose up -d### Installation
-
-
-
-# 4. Monitor1. **Clone the repository**
-
-docker logs firecrawl-uit-crawler -f```bash
-
-```git clone https://github.com/Jajajou/UIT_DOCS_AGENT.git
-
-cd UIT_DOCS_AGENT
-
-## 📂 Cấu trúc Project```
-
-
-
-```2. **Review/Edit configuration** (optional)
-
-uit_firecrawl_new/```bash
-
-├── uit_crawler/              # Custom crawler (⭐ recommended)# Edit .env file to customize URLs and settings
-
-│   ├── main.py               # Core crawlernotepad .env  # Windows
-
-│   ├── utils/                # Helper modulesnano .env     # Linux/Mac
-
-│   ├── config.yaml           # Base config```
-
-│   └── Dockerfile
-
-│3. **Start crawling**
-
-├── firecrawl_version/        # Firecrawl self-hosted version```bash
-
-│   ├── main.py               # Wrapper script# Build and run in background
-
-│   ├── docker-compose.yml    # 5 services stackdocker compose up -d --build
-
-│   ├── README.md             # Full documentation
-
-│   └── QUICKSTART.md# Or run once and exit
-
-│docker compose run --rm app
-
-├── firecrawl/                # Official Firecrawl (git submodule)```
-
-│   └── ...                   # Reference only
-
-│4. **Monitor progress**
-
-├── docs/                     # Documentation```bash
-
-│   ├── WHY_CUSTOM_CRAWLER.md# View logs
-
-│   ├── COMPARISON_ALL_VERSIONS.mddocker logs firecrawl-uit -f
-
-│   └── ...
-
-│# Check data
-
-├── docker-compose.yml        # Custom crawler composels data/html    # HTML files
-
-└── .env                      # Configurationls data/pdf     # PDF files
-
-```ls data/text    # Extracted text
+cp .env.example .env### 1. Prerequisites
 
 ```
 
-## 📊 So sánh
+- **Docker** with **4GB+ RAM** allocated
 
-## 📁 Project Structure
+2. Edit `.env` if needed (defaults work):- **8GB+ total system RAM** recommended
 
-| Feature | Custom Crawler | Firecrawl Self-Hosted |
-
-|---------|---------------|----------------------|```
-
-| **RAM** | 512MB | 2-3GB |firecrawl-uit-local-advanced/
-
-| **Containers** | 1 | 5 |├── .env                    # Environment configuration
-
-| **Setup time** | 2 phút | 5-10 phút |├── .gitignore             # Git ignore rules
-
-| **JavaScript** | ❌ | ✅ |├── docker-compose.yml     # Docker compose configuration
-
-| **Markdown** | ❌ | ✅ |├── README.md              # This file
-
-| **PDF Download** | ✅ | ✅ |├── data/                  # Output directory (crawled data)
-
-| **Complexity** | Đơn giản | Phức tạp |│   ├── html/             # Raw HTML pages
-
-│   ├── pdf/              # Downloaded PDF files
-
-## 📖 Documentation│   ├── docs/             # Office documents (DOCX, XLS, etc.)
-
-│   ├── text/             # Extracted text from files
-
-Xem chi tiết trong folder `docs/`:│   ├── metadata.json     # Complete metadata (JSON)
-
-│   └── metadata.jsonl    # Line-delimited metadata
-
-- [WHY_CUSTOM_CRAWLER.md](docs/WHY_CUSTOM_CRAWLER.md) - Lý do chọn custom crawler├── firecrawl/            # Crawler application
-
-- [COMPARISON_ALL_VERSIONS.md](docs/COMPARISON_ALL_VERSIONS.md) - So sánh 3 phiên bản│   ├── main.py           # Main crawler script
-
-- [DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) - Index toàn bộ docs│   ├── config.yaml       # Base configuration
-
-│   ├── Dockerfile        # Docker image definition
-
-## ⚙️ Configuration│   └── utils/            # Utility modules
-
-│       ├── downloader.py # File download handler
-
-Edit file `.env`:│       ├── parser.py     # Content parsing
-
-│       ├── ratelimit.py  # Rate limiting
-
-```bash│       └── storage.py    # Data storage
-
-# 35 seed URLs for UIT documentation└── logs/                 # Application logs
-
-SEED_URLS=https://daa.uit.edu.vn/qui-che-qui-dinh-qui-trinh,...    └── firecrawl.log     # Main log file
-
-```
-
-# Crawl behavior
-
-MAX_DEPTH=3## ⚙️ Configuration
-
-CONCURRENCY=2
-
-RATE_LIMIT=1### Environment Variables (.env)
-
-
-
-# Schedule (crawl every 24 hours)The crawler is configured via the `.env` file. Key settings:
+```bash- **10GB+ free disk space**
 
 SCHEDULE_HOURS=24
 
-RUN_ONCE=false#### Crawl Targets
-
-``````bash
-
-# Multiple URLs separated by commas
-
-## 📁 OutputSEED_URLS=https://daa.uit.edu.vn/qui-che-qui-dinh-qui-trinh,https://daa.uit.edu.vn/thongbaochinhquy,...
-
-
-
-```# URL patterns to include
-
-data/INCLUDE_PATTERNS=/qui-che,/quy-dinh,/ctdt-khoa,/cqui,/tu-xa
-
-├── html/           # Raw HTML files
-
-├── pdf/            # Downloaded PDFs# URL patterns to exclude
-
-├── text/           # Extracted textEXCLUDE_PATTERNS=/tin-tuc,/news,/blog
-
-└── metadata.json   # Metadata```
+MAX_WORKERS=3### 2. Configure
 
 ```
 
-#### Crawl Behavior
+Copy `.env.example` to `.env`:
 
-## 🔧 Common Commands```bash
+3. Start services:```bash
 
-MAX_DEPTH=3              # How deep to follow links (0-10)
+```bashcp .env.example .env
 
-```bashCONCURRENCY=2            # Parallel requests (1-5 recommended)
-
-# Start crawlerRATE_LIMIT=1             # Delay between requests in seconds
-
-docker compose up -dRESPECT_ROBOTS=false     # robots.txt compliance (false for internal sites)
+docker compose up -d```
 
 ```
 
-# Stop crawler
+Edit `.env` (optional - defaults work fine):
 
-docker compose down#### Scheduling
+First run takes 5-10 minutes to initialize all services.```bash
+
+# No API key needed!
+
+### Monitor ProgressSCHEDULE_HOURS=24
+
+BULL_AUTH_KEY=CHANGEME
+
+```bash```
+
+# Check services
+
+docker compose ps### 3. Run
+
+
+
+# View crawler logs```bash
+
+docker logs firecrawl-uit-crawler -fdocker compose up -d
+
+```
+
+# View API logs
+
+docker logs firecrawl-api -f**First run takes 5-10 minutes** to:
+
+```- Pull Firecrawl images (~2GB)
+
+- Start 5 containers
+
+## Configuration- Initialize PostgreSQL database
+
+- Wait for all services to be ready
+
+### Environment Variables
+
+### 4. Monitor
 
 ```bash
 
-# View logsSCHEDULE_HOURS=24        # Hours between crawl runs
+# SchedulingCheck services status:
 
-docker logs firecrawl-uit -fRUN_ONCE=false          # Set to true for one-time crawl
+SCHEDULE_HOURS=24          # Crawl interval (hours)```bash
 
-ACTIVE_WINDOW=          # Time ranges: "01:00-05:00,12:00-13:00"
+RUN_ONCE=false            # Set true for one-time executiondocker compose ps
 
-# Restart with new configWINDOW_TZ=Asia/Ho_Chi_Minh
-
-docker compose down && docker compose up -d --build```
+MAX_WORKERS=3             # Parallel workers```
 
 
 
-# Clean all data#### Performance
+# URL Configuration (optional, uses config.yaml by default)View logs:
 
-docker compose down -v```bash
+SEED_URLS=url1,url2```bash
 
-rm -rf data/ logs/BANDWIDTH_BPS=0          # Bandwidth limit (0 = unlimited)
+INCLUDE_PATTERNS=/path1,/path2# Firecrawl API logs
 
-```JITTER_MAX=0.5          # Random delay variance (seconds)
+EXCLUDE_PATTERNS=/news,/blogdocker logs firecrawl-api -f
+
+MAX_DEPTH=3
+
+```# Crawler logs
+
+docker logs firecrawl-uit-crawler -f
+
+### config.yaml
+
+# All logs
+
+```yamldocker compose logs -f
+
+seed_urls:```
+
+  - https://daa.uit.edu.vn/qui-che-qui-dinh-qui-trinh
+
+  - https://daa.uit.edu.vn/thongbaochinhquy### 5. Access Bull Queue UI
+
+  # ... more URLs
+
+Open browser: http://localhost:3002/admin/CHANGEME/queues
+
+max_depth: 3
+
+(Change `CHANGEME` to your `BULL_AUTH_KEY` value)
+
+include_patterns:
+
+  - /qui-dinh## � Resource Requirements
+
+  - /thong-bao
+
+### Firecrawl Self-Hosted:
+
+exclude_patterns:- **RAM**: 2-3GB (5 containers)
+
+  - /news- **CPU**: 2+ cores recommended
+
+  - /blog- **Disk**: 10GB+ for Docker images
+
+```- **Cost**: **$0** (runs locally)
+
+
+
+## Output Structure### For UIT use case (~100 pages):
+
+- **Custom crawler**: 512MB RAM, $0
+
+```- **Firecrawl self-hosted**: 2-3GB RAM, $0
+
+data/- **Firecrawl cloud API**: 512MB RAM, $20/month
+
+├── content/
+
+│   ├── daa/## 📊 Service Breakdown
+
+│   │   ├── quy-dinh/
+
+│   │   ├── quy-trinh/| Service | Purpose | RAM | Port |
+
+│   │   ├── thong-bao/|---------|---------|-----|------|
+
+│   │   └── huong-dan/| **api** | Main Firecrawl API | 512MB | 3002 |
+
+│   └── khac/| **playwright-service** | Browser automation | 1GB | 3000 |
+
+├── metadata.json         # All crawled pages metadata| **redis** | Job queue | 256MB | 6379 |
+
+├── metadata.jsonl        # Line-delimited metadata| **postgres** | Database | 512MB | 5432 |
+
+├── crawl_stats.json      # Performance statistics| **crawler** | UIT orchestrator | 256MB | - |
+
+├── checkpoint.json       # Recovery checkpoint| **Total** | | **~2.5GB** | |
+
+└── failed_urls.jsonl     # Failed URL log
+
+```## ⚙️ Configuration
+
+
+
+## Resource Requirements### Environment Variables
+
+
+
+| Service | RAM | Purpose |```bash
+
+|---------|-----|---------|# Required
+
+| api | 512MB | Firecrawl API |FIRECRAWL_API_KEY=fc-xxx          # Get from firecrawl.dev
+
+| playwright-service | 1GB | Browser automation |
+
+| redis | 256MB | Job queue |# Optional
+
+| postgres | 512MB | Database |SCHEDULE_HOURS=24                  # Crawl every 24 hours
+
+| crawler | 256MB | Orchestrator |RUN_ONCE=false                     # Set true for one-time run
+
+| **Total** | **~2.5GB** | |SEED_URLS=url1,url2,url3          # URLs to crawl
+
+INCLUDE_PATTERNS=/path1,/path2     # Include only these paths
+
+## TroubleshootingEXCLUDE_PATTERNS=/news,/blog       # Exclude these paths
+
+MAX_DEPTH=3                        # Maximum crawl depth
+
+### Services not starting```
+
+```bash
+
+# Check logs## 📁 Output Structure
+
+docker logs firecrawl-api
 
 ```
+
+# Restart servicesdata/
+
+docker compose restart├── html/              # Raw HTML files
+
+├── markdown/          # Converted markdown
+
+# Ensure Docker has 4GB+ RAM allocated├── metadata.json      # All metadata
+
+```└── metadata.jsonl     # Line-delimited metadata
+
+
+
+### Connection refusedlogs/
+
+- Wait 5-10 minutes for first startup└── firecrawl.log      # Application logs
+
+- Check all services: `docker compose ps````
+
+- Services must show "healthy" status
+
+## ✅ Advantages
+
+### Out of memory
+
+- Increase Docker memory to 4GB+1. **Advanced features**:
+
+- Reduce MAX_WORKERS to 2 or 1   - ✅ JavaScript rendering (Playwright)
+
+- Close other applications   - ✅ Browser automation
+
+   - ✅ Screenshot capture
+
+## Development   - ✅ LLM-ready markdown
+
+   - ✅ Professional UI (Bull Queue)
+
+### Project Structure
+
+2. **No cost**:
+
+```   - ✅ Free forever (no API key)
+
+.   - ✅ All features unlocked
+
+├── main.py              # Main crawler logic   - ✅ No rate limits
+
+├── config.yaml          # Crawl configuration
+
+├── docker-compose.yml   # Service orchestration3. **Full control**:
+
+├── Dockerfile          # Crawler container   - ✅ Runs on your infrastructure
+
+├── .env.example        # Environment template   - ✅ No external dependencies
+
+└── README.md           # Documentation   - ✅ Data stays local
+
+```
+
+## ❌ Disadvantages
+
+### Key Components
+
+1. **Resource intensive**:
+
+- **CrawlStats**: Performance metrics tracking   - ❌ Requires 2-3GB RAM
+
+- **Checkpoint System**: Crash recovery   - ❌ 5 containers to manage
+
+- **Health Check**: Service readiness verification   - ❌ Slower startup (5-10 mins)
+
+- **Parallel Execution**: ThreadPoolExecutor-based crawling
+
+- **Content Categorization**: Smart folder organization2. **Complex setup**:
+
+   - ❌ More moving parts
+
+## License   - ❌ Harder to debug
+
+   - ❌ Need Docker expertise
+
+MIT
+
+3. **Overkill for UIT**:
+   - ❌ UIT website is simple
+   - ❌ Custom crawler is faster
+   - ❌ More maintenance needed
+
+## 🎯 When to Use This Version
+
+✅ **Use Firecrawl Self-Hosted when**:
+- Target website has heavy anti-bot
+- Need JavaScript rendering
+- Have 2-3GB RAM available
+- Want professional features (Bull Queue UI)
+- Don't want to pay for cloud API
+
+❌ **Use Custom Crawler when**:
+- Internal/simple websites (like UIT) ⭐
+- Want minimal resource usage (512MB)
+- Want simple single-container setup
+- Don't need JavaScript rendering
+- Prefer lightweight solution
+
+## 🔄 Migration from Custom Crawler
+
+If you want to switch from custom crawler to Firecrawl self-hosted:
+
+```bash
+# 1. Stop custom crawler
+docker compose -f ../docker-compose.yml down
+
+# 2. Go to firecrawl_version directory
+cd firecrawl_version
+
+# 3. Copy .env (no API key needed!)
+cp .env.example .env
+
+# 4. Start Firecrawl stack (first time takes 5-10 mins)
+docker compose up -d
+
+# 5. Wait for services to be ready
+docker compose ps
+
+# 6. Monitor
+docker logs firecrawl-uit-crawler -f
+```
+
+## 📚 API Documentation
+
+- [Firecrawl API Docs](https://docs.firecrawl.dev)
+- [Python SDK](https://docs.firecrawl.dev/sdks/python)
+- [Pricing](https://firecrawl.dev/pricing)
 
 ## 🆘 Troubleshooting
 
-### Current Crawl Targets
+### Error: Services not starting
+```
+ERROR: Container firecrawl-api exited with code 1
+```
+**Solution**: 
+- Check Docker has enough RAM (need 4GB+)
+- Wait 5-10 minutes for first startup
+- Check logs: `docker logs firecrawl-api`
 
-### Container keeps restarting
+### Error: Connection refused
+```
+Connection refused to http://api:3002
+```
+**Solution**: 
+- Services still starting, wait longer
+- Check all services running: `docker compose ps`
+- Restart: `docker compose restart`
 
-**Solution**: Check logs with `docker logs firecrawl-uit`The crawler is configured to crawl:
+### Error: Out of memory
+```
+OOMKilled or container keeps restarting
+```
+**Solution**: 
+- Increase Docker memory limit to 4GB+
+- Close other applications
+- Use custom crawler instead (only 512MB)
 
+### Bull Queue UI not accessible
+**Solution**: 
+- Check if API is running: `docker compose ps`
+- Access: http://localhost:3002/admin/CHANGEME/queues
+- Change `CHANGEME` to your `BULL_AUTH_KEY`
 
+## 🎓 Learning Resources
 
-### No files downloaded**📚 Training Programs (Chương trình đào tạo)**
+- [Firecrawl Self-Hosting Guide](../firecrawl/SELF_HOST.md)
+- [Firecrawl Documentation](https://docs.firecrawl.dev)
+- [Python SDK Examples](https://github.com/firecrawl/firecrawl-py)
+- [Comparison with Custom Crawler](../WHY_CUSTOM_CRAWLER.md)
 
-**Solution**: - Regular programs: 2012-2025 (13 years)
+## 🏆 Recommendation
 
-1. Check seed URLs in `.env`- Distance learning: 2008, 2013, 2018-2024 (8 years)
+**For UIT use case**: **Use custom crawler** (uit_crawler/) ⭐
+- ✅ Free
+- ✅ Simple (1 container)
+- ✅ Fast (512MB RAM)
+- ✅ Sufficient features
+- ✅ No external dependencies
 
-2. Verify network connectivity
-
-3. Check `INCLUDE_PATTERNS` and `EXCLUDE_PATTERNS`**📋 Regulations & Guidelines**
-
-- University regulations
-
-### Out of memory- Training guidelines
-
-**Solution**: - Announcements (regular & distance learning)
-
-- Custom crawler: Should work with 512MB- Administrative procedures
-
-- Firecrawl: Need 4GB+ Docker memory
-
-See `.env` file for complete list of URLs.
-
-## 📚 More Info
-
-## 🎯 Usage
-
-- [Firecrawl Self-Hosted Guide](firecrawl_version/README.md)
-
-- [Full Documentation](docs/DOCUMENTATION_INDEX.md)### Basic Commands
-
-- [Migration History](docs/MIGRATION_COMPLETE.md)
-
-**Start crawler (background)**
-
-## 🏆 Recommendation```bash
-
-docker compose up -d
-
-**Cho UIT use case**: Dùng **Custom Crawler** (uit_crawler/)```
-
-- ✅ Đơn giản, nhẹ, nhanh
-
-- ✅ Đủ tính năng**View real-time logs**
-
-- ✅ Dễ maintain```bash
-
-docker logs firecrawl-uit -f
-
-**Cho website phức tạp**: Dùng **Firecrawl Self-Hosted**```
-
+**For complex websites with JS**: **Use Firecrawl self-hosted** (this version)
+- ✅ Free (no API key)
+- ✅ Advanced anti-bot
 - ✅ JavaScript rendering
+- ✅ Full control
+- ❌ Heavy (2-3GB RAM)
+- ❌ Complex (5 containers)
 
-- ✅ Advanced anti-bot**Stop crawler**
-
-- ❌ Nặng hơn```bash
-
-docker compose down
-
----```
-
-
-
-**Made with ❤️ for UIT****Restart crawler**
-
-```bash
-docker compose restart
-```
-
-**Run once and exit**
-```bash
-docker compose run --rm -e RUN_ONCE=true app
-```
-
-### Check Results
-
-**View statistics**
-```powershell
-# Count files
-(Get-ChildItem data\html -File).Count   # HTML files
-(Get-ChildItem data\pdf -File).Count    # PDF files
-
-# Check total size
-(Get-ChildItem data -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
-```
-
-## 📊 Output Data
-
-### Data Structure
-
-After crawling, data is organized as:
-
-```
-data/
-├── html/               # Raw HTML files
-│   └── _qui-che-qui-dinh-qui-trinh,-06a1251ebe.html
-├── pdf/                # PDF documents
-│   └── _sites_daa_files_202310_quy_che.pdf
-├── text/               # Extracted text
-│   └── _sites_daa_files_202310_quy_che.txt
-├── docs/               # Office documents
-│   └── form_dang_ky.xls
-├── metadata.json       # All metadata (JSON array)
-└── metadata.jsonl      # Line-delimited JSON
-```
-
-### Metadata Format
-
-Each crawled page/file has metadata:
-```json
-{
-  "title": "Quy chế quy định quy trình",
-  "url": "https://daa.uit.edu.vn/qui-che-qui-dinh-qui-trinh",
-  "type": "html",
-  "content": "Full text content...",
-  "download_path": "/data/html/_qui-che-qui-dinh-qui-trinh.html",
-  "date": "2024-01-15",
-  "source": "daa.uit.edu.vn"
-}
-```
-
-### Current Statistics
-
-After full crawl:
-- **HTML files**: ~86 pages
-- **PDF documents**: ~131 files
-- **Text files**: ~131 extracted texts
-- **Total size**: ~267 MB
-
-## 🔧 Advanced Configuration
-
-### Custom Crawl Schedule
-
-Run only during off-peak hours:
-```bash
-# Edit .env
-ACTIVE_WINDOW=01:00-05:00,22:00-23:59
-SCHEDULE_HOURS=24
-```
-
-### Bandwidth Limiting
-
-Limit bandwidth to be polite:
-```bash
-BANDWIDTH_BPS=100000    # ~100 KB/s
-JITTER_MAX=1.0          # Add random delays
-```
-
-### Add More URLs
-
-Edit `.env` and add to `SEED_URLS`:
-```bash
-SEED_URLS=...,https://daa.uit.edu.vn/new-page
-```
-
-Then restart:
-```bash
-docker compose restart
-```
-
-### Docker Compose Configuration
-
-The `docker-compose.yml` uses:
-- **Host network mode** - Required for UIT internal network access
-- **Volume mounts** - Persists data and logs
-- **Environment variables** - Configuration from `.env`
-- **Auto-restart** - Keeps crawler running
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**1. Docker not starting**
-```bash
-# Check if Docker Desktop is running
-docker ps
-
-# Start Docker Desktop (Windows)
-Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
-```
-
-**2. SSL Certificate errors**
-```
-[SSL: CERTIFICATE_VERIFY_FAILED]
-```
-✅ Already fixed - SSL verification is disabled for internal UIT network
-
-**3. Connection refused**
-```
-[Errno 111] Connection refused
-```
-- Check if you're on UIT network
-- VPN might be required for internal URLs
-
-**4. No data being crawled**
-```bash
-# Check logs
-docker logs firecrawl-uit --tail 50
-
-# Verify .env configuration
-cat .env
-```
-
-**5. Container keeps restarting**
-```bash
-# Check logs for errors
-docker logs firecrawl-uit
-
-# Remove and recreate
-docker compose down
-docker compose up -d --build
-```
-
-### Debug Mode
-
-Enable verbose logging:
-```bash
-# Edit firecrawl/main.py
-# Change: logging.INFO to logging.DEBUG
-```
-
-## 📝 Notes
-
-- **Internal Network**: Crawler uses `network_mode: host` to access UIT internal servers (10.204.2.x)
-- **SSL Bypass**: SSL verification is disabled (`verify=False`) for self-signed certificates
-- **Data Persistence**: All crawled data is stored in `./data` and persists across container restarts
-- **Logs**: Available in `./logs/firecrawl.log` and via `docker logs`
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- Built for UIT (University of Information Technology)
-- Based on local Firecrawl implementation
-- Designed for educational documentation archival
+**For convenience**: **Use Firecrawl cloud API**
+- ✅ Minimal resources
+- ✅ Managed service
+- ❌ Costs $20+/month
 
 ---
 
-**Made with ❤️ for UIT Community**
+**Made with 🔥 by Firecrawl**
