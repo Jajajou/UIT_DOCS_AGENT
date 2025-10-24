@@ -1,0 +1,72 @@
+# Python# Python
+
+__pycache__/__pycache__/
+
+*.py[cod]*.py[cod]
+
+*$py.class*$py.class
+
+*.so*.so
+
+.Python.Python
+
+build/
+
+# Logsdevelop-eggs/
+
+logs/dist/
+
+*.logdownloads/
+
+eggs/
+
+# Environment.eggs/
+
+.env.locallib/
+
+lib64/
+
+# IDEparts/
+
+.vscode/sdist/
+
+.idea/var/
+
+*.swpwheels/
+
+*.swopip-wheel-metadata/
+
+share/python-wheels/
+
+# OS*.egg-info/
+
+.DS_Store.installed.cfg
+
+Thumbs.db*.egg
+
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data & Logs
+data/
+logs/
+*.log
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db

@@ -60,7 +60,6 @@ env/
 *~
 
 # Data & Logs
-data/
 logs/
 *.log
 
