@@ -1,6 +1,6 @@
 [submodule "firecrawl"]
 	path = firecrawl
-	url = https://github.com/firecrawl/firecrawl
+	url = https://github.com/mendableai/firecrawl.git
 
 [submodule "LightRAG_UIT"]
 	path = LightRAG_UIT
