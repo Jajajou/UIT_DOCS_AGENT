@@ -12,6 +12,16 @@ dependencies = [
     "langchain-openai>=1.0.0",
     "langgraph>=1.0.0",
     "python-dotenv>=1.0.1",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "transformers>=4.46.3,<4.48",
+    "pillow>=10.0.0",
+    "pdf2image>=1.16.0",
+    "requests>=2.31.0",
+    "addict>=2.4.0",
+    "matplotlib>=3.7.0",
+    "einops>=0.7.0",
+    "easydict>=1.13.0",
 ]
 
 
