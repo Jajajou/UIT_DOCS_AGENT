@@ -9,7 +9,26 @@ dependencies = [
     "langchain-openai>=1.0.0",
     "langgraph>=1.0.0",
     "langgraph-cli[inmem]>=0.4.4",
+    "lightrag-hku[api]",
     "mineru[core]>=2.5.4",
     "psycopg2-binary>=2.9.11",
     "python-multipart>=0.0.20",
+]
+
+[tool.uv.workspace]
+members = [
+    "LightRAG",
+]
+
+[tool.uv.sources]
+lightrag-hku = { workspace = true }
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+executionEnvironments = [ {root = ".", extraPaths = ["LightRAG", "LangGraph"]} ]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.1.0",
 ]
