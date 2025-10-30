@@ -5,3 +5,6 @@
 	path = LightRAG
 	url = git@github.com:Jajajou/LightRAG.git
 	branch = uit
+[submodule "MinerU"]
+	path = MinerU
+	url = https://github.com/Jajajou/MinerU.git

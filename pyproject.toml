@@ -18,10 +18,12 @@ dependencies = [
 [tool.uv.workspace]
 members = [
     "LightRAG",
+    "MinerU",
 ]
 
 [tool.uv.sources]
 lightrag-hku = { workspace = true }
+mineru = { workspace = true }
 
 [tool.pyright]
 venvPath = "."

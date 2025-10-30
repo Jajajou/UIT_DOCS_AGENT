@@ -112,7 +112,7 @@ class LightRAGCore:
                 )
             
             # Create embedding function with custom config
-            async def embedding_func(texts: List[str]) -> List[List[float]]:
+            async def embedding_func(texts: List[str]):
                 return await openai_embed(
                     texts=texts,
                     model=self.embedding_model,
