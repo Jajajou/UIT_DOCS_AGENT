@@ -1,0 +1,50 @@
+services:
+# LightRAG for document knowledge base
+  lightrag_uit:
+    container_name: lightrag_uit
+    image: ghcr.io/hkuds/lightrag:latest
+    build:
+      context: LightRAG
+      dockerfile: LightRAG/Dockerfile
+      tags:
+        - ghcr.io/hkuds/lightrag:latest
+    env_file: .env.lightrag
+    ports: ["9622:9621"]
+    depends_on:
+      postgres_uit:
+        condition: service_started
+      qdrant_uit:
+        condition: service_started
+    volumes:
+      - ./LightRAG/data/rag_storage_docs:/app/data/rag_storage
+      - ./LightRAG/data/inputs_docs:/app/data/inputs
+      - ./LightRAG/data/tiktoken_doc:/app/data/tiktoken
+      - ./LightRAG/config1.ini:/app/config.ini
+      - ./LightRAG/.env1:/app/.env
+    environment:
+      - TIKTOKEN_CACHE_DIR_DOC=/app/data/tiktoken
+    # restart: unless-stopped
+    
+  postgres_uit:
+    image: pgvector/pgvector:pg16
+    env_file: .env.lightrag
+    ports: ["5433:5432"]
+    environment: 
+      POSTGRES_DB: lightrag
+    volumes:
+      - ./LightRAG/data/pg_data_docs:/var/lib/postgresql/data
+
+  qdrant_uit:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6336:6333"
+      - "6337:6334"
+    volumes:
+      - ./LightRAG/data/qdrant_data_docs:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:6336/readyz || curl -fsS http://localhost:6336/readyz || wget -q -O- http://localhost:6336/healthz || curl -fsS http://localhost:6336/healthz || exit 1"]
+      interval: 3s
+      timeout: 2s
+      retries: 40
+      start_period: 5s
+

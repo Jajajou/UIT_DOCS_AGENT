@@ -1,10 +1,6 @@
 [submodule "firecrawl"]
 	path = firecrawl
 	url = https://github.com/duckonthemic/firecrawl_uit.git
-
-[submodule "LightRAG_UIT"]
-	path = LightRAG_UIT
-	url = https://github.com/Jajajou/LightRAG_UIT
 [submodule "MinerU"]
 	path = MinerU
 	url = https://github.com/Jajajou/MinerU.git
