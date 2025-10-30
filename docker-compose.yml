@@ -18,11 +18,9 @@ services:
     volumes:
       - ./LightRAG/data/rag_storage_docs:/app/data/rag_storage
       - ./LightRAG/data/inputs_docs:/app/data/inputs
-      - ./LightRAG/data/tiktoken_doc:/app/data/tiktoken
-      - ./LightRAG/config1.ini:/app/config.ini
-      - ./LightRAG/.env1:/app/.env
+      - ./LightRAG/app/data/tiktoken/tiktoken_doc:/app/data/tiktoken
     environment:
-      - TIKTOKEN_CACHE_DIR_DOC=/app/data/tiktoken
+      - TIKTOKEN_CACHE_DIR_DOC=./LightRAG/app/data/tiktoken
     # restart: unless-stopped
     
   postgres_uit:

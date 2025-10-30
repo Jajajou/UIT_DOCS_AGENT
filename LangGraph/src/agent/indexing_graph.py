@@ -1,4 +1,4 @@
-# indexing_graph.py - Updated to use LightRAG Core instead of API
+# indexing_graph.py - Matches the perfect flowchart
 from __future__ import annotations
 
 import io
@@ -9,13 +9,12 @@ from pathlib import Path
 from typing import Literal, List, Dict, Any, Union, Optional, cast
 from langgraph.graph import StateGraph, END, START
 from agent.state import IndexingState
-from agent.lightrag_core import get_lightrag_core
+from agent.lightrag_client import LightRAGAPIClient
 from agent.mineru_client import MinerUClient, MinerUClientError
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 
 
-# Use LightRAG Core instead of API client
-lightrag_core = get_lightrag_core()
+api_client = LightRAGAPIClient()
 mineru_client = MinerUClient()
 
 # ---------------------- Helper Functions ----------------------
@@ -49,6 +48,7 @@ def _parse_chat_command(msg: AnyMessage) -> Dict[str, Any]:
     Supported commands:
     - "upload /path/to/file.pdf" -> Upload single file
     - "upload /path/to/folder" -> Upload all files in folder
+    - "scan" -> Trigger scan
     - anything else -> insert as text
     """
     content = getattr(msg, "content", "")
@@ -76,6 +76,13 @@ def _parse_chat_command(msg: AnyMessage) -> Dict[str, Any]:
         return {
             "command": "upload_path",
             "path": path,
+            "text": text
+        }
+    
+    # Check for scan command
+    if text.lower() == "scan" or text.lower().startswith("scan"):
+        return {
+            "command": "scan",
             "text": text
         }
     
@@ -182,6 +189,11 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
         state["source_type"] = "file"
         state["input_source"] = parsed["path"]  # Store path for next node
         state["description"] = f"Upload from path: {parsed['path']}"
+    
+    elif command == "scan":
+        state["source_type"] = "scan"
+        state["input_source"] = None  # type: ignore
+        state["description"] = "Manual scan triggered"
     
     elif command == "text":
         state["source_type"] = "text"
@@ -307,60 +319,74 @@ def parse_with_mineru(state: IndexingState) -> IndexingState:
         file_stem = Path(file_path).stem
         output_dir = f"./output/{file_stem}"
         
-        print(f"[MINERU] Parsing {os.path.basename(file_path)}...")
+        print(f"[MINERU] Parsing: {os.path.basename(file_path)}")
         
-        result = mineru_client.parse_pdf(
-            pdf_path=file_path,
-            output_dir=output_dir
+        md_content, output_path = mineru_client.parse_and_get_markdown(
+            file_path,
+            output_dir=output_dir,
+            parse_method="auto",
+            lang_list="latin",
+            table_enable=True,
+            formula_enable=True,
         )
         
-        if result["success"]:
-            markdown_content = result.get("markdown_content", "")
-            
-            state["parsed_content"] = markdown_content
-            state["mineru_output_dir"] = output_dir
-            state["mineru_success"] = True
-            state["mineru_error"] = None  # type: ignore
-            
-            print(f"[MINERU] ✓ Success - {len(markdown_content):,} chars")
-        else:
-            error_msg = result.get("error", "Unknown error")
-            state["mineru_success"] = False
-            state["mineru_error"] = error_msg
-            
-            print(f"[MINERU] ✗ Failed: {error_msg}")
-    
+        print(f"[MINERU] ✓ Success - {len(md_content):,} chars")
+        
+        state["parsed_content"] = md_content
+        state["mineru_output_dir"] = output_path
+        state["mineru_success"] = True
+        state["error"] = None  # type: ignore
+        
     except Exception as e:
+        print(f"[MINERU] ✗ Failed: {str(e)}")
+        state["parsed_content"] = None  # type: ignore
         state["mineru_success"] = False
         state["mineru_error"] = str(e)
-        print(f"[MINERU] ✗ Exception: {str(e)}")
     
     return state
 
 
-async def upload_to_lightrag(state: IndexingState) -> IndexingState:
-    """Upload content to LightRAG using Core library."""
-    
-    # Initialize LightRAG Core if not already
-    if not lightrag_core.initialized:
-        await lightrag_core.initialize()
+def upload_to_lightrag(state: IndexingState) -> IndexingState:
+    """Upload to LightRAG (handles text, scan, and files)."""
     
     source_type = state.get("source_type")
+    
+    # Handle scan
+    if source_type == "scan":
+        try:
+            result = api_client.trigger_scan()
+            state["api_response"] = result
+            state["status_message"] = "Scan initiated"
+            
+            track_id = result.get("track_id", "N/A")
+            response_text = f"✓ Scan initiated!\n\nTrack ID: `{track_id}`\n\nProcessing in background..."
+            
+            msgs = list(state.get("messages", []))
+            msgs.append(AIMessage(content=response_text))
+            state["messages"] = msgs
+            
+        except Exception as e:
+            state["error"] = str(e)
+            msgs = list(state.get("messages", []))
+            msgs.append(AIMessage(content=f"Error: {str(e)}"))
+            state["messages"] = msgs
+        
+        return state
     
     # Handle text
     if source_type == "text":
         try:
             input_source = state.get("input_source")
             if isinstance(input_source, list):
-                result = await lightrag_core.insert_texts(cast(List[str], input_source))
+                result = api_client.insert_texts(cast(List[str], input_source))
             else:
-                result = await lightrag_core.insert_text(cast(str, input_source))
+                result = api_client.insert_text(cast(str, input_source))
             
             state["api_response"] = result
             state["status_message"] = "Text inserted"
             
-            status = result.get("status", "success")
-            response_text = f"✓ Text inserted!\n\nStatus: `{status}`\n\nProcessing in background..."
+            track_id = result.get("track_id", "N/A")
+            response_text = f"✓ Text inserted!\n\nTrack ID: `{track_id}`\n\nProcessing in background..."
             
             msgs = list(state.get("messages", []))
             msgs.append(AIMessage(content=response_text))
@@ -392,7 +418,7 @@ async def upload_to_lightrag(state: IndexingState) -> IndexingState:
             
             if state.get("mineru_success") and parsed_content:
                 # Upload parsed content
-                result = await lightrag_core.insert_text(
+                result = api_client.insert_text(
                     text=parsed_content,
                     file_source=file_name
                 )
@@ -400,29 +426,25 @@ async def upload_to_lightrag(state: IndexingState) -> IndexingState:
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
-                    "status": result.get("status", "success"),
+                    "track_id": result.get("track_id"),
+                    "status": "success",
                     "parsed_with_mineru": True,
                     "output_dir": state.get("mineru_output_dir"),
                     "markdown_length": len(parsed_content),
                     "response": result
                 }
                 
-                print(f"[UPLOAD] ✓ Success (MinerU) - Status: {result.get('status')}")
+                print(f"[UPLOAD] ✓ Success (MinerU) - Track: {result.get('track_id')}")
             
             else:
-                # Read file content and insert
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    file_content = f.read()
-                
-                result = await lightrag_core.insert_text(
-                    text=file_content,
-                    file_source=file_name
-                )
+                # Direct file upload
+                result = api_client.upload_file(file_path)
                 
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
-                    "status": result.get("status", "success"),
+                    "track_id": result.get("track_id"),
+                    "status": "success",
                     "parsed_with_mineru": False,
                     "response": result
                 }
@@ -431,7 +453,7 @@ async def upload_to_lightrag(state: IndexingState) -> IndexingState:
                 if mineru_error:
                     upload_result["fallback_reason"] = mineru_error
                 
-                print(f"[UPLOAD] ✓ Success (Direct) - Status: {result.get('status')}")
+                print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}")
             
             results = state.get("upload_results", [])
             results.append(upload_result)
@@ -504,7 +526,7 @@ def finalize_upload(state: IndexingState) -> IndexingState:
                     extra = " (Direct - MinerU failed)"
                 
                 response_lines.append(f"  • `{result['file_name']}`{extra}")
-                response_lines.append(f"    Status: `{result.get('status', 'success')}`")
+                response_lines.append(f"    Track ID: `{result['track_id']}`")
     
     if failed_count > 0:
         response_lines.append("")
@@ -552,7 +574,7 @@ def route_after_prepare(state: IndexingState) -> Literal["error_handler", "uploa
     
     source_type = state.get("source_type")
     
-    if source_type == "text":
+    if source_type in ["text", "scan"]:
         return "upload_to_lightrag"
     elif source_type == "file":
         return "prepare_file_list"
@@ -588,7 +610,7 @@ def route_after_upload(state: IndexingState) -> Literal["prepare_file_list", "fi
         else:
             return "finalize_upload"
     else:
-        # Text - we're done
+        # Text or scan - we're done
         return "end"
 
 
