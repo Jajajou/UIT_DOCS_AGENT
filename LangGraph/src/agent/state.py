@@ -5,6 +5,9 @@ from langgraph.graph.message import add_messages
 from langchain_core.messages import AnyMessage
 from typing_extensions import NotRequired
 
+class Data(TypedDict):
+    path: str
+    source: str
 
 class IndexingState(TypedDict):
     """State for the document indexing pipeline/graph with Chat UI support."""
@@ -13,7 +16,7 @@ class IndexingState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
     
     # Indexing parameters - all optional now since we can extract from messages
-    input_source: NotRequired[Union[str, List[str]]]
+    input_source: NotRequired[Union[Data, List[Data]]]
     source_type: NotRequired[Literal["file", "text", "scan", "batch"]]
     description: NotRequired[str]
     

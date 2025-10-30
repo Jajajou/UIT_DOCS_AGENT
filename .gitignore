@@ -216,3 +216,10 @@ __marimo__/
 .streamlit/secrets.toml
 .langgraph_api/
 .env.lightrag
+
+# Data directories
+data/inputs/
+data/rag_storage/
+data/tiktoken/
+data/pg_data/
+data/qdrant_data/

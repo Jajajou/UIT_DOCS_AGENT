@@ -1,10 +1,10 @@
 [submodule "firecrawl"]
 	path = firecrawl
 	url = https://github.com/duckonthemic/firecrawl_uit.git
-[submodule "LightRAG"]
-	path = LightRAG
-	url = git@github.com:Jajajou/LightRAG.git
-	branch = uit
 [submodule "MinerU"]
 	path = MinerU
 	url = https://github.com/Jajajou/MinerU.git
+[submodule "LightRAG"]
+	path = LightRAG
+	url = https://github.com/Jajajou/LightRAG.git
+	branch = uit

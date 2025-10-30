@@ -33,4 +33,5 @@ executionEnvironments = [ {root = ".", extraPaths = ["LightRAG", "LangGraph"]} ]
 [dependency-groups]
 dev = [
     "ipykernel>=7.1.0",
+    "pypdf2>=3.0.1",
 ]

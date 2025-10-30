@@ -4,8 +4,8 @@ services:
     container_name: lightrag_uit
     image: ghcr.io/hkuds/lightrag:latest
     build:
-      context: LightRAG
-      dockerfile: LightRAG/Dockerfile
+      context: ./LightRAG
+      dockerfile: ./LightRAG/Dockerfile
       tags:
         - ghcr.io/hkuds/lightrag:latest
     env_file: .env.lightrag
@@ -16,11 +16,11 @@ services:
       qdrant_uit:
         condition: service_started
     volumes:
-      - ./LightRAG/data/rag_storage_docs:/app/data/rag_storage
-      - ./LightRAG/data/inputs_docs:/app/data/inputs
-      - ./LightRAG/app/data/tiktoken/tiktoken_doc:/app/data/tiktoken
+      - ./data/rag_storage:/app/data/rag_storage
+      - ./data/inputs:/app/data/inputs
+      - ./data/tiktoken:/app/data/tiktoken
     environment:
-      - TIKTOKEN_CACHE_DIR_DOC=./LightRAG/app/data/tiktoken
+      - TIKTOKEN_CACHE_DIR_DOC=./data/tiktoken
     # restart: unless-stopped
     
   postgres_uit:
@@ -30,7 +30,7 @@ services:
     environment: 
       POSTGRES_DB: lightrag
     volumes:
-      - ./LightRAG/data/pg_data_docs:/var/lib/postgresql/data
+      - ./data/pg_data:/var/lib/postgresql/data
 
   qdrant_uit:
     image: qdrant/qdrant:latest
@@ -38,7 +38,7 @@ services:
       - "6336:6333"
       - "6337:6334"
     volumes:
-      - ./LightRAG/data/qdrant_data_docs:/qdrant/storage
+      - ./data/qdrant_data:/qdrant/storage
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://localhost:6336/readyz || curl -fsS http://localhost:6336/readyz || wget -q -O- http://localhost:6336/healthz || curl -fsS http://localhost:6336/healthz || exit 1"]
       interval: 3s

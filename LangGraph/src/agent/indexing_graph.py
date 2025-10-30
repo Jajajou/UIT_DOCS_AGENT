@@ -12,6 +12,7 @@ from agent.state import IndexingState
 from agent.lightrag_client import LightRAGAPIClient
 from agent.mineru_client import MinerUClient, MinerUClientError
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
+from agent.utils import get_url
 
 
 api_client = LightRAGAPIClient()
@@ -410,6 +411,7 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
         file_name = os.path.basename(file_path)
         file_list = state.get("file_list", [])
         current_index = state.get("current_file_index", 0)
+        url = get_url(file_path)
         
         print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}")
         
@@ -420,12 +422,13 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
                 # Upload parsed content
                 result = api_client.insert_text(
                     text=parsed_content,
-                    file_source=file_name
+                    file_source=url
                 )
                 
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
+                    "file_source": url,
                     "track_id": result.get("track_id"),
                     "status": "success",
                     "parsed_with_mineru": True,
@@ -443,6 +446,7 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
+                    "file_source": url,
                     "track_id": result.get("track_id"),
                     "status": "success",
                     "parsed_with_mineru": False,
@@ -466,6 +470,7 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
             results.append({
                 "file_path": file_path,
                 "file_name": file_name,
+                "file_source": url,
                 "status": "failed",
                 "error": str(e)
             })
