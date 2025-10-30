@@ -5,11 +5,11 @@ import json
 from typing import Any, Dict, Optional, cast, List
 from langgraph.graph import StateGraph, END
 from agent.state import QueryState
-from agent.lightrag_client import LightRAGAPIClient
+from agent.lightrag_core import get_lightrag_core
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 
-# Reuse a single API client (reads env for URL, API key, token)
-api_client = LightRAGAPIClient()
+# Get LightRAG Core instance (will be initialized on first use)
+lightrag_core = get_lightrag_core()
 
 def _content_to_text(content: Any) -> str:
     # content may be a str OR a list of message parts like [{"type":"text", "text":"..."}]
@@ -33,7 +33,7 @@ def _last_human_text(messages: List[AnyMessage]) -> str:
 
 # ---------------------- Graph Nodes ----------------------
 def prepare_payload(state: QueryState) -> QueryState:
-    """Validate inputs and assemble payload for LightRAG /query."""
+    """Validate inputs and assemble payload for LightRAG query."""
     query = state.get("query")
     
     # If no direct query, extract from messages (for Chat UI)
@@ -41,7 +41,9 @@ def prepare_payload(state: QueryState) -> QueryState:
         query = _last_human_text(state.get("messages", []))
     
     mode = state.get("mode", "mix")
-    top_k = state.get("top_k", 5)
+    top_k = state.get("top_k", 60)
+    response_type = state.get("response_type", "Multiple Paragraphs")
+    include_references = state.get("include_references", True)
 
     if not query or not isinstance(query, str):
         state["error"] = "query must be a non-empty string"
@@ -58,59 +60,59 @@ def prepare_payload(state: QueryState) -> QueryState:
     payload: Dict[str, Any] = {
         "query": query,
         "mode": mode,
-        "include_references": True,
+        "include_references": include_references,
+        "response_type": response_type,
         "top_k": top_k,
     }
     state["api_payload"] = payload
     state["error"] = None # type: ignore
     return state
 
-# ---------------------- Helpers ----------------------
-def _to_conv_item(msg: AnyMessage) -> Dict[str, Any]:
-    if isinstance(msg, HumanMessage):
-        return {"role": "user", "content": msg.content}
-    elif isinstance(msg, AIMessage):
-        return {"role": "assistant", "content": msg.content}
-    return {"role": "unknown", "content": getattr(msg, "content", "")}
 
-def call_query_api(state: QueryState) -> QueryState:
+async def call_lightrag_core(state: QueryState) -> QueryState:
+    """
+    Call LightRAG Core directly instead of API.
+    This replaces the API call with direct library usage.
+    """
     if state.get("error"):
         return state
 
     payload = cast(Dict[str, Any], state.get("api_payload") or {})
+    
     try:
-        endpoint = "/query/stream" if payload.get("stream") else "/query"
-        # Use raw _post to preserve full payload shape
-        r = api_client._post(endpoint, json=payload, stream=payload.get("stream", False))
-        r.raise_for_status()
-
-        if payload.get("stream"):
-            # NDJSON streaming
-            chunks: List[str] = []
-            for line in r.iter_lines(decode_unicode=True):
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                except Exception:
-                    continue
-                if isinstance(obj, dict):
-                    if "response" in obj and isinstance(obj["response"], str):
-                        chunks.append(obj["response"])
-                    state["api_response"] = obj
-            answer = ("".join(chunks)).strip() or None
+        # Initialize if not already initialized
+        if not lightrag_core.initialized:
+            await lightrag_core.initialize()
+        
+        # Query using LightRAG Core
+        result = await lightrag_core.query(
+            query_text=payload.get("query", ""),
+            mode=payload.get("mode", "mix"),
+            include_references=payload.get("include_references", True),
+            response_type=payload.get("response_type", "Multiple Paragraphs"),
+            top_k=payload.get("top_k", 60),
+            conversation_history=payload.get("conversation_history"),
+            max_total_tokens=payload.get("max_total_tokens"),
+            stream=False  # Core mode doesn't support streaming yet
+        )
+        
+        # Store result
+        state["api_response"] = result
+        
+        # Extract answer
+        answer = result.get("response") or result.get("answer")
+        
+        if result.get("error"):
+            state["error"] = result["error"]
+            state["final_answer"] = None # type: ignore
         else:
-            resp = r.json()
-            state["api_response"] = resp
-            answer = resp.get("response") or resp.get("answer")
-
-        state["final_answer"] = answer # type: ignore
-
-        # Append assistant message so Studio Chat shows the answer
-        if answer:
-            msgs = list(state.get("messages", []))
-            msgs.append(AIMessage(content=answer))
-            state["messages"] = msgs
+            state["final_answer"] = answer # type: ignore
+            
+            # Append assistant message so Studio Chat shows the answer
+            if answer:
+                msgs = list(state.get("messages", []))
+                msgs.append(AIMessage(content=answer))
+                state["messages"] = msgs
 
     except Exception as e:
         state["error"] = str(e)
@@ -123,10 +125,10 @@ def call_query_api(state: QueryState) -> QueryState:
 # ---------------------- Builder ----------------------
 builder = StateGraph(state_schema=QueryState)
 builder.add_node("prepare_payload", prepare_payload)
-builder.add_node("call_api", call_query_api)
+builder.add_node("call_lightrag", call_lightrag_core)
 builder.set_entry_point("prepare_payload")
-builder.add_edge("prepare_payload", "call_api")
-builder.add_edge("call_api", END)
+builder.add_edge("prepare_payload", "call_lightrag")
+builder.add_edge("call_lightrag", END)
 
 graph = builder.compile()
 graph.name = "RetrievalGraph"
