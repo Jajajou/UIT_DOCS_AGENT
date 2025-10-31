@@ -326,7 +326,7 @@ def parse_with_mineru(state: IndexingState) -> IndexingState:
             file_path,
             output_dir=output_dir,
             parse_method="auto",
-            lang_list="latin",
+            lang_list='["latin"]',
             table_enable=True,
             formula_enable=True,
         )

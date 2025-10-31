@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Literal
 from dotenv import load_dotenv
 
+load_dotenv("../../.env")
+base_url = os.getenv("MINERU_URL")
+
 DEFAULT_TIMEOUT = 300  # 5 minutes for 1 PDF parsing
 
 
@@ -37,7 +40,7 @@ class MinerUClient:
         file_path: str,
         output_dir: str | None = None,
         parse_method: Literal["auto", "txt", "ocr"] = "auto",
-        lang_list: str = "ch",
+        lang_list: str = "latin",
         start_page_id: int = 0,
         end_page_id: int = 99999,
         return_md: bool = True,
