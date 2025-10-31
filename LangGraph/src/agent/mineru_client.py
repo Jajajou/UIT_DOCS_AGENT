@@ -3,10 +3,8 @@ import os
 import requests
 from pathlib import Path
 from typing import Optional, Dict, Any, Literal
-from dotenv import load_dotenv
+from agent.config import MINERU_DIR, MINERU_BASE_URL
 
-load_dotenv("../../.env")
-base_url = os.getenv("MINERU_URL")
 
 DEFAULT_TIMEOUT = 300  # 5 minutes for 1 PDF parsing
 
@@ -24,8 +22,7 @@ class MinerUClient:
         timeout: int = DEFAULT_TIMEOUT,
         session: requests.Session | None = None,
     ) -> None:
-        load_dotenv("LangGraph/.env")
-        self.base_url = base_url or os.getenv("MINERU_URL")
+        self.base_url = MINERU_BASE_URL
         self.timeout = timeout
         self._session = session or requests.Session()
     
@@ -74,11 +71,12 @@ class MinerUClient:
         if not file_path.lower().endswith('.pdf'):
             raise MinerUClientError(f"Only PDF files are supported: {file_path}")
         
+        
         # Create output directory based on file name if not provided
         if output_dir is None:
             file_stem = Path(file_path).stem
-            output_dir = f"./output/{file_stem}"
-        
+            output_dir = str((MINERU_DIR / file_stem).resolve())
+
         # Prepare form data
         files = {
             'files': (os.path.basename(file_path), open(file_path, 'rb'), 'application/pdf')
@@ -134,14 +132,16 @@ class MinerUClient:
         if not output_path.exists():
             return None
         
-        # Look for .md files in the output directory
-        md_files = list(output_path.glob("*.md"))
+        # find all .md files inside (recursively)
+        md_files = [f for f in output_path.rglob("*.md") if f.is_file()]
+        if not md_files:
+            return None
         
         if not md_files:
             return None
         
-        # Return the first markdown file content
-        md_file = md_files[0]
+        # pick the most recently modified .md
+        md_file = max(md_files, key=lambda f: f.stat().st_mtime)
         try:
             with open(md_file, 'r', encoding='utf-8') as f:
                 return f.read()
@@ -168,13 +168,13 @@ class MinerUClient:
         # Set default output directory
         if output_dir is None:
             file_stem = Path(file_path).stem
-            output_dir = f"./output/{file_stem}"
-        
+            output_dir = str((MINERU_DIR / file_stem).resolve())
+
         print(f"[MinerU] Parsing PDF: {file_path}")
         print(f"[MinerU] Output directory: {output_dir}")
         
         # Parse the PDF
-        result = self.parse_pdf(file_path, output_dir=output_dir, **kwargs)
+        result = self.parse_pdf(file_path, output_dir=str(output_dir), **kwargs)
         
         print(f"[MinerU] Parse result: {result}")
         

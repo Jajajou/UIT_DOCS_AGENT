@@ -223,3 +223,4 @@ data/rag_storage/
 data/tiktoken/
 data/pg_data/
 data/qdrant_data/
+data/MinerU/

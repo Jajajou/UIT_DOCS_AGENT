@@ -5,6 +5,7 @@ import io
 import os
 import glob
 import requests
+import sys
 from pathlib import Path
 from typing import Literal, List, Dict, Any, Union, Optional, cast
 from langgraph.graph import StateGraph, END, START
@@ -13,6 +14,7 @@ from agent.lightrag_client import LightRAGAPIClient
 from agent.mineru_client import MinerUClient, MinerUClientError
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 from agent.utils import get_url
+from agent.config import MINERU_DIR
 
 
 api_client = LightRAGAPIClient()
@@ -318,7 +320,8 @@ def parse_with_mineru(state: IndexingState) -> IndexingState:
     
     try:
         file_stem = Path(file_path).stem
-        output_dir = f"./output/{file_stem}"
+        output_dir = str((MINERU_DIR / file_stem).resolve())
+
         
         print(f"[MINERU] Parsing: {os.path.basename(file_path)}")
         
@@ -326,7 +329,7 @@ def parse_with_mineru(state: IndexingState) -> IndexingState:
             file_path,
             output_dir=output_dir,
             parse_method="auto",
-            lang_list='["latin"]',
+            lang_list="latin",
             table_enable=True,
             formula_enable=True,
         )
