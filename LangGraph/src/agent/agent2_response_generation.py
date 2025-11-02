@@ -25,6 +25,7 @@ from agent.state_v2 import (
     FALLBACK_RESPONSE_TEMPLATE,
     PARTIAL_ANSWER_SUFFIX
 )
+from agent.prompts import get_prompt, format_prompt
 
 
 # ============================================================================
@@ -43,10 +44,15 @@ GENERATION_TEMPERATURE = float(os.getenv("AGENT2_GENERATION_TEMP", "0.3"))
 
 
 # ============================================================================
-# Prompt Templates
+# Prompt Templates (from prompts.py)
 # ============================================================================
 
-DATA_QUALITY_ASSESSMENT_PROMPT = """
+# Prompts are loaded from prompts.py
+# DATA_QUALITY_ASSESSMENT_PROMPT = get_prompt("data_quality_assessment_system", LLM_MODEL)
+# RESPONSE_GENERATION_PROMPT = get_prompt("response_generation_system", LLM_MODEL)
+
+# For backwards compatibility, keep old prompts as fallback
+DATA_QUALITY_ASSESSMENT_PROMPT_OLD = """
 Bạn là chuyên gia đánh giá chất lượng dữ liệu cho hệ thống RAG tư vấn sinh viên UIT.
 
 <role>
@@ -394,8 +400,10 @@ def agent2_assess_data_quality(state: QueryStateV2) -> QueryStateV2:
     relationships_summary = _format_relationships_summary(relationships)
     chunks_summary = _format_chunks_summary(chunks)
     
-    # Build prompt
-    prompt = DATA_QUALITY_ASSESSMENT_PROMPT.format(
+    # Load and format prompt from prompts.py
+    prompt_template = get_prompt("data_quality_assessment_system", LLM_MODEL)
+    prompt = format_prompt(
+        prompt_template,
         parsed_intention=parsed_intention,
         entities_summary=entities_summary,
         relationships_summary=relationships_summary,
@@ -521,8 +529,10 @@ def _generate_full_response(state: QueryStateV2) -> QueryStateV2:
     # Format retrieved data
     retrieved_data_formatted = _format_retrieved_data_for_generation(state)
     
-    # Build prompt
-    prompt = RESPONSE_GENERATION_PROMPT.format(
+    # Load and format prompt from prompts.py
+    prompt_template = get_prompt("response_generation_system", LLM_MODEL)
+    prompt = format_prompt(
+        prompt_template,
         parsed_intention=parsed_intention,
         retrieved_data_formatted=retrieved_data_formatted,
         quality_score=quality_score,

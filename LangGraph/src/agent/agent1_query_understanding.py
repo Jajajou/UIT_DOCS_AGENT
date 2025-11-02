@@ -15,6 +15,7 @@ from typing import Any, List
 from openai import OpenAI
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 from agent.state_v2 import QueryStateV2, QueryUnderstanding, QUERY_CONFIDENCE_THRESHOLD
+from agent.prompts import get_prompt
 
 
 # ============================================================================
@@ -32,10 +33,14 @@ LLM_TEMPERATURE = float(os.getenv("AGENT1_TEMPERATURE", "0.1"))
 
 
 # ============================================================================
-# Prompt Template
+# Prompt Template (from prompts.py)
 # ============================================================================
 
-QUERY_UNDERSTANDING_SYSTEM_PROMPT = """
+# Prompt is loaded from prompts.py
+# QUERY_UNDERSTANDING_SYSTEM_PROMPT = get_prompt("query_understanding_system", LLM_MODEL)
+
+# For backwards compatibility, keep old prompt as fallback
+QUERY_UNDERSTANDING_SYSTEM_PROMPT_OLD = """
 Bạn là trợ lý phân tích câu hỏi của sinh viên UIT (Đại học Công nghệ Thông tin - ĐHQG TP.HCM).
 
 <role>
@@ -244,11 +249,14 @@ def agent1_understand_query(state: QueryStateV2) -> QueryStateV2:
     print("=" * 80)
     
     try:
+        # Load prompt from prompts.py
+        system_prompt = get_prompt("query_understanding_system", LLM_MODEL)
+        
         # Call LLM with structured output
         completion = client.beta.chat.completions.parse(
             model=LLM_MODEL,
             messages=[
-                {"role": "system", "content": QUERY_UNDERSTANDING_SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Phân tích câu hỏi sau:\n\n{query}"}
             ],
             response_format=QueryUnderstanding,
