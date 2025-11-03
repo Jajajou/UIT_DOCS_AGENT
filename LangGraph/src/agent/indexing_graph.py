@@ -39,8 +39,10 @@ def _content_to_text(content: Any) -> str:
 def _last_human_message(messages: List[AnyMessage]) -> Optional[AnyMessage]:
     """Get the last human message."""
     for msg in reversed(messages or []):
+        print(msg)
         if isinstance(msg, HumanMessage) or getattr(msg, "type", None) == "human":
             return msg
+        
     return None
 
 
@@ -159,12 +161,18 @@ def _is_pdf(file_path: str) -> bool:
 
 # ---------------------- Graph Nodes ----------------------
 
+# def ingest_user_text(state: IndexingState) -> IndexingState:
+#     txt = state.get("input_text")
+#     if txt:
+#         state["messages"].append(HumanMessage(content=txt))
+#     return state
+
 def prepare_indexing(state: IndexingState) -> IndexingState:
     """Prepare indexing request - determine command type."""
     
     # If direct input provided (from Graph tab), use it
-    if state.get("source_type") and state.get("input_source") is not None:
-        return state
+    # if state.get("source_type") and state.get("input_source") is not None:
+        # return state
     
     messages = state.get("messages", [])
     if not messages:
@@ -173,7 +181,12 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
         return state
     
     # Get last human message
+    print("Messages list length:", len(messages))
+    for i, m in enumerate(messages):
+        print(f"{i}: {m}")
+    
     last_msg = _last_human_message(messages)
+    # state["status_message"] = last_msg['content']
     if not last_msg:
         state["error"] = "No input provided"
         state["status_message"] = "Error: No input"
@@ -277,8 +290,8 @@ def prepare_file_list(state: IndexingState) -> IndexingState:
     
     # Initialize file processing state
     state["file_list"] = supported_files
-    state["current_file_index"] = 0
-    state["upload_results"] = []
+    # state["current_file_index"] = 0
+    # state["upload_results"] = []
     state["error"] = None  # type: ignore
     
     return state
@@ -416,7 +429,7 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
         current_index = state.get("current_file_index", 0)
         url = get_url(file_path)
         
-        print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}")
+        print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}, {url}")
         
         try:
             parsed_content = state.get("parsed_content")
@@ -613,7 +626,11 @@ def route_after_upload(state: IndexingState) -> Literal["prepare_file_list", "fi
         file_list = state.get("file_list", [])
         current_index = state.get("current_file_index", 0)
         
+        print(f"current_index - {current_index:,}")
+        print(f"file_list - {len(file_list):,}")
+
         if current_index < len(file_list):
+            # current_file_index
             return "prepare_file_list"
         else:
             return "finalize_upload"
@@ -627,6 +644,7 @@ def route_after_upload(state: IndexingState) -> Literal["prepare_file_list", "fi
 builder = StateGraph(state_schema=IndexingState)
 
 # Add all nodes
+# builder.add_node("ingest_user_text", ingest_user_text)
 builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
@@ -637,6 +655,7 @@ builder.add_node("error_handler", error_handler)
 
 # Build the graph following the flowchart exactly
 builder.add_edge(START, "prepare_indexing")
+# builder.add_edge("ingest_user_text", "prepare_indexing")
 
 builder.add_conditional_edges(
     "prepare_indexing",
