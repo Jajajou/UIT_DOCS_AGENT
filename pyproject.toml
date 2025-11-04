@@ -12,8 +12,10 @@ dependencies = [
     "langgraph-cli[inmem]>=0.4.4",
     "lightrag-hku[api]",
     "mineru[core]>=2.6.2",
+    "nltk>=3.9.2",
     "psycopg2-binary>=2.9.11",
     "python-multipart>=0.0.20",
+    "unidecode>=1.4.0",
 ]
 
 [tool.uv.workspace]
@@ -29,7 +31,7 @@ lightrag-hku = { workspace = true }
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-executionEnvironments = [ {root = ".", extraPaths = ["LightRAG", "LangGraph"]} ]
+executionEnvironments = [ {root = ".", extraPaths = ["LightRAG", "LangGraph", "VietnameseOcrCorrection"]} ]
 
 [dependency-groups]
 dev = [

@@ -13,14 +13,33 @@ from agent.state import IndexingState
 from agent.lightrag_client import LightRAGAPIClient
 from agent.mineru_client import MinerUClient, MinerUClientError
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
-from agent.utils import get_url
+from agent.utils import get_url, predict
 from agent.config import MINERU_DIR
+from dotenv import load_dotenv
+
+load_dotenv()
+project_dir = str(os.environ.get("PROJECT_ROOT"))
+viet_ocr_correction = os.path.join(project_dir, "VietnameseOcrCorrection")
+sys.path.append(os.path.abspath(viet_ocr_correction))
 
 
 api_client = LightRAGAPIClient()
 mineru_client = MinerUClient()
 
 # ---------------------- Helper Functions ----------------------
+def _fix_md_content(md_content: str) -> str:
+    return predict(md_content)
+
+def _dedupe_paths(paths: list[str]) -> list[str]:
+    seen = set()
+    out = []
+    for p in paths:
+        ap = os.path.abspath(p)
+        if ap not in seen:
+            seen.add(ap)
+            out.append(ap)
+    return out
+
 def _content_to_text(content: Any) -> str:
     """Extract text from message content."""
     if isinstance(content, str):
@@ -289,7 +308,9 @@ def prepare_file_list(state: IndexingState) -> IndexingState:
     print(f"[FILE_LIST] Files: {', '.join(preview_files)}{more_text}")
     
     # Initialize file processing state
-    state["file_list"] = supported_files
+    existing = state.get("file_list", [])
+    merged = _dedupe_paths(existing + supported_files)
+    state["file_list"] = merged
     # state["current_file_index"] = 0
     # state["upload_results"] = []
     state["error"] = None  # type: ignore
@@ -302,7 +323,9 @@ def check_if_pdf(state: IndexingState) -> IndexingState:
     
     file_list = state.get("file_list", [])
     current_index = state.get("current_file_index", 0)
-    
+
+    print(f"current file list: {file_list} - current_index: {current_index}")
+
     if current_index >= len(file_list):
         # No more files
         state["is_pdf"] = False
@@ -310,6 +333,7 @@ def check_if_pdf(state: IndexingState) -> IndexingState:
         return state
     
     current_file = file_list[current_index]
+    print(f"current file path: {current_file}")
     is_pdf = _is_pdf(current_file)
     
     state["is_pdf"] = is_pdf
@@ -349,7 +373,7 @@ def parse_with_mineru(state: IndexingState) -> IndexingState:
         
         print(f"[MINERU] ✓ Success - {len(md_content):,} chars")
         
-        state["parsed_content"] = md_content
+        state["parsed_content"] = _fix_md_content(md_content)
         state["mineru_output_dir"] = output_path
         state["mineru_success"] = True
         state["error"] = None  # type: ignore
@@ -494,7 +518,8 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
         
         # Move to next file
         current_index = state.get("current_file_index", 0)
-        state["current_file_index"] = current_index + 1
+        if current_index < len(file_list):
+            state["current_file_index"] = current_index + 1
         
         # Clear current file state
         state["current_file_path"] = None  # type: ignore
