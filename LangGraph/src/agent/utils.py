@@ -10,8 +10,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 project_dir = str(os.environ.get("PROJECT_ROOT"))
-viet_ocr_correction = os.path.join(project_dir, "VietnameseOcrCorrection")
-sys.path.append(os.path.abspath(viet_ocr_correction))
 
 def find_urls_by_filename(
     links: Iterable[str],
@@ -103,14 +101,3 @@ def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
     return None
 
 #---
-
-from tool.predictor import Predictor # type: ignore
-
-def predict(input: str, ngram: int = 5):
-    model_predictor = Predictor(
-        device='mps', # TODO: change later in .env
-        model_type='seq2seq',
-        weight_path='/Users/jajajou1778/UIT_DOCS_AGENT/VietnameseOcrCorrection/weights/seq2seq_0.pth'
-    )
-
-    return model_predictor.predict(input.strip(), NGRAM=ngram)

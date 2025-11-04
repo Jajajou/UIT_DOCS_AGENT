@@ -25,8 +25,8 @@ members = [
 ]
 
 [tool.uv.sources]
-mineru = { workspace = true }
 lightrag-hku = { workspace = true }
+mineru = { workspace = true }
 
 [tool.pyright]
 venvPath = "."
