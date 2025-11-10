@@ -5,10 +5,23 @@ from dotenv import load_dotenv
 load_dotenv()
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).parents[2])).resolve()
 DATA_DIR = PROJECT_ROOT / "data"
-MINERU_DIR = DATA_DIR / "MinerU"
+DEEPSEEK_OCR_DIR = DATA_DIR / "DeepSeek-OCR"
 
-MINERU_BASE_URL = os.getenv("MINERU_URL", "http://localhost:8000")  
+MODEL_NAME = "mlx-community/DeepSeek-OCR-8bit"
 
-print(f"PROJECT_ROOT is set to: {PROJECT_ROOT}")
-print(f"DATA_DIR is set to: {DATA_DIR}")
-print(f"MINERU_DIR is set to: {MINERU_DIR}")
+MODEL_CONFIGS = {
+    "Gundam": {"base_size": 1024, "image_size": 640, "crop_mode": True},
+    "Tiny": {"base_size": 512, "image_size": 512, "crop_mode": False},
+    "Small": {"base_size": 640, "image_size": 640, "crop_mode": False},
+    "Base": {"base_size": 1024, "image_size": 1024, "crop_mode": False},
+    "Large": {"base_size": 1280, "image_size": 1280, "crop_mode": False}
+}
+
+TASK_PROMPTS = {
+    "Markdown": {"prompt": "<|grounding|>Convert the document to markdown.", "has_grounding": True},
+    "Free OCR": {"prompt": "Free OCR.", "has_grounding": False},
+    "Locate": {"prompt": "Locate <|ref|>text<|/ref|> in the image.", "has_grounding": True},
+    "Describe": {"prompt": "Describe this image in detail.", "has_grounding": False},
+    "Custom": {"prompt": "", "has_grounding": False}
+}
+SKIP_REPEAT = True

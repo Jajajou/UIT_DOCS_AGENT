@@ -30,11 +30,11 @@ class IndexingState(TypedDict):
     # PDF detection fields
     is_pdf: NotRequired[bool]  # Whether current file is PDF
     
-    # MinerU parsing fields
+    # DeepSeek_OCR parsing fields
     parsed_content: NotRequired[str]  # Markdown content from MinerU
-    mineru_output_dir: NotRequired[str]  # Output directory from MinerU
-    mineru_success: NotRequired[bool]  # Whether MinerU parsing succeeded
-    mineru_error: NotRequired[str]  # Error message if MinerU failed
+    deepseek_ocr_output_dir: NotRequired[str]  # Output directory from MinerU
+    deepseek_ocr_success: NotRequired[bool]  # Whether MinerU parsing succeeded
+    deepseek_ocr_error: NotRequired[str]  # Error message if MinerU failed
     
     # API interaction fields
     api_payload: NotRequired[Dict[str, Any]]

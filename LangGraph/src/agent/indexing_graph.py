@@ -11,16 +11,30 @@ from typing import Literal, List, Dict, Any, Union, Optional, cast
 from langgraph.graph import StateGraph, END, START
 from agent.state import IndexingState
 from agent.lightrag_client import LightRAGAPIClient
-from agent.mineru_client import MinerUClient, MinerUClientError
+from agent.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClientError
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 from agent.utils import get_url
-from agent.config import MINERU_DIR
+from agent.config import DEEPSEEK_OCR_DIR
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 api_client = LightRAGAPIClient()
-mineru_client = MinerUClient()
+dsocr_client = DeepSeekOCRClient()
 
 # ---------------------- Helper Functions ----------------------
+
+def _dedupe_paths(paths: list[str]) -> list[str]:
+    seen = set()
+    out = []
+    for p in paths:
+        ap = os.path.abspath(p)
+        if ap not in seen:
+            seen.add(ap)
+            out.append(ap)
+    return out
+
 def _content_to_text(content: Any) -> str:
     """Extract text from message content."""
     if isinstance(content, str):
@@ -39,8 +53,10 @@ def _content_to_text(content: Any) -> str:
 def _last_human_message(messages: List[AnyMessage]) -> Optional[AnyMessage]:
     """Get the last human message."""
     for msg in reversed(messages or []):
+        print(msg)
         if isinstance(msg, HumanMessage) or getattr(msg, "type", None) == "human":
             return msg
+        
     return None
 
 
@@ -159,12 +175,18 @@ def _is_pdf(file_path: str) -> bool:
 
 # ---------------------- Graph Nodes ----------------------
 
+# def ingest_user_text(state: IndexingState) -> IndexingState:
+#     txt = state.get("input_text")
+#     if txt:
+#         state["messages"].append(HumanMessage(content=txt))
+#     return state
+
 def prepare_indexing(state: IndexingState) -> IndexingState:
     """Prepare indexing request - determine command type."""
     
     # If direct input provided (from Graph tab), use it
-    if state.get("source_type") and state.get("input_source") is not None:
-        return state
+    # if state.get("source_type") and state.get("input_source") is not None:
+        # return state
     
     messages = state.get("messages", [])
     if not messages:
@@ -173,7 +195,12 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
         return state
     
     # Get last human message
+    print("Messages list length:", len(messages))
+    for i, m in enumerate(messages):
+        print(f"{i}: {m}")
+    
     last_msg = _last_human_message(messages)
+    # state["status_message"] = last_msg['content']
     if not last_msg:
         state["error"] = "No input provided"
         state["status_message"] = "Error: No input"
@@ -276,9 +303,11 @@ def prepare_file_list(state: IndexingState) -> IndexingState:
     print(f"[FILE_LIST] Files: {', '.join(preview_files)}{more_text}")
     
     # Initialize file processing state
-    state["file_list"] = supported_files
-    state["current_file_index"] = 0
-    state["upload_results"] = []
+    existing = state.get("file_list", [])
+    merged = _dedupe_paths(existing + supported_files)
+    state["file_list"] = merged
+    # state["current_file_index"] = 0
+    # state["upload_results"] = []
     state["error"] = None  # type: ignore
     
     return state
@@ -289,7 +318,9 @@ def check_if_pdf(state: IndexingState) -> IndexingState:
     
     file_list = state.get("file_list", [])
     current_index = state.get("current_file_index", 0)
-    
+
+    print(f"current file list: {file_list} - current_index: {current_index}")
+
     if current_index >= len(file_list):
         # No more files
         state["is_pdf"] = False
@@ -297,6 +328,7 @@ def check_if_pdf(state: IndexingState) -> IndexingState:
         return state
     
     current_file = file_list[current_index]
+    print(f"current file path: {current_file}")
     is_pdf = _is_pdf(current_file)
     
     state["is_pdf"] = is_pdf
@@ -309,43 +341,39 @@ def check_if_pdf(state: IndexingState) -> IndexingState:
     return state
 
 
-def parse_with_mineru(state: IndexingState) -> IndexingState:
-    """Parse PDF with MinerU."""
+def parse_with_DeepSeek_OCR(state: IndexingState) -> IndexingState:
+    """Parse PDF with DeepSeek OCR."""
     
     file_path = state.get("current_file_path")
     
     if not file_path:
-        state["error"] = "No file path for MinerU"
+        state["error"] = "No file path for DeepSeek_OCR"
         return state
     
     try:
         file_stem = Path(file_path).stem
-        output_dir = str((MINERU_DIR / file_stem).resolve())
+        output_dir = str((DEEPSEEK_OCR_DIR / file_stem).resolve())
 
         
-        print(f"[MINERU] Parsing: {os.path.basename(file_path)}")
+        print(f"[DeepSeek_OCR] Parsing: {os.path.basename(file_path)}")
         
-        md_content, output_path = mineru_client.parse_and_get_markdown(
+        md_content, output_path = dsocr_client.parse_and_get_markdown(
             file_path,
             output_dir=output_dir,
-            parse_method="auto",
-            lang_list="latin",
-            table_enable=True,
-            formula_enable=True,
         )
         
-        print(f"[MINERU] ✓ Success - {len(md_content):,} chars")
+        print(f"[DeepSeek_OCR] ✓ Success - {len(md_content):,} chars")
         
         state["parsed_content"] = md_content
-        state["mineru_output_dir"] = output_path
-        state["mineru_success"] = True
+        state["deepseek_ocr_output_dir"] = output_path
+        state["deepseek_ocr_success"] = True
         state["error"] = None  # type: ignore
         
     except Exception as e:
-        print(f"[MINERU] ✗ Failed: {str(e)}")
+        print(f"[DeepSeek_OCR] ✗ Failed: {str(e)}")
         state["parsed_content"] = None  # type: ignore
-        state["mineru_success"] = False
-        state["mineru_error"] = str(e)
+        state["deepseek_ocr_success"] = False
+        state["deepseek_ocr_error"] = str(e)
     
     return state
 
@@ -416,12 +444,12 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
         current_index = state.get("current_file_index", 0)
         url = get_url(file_path)
         
-        print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}")
+        print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}, {url}")
         
         try:
             parsed_content = state.get("parsed_content")
             
-            if state.get("mineru_success") and parsed_content:
+            if state.get("deepseek_ocr_success") and parsed_content:
                 # Upload parsed content
                 result = api_client.insert_text(
                     text=parsed_content,
@@ -434,13 +462,13 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
                     "file_source": url,
                     "track_id": result.get("track_id"),
                     "status": "success",
-                    "parsed_with_mineru": True,
-                    "output_dir": state.get("mineru_output_dir"),
+                    "parse_with_DeepSeek_OCR": True,
+                    "output_dir": state.get("deepseek_ocr_output_dir"),
                     "markdown_length": len(parsed_content),
                     "response": result
                 }
                 
-                print(f"[UPLOAD] ✓ Success (MinerU) - Track: {result.get('track_id')}")
+                print(f"[UPLOAD] ✓ Success (DeepSeek_OCR) - Track: {result.get('track_id')}")
             
             else:
                 # Direct file upload
@@ -452,13 +480,13 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
                     "file_source": url,
                     "track_id": result.get("track_id"),
                     "status": "success",
-                    "parsed_with_mineru": False,
+                    "parse_with_DeepSeek_OCR": False,
                     "response": result
                 }
                 
-                mineru_error = state.get("mineru_error")
-                if mineru_error:
-                    upload_result["fallback_reason"] = mineru_error
+                deepseek_ocr_error = state.get("deepseek_ocr_error")
+                if deepseek_ocr_error:
+                    upload_result["fallback_reason"] = deepseek_ocr_error
                 
                 print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}")
             
@@ -481,13 +509,14 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
         
         # Move to next file
         current_index = state.get("current_file_index", 0)
-        state["current_file_index"] = current_index + 1
+        if current_index < len(file_list):
+            state["current_file_index"] = current_index + 1
         
         # Clear current file state
         state["current_file_path"] = None  # type: ignore
         state["parsed_content"] = None  # type: ignore
-        state["mineru_success"] = False
-        state["mineru_error"] = None  # type: ignore
+        state["deepseek_ocr_success"] = False
+        state["deepseek_ocr_error"] = None  # type: ignore
     
     return state
 
@@ -502,7 +531,7 @@ def finalize_upload(state: IndexingState) -> IndexingState:
     
     success_count = sum(1 for r in upload_results if r["status"] == "success")
     failed_count = len(upload_results) - success_count
-    mineru_count = sum(1 for r in upload_results if r.get("parsed_with_mineru"))
+    deepseek_ocr_count = sum(1 for r in upload_results if r.get("parse_with_DeepSeek_OCR"))
     
     response_lines = []
     file_list = state.get("file_list", [])
@@ -518,8 +547,8 @@ def finalize_upload(state: IndexingState) -> IndexingState:
     
     response_lines.append("")
     
-    if mineru_count > 0:
-        response_lines.append(f"**PDFs parsed with MinerU:** {mineru_count}")
+    if deepseek_ocr_count > 0:
+        response_lines.append(f"**PDFs parsed with DeepSeek OCR:** {deepseek_ocr_count}")
         response_lines.append("")
     
     if success_count > 0:
@@ -527,11 +556,11 @@ def finalize_upload(state: IndexingState) -> IndexingState:
         for result in upload_results:
             if result["status"] == "success":
                 extra = ""
-                if result.get("parsed_with_mineru"):
+                if result.get("parse_with_DeepSeek_OCR"):
                     md_len = result.get("markdown_length", 0)
-                    extra = f" (MinerU: {md_len:,} chars)"
+                    extra = f" (DeepSeek_OCR: {md_len:,} chars)"
                 elif result.get("fallback_reason"):
-                    extra = " (Direct - MinerU failed)"
+                    extra = " (Direct - DeepSeek_OCR failed)"
                 
                 response_lines.append(f"  • `{result['file_name']}`{extra}")
                 response_lines.append(f"    Track ID: `{result['track_id']}`")
@@ -597,10 +626,10 @@ def route_after_file_list(state: IndexingState) -> Literal["check_if_pdf", "erro
     return "check_if_pdf"
 
 
-def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_mineru", "upload_to_lightrag"]:
+def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_DeepSeek_OCR", "upload_to_lightrag"]:
     """Route based on whether file is PDF."""
     if state.get("is_pdf"):
-        return "parse_with_mineru"
+        return "parse_with_DeepSeek_OCR"
     return "upload_to_lightrag"
 
 
@@ -613,7 +642,11 @@ def route_after_upload(state: IndexingState) -> Literal["prepare_file_list", "fi
         file_list = state.get("file_list", [])
         current_index = state.get("current_file_index", 0)
         
+        print(f"current_index - {current_index:,}")
+        print(f"file_list - {len(file_list):,}")
+
         if current_index < len(file_list):
+            # current_file_index
             return "prepare_file_list"
         else:
             return "finalize_upload"
@@ -627,16 +660,18 @@ def route_after_upload(state: IndexingState) -> Literal["prepare_file_list", "fi
 builder = StateGraph(state_schema=IndexingState)
 
 # Add all nodes
+# builder.add_node("ingest_user_text", ingest_user_text)
 builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
-builder.add_node("parse_with_mineru", parse_with_mineru)
+builder.add_node("parse_with_DeepSeek_OCR", parse_with_DeepSeek_OCR)
 builder.add_node("upload_to_lightrag", upload_to_lightrag)
 builder.add_node("finalize_upload", finalize_upload)
 builder.add_node("error_handler", error_handler)
 
 # Build the graph following the flowchart exactly
 builder.add_edge(START, "prepare_indexing")
+# builder.add_edge("ingest_user_text", "prepare_indexing")
 
 builder.add_conditional_edges(
     "prepare_indexing",
@@ -661,12 +696,12 @@ builder.add_conditional_edges(
     "check_if_pdf",
     route_after_pdf_check,
     {
-        "parse_with_mineru": "parse_with_mineru",
+        "parse_with_DeepSeek_OCR": "parse_with_DeepSeek_OCR",
         "upload_to_lightrag": "upload_to_lightrag"
     }
 )
 
-builder.add_edge("parse_with_mineru", "upload_to_lightrag")
+builder.add_edge("parse_with_DeepSeek_OCR", "upload_to_lightrag")
 
 builder.add_conditional_edges(
     "upload_to_lightrag",

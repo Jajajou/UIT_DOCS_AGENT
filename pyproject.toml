@@ -5,25 +5,32 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "addict>=2.4.0",
+    "einops>=0.8.1",
     "fastapi>=0.119.1",
     "langchain-openai>=1.0.0",
     "langgraph>=1.0.0",
+    "langgraph-api>=0.4.47",
     "langgraph-cli[inmem]>=0.4.4",
     "lightrag-hku[api]",
-    "mineru[core]>=2.6.2",
+    "matplotlib>=3.10.7",
+    "mlx-vlm[torch]",
+    "nltk>=3.9.2",
+    "ollama>=0.6.0",
     "psycopg2-binary>=2.9.11",
     "python-multipart>=0.0.20",
+    "transformers>=4.47.1",
+    "unidecode>=1.4.0",
 ]
 
 [tool.uv.workspace]
 members = [
     "LightRAG",
-    "MinerU",
 ]
 
 [tool.uv.sources]
+mlx-vlm = { git = "https://github.com/Blaizzy/mlx-vlm.git" }
 lightrag-hku = { workspace = true }
-mineru = { workspace = true }
 
 [tool.pyright]
 venvPath = "."
@@ -32,6 +39,8 @@ executionEnvironments = [ {root = ".", extraPaths = ["LightRAG", "LangGraph"]} ]
 
 [dependency-groups]
 dev = [
+    "img2pdf>=0.6.1",
     "ipykernel>=7.1.0",
+    "pymupdf>=1.26.5",
     "pypdf2>=3.0.1",
 ]

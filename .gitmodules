@@ -9,3 +9,7 @@
 	path = MinerU
 	url = https://github.com/Jajajou/MinerU.git
 	branch = uit
+[submodule "VietnameseOcrCorrection"]
+	path = VietnameseOcrCorrection
+	url = https://github.com/Jajajou/VietnameseOcrCorrection
+	branch = uit

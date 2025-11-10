@@ -4,6 +4,6 @@
   "env": "./LangGraph/.env",
   "graphs": {
     "index": "./LangGraph/src/agent/indexing_graph.py:graph",
-    "retrieval": "./LangGraph/src/agent/query_graph.py:graph"
+    "retrieval": "./LangGraph/src/agent/query_graph_v2.py:graph"
   }
 }

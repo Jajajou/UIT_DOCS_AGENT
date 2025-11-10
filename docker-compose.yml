@@ -4,8 +4,8 @@ services:
     container_name: lightrag_uit
     image: ghcr.io/hkuds/lightrag:latest
     build:
-      context: /Users/jajajou1778/UIT_DOCS_AGENT/LightRAG
-      dockerfile: /Users/jajajou1778/UIT_DOCS_AGENT/LightRAG/Dockerfile
+      context: LightRAG
+      dockerfile: Dockerfile
       tags:
         - ghcr.io/hkuds/lightrag:latest
     env_file: .env.lightrag
