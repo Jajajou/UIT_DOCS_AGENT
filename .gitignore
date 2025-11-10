@@ -216,11 +216,7 @@ __marimo__/
 .streamlit/secrets.toml
 .langgraph_api/
 .env.lightrag
+.env.deepseekocr
 
 # Data directories
-data/inputs/
-data/rag_storage/
-data/tiktoken/
-data/pg_data/
-data/qdrant_data/
-data/MinerU/
+data/**/*
