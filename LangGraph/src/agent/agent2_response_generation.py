@@ -15,13 +15,13 @@ import json
 from typing import Any, Dict, List
 from openai import OpenAI
 from langchain_core.messages import AIMessage
-from agent.state_v2 import (
-    QueryStateV2,
-    DataQualityAssessment,
+from agent.query_state import (
+    QueryState,
+    # DataQualityAssessment,
     ResponseGeneration,
     Reference,
-    DATA_QUALITY_THRESHOLD_HIGH,
-    DATA_QUALITY_THRESHOLD_LOW,
+    # DATA_QUALITY_THRESHOLD_HIGH,
+    # DATA_QUALITY_THRESHOLD_LOW,
     FALLBACK_RESPONSE_TEMPLATE,
     PARTIAL_ANSWER_SUFFIX
 )
@@ -301,7 +301,7 @@ def _format_chunks_summary(chunks: List[Dict[str, Any]]) -> str:
     return "\n".join(summary_lines)
 
 
-def _format_retrieved_data_for_generation(state: QueryStateV2) -> str:
+def _format_retrieved_data_for_generation(state: QueryState) -> str:
     """Format all retrieved data for response generation prompt."""
     
     entities = state.get("retrieved_entities", [])
@@ -366,7 +366,7 @@ def _extract_references_from_chunks(chunks: List[Dict[str, Any]]) -> List[Dict[s
 # Agent 2 Nodes
 # ============================================================================
 
-def agent2_assess_data_quality(state: QueryStateV2) -> QueryStateV2:
+def agent2_assess_data_quality(state: QueryState) -> QueryState:
     """
     Agent 2 Phase 1: Assess quality of retrieved data.
     
@@ -377,7 +377,7 @@ def agent2_assess_data_quality(state: QueryStateV2) -> QueryStateV2:
     4. Decides if fallback is needed
     
     Args:
-        state: Current QueryStateV2 with retrieved data
+        state: Current QueryState with retrieved data
         
     Returns:
         Updated state with data quality assessment
@@ -417,7 +417,7 @@ def agent2_assess_data_quality(state: QueryStateV2) -> QueryStateV2:
             messages=[
                 {"role": "user", "content": prompt}
             ],
-            response_format=DataQualityAssessment,
+            # response_format=DataQualityAssessment,
             temperature=ASSESSMENT_TEMPERATURE,
         )
         
@@ -427,17 +427,17 @@ def agent2_assess_data_quality(state: QueryStateV2) -> QueryStateV2:
             raise ValueError("LLM did not return structured output")
         
         # Update state
-        state["data_quality_score"] = assessment.quality_score
-        state["data_quality_reason"] = assessment.quality_reason
-        state["data_coverage"] = assessment.coverage
-        state["should_fallback"] = assessment.should_fallback
+        # state["data_quality_score"] = assessment.quality_score
+        # state["data_quality_reason"] = assessment.quality_reason
+        # state["data_coverage"] = assessment.coverage
+        # state["should_fallback"] = assessment.should_fallback
         
         if assessment.fallback_reason:
-            state["fallback_reason"] = assessment.fallback_reason
+            # state["fallback_reason"] = assessment.fallback_reason
         
         # Log results
-        print(f"[AGENT 2 - ASSESSMENT] Quality Score: {assessment.quality_score:.2f}")
-        print(f"[AGENT 2 - ASSESSMENT] Coverage: {assessment.coverage}")
+        # print(f"[AGENT 2 - ASSESSMENT] Quality Score: {assessment.quality_score:.2f}")
+        print(f"[AGENT 2 - ASSESSMENT] Coverage: {assessment.coverage}") # type: ignore
         print(f"[AGENT 2 - ASSESSMENT] Reason: {assessment.quality_reason}")
         print(f"[AGENT 2 - ASSESSMENT] Should Fallback: {assessment.should_fallback}")
         
@@ -449,16 +449,16 @@ def agent2_assess_data_quality(state: QueryStateV2) -> QueryStateV2:
         print(f"[AGENT 2 - ASSESSMENT] ✗ {error_msg}")
         
         # On error, set low quality and fallback
-        state["data_quality_score"] = 0.0
-        state["data_quality_reason"] = f"Error during assessment: {str(e)}"
-        state["data_coverage"] = "insufficient"
-        state["should_fallback"] = True
-        state["fallback_reason"] = "Lỗi khi đánh giá chất lượng dữ liệu"
+        # state["data_quality_score"] = 0.0
+        # state["data_quality_reason"] = f"Error during assessment: {str(e)}"
+        # state["data_coverage"] = "insufficient"
+        # state["should_fallback"] = True
+        # state["fallback_reason"] = "Lỗi khi đánh giá chất lượng dữ liệu"
     
     return state
 
 
-def agent2_generate_response(state: QueryStateV2) -> QueryStateV2:
+def agent2_generate_response(state: QueryState) -> QueryState:
     """
     Agent 2 Phase 2: Generate response based on data quality.
     
@@ -468,7 +468,7 @@ def agent2_generate_response(state: QueryStateV2) -> QueryStateV2:
     3. If not fallback: generates full/partial answer with references
     
     Args:
-        state: Current QueryStateV2 with data quality assessment
+        state: Current QueryState with data quality assessment
         
     Returns:
         Updated state with generated response
@@ -487,7 +487,7 @@ def agent2_generate_response(state: QueryStateV2) -> QueryStateV2:
         return _generate_full_response(state)
 
 
-def _generate_fallback_response(state: QueryStateV2) -> QueryStateV2:
+def _generate_fallback_response(state: QueryState) -> QueryState:
     """Generate fallback response suggesting to contact advisor."""
     
     # Extract topic from parsed_intention or query
@@ -518,7 +518,7 @@ def _generate_fallback_response(state: QueryStateV2) -> QueryStateV2:
     return state
 
 
-def _generate_full_response(state: QueryStateV2) -> QueryStateV2:
+def _generate_full_response(state: QueryState) -> QueryState:
     """Generate full or partial response with references."""
     
     parsed_intention = state.get("parsed_intention", state.get("query", ""))

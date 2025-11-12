@@ -11,13 +11,12 @@ import os
 from typing import Any, Dict, List, Tuple
 from openai import OpenAI
 from langchain_core.messages import AIMessage
-from agent.state_v3 import (
-    QueryStateV3,
+from agent.prompts import PROMPTS
+from agent.query_state import (
+    QueryState,
     ResponseGeneration,
     Reference,
     FALLBACK_CONFIDENCE_THRESHOLD,
-    FALLBACK_RESPONSE_TEMPLATE,
-    PARTIAL_ANSWER_SUFFIX
 )
 
 
@@ -32,103 +31,6 @@ client = OpenAI(
 
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 LLM_TEMPERATURE = float(os.getenv("AGENT3_TEMPERATURE", "0.3"))
-
-
-# ============================================================================
-# Prompt Template
-# ============================================================================
-
-RESPONSE_GENERATION_PROMPT = """
-Bạn là trợ lý tư vấn học tập cho sinh viên UIT (Đại học Công nghệ Thông tin - ĐHQG TP.HCM).
-
-<role>
-Nhiệm vụ của bạn là tạo câu trả lời chính xác, đầy đủ và thân thiện cho sinh viên dựa trên dữ liệu đã được rerank (sắp xếp theo độ liên quan).
-</role>
-
-<user_query>
-{parsed_intention}
-</user_query>
-
-<reranked_data>
-Dữ liệu sau đã được sắp xếp theo độ liên quan (cao nhất trước):
-
-{reranked_data_formatted}
-</reranked_data>
-
-<confidence_info>
-Overall Confidence: {overall_confidence:.2f}
-Confidence Reason: {confidence_reason}
-</confidence_info>
-
-<instructions>
-1. **Trả lời chính xác:**
-   - Ưu tiên sử dụng data có score cao (>0.7)
-   - Không bịa đặt thông tin không có trong data
-   - Nếu data không đủ trả lời một phần nào, hãy nói rõ
-
-2. **Trích dẫn nguồn với hyperlink:**
-   - Sử dụng markdown format: [Tên tài liệu](URL)
-   - Ví dụ: "Theo [Quy chế đào tạo 2024](https://example.com/quy-che.pdf), sinh viên cần..."
-   - Chỉ trích dẫn các nguồn có URL (file_source)
-   - Đặt hyperlink ngay sau thông tin được trích dẫn
-
-3. **Xử lý theo confidence:**
-   - **High (>= 0.7)**: Trả lời đầy đủ, tự tin → response_type = "full_answer"
-   - **Medium (0.4-0.7)**: Không nên xảy ra (đã hỏi follow-up ở bước trước)
-   - **Low (< 0.4)**: Fallback response → response_type = "fallback"
-
-4. **Format response:**
-   - Sử dụng markdown cho dễ đọc
-   - Chia thành đoạn văn rõ ràng
-   - Dùng bullet points nếu cần liệt kê
-   - Thân thiện, lịch sự, chuyên nghiệp
-
-5. **References:**
-   - List tất cả tài liệu được sử dụng
-   - Mỗi reference cần: title, url (nếu có), relevance score
-   - Sắp xếp theo độ liên quan (cao nhất trước)
-   - Chỉ include references có score >= 0.5
-</instructions>
-
-<output_format>
-Trả về JSON với schema ResponseGeneration:
-{{
-  "response_text": "...",
-  "response_type": "full_answer" | "partial_answer" | "fallback",
-  "references": [
-    {{
-      "title": "...",
-      "url": "...",
-      "relevance": 0.0-1.0,
-      "excerpt": "..." (optional)
-    }}
-  ]
-}}
-</output_format>
-
-<examples>
-Example 1 (Full Answer - High Confidence):
-{{
-  "response_text": "Theo [Quy chế đào tạo 2024](https://daa.uit.edu.vn/quy-che-2024.pdf), sinh viên ngành Khoa học Máy tính cần tích lũy tối thiểu **140 tín chỉ** để đủ điều kiện tốt nghiệp.\\n\\nCụ thể, 140 tín chỉ này bao gồm:\\n- Kiến thức giáo dục đại cương: 40 tín chỉ\\n- Kiến thức cơ sở ngành: 50 tín chỉ\\n- Kiến thức chuyên ngành: 45 tín chỉ\\n- Thực tập và khóa luận: 5 tín chỉ\\n\\nNgoài ra, sinh viên cũng cần đạt các điều kiện khác như GPA tối thiểu 2.0, hoàn thành chương trình giáo dục thể chất và giáo dục quốc phòng.",
-  "response_type": "full_answer",
-  "references": [
-    {{
-      "title": "Quy chế đào tạo 2024",
-      "url": "https://daa.uit.edu.vn/quy-che-2024.pdf",
-      "relevance": 0.95,
-      "excerpt": "Điều 15: Điều kiện tốt nghiệp..."
-    }}
-  ]
-}}
-
-Example 2 (Fallback - Low Confidence):
-{{
-  "response_text": "Cảm ơn bạn đã đặt câu hỏi.\\n\\nDựa trên thông tin hiện có trong hệ thống, tôi chưa thể cung cấp câu trả lời đầy đủ và chính xác cho câu hỏi này.\\n\\n**Đề xuất:**\\nĐể được tư vấn chi tiết và chính xác nhất, bạn vui lòng liên hệ:\\n- **Cố vấn học tập** của lớp/khoa\\n- **Phòng Đào tạo** (nếu liên quan đến quy chế, quy trình đào tạo)\\n- **Phòng Công tác Sinh viên** (nếu liên quan đến học bổng, hoạt động sinh viên)",
-  "response_type": "fallback",
-  "references": []
-}}
-</examples>
-"""
 
 
 # ============================================================================
@@ -220,7 +122,7 @@ def _extract_references(
 # Agent 3 Node
 # ============================================================================
 
-def agent3_generate_response(state: QueryStateV3) -> QueryStateV3:
+def agent3_generate_response(state: QueryState) -> QueryState:
     """
     Agent 3: Generate response using reranked data.
     
@@ -232,7 +134,7 @@ def agent3_generate_response(state: QueryStateV3) -> QueryStateV3:
     5. Adds AI message to chat
     
     Args:
-        state: Current QueryStateV3
+        state: Current QueryState
         
     Returns:
         Updated state with generated response
@@ -258,7 +160,7 @@ def agent3_generate_response(state: QueryStateV3) -> QueryStateV3:
         print(f"[AGENT 3] Low confidence ({overall_confidence:.2f}), using fallback response")
         
         topic = state.get("extracted_topics", ["câu hỏi của bạn"])[0] if state.get("extracted_topics") else "câu hỏi của bạn"
-        fallback_text = FALLBACK_RESPONSE_TEMPLATE.format(
+        fallback_text = PROMPTS["fallback_response_template"].format(
             topic=topic,
             fallback_reason=confidence_reason
         )
@@ -285,7 +187,7 @@ def agent3_generate_response(state: QueryStateV3) -> QueryStateV3:
         )
         
         # Prepare prompt
-        prompt_text = RESPONSE_GENERATION_PROMPT.format(
+        prompt_text = PROMPTS["response_generation_prompt"].format(
             parsed_intention=parsed_intention,
             reranked_data_formatted=reranked_data_formatted,
             overall_confidence=overall_confidence,
@@ -322,7 +224,7 @@ def agent3_generate_response(state: QueryStateV3) -> QueryStateV3:
         
         # Add partial answer suffix if needed
         if response_gen.response_type == "partial_answer":
-            final_answer += PARTIAL_ANSWER_SUFFIX
+            final_answer += PROMPTS["partial_answer_suffix"]
         
         state["final_answer"] = final_answer
         

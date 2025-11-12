@@ -1,5 +1,5 @@
 """
-Extended State Schema for 3-Agent RAG Pipeline with Reranker.
+State Schema for 3-Agent RAG Pipeline with Reranker.
 
 This module defines the state schema for an advanced RAG pipeline that includes:
 - Agent 1: Query Understanding with automatic parameter tuning
@@ -21,11 +21,11 @@ from pydantic import BaseModel, Field
 # Pydantic Models for Structured Outputs
 # ============================================================================
 
-class QueryUnderstandingV3(BaseModel):
+class QueryUnderstanding(BaseModel):
     """
     Structured output from Agent 1: Query Understanding with Parameter Tuning.
     
-    Extended from V2 to include automatic parameter tuning for retrieval.
+    Include automatic parameter tuning for retrieval.
     """
     
     parsed_intention: str = Field(
@@ -65,6 +65,12 @@ class QueryUnderstandingV3(BaseModel):
         le=20,
         default=8,
         description="Suggested number of top results to retrieve"
+    )
+    suggested_chunk_top_k: int = Field(
+        ge=1,
+        le=20,
+        default=16,
+        description="Suggested number of top chunks to retrieve"
     )
     tuning_reason: str = Field(
         description="Explanation for the suggested parameters (mode and top_k)"
@@ -135,7 +141,7 @@ class ResponseGeneration(BaseModel):
 # TypedDict State Schema for LangGraph
 # ============================================================================
 
-class QueryStateV3(TypedDict):
+class QueryState(TypedDict):
     """
     Extended state schema for 3-agent RAG pipeline with reranker.
     
@@ -154,66 +160,66 @@ class QueryStateV3(TypedDict):
     messages: Annotated[List[AnyMessage], add_messages]
     
     # ============ Input ============
-    query: NotRequired[str]  # Original user query (extracted from messages if not provided)
+    query: NotRequired[str]  
     
     # ============ Agent 1: Query Understanding + Parameter Tuning ============
-    # Output từ Agent 1
-    parsed_intention: NotRequired[str]  # Clarified/rephrased query
-    extracted_entities: NotRequired[List[str]]  # Important entities
-    extracted_topics: NotRequired[List[str]]  # Main topics
-    query_confidence: NotRequired[float]  # 0.0 - 1.0
-    query_confidence_reason: NotRequired[str]  # Reason for confidence score
+    # Agent 1 Output
+    parsed_intention: NotRequired[str]  
+    extracted_entities: NotRequired[List[str]] 
+    extracted_topics: NotRequired[List[str]]  
+    query_confidence: NotRequired[float]  
+    query_confidence_reason: NotRequired[str]  
     
-    # Decision từ Agent 1
-    needs_clarification: NotRequired[bool]  # True if need to ask user
-    clarification_question: NotRequired[str]  # Question to clarify
+    # Agent 1 Decision
+    needs_clarification: NotRequired[bool]  
+    clarification_question: NotRequired[str]  
     
-    # NEW: Tuned parameters từ Agent 1
+    # Tuned parameters từ Agent 1
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]
     top_k: NotRequired[int]
+    chunk_top_k: NotRequired[int]
     tuning_reason: NotRequired[str]  # Explanation for parameter choices
     
     # ============ Data Retrieval (LightRAG) ============
     # Optional parameters for fine-tuning
-    chunk_top_k: NotRequired[int]
     max_entity_tokens: NotRequired[int]
     max_relation_tokens: NotRequired[int]
     max_total_tokens: NotRequired[int]
     
     # Raw data from LightRAG /query/data endpoint
-    retrieved_entities: NotRequired[List[Dict[str, Any]]]  # Entity data
-    retrieved_relationships: NotRequired[List[Dict[str, Any]]]  # Relationship data
-    retrieved_chunks: NotRequired[List[Dict[str, Any]]]  # Text chunks with metadata
-    retrieval_metadata: NotRequired[Dict[str, Any]]  # Additional metadata (scores, etc.)
+    retrieved_entities: NotRequired[List[Dict[str, Any]]]  
+    retrieved_relationships: NotRequired[List[Dict[str, Any]]]  
+    retrieved_chunks: NotRequired[List[Dict[str, Any]]]  
+    retrieval_metadata: NotRequired[Dict[str, Any]]  
     
     # ============ Reranker ============
-    # NEW: Reranked data with scores
-    reranked_entities: NotRequired[List[Tuple[Dict[str, Any], float]]]  # (entity, score) tuples
-    reranked_relationships: NotRequired[List[Tuple[Dict[str, Any], float]]]  # (relationship, score) tuples
-    reranked_chunks: NotRequired[List[Tuple[Dict[str, Any], float]]]  # (chunk, score) tuples
+    # Reranked data with scores
+    reranked_entities: NotRequired[List[Tuple[Dict[str, Any], float]]]  
+    reranked_relationships: NotRequired[List[Tuple[Dict[str, Any], float]]]  
+    reranked_chunks: NotRequired[List[Tuple[Dict[str, Any], float]]]  
     
-    # NEW: Rerank scores and confidence
+    # Rerank scores and confidence
     entity_scores: NotRequired[List[float]]
     relationship_scores: NotRequired[List[float]]
     chunk_scores: NotRequired[List[float]]
-    rerank_confidence: NotRequired[float]  # Aggregate confidence from reranker (0.0 - 1.0)
-    rerank_metadata: NotRequired[Dict[str, Any]]  # Metadata about reranking process
+    rerank_confidence: NotRequired[float]  
+    rerank_metadata: NotRequired[Dict[str, Any]]  
     
     # ============ Agent 2: Confidence Assessment ============
-    # NEW: Overall confidence combining query + rerank
-    overall_confidence: NotRequired[float]  # 0.0 - 1.0
-    needs_followup: NotRequired[bool]  # True if need to ask follow-up question
-    followup_question: NotRequired[str]  # Follow-up question to user
-    confidence_reason: NotRequired[str]  # Detailed reason for confidence decision
+    # Overall confidence combining query + rerank
+    overall_confidence: NotRequired[float]  
+    needs_followup: NotRequired[bool]  
+    followup_question: NotRequired[str]  
+    confidence_reason: NotRequired[str]  
     
     # ============ Agent 3: Response Generation ============
-    generated_response: NotRequired[str]  # Generated response text
+    generated_response: NotRequired[str]  
     response_type: NotRequired[Literal["full_answer", "partial_answer", "fallback"]]
-    references: NotRequired[List[Dict[str, Any]]]  # References with hyperlinks
+    references: NotRequired[List[Dict[str, Any]]]  
     
     # ============ Final Output ============
-    final_answer: NotRequired[str]  # Formatted final answer for user
-    confidence_summary: NotRequired[Dict[str, Any]]  # Summary of all confidence scores
+    final_answer: NotRequired[str]  
+    confidence_summary: NotRequired[Dict[str, Any]]  
     
     # ============ Legacy/Compatibility Fields ============
     # Keep for backward compatibility
@@ -238,40 +244,18 @@ class QueryStateV3(TypedDict):
 # ============================================================================
 
 # Thresholds for decision making
-QUERY_CONFIDENCE_THRESHOLD = 0.5  # Below this → ask clarification
-OVERALL_CONFIDENCE_THRESHOLD = 0.7  # Below this → ask follow-up question
-FALLBACK_CONFIDENCE_THRESHOLD = 0.4  # Below this → fallback response
+QUERY_CONFIDENCE_THRESHOLD = 0.5  
+OVERALL_CONFIDENCE_THRESHOLD = 0.7  
+FALLBACK_CONFIDENCE_THRESHOLD = 0.4  
 
 # Default retrieval parameters
 DEFAULT_RETRIEVAL_MODE = "mix"
 DEFAULT_TOP_K = 8
-DEFAULT_CHUNK_TOP_K = 10
+DEFAULT_CHUNK_TOP_K = 16
 
 # Reranker configuration
 DEFAULT_RERANKER_MODEL = "namdp-ptit/ViRanker"
 RERANKER_TOP_N_FOR_CONFIDENCE = 5  # Number of top scores to use for confidence calculation
-
-# Response templates
-FALLBACK_RESPONSE_TEMPLATE = """
-Cảm ơn bạn đã đặt câu hỏi về {topic}.
-
-Dựa trên thông tin hiện có trong hệ thống, tôi chưa thể cung cấp câu trả lời đầy đủ và chính xác cho câu hỏi này.
-
-**Đề xuất:**
-Để được tư vấn chi tiết và chính xác nhất, bạn vui lòng liên hệ:
-- **Cố vấn học tập** của lớp/khoa
-- **Phòng Đào tạo** (nếu liên quan đến quy chế, quy trình đào tạo)
-- **Phòng Công tác Sinh viên** (nếu liên quan đến học bổng, hoạt động sinh viên)
-
-**Lý do:** {fallback_reason}
-"""
-
-PARTIAL_ANSWER_SUFFIX = """
-
----
-
-**Lưu ý:** Thông tin trên có thể chưa đầy đủ. Để được tư vấn chi tiết hơn, bạn vui lòng liên hệ cố vấn học tập hoặc phòng ban liên quan.
-"""
 
 
 # ============================================================================
@@ -279,8 +263,8 @@ PARTIAL_ANSWER_SUFFIX = """
 # ============================================================================
 
 __all__ = [
-    "QueryStateV3",
-    "QueryUnderstandingV3",
+    "QueryState",
+    "QueryUnderstanding",
     "Reference",
     "ConfidenceAssessment",
     "ResponseGeneration",
@@ -292,6 +276,4 @@ __all__ = [
     "DEFAULT_CHUNK_TOP_K",
     "DEFAULT_RERANKER_MODEL",
     "RERANKER_TOP_N_FOR_CONFIDENCE",
-    "FALLBACK_RESPONSE_TEMPLATE",
-    "PARTIAL_ANSWER_SUFFIX",
 ]

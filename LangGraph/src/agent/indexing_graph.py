@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Literal, List, Dict, Any, Union, Optional, cast
 from langgraph.graph import StateGraph, END, START
-from agent.state import IndexingState
+from agent.indexing_state import IndexingState
 from agent.lightrag_client import LightRAGAPIClient
 from agent.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClientError
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage

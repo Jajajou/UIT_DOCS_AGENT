@@ -45,7 +45,7 @@ class Reranker:
                 use_fp16=os.getenv("RERANKER_USE_FP16", "True").lower() == "true",
                 batch_size=int(os.getenv("RERANKER_BATCH_SIZE", "32")),
                 normalize_scores=True,
-                max_length=512
+                # max_length=512
             )
         
         self.config = config
@@ -77,7 +77,7 @@ class Reranker:
         query: str,
         texts: List[str],
         batch_size: Optional[int] = None
-    ) -> List[float]:
+    ) -> List[float]: #type: ignore
         """
         Compute relevance scores for a list of texts given a query.
         
@@ -96,7 +96,7 @@ class Reranker:
             raise RuntimeError("Reranker model not loaded")
         
         # Prepare pairs
-        pairs = [[query, text] for text in texts]
+        pairs = [(query, text) for text in texts]
         
         # Compute scores
         batch_size = batch_size or self.config.batch_size
@@ -110,9 +110,11 @@ class Reranker:
         if isinstance(scores, (int, float)):
             scores = [scores]
         elif hasattr(scores, 'tolist'):
-            scores = scores.tolist()
-        
-        return scores
+            if scores != None: 
+                scores = scores.tolist()
+                return scores
+        else:
+            return []
     
     def rerank_items(
         self,
@@ -209,7 +211,7 @@ class Reranker:
         )
         
         # Ensure in [0,1] range
-        return max(0.0, min(1.0, aggregate))
+        return max(0.0, min(1.0, aggregate)) #type: ignore
 
 
 class MultiSourceReranker:
