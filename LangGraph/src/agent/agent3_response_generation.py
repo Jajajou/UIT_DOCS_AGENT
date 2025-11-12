@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import os
 from typing import Any, Dict, List, Tuple
-from openai import OpenAI
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from agent.prompts import PROMPTS
 from agent.query_state import (
     QueryState,
@@ -18,19 +17,20 @@ from agent.query_state import (
     Reference,
     FALLBACK_CONFIDENCE_THRESHOLD,
 )
+from langchain.chat_models import init_chat_model
 
 
 # ============================================================================
 # Configuration
 # ============================================================================
 
-client = OpenAI(
+llm = init_chat_model(
+    model_provider="openai",
     api_key=os.getenv("OPENAI_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    base_url=os.getenv("OPENAI_BASE_URL"),
+    model=os.getenv("LLM_MODEL"),
+    temperature=float(os.getenv("AGENT3_TEMPERATURE", "0.3"))
 )
-
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
-LLM_TEMPERATURE = float(os.getenv("AGENT3_TEMPERATURE", "0.3"))
 
 
 # ============================================================================
@@ -195,18 +195,14 @@ def agent3_generate_response(state: QueryState) -> QueryState:
         )
         
         # Call LLM with structured output
-        completion = client.beta.chat.completions.parse(
-            model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": prompt_text},
-                {"role": "user", "content": "Generate response cho query trên."}
-            ],
-            response_format=ResponseGeneration,
-            temperature=LLM_TEMPERATURE,
-        )
-        
-        # Parse structured output
-        response_gen = completion.choices[0].message.parsed
+        llm_structured_output = llm.with_structured_output(ResponseGeneration)
+
+        msgs = [
+            SystemMessage(content=prompt_text),
+            HumanMessage(content="Generate response cho query trên.")
+        ]
+
+        response_gen = llm_structured_output.invoke(input=msgs)
         
         if not response_gen:
             raise ValueError("LLM did not return structured output")

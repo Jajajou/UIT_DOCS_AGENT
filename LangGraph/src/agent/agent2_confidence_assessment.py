@@ -15,8 +15,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
-from openai import OpenAI
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from agent.prompts import PROMPTS
 from agent.query_state import (
     QueryState,
@@ -24,19 +23,20 @@ from agent.query_state import (
     OVERALL_CONFIDENCE_THRESHOLD,
     FALLBACK_CONFIDENCE_THRESHOLD
 )
+from langchain.chat_models import init_chat_model
 
 
 # ============================================================================
 # Configuration
 # ============================================================================
 
-client = OpenAI(
+llm = init_chat_model(
+    model_provider="openai",
     api_key=os.getenv("OPENAI_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL", "https://router.huggingface.co/v1")
+    base_url=os.getenv("OPENAI_BASE_URL"),
+    model=os.getenv("LLM_MODEL"),
+    temperature=float(os.getenv("AGENT2_TEMPERATURE", "0.2"))
 )
-
-LLM_MODEL = os.getenv("LLM_MODEL", "Qwen3-4B-Instruct-2507")
-LLM_TEMPERATURE = float(os.getenv("AGENT2_TEMPERATURE", "0.2"))
 
 
 # ============================================================================
@@ -100,18 +100,14 @@ def agent2_assess_confidence(state: QueryState) -> QueryState:
                 """
         
         # Call LLM with structured output
-        completion = client.beta.chat.completions.parse(
-            model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": PROMPTS["confidence_assessment_system_prompt"]},
-                {"role": "user", "content": f"Đánh giá confidence cho trường hợp sau:\n\n{context}"}
-            ],
-            response_format=ConfidenceAssessment,
-            temperature=LLM_TEMPERATURE,
-        )
-        
-        # Parse structured output
-        assessment = completion.choices[0].message.parsed
+        llm_structured_output = llm.with_structured_output(ConfidenceAssessment)
+
+        msgs = [
+            SystemMessage(content=PROMPTS["confidence_assessment_system_prompt"]),
+            HumanMessage(content=f"Đánh giá confidence cho trường hợp sau:\n\n{context}")
+        ]
+
+        assessment = llm_structured_output.invoke(input=msgs)
         
         if not assessment:
             raise ValueError("LLM did not return structured output")
