@@ -5,11 +5,3 @@
 	path = LightRAG
 	url = https://github.com/Jajajou/LightRAG.git
 	branch = uit
-[submodule "MinerU"]
-	path = MinerU
-	url = https://github.com/Jajajou/MinerU.git
-	branch = uit
-[submodule "VietnameseOcrCorrection"]
-	path = VietnameseOcrCorrection
-	url = https://github.com/Jajajou/VietnameseOcrCorrection
-	branch = uit
