@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path, PurePosixPath
-from typing import Optional, Union, Iterable, Tuple, List
+from typing import Optional, Union, Iterable, Tuple, List, Any
 import re
 from urllib.parse import urlparse, unquote
 import sys
 import os
+import pytesseract
+import tempfile
+from PIL import Image
 from dotenv import load_dotenv
+from langchain_core.messages import AnyMessage
 
 load_dotenv()
 project_dir = str(os.environ.get("PROJECT_ROOT"))
@@ -100,4 +104,80 @@ def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
         
     return None
 
+def content_to_text(content: Any) -> str:
+    """Extract text from message content."""
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        texts = []
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "text":
+                txt = (part.get("text") or "").strip()
+                if txt:
+                    texts.append(txt)
+        return " ".join(texts) if texts else ""
+    return ""
+
+
+def get_last_human_message(messages: List[AnyMessage]) -> Optional[AnyMessage]:
+    """Get the last human message from a list of messages."""
+    for msg in reversed(messages or []):
+        if msg.type == "human":
+            return msg
+    return None
+
+def preprocess_image_for_ocr(image_path: str) -> str:
+    """
+    Pre-processes an image for OCR by detecting orientation, rotating,
+    fitting to A4 size, and saving to a temporary file.
+
+    Args:
+        image_path: Path to the input image file.
+
+    Returns:
+        Path to the processed temporary image file.
+    """
+    temp_file_path = None
+    try:
+        with Image.open(image_path) as img:
+            # Get orientation data
+            try:
+                osd_dict = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
+                rotation_angle = osd_dict.get('rotate', 0)
+            except pytesseract.TesseractError:
+                # If OSD fails, assume no rotation is needed
+                rotation_angle = 0
+            
+            # Rotate the image if needed
+            if rotation_angle != 0:
+                rotated_img = img.rotate(-1 * rotation_angle, expand=True)
+            else:
+                rotated_img = img
+
+            # A4 dimensions at 300 DPI
+            A4_WIDTH_PX, A4_HEIGHT_PX = 2480, 3508
+            a4_page = Image.new('RGB', (A4_WIDTH_PX, A4_HEIGHT_PX), 'white')
+
+            img_width, img_height = rotated_img.size
+            width_ratio = A4_WIDTH_PX / img_width
+            height_ratio = A4_HEIGHT_PX / img_height
+            scaling_factor = min(width_ratio, height_ratio)
+
+            new_width = int(img_width * scaling_factor)
+            new_height = int(img_height * scaling_factor)
+
+            resized_img = rotated_img.resize((new_width, new_height), Image.LANCZOS) #type: ignore
+
+            paste_x = (A4_WIDTH_PX - new_width) // 2
+            paste_y = (A4_HEIGHT_PX - new_height) // 2
+            a4_page.paste(resized_img, (paste_x, paste_y))
+
+            # Save the processed image to a temporary file
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
+                a4_page.save(temp_file, format="PNG")
+                temp_file_path = temp_file.name
+        return temp_file_path
+    except Exception as e:
+        print(f"Error during image preprocessing: {e}")
+        return image_path # Return original path if preprocessing fails
 #---

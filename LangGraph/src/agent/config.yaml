@@ -1,0 +1,39 @@
+# LangGraph/src/agent/config.yaml
+
+# DeepSeek OCR Configuration
+deepseek_ocr:
+  model_name: "mlx-community/DeepSeek-OCR-8bit"
+  model_configs:
+    Gundam: {base_size: 1024, image_size: 640, crop_mode: True}
+    Tiny: {base_size: 512, image_size: 512, crop_mode: False}
+    Small: {base_size: 640, image_size: 640, crop_mode: False}
+    Base: {base_size: 1024, image_size: 1024, crop_mode: False}
+    Large: {base_size: 1280, image_size: 1280, crop_mode: False}
+  task_prompts:
+    Markdown: {prompt: "<|grounding|>Convert the document to markdown.", has_grounding: True}
+    Free OCR: {prompt: "Free OCR.", has_grounding: False}
+    Locate: {prompt: "Locate <|ref|>text<|/ref|> in the image.", has_grounding: True}
+    Describe: {prompt: "Describe this image in detail.", has_grounding: False}
+    Custom: {prompt: "", has_grounding: False}
+  skip_repeat: True
+
+# Query Confidence Thresholds
+query_thresholds:
+  query_confidence_threshold: 0.5
+  overall_confidence_threshold: 0.7
+  fallback_confidence_threshold: 0.4
+
+# Default Retrieval Parameters
+retrieval:
+  default_mode: "mix"
+  default_top_k: 8
+  default_chunk_top_k: 16
+
+# Reranker Configuration
+reranker:
+  default_model: "namdp-ptit/ViRanker"
+  top_n_for_confidence: 5
+  use_fp16: True
+  batch_size: 32
+  normalize_scores: True
+  max_length: 512

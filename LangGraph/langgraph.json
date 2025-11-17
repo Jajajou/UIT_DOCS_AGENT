@@ -3,7 +3,7 @@
   "dependencies": ["."],
   "env": "./LangGraph/.env",
   "graphs": {
-    "index": "./LangGraph/src/agent/indexing_graph.py:graph",
-    "retrieval": "./LangGraph/src/agent/query_graph_v2.py:graph"
+    "index": "./LangGraph/src/agent/graphs/indexing_graph.py:graph",
+    "retrieval": "./LangGraph/src/agent/graphs/query_graph.py:graph"
   }
 }

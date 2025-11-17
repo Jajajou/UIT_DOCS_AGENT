@@ -6,16 +6,19 @@ import os
 import glob
 import requests
 import sys
+import tempfile
 from pathlib import Path
 from typing import Literal, List, Dict, Any, Union, Optional, cast
-from langgraph.graph import StateGraph, END, START
-from agent.state import IndexingState
-from agent.lightrag_client import LightRAGAPIClient
-from agent.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClientError
-from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
-from agent.utils import get_url
-from agent.config import DEEPSEEK_OCR_DIR
+
 from dotenv import load_dotenv
+from langgraph.graph import StateGraph, END, START
+
+from agent.config import DEEPSEEK_OCR_DIR
+from agent.clients.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClientError
+from agent.states.indexing_state import IndexingState
+from agent.clients.lightrag_client import LightRAGAPIClient
+from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
+from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 
 load_dotenv()
 
@@ -35,31 +38,6 @@ def _dedupe_paths(paths: list[str]) -> list[str]:
             out.append(ap)
     return out
 
-def _content_to_text(content: Any) -> str:
-    """Extract text from message content."""
-    if isinstance(content, str):
-        return content.strip()
-    if isinstance(content, list):
-        texts = []
-        for part in content:
-            if isinstance(part, dict) and part.get("type") == "text":
-                txt = (part.get("text") or "").strip()
-                if txt:
-                    texts.append(txt)
-        return " ".join(texts) if texts else ""
-    return ""
-
-
-def _last_human_message(messages: List[AnyMessage]) -> Optional[AnyMessage]:
-    """Get the last human message."""
-    for msg in reversed(messages or []):
-        print(msg)
-        if isinstance(msg, HumanMessage) or getattr(msg, "type", None) == "human":
-            return msg
-        
-    return None
-
-
 def _parse_chat_command(msg: AnyMessage) -> Dict[str, Any]:
     """
     Parse chat message to determine command.
@@ -71,7 +49,7 @@ def _parse_chat_command(msg: AnyMessage) -> Dict[str, Any]:
     - anything else -> insert as text
     """
     content = getattr(msg, "content", "")
-    text = _content_to_text(content).strip()
+    text = content_to_text(content).strip()
     
     print("=" * 80)
     print(f"[PARSE] Input text: '{text}'")
@@ -199,7 +177,7 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
     for i, m in enumerate(messages):
         print(f"{i}: {m}")
     
-    last_msg = _last_human_message(messages)
+    last_msg = get_last_human_message(messages)
     # state["status_message"] = last_msg['content']
     if not last_msg:
         state["error"] = "No input provided"
@@ -342,23 +320,37 @@ def check_if_pdf(state: IndexingState) -> IndexingState:
 
 
 def parse_with_DeepSeek_OCR(state: IndexingState) -> IndexingState:
-    """Parse PDF with DeepSeek OCR."""
-    
+    """
+    Pre-processes and parses a PDF file with DeepSeek OCR.
+
+    This function performs the following steps:
+    1. Opens the PDF page as an image.
+    2. Uses Tesseract OSD to detect orientation.
+    3. Rotates the image to the correct orientation if needed.
+    4. Creates a standard A4-sized blank page.
+    5. Resizes the corrected image to fit the A4 page while maintaining aspect ratio.
+    6. Pastes the resized image onto the center of the A4 page.
+    7. Saves the final image to a temporary file.
+    8. Calls the DeepSeek OCR client with the path to the temporary file.
+    9. Cleans up the temporary file.
+    """
     file_path = state.get("current_file_path")
-    
     if not file_path:
         state["error"] = "No file path for DeepSeek_OCR"
         return state
-    
+
+    temp_file_path = None
     try:
+        print(f"[DeepSeek_OCR] Pre-processing and parsing: {os.path.basename(file_path)}")
+
+        temp_file_path = preprocess_image_for_ocr(file_path)
+
+        # Parse the processed image with DeepSeek OCR
         file_stem = Path(file_path).stem
         output_dir = str((DEEPSEEK_OCR_DIR / file_stem).resolve())
-
-        
-        print(f"[DeepSeek_OCR] Parsing: {os.path.basename(file_path)}")
         
         md_content, output_path = dsocr_client.parse_and_get_markdown(
-            file_path,
+            temp_file_path,
             output_dir=output_dir,
         )
         
@@ -367,14 +359,18 @@ def parse_with_DeepSeek_OCR(state: IndexingState) -> IndexingState:
         state["parsed_content"] = md_content
         state["deepseek_ocr_output_dir"] = output_path
         state["deepseek_ocr_success"] = True
-        state["error"] = None  # type: ignore
-        
+        state["error"] = ""
+
     except Exception as e:
         print(f"[DeepSeek_OCR] ✗ Failed: {str(e)}")
-        state["parsed_content"] = None  # type: ignore
+        state["parsed_content"] = ""
         state["deepseek_ocr_success"] = False
         state["deepseek_ocr_error"] = str(e)
-    
+    finally:
+        # Clean up the temporary file
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+
     return state
 
 
