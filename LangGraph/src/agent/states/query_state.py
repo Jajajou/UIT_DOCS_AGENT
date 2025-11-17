@@ -15,6 +15,7 @@ from langgraph.graph.message import add_messages
 from langchain_core.messages import AnyMessage
 from typing_extensions import NotRequired
 from pydantic import BaseModel, Field
+from ..config import settings
 
 
 # ============================================================================
@@ -57,19 +58,19 @@ class QueryUnderstanding(BaseModel):
     
     # NEW: Parameter tuning outputs
     suggested_mode: Literal["naive", "local", "global", "hybrid", "mix"] = Field(
-        default="mix",
+        default=settings.retrieval.default_mode,
         description="Suggested retrieval mode based on query type"
     )
     suggested_top_k: int = Field(
         ge=1,
         le=20,
-        default=8,
+        default=settings.retrieval.default_top_k,
         description="Suggested number of top results to retrieve"
     )
     suggested_chunk_top_k: int = Field(
         ge=1,
         le=130,
-        default=16,
+        default=settings.retrieval.default_chunk_top_k,
         description="Suggested number of top chunks to retrieve"
     )
     tuning_reason: str = Field(
@@ -240,25 +241,6 @@ class QueryState(TypedDict):
 
 
 # ============================================================================
-# Configuration Constants
-# ============================================================================
-
-# Thresholds for decision making
-QUERY_CONFIDENCE_THRESHOLD = 0.5  
-OVERALL_CONFIDENCE_THRESHOLD = 0.7  
-FALLBACK_CONFIDENCE_THRESHOLD = 0.4  
-
-# Default retrieval parameters
-DEFAULT_RETRIEVAL_MODE = "mix"
-DEFAULT_TOP_K = 8
-DEFAULT_CHUNK_TOP_K = 16
-
-# Reranker configuration
-DEFAULT_RERANKER_MODEL = "namdp-ptit/ViRanker"
-RERANKER_TOP_N_FOR_CONFIDENCE = 5  # Number of top scores to use for confidence calculation
-
-
-# ============================================================================
 # Export
 # ============================================================================
 
@@ -268,12 +250,4 @@ __all__ = [
     "Reference",
     "ConfidenceAssessment",
     "ResponseGeneration",
-    "QUERY_CONFIDENCE_THRESHOLD",
-    "OVERALL_CONFIDENCE_THRESHOLD",
-    "FALLBACK_CONFIDENCE_THRESHOLD",
-    "DEFAULT_RETRIEVAL_MODE",
-    "DEFAULT_TOP_K",
-    "DEFAULT_CHUNK_TOP_K",
-    "DEFAULT_RERANKER_MODEL",
-    "RERANKER_TOP_N_FOR_CONFIDENCE",
 ]

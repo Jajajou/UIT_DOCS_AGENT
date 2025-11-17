@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any, Tuple, List, Literal
 from PIL import Image
 from mlx_vlm import load, apply_chat_template, generate
 # from mlx_vlm.utils import load_image
-from agent.config import MODEL_NAME, MODEL_CONFIGS, TASK_PROMPTS, SKIP_REPEAT, DEEPSEEK_OCR_DIR
+from agent.config import settings
 
 DEFAULT_TIMEOUT = 300  # 5 minutes for 1 PDF parsing
 
@@ -24,7 +24,7 @@ class DeepSeekOCRClient:
     
     def __init__(
         self,
-        model_name: str = MODEL_NAME,
+        model_name: str = settings.deepseek_ocr.model_name,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> None:
         self.timeout = timeout
@@ -157,8 +157,8 @@ class DeepSeekOCRClient:
         self._ensure_loaded()
 
         try:
-            prompt = TASK_PROMPTS["Markdown"]["prompt"]
-            has_grounding = TASK_PROMPTS["Markdown"]["has_grounding"]
+            prompt = settings.deepseek_ocr.task_prompts["Markdown"]["prompt"]
+            has_grounding = settings.deepseek_ocr.task_prompts["Markdown"]["has_grounding"]
 
             messages = [
                 {"role": "user", "content": f"{prompt}"}
@@ -381,7 +381,7 @@ class DeepSeekOCRClient:
         if output_dir is None:
             output_dir = str(Path("./output") / file_stem)
         else:
-            output_dir = str(DEEPSEEK_OCR_DIR / file_stem)
+            output_dir = str(settings.deepseek_ocr_dir / file_stem)
         
         # Parse the PDF
         result = self.parse_pdf(file_path, output_dir=output_dir, return_md=True, **kwargs)

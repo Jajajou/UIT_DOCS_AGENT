@@ -10,15 +10,14 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Tuple
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
-from agent.prompts import PROMPTS
-from agent.query_state import (
+from agent.core.prompts import PROMPTS
+from agent.states.query_state import (
     QueryState,
     ResponseGeneration,
     Reference,
-    FALLBACK_CONFIDENCE_THRESHOLD,
 )
 from langchain.chat_models import init_chat_model
-from agent.config import get_attr_safe
+from agent.config import get_attr_safe, settings
 
 
 # ============================================================================
@@ -27,11 +26,11 @@ from agent.config import get_attr_safe
 
 llm = init_chat_model(
     model_provider="openai",
-    api_key=os.getenv("OPENAI_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL"),
-    model=os.getenv("LLM_MODEL"),
+    api_key=settings.openai_api_key,
+    base_url=settings.openai_base_url,
+    model=settings.llm_model,
     streaming=False,
-    temperature=float(os.getenv("AGENT3_TEMPERATURE", "0.3")),
+    temperature=settings.agent3_temperature,
     model_kwargs={"tool_choice": "none"}
 )
 
@@ -159,7 +158,7 @@ def agent3_generate_response(state: QueryState) -> QueryState:
     print("=" * 80)
     
     # Check if should fallback
-    if overall_confidence < FALLBACK_CONFIDENCE_THRESHOLD:
+    if overall_confidence < settings.query_thresholds.fallback_confidence_threshold:
         print(f"[AGENT 3] Low confidence ({overall_confidence:.2f}), using fallback response")
         
         topic = state.get("extracted_topics", ["câu hỏi của bạn"])[0] if state.get("extracted_topics") else "câu hỏi của bạn"

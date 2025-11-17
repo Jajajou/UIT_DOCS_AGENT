@@ -16,18 +16,14 @@ import os
 from typing import Any, List
 from openai import OpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
-from agent.query_state import (
+from agent.states.query_state import (
     QueryState,
     QueryUnderstanding,
-    QUERY_CONFIDENCE_THRESHOLD,
-    DEFAULT_RETRIEVAL_MODE,
-    DEFAULT_TOP_K,
-    DEFAULT_CHUNK_TOP_K
 )
 
 from langchain.chat_models import init_chat_model
-from agent.prompts import PROMPTS
-from agent.config import get_attr_safe
+from agent.core.prompts import PROMPTS
+from agent.config import get_attr_safe, settings
 
 
 # ============================================================================
@@ -36,11 +32,11 @@ from agent.config import get_attr_safe
 
 llm = init_chat_model(
     model_provider="openai",
-    api_key=os.getenv("OPENAI_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL"),
-    model=os.getenv("LLM_MODEL","Qwen/Qwen3-4B-Instruct-2507"),
+    api_key=settings.openai_api_key,
+    base_url=settings.openai_base_url,
+    model=settings.llm_model,
     streaming=False,
-    temperature=float(os.getenv("AGENT1_TEMPERATURE", "0.1")),
+    temperature=settings.agent1_temperature,
     model_kwargs={"tool_choice": "none"}
 )
 
@@ -180,9 +176,9 @@ def agent1_understand_query(state: QueryState) -> QueryState:
         state["clarification_question"] = "Xin lỗi, tôi gặp lỗi khi phân tích câu hỏi. Bạn có thể diễn đạt lại câu hỏi được không?"
         
         # Set default retrieval params
-        state["retrieval_mode"] = DEFAULT_RETRIEVAL_MODE
-        state["top_k"] = DEFAULT_TOP_K
-        state["chunk_top_k"] = DEFAULT_CHUNK_TOP_K
+        state["retrieval_mode"] = settings.retrieval.default_mode
+        state["top_k"] = settings.retrieval.default_top_k
+        state["chunk_top_k"] = settings.retrieval.default_chunk_top_k
         state["tuning_reason"] = "Error occurred, using default parameters"
     
     return state

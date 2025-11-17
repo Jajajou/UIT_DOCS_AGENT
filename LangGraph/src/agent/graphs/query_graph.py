@@ -16,25 +16,24 @@ from typing import Any, Dict, List
 from langgraph.graph import StateGraph, START,END
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 
-from agent.query_state import (
+from agent.states.query_state import (
     QueryState,
-    DEFAULT_RETRIEVAL_MODE,
-    DEFAULT_TOP_K,
-    DEFAULT_CHUNK_TOP_K
 )
-from agent.lightrag_client import LightRAGAPIClient
-from agent.reranker import MultiSourceReranker
-from agent.agent1_query_understanding import (
+from agent.clients.lightrag_client import LightRAGAPIClient
+from agent.clients.reranker import MultiSourceReranker
+from agent.agents.agent1_query_understanding import (
     agent1_understand_query,
     decide_after_agent1,
     ask_clarification
 )
-from agent.agent2_confidence_assessment import (
+from agent.agents.agent2_confidence_assessment import (
     agent2_assess_confidence,
     decide_after_agent2,
     ask_followup
 )
-from agent.agent3_response_generation import agent3_generate_response
+from agent.agents.agent3_response_generation import agent3_generate_response
+from agent.utils import content_to_text, get_last_human_message
+from agent.config import settings
 
 
 # ============================================================================
@@ -43,34 +42,6 @@ from agent.agent3_response_generation import agent3_generate_response
 
 api_client = LightRAGAPIClient()
 reranker = MultiSourceReranker()
-
-
-# ============================================================================
-# Helper Functions
-# ============================================================================
-
-def _content_to_text(content: Any) -> str:
-    """Extract text from message content."""
-    if isinstance(content, str):
-        return content.strip()
-    if isinstance(content, list):
-        texts = []
-        for part in content:
-            if isinstance(part, dict) and part.get("type") == "text":
-                txt = (part.get("text") or "").strip()
-                if txt:
-                    texts.append(txt)
-
-        return "".join(texts) if texts else ""
-    return ""
-
-
-def _last_human_text(messages: List[AnyMessage]) -> str:
-    """Get text from the last human message."""
-    for msg in reversed(messages or []):
-        if isinstance(msg, HumanMessage) or getattr(msg, "type", None) == "human":
-            return _content_to_text(getattr(msg, "content", ""))
-    return ""
 
 
 # ============================================================================
@@ -92,9 +63,13 @@ def prepare_input(state: QueryState) -> QueryState:
         return state
     
     # Get last human message
-    last_msg = _last_human_text(messages)
-    state["query"] = _content_to_text(last_msg)
-    query = state["query"]
+    last_msg = get_last_human_message(messages)
+    if not last_msg:
+        state["error"] = "No human message found"
+        state["status_message"] = "Error: No human message"
+        return state
+
+    query = content_to_text(last_msg.content)
     
     # Store query
     state["query"] = query
@@ -126,9 +101,9 @@ def retrieve_data(state: QueryState) -> QueryState:
         return state
     
     # Get retrieval parameters (tuned by Agent 1)
-    mode = state.get("retrieval_mode", DEFAULT_RETRIEVAL_MODE)
-    top_k = state.get("top_k", DEFAULT_TOP_K)
-    chunk_top_k = state.get("chunk_top_k", DEFAULT_CHUNK_TOP_K)
+    mode = state.get("retrieval_mode", settings.retrieval.default_mode)
+    top_k = state.get("top_k", settings.retrieval.default_top_k)
+    chunk_top_k = state.get("chunk_top_k", settings.retrieval.default_chunk_top_k)
     max_entity_tokens = state.get("max_entity_tokens")
     max_relation_tokens = state.get("max_relation_tokens")
     max_total_tokens = state.get("max_total_tokens")

@@ -10,17 +10,7 @@ from __future__ import annotations
 import os
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
-from dataclasses import dataclass
-
-
-@dataclass
-class RerankConfig:
-    """Configuration for reranker."""
-    model_name: str = "namdp-ptit/ViRanker"
-    use_fp16: bool = True
-    batch_size: int = 32
-    normalize_scores: bool = True
-    max_length: int = 512
+from agent.config import settings
 
 
 class Reranker:
@@ -32,23 +22,11 @@ class Reranker:
     - thanhtantran/Vietnamese_Reranker (for longer documents)
     """
     
-    def __init__(self, config: Optional[RerankConfig] = None):
+    def __init__(self):
         """
-        Initialize reranker with configuration.
-        
-        Args:
-            config: RerankConfig object. If None, uses default config from env vars.
+        Initialize reranker with configuration from settings.
         """
-        if config is None:
-            config = RerankConfig(
-                model_name=os.getenv("RERANKER_MODEL", "namdp-ptit/ViRanker"),
-                use_fp16=os.getenv("RERANKER_USE_FP16", "True").lower() == "true",
-                batch_size=int(os.getenv("RERANKER_BATCH_SIZE", "32")),
-                normalize_scores=True,
-                # max_length=512
-            )
-        
-        self.config = config
+        self.config = settings.reranker
         self._model = None
         self._load_model()
     
@@ -57,9 +35,9 @@ class Reranker:
         try:
             from FlagEmbedding import FlagReranker
             
-            print(f"[RERANKER] Loading model: {self.config.model_name}")
+            print(f"[RERANKER] Loading model: {self.config.default_model}")
             self._model = FlagReranker(
-                self.config.model_name,
+                self.config.default_model,
                 use_fp16=self.config.use_fp16
             )
             print(f"[RERANKER] ✓ Model loaded successfully")
@@ -169,7 +147,7 @@ class Reranker:
     def calculate_aggregate_confidence(
         self,
         scores: List[float],
-        top_n: int = 5
+        top_n: int = settings.reranker.top_n_for_confidence
     ) -> float:
         """
         Calculate aggregate confidence score from a list of scores.
@@ -322,43 +300,9 @@ class MultiSourceReranker:
                 "entity_count": len(reranked_entities),
                 "relationship_count": len(reranked_relationships),
                 "chunk_count": len(reranked_chunks),
-                "model_name": self.reranker.config.model_name
+                "model_name": self.reranker.config.default_model
             }
         }
-
-
-# ============================================================================
-# Convenience Functions
-# ============================================================================
-
-def create_reranker(model_name: Optional[str] = None) -> Reranker:
-    """
-    Create a reranker instance with optional model name.
-    
-    Args:
-        model_name: Model name to use. If None, uses env var or default.
-        
-    Returns:
-        Reranker instance
-    """
-    config = RerankConfig()
-    if model_name:
-        config.model_name = model_name
-    return Reranker(config)
-
-
-def create_multi_source_reranker(model_name: Optional[str] = None) -> MultiSourceReranker:
-    """
-    Create a multi-source reranker instance.
-    
-    Args:
-        model_name: Model name to use. If None, uses env var or default.
-        
-    Returns:
-        MultiSourceReranker instance
-    """
-    reranker = create_reranker(model_name)
-    return MultiSourceReranker(reranker)
 
 
 # ============================================================================
@@ -368,7 +312,4 @@ def create_multi_source_reranker(model_name: Optional[str] = None) -> MultiSourc
 __all__ = [
     "Reranker",
     "MultiSourceReranker",
-    "RerankConfig",
-    "create_reranker",
-    "create_multi_source_reranker"
 ]

@@ -16,15 +16,13 @@ from __future__ import annotations
 import os
 from typing import Any
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
-from agent.prompts import PROMPTS
-from agent.query_state import (
+from agent.core.prompts import PROMPTS
+from agent.states.query_state import (
     QueryState,
     ConfidenceAssessment,
-    OVERALL_CONFIDENCE_THRESHOLD,
-    FALLBACK_CONFIDENCE_THRESHOLD
 )
 from langchain.chat_models import init_chat_model
-from agent.config import get_attr_safe
+from agent.config import get_attr_safe, settings
 
 
 # ============================================================================
@@ -33,10 +31,10 @@ from agent.config import get_attr_safe
 
 llm = init_chat_model(
     model_provider="openai",
-    api_key=os.getenv("OPENAI_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL"),
-    model=os.getenv("LLM_MODEL"),
-    temperature=float(os.getenv("AGENT2_TEMPERATURE", "0.2"))
+    api_key=settings.openai_api_key,
+    base_url=settings.openai_base_url,
+    model=settings.llm_model,
+    temperature=settings.agent2_temperature
 )
 
 
@@ -140,7 +138,7 @@ def agent2_assess_confidence(state: QueryState) -> QueryState:
         # Fallback to simple calculation
         overall_confidence = 0.4 * query_confidence + 0.6 * rerank_confidence
         state["overall_confidence"] = overall_confidence
-        state["needs_followup"] = overall_confidence < OVERALL_CONFIDENCE_THRESHOLD
+        state["needs_followup"] = overall_confidence < settings.query_thresholds.overall_confidence_threshold
         state["confidence_reason"] = f"Simple calculation: 0.4*{query_confidence:.2f} + 0.6*{rerank_confidence:.2f} = {overall_confidence:.2f}"
         
         if state["needs_followup"]:
