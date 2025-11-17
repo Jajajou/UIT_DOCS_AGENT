@@ -27,6 +27,7 @@ from agent.query_state import (
 
 from langchain.chat_models import init_chat_model
 from agent.prompts import PROMPTS
+from agent.config import get_attr_safe
 
 
 # ============================================================================
@@ -37,8 +38,10 @@ llm = init_chat_model(
     model_provider="openai",
     api_key=os.getenv("OPENAI_API_KEY"),
     base_url=os.getenv("OPENAI_BASE_URL"),
-    model=os.getenv("LLM_MODEL"),
-    temperature=float(os.getenv("AGENT1_TEMPERATURE", "0.1"))
+    model=os.getenv("LLM_MODEL","Qwen/Qwen3-4B-Instruct-2507"),
+    streaming=False,
+    temperature=float(os.getenv("AGENT1_TEMPERATURE", "0.1")),
+    model_kwargs={"tool_choice": "none"}
 )
 
 
@@ -108,57 +111,60 @@ def agent1_understand_query(state: QueryState) -> QueryState:
     print(f"[AGENT 1] Analyzing query: {query}")
     print("=" * 80)
     
+    # try:
     try:
         # Call LLM with structured output
-        llm_structured_output = llm.with_structured_output(QueryUnderstanding)
+        llm_json = llm.bind(response_format={"type": "json_object"})
+        llm_structured_output = llm_json.with_structured_output( #type: ignore
+            QueryUnderstanding,          
+            method="json_schema",       
+            include_raw=False             
+        )           
 
         msgs = [
                 SystemMessage(content=PROMPTS["query_understanding_system"]),
                 HumanMessage(content=f"Phân tích câu hỏi sau:\n\n{query}")
                 ]
 
-        completion = llm_structured_output.invoke(
+        understanding = llm_structured_output.invoke(
             input=msgs
         )
-
-        # Parse structured output
-        understanding = completion
-        
+        print(understanding)
         if not understanding:
             raise ValueError("LLM did not return structured output")
         
         # Update state with Agent 1 outputs
-        state["parsed_intention"] = understanding.parsed_intention
-        state["extracted_entities"] = understanding.extracted_entities
-        state["extracted_topics"] = understanding.extracted_topics
-        state["query_confidence"] = understanding.confidence
-        state["query_confidence_reason"] = understanding.confidence_reason
-        state["needs_clarification"] = understanding.needs_clarification
+        state["parsed_intention"] = get_attr_safe(understanding,"parsed_intention")
+        state["extracted_entities"] = get_attr_safe(understanding,"extracted_entities")
+        state["extracted_topics"] = get_attr_safe(understanding,"extracted_topics")
+        state["query_confidence"] = get_attr_safe(understanding,"confidence")
+        state["query_confidence_reason"] = get_attr_safe(understanding,"confidence_reason")
+        state["needs_clarification"] = get_attr_safe(understanding,"needs_clarification")
         
-        if understanding.clarification_question:
-            state["clarification_question"] = understanding.clarification_question
+        if get_attr_safe(understanding,"clarification_question") != None:
+            state["clarification_question"] = get_attr_safe(understanding,"clarification_question")
         
         # Update retrieval parameters
-        state["retrieval_mode"] = understanding.suggested_mode
-        state["top_k"] = understanding.suggested_top_k
-        state["chunk_top_k"] = understanding.suggested_chunk_top_k
-        state["tuning_reason"] = understanding.tuning_reason
+        state["retrieval_mode"] = get_attr_safe(understanding,"suggested_mode")
+        state["top_k"] = get_attr_safe(understanding,"suggested_top_k")
+        state["chunk_top_k"] = get_attr_safe(understanding,"suggested_chunk_top_k")
+        state["tuning_reason"] = get_attr_safe(understanding,"tuning_reason")
         
         # Log results
-        print(f"[AGENT 1] Parsed Intention: {understanding.parsed_intention}")
-        print(f"[AGENT 1] Entities: {understanding.extracted_entities}")
-        print(f"[AGENT 1] Topics: {understanding.extracted_topics}")
-        print(f"[AGENT 1] Confidence: {understanding.confidence:.2f}")
-        print(f"[AGENT 1] Reason: {understanding.confidence_reason}")
-        print(f"[AGENT 1] Needs Clarification: {understanding.needs_clarification}")
+        print(f"[AGENT 1] Parsed Intention: {get_attr_safe(understanding,"parsed_intention")}")
+        print(f"[AGENT 1] Entities: {get_attr_safe(understanding,"extracted_entities")}")
+        print(f"[AGENT 1] Topics: {get_attr_safe(understanding,"extracted_topics")}")
+        print(f"[AGENT 1] Confidence: {get_attr_safe(understanding,"confidence"):.2f}")
+        print(f"[AGENT 1] Reason: {get_attr_safe(understanding,"confidence_reason")}")
+        print(f"[AGENT 1] Needs Clarification: {get_attr_safe(understanding,"needs_clarification")}")
         
         # Log parameter tuning
-        print(f"[AGENT 1] Suggested Mode: {understanding.suggested_mode}")
-        print(f"[AGENT 1] Suggested Top-K: {understanding.suggested_top_k}")
-        print(f"[AGENT 1] Tuning Reason: {understanding.tuning_reason}")
+        print(f"[AGENT 1] Suggested Mode: {get_attr_safe(understanding,"suggested_mode")}")
+        print(f"[AGENT 1] Suggested Top-K: {get_attr_safe(understanding,"suggested_top_k")}")
+        print(f"[AGENT 1] Tuning Reason: {get_attr_safe(understanding,"tuning_reason")}")
         
-        if understanding.needs_clarification:
-            print(f"[AGENT 1] Clarification Question: {understanding.clarification_question}")
+        if get_attr_safe(understanding,"needs_clarification"):
+            print(f"[AGENT 1] Clarification Question: {get_attr_safe(understanding,"clarification_question")}")
         
         state["error"] = None  # type: ignore
         
@@ -192,10 +198,13 @@ def decide_after_agent1(state: QueryState) -> str:
     
     Returns:
         - "ask_clarification" if needs_clarification is True
+        - "agent3_generate_response" if confident > 0.9
         - "retrieve_data" otherwise
     """
     if state.get("needs_clarification", False):
         return "ask_clarification"
+    # if state.get("query_confidence") > 0.9: #type: ignore
+        # return "agent3_generate_response"
     return "retrieve_data"
 
 

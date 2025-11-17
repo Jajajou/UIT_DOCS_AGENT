@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "uit-docs-agent"
 version = "0.1.0"
@@ -38,7 +42,7 @@ lightrag-hku = { workspace = true }
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-executionEnvironments = [ {root = ".", extraPaths = ["LightRAG", "LangGraph"]} ]
+executionEnvironments = [ {root = ".", extraPaths = ["LightRAG", "LangGraph/src",]} ]
 
 [dependency-groups]
 dev = [
@@ -47,3 +51,9 @@ dev = [
     "pymupdf>=1.26.5",
     "pypdf2>=3.0.1",
 ]
+
+[tool.setuptools.package-dir]
+"" = "LangGraph/src"
+
+[tool.setuptools.packages.find]
+where = ["LangGraph/src"]

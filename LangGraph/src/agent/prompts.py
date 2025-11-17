@@ -149,7 +149,7 @@ Tự động chọn tham số retrieval dựa trên query type:
 - **60–80**: Query phức tạp, cần nhiều nguồn
   - Ví dụ: "Điều kiện, thủ tục, deadline học bổng KKHT?"
   
-- **100–150**: Query rất phức tạp, exploratory
+- **90-130**: Query rất phức tạp, exploratory
   - Ví dụ: "So sánh các loại học bổng tại UIT?"
 
 **Quy tắc chung:**
@@ -159,7 +159,7 @@ Tự động chọn tham số retrieval dựa trên query type:
 </parameter_tuning>
 
 <output_format>
-Trả về JSON với schema QueryUnderstandingV3:
+Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
 {
   "parsed_intention": "...",
   "extracted_entities": ["...", "..."],

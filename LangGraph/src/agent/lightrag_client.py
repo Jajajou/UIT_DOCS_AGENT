@@ -258,6 +258,7 @@ class LightRAGAPIClient:
         payload: dict[str, t.Any] = {
             "query": query_text,
             "mode": mode,
+            "enable_rerank": False
         }
         if top_k is not None:
             payload["top_k"] = top_k

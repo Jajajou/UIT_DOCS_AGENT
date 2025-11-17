@@ -10,7 +10,7 @@ This module defines the state schema for an advanced RAG pipeline that includes:
 
 from __future__ import annotations
 
-from typing import TypedDict, Literal, Optional, List, Dict, Any, Annotated, Tuple
+from typing_extensions import TypedDict, Literal, Optional, List, Dict, Any, Annotated, Tuple
 from langgraph.graph.message import add_messages
 from langchain_core.messages import AnyMessage
 from typing_extensions import NotRequired
@@ -68,7 +68,7 @@ class QueryUnderstanding(BaseModel):
     )
     suggested_chunk_top_k: int = Field(
         ge=1,
-        le=20,
+        le=130,
         default=16,
         description="Suggested number of top chunks to retrieve"
     )
@@ -129,7 +129,7 @@ class ResponseGeneration(BaseModel):
         description="Nội dung câu trả lời chi tiết, có thể chứa markdown formatting và hyperlinks"
     )
     response_type: Literal["full_answer", "partial_answer", "fallback"] = Field(
-        description="Loại response: full (đầy đủ), partial (một phần + suggest advisor), fallback (chỉ suggest advisor)"
+        description="Loại response: full_answer (đầy đủ), partial_answer (một phần + suggest advisor), fallback (chỉ suggest advisor)"
     )
     references: List[Reference] = Field(
         default_factory=list,

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from typing import Any, Dict, List
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START,END
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 
 from agent.query_state import (
@@ -54,11 +54,14 @@ def _content_to_text(content: Any) -> str:
     if isinstance(content, str):
         return content.strip()
     if isinstance(content, list):
+        texts = []
         for part in content:
             if isinstance(part, dict) and part.get("type") == "text":
                 txt = (part.get("text") or "").strip()
                 if txt:
-                    return txt
+                    texts.append(txt)
+
+        return "".join(texts) if texts else ""
     return ""
 
 
@@ -81,16 +84,17 @@ def prepare_input(state: QueryState) -> QueryState:
     Extract query from messages if not provided directly.
     """
     
-    query = state.get("query")
-    
-    # If no direct query, extract from messages
-    if not query:
-        query = _last_human_text(state.get("messages", []))
-    
-    if not query:
-        state["error"] = "No query provided"
-        state["status_message"] = "Error: No query"
+    # Extract query
+    messages = state.get("messages", [])
+    if not messages:
+        state["error"] = "No input provided"
+        state["status_message"] = "Error: No input"
         return state
+    
+    # Get last human message
+    last_msg = _last_human_text(messages)
+    state["query"] = _content_to_text(last_msg)
+    query = state["query"]
     
     # Store query
     state["query"] = query
@@ -147,16 +151,17 @@ def retrieve_data(state: QueryState) -> QueryState:
         )
         
         # Parse result
-        entities = result.get("entities", [])
-        relationships = result.get("relationships", [])
-        chunks = result.get("chunks", [])
+        entities = result["data"]["entities"]
+        relationships = result["data"]["relationships"]
+        chunks = result["data"]["chunks"]
+        metadata = result["metadata"]
         
         # Store in state
         state["retrieved_entities"] = entities
         state["retrieved_relationships"] = relationships
         state["retrieved_chunks"] = chunks
         state["retrieval_metadata"] = {
-            "mode": mode,
+            "mode": metadata["query_mode"],
             "top_k": top_k,
             "chunk_top_k": chunk_top_k,
             "total_entities": len(entities),
@@ -320,7 +325,7 @@ builder.add_node("agent3_generate_response", agent3_generate_response)
 builder.add_node("format_final_answer", format_final_answer)
 
 # Set entry point
-builder.set_entry_point("prepare_input")
+builder.add_edge(START, "prepare_input")
 
 # Add edges
 builder.add_edge("prepare_input", "agent1_understand_query")
@@ -331,6 +336,7 @@ builder.add_conditional_edges(
     decide_after_agent1,
     {
         "ask_clarification": "ask_clarification",
+        # "agent3_generate_response": "agent3_generate_response",
         "retrieve_data": "retrieve_data"
     }
 )

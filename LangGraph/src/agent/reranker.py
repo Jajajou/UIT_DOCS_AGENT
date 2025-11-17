@@ -90,7 +90,7 @@ class Reranker:
             List of scores (0.0-1.0 if normalized, raw scores otherwise)
         """
         if not texts:
-            return []
+            raise RuntimeError("Texts empty")
         
         if self._model is None:
             raise RuntimeError("Reranker model not loaded")
@@ -107,14 +107,16 @@ class Reranker:
         )
         
         # Ensure scores is a list
-        if isinstance(scores, (int, float)):
-            scores = [scores]
-        elif hasattr(scores, 'tolist'):
-            if scores != None: 
-                scores = scores.tolist()
-                return scores
-        else:
-            return []
+        # if isinstance(scores, (int, float)):
+        #     scores = [scores]
+        # elif hasattr(scores, 'tolist'):
+        #     if scores != None: 
+        #         scores = scores.tolist()
+        #         return scores
+        # else:
+        #     return []
+
+        return scores #type: ignore
     
     def rerank_items(
         self,
@@ -146,6 +148,8 @@ class Reranker:
                 # Try alternative fields
                 text = item.get("name", "") or item.get("description", "") or str(item)
             texts.append(str(text))
+
+        print(texts)
         
         # Compute scores
         scores = self.compute_scores(query, texts)
@@ -270,7 +274,7 @@ class MultiSourceReranker:
         
         # Rerank entities
         reranked_entities = self.reranker.rerank_items(
-            query, entities, text_field="name", top_k=top_k_entities
+            query, entities, text_field="entity_name", top_k=top_k_entities
         )
         entity_scores = [score for _, score in reranked_entities]
         

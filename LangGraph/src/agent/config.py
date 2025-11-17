@@ -2,6 +2,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+from pydantic import BaseModel
+from typing import Any
+
 load_dotenv()
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).parents[2])).resolve()
 DATA_DIR = PROJECT_ROOT / "data"
@@ -25,3 +28,31 @@ TASK_PROMPTS = {
     "Custom": {"prompt": "", "has_grounding": False}
 }
 SKIP_REPEAT = True
+
+
+def get_attr_safe(obj: Any, attr: str, default: Any = None) -> Any:
+    """
+    Safely retrieves an attribute from a BaseModel or a dict.
+
+    Works for:
+    - Pydantic BaseModel instances
+    - Dicts
+    - Nested attributes using dot notation ("a.b.c")
+    """
+    try:
+        if obj is None:
+            return default
+
+        # Support nested keys
+        parts = attr.split(".")
+        value = obj
+        for part in parts:
+            if isinstance(value, BaseModel):
+                value = getattr(value, part, default)
+            elif isinstance(value, dict):
+                value = value.get(part, default)
+            else:
+                return default
+        return value
+    except Exception:
+        return default

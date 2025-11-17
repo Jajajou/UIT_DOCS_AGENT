@@ -24,6 +24,7 @@ from agent.query_state import (
     FALLBACK_CONFIDENCE_THRESHOLD
 )
 from langchain.chat_models import init_chat_model
+from agent.config import get_attr_safe
 
 
 # ============================================================================
@@ -109,24 +110,25 @@ def agent2_assess_confidence(state: QueryState) -> QueryState:
 
         assessment = llm_structured_output.invoke(input=msgs)
         
+        
         if not assessment:
             raise ValueError("LLM did not return structured output")
         
         # Update state
-        state["overall_confidence"] = assessment.overall_confidence
-        state["needs_followup"] = assessment.needs_followup
-        state["confidence_reason"] = assessment.confidence_reason
+        state["overall_confidence"] = get_attr_safe(assessment,"overall_confidence")
+        state["needs_followup"] = get_attr_safe(assessment,"needs_followup")
+        state["confidence_reason"] = get_attr_safe(assessment,"confidence_reason")
         
-        if assessment.followup_question:
-            state["followup_question"] = assessment.followup_question
+        if get_attr_safe(assessment,"followup_question") != None:
+            state["followup_question"] = get_attr_safe(assessment,"followup_question")
         
         # Log results
-        print(f"[AGENT 2] Overall Confidence: {assessment.overall_confidence:.2f}")
-        print(f"[AGENT 2] Needs Follow-up: {assessment.needs_followup}")
-        print(f"[AGENT 2] Reason: {assessment.confidence_reason}")
+        print(f"[AGENT 2] Overall Confidence: {get_attr_safe(assessment,"overall_confidence"):.2f}")
+        print(f"[AGENT 2] Needs Follow-up: {get_attr_safe(assessment,"needs_followup")}")
+        print(f"[AGENT 2] Reason: {get_attr_safe(assessment,"confidence_reason")}")
         
-        if assessment.needs_followup:
-            print(f"[AGENT 2] Follow-up Question: {assessment.followup_question}")
+        if get_attr_safe(assessment,"needs_followup"):
+            print(f"[AGENT 2] Follow-up Question: {get_attr_safe(assessment,"followup_question")}")
         
         state["error"] = None  # type: ignore
         

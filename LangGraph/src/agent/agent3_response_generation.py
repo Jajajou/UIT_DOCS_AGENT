@@ -18,6 +18,7 @@ from agent.query_state import (
     FALLBACK_CONFIDENCE_THRESHOLD,
 )
 from langchain.chat_models import init_chat_model
+from agent.config import get_attr_safe
 
 
 # ============================================================================
@@ -29,7 +30,9 @@ llm = init_chat_model(
     api_key=os.getenv("OPENAI_API_KEY"),
     base_url=os.getenv("OPENAI_BASE_URL"),
     model=os.getenv("LLM_MODEL"),
-    temperature=float(os.getenv("AGENT3_TEMPERATURE", "0.3"))
+    streaming=False,
+    temperature=float(os.getenv("AGENT3_TEMPERATURE", "0.3")),
+    model_kwargs={"tool_choice": "none"}
 )
 
 
@@ -195,31 +198,36 @@ def agent3_generate_response(state: QueryState) -> QueryState:
         )
         
         # Call LLM with structured output
-        llm_structured_output = llm.with_structured_output(ResponseGeneration)
+        llm_json = llm.bind(response_format={"type": "json_object"})
+        llm_structured_output = llm_json.with_structured_output( #type: ignore
+            ResponseGeneration,          
+            method="json_schema",       
+            include_raw=False             
+        ) 
 
         msgs = [
             SystemMessage(content=prompt_text),
-            HumanMessage(content="Generate response cho query trên.")
+            HumanMessage(content=f"{parsed_intention}\n\nGenerate response cho query trên.")
         ]
-
-        response_gen = llm_structured_output.invoke(input=msgs)
+        print(f"GOI LLM: {prompt_text}")
+        response_gen = llm_structured_output.invoke(input=prompt_text)
         
         if not response_gen:
             raise ValueError("LLM did not return structured output")
         
         # Update state
-        state["generated_response"] = response_gen.response_text
-        state["response_type"] = response_gen.response_type
+        state["generated_response"] = get_attr_safe(response_gen,"response_text")
+        state["response_type"] = get_attr_safe(response_gen,"response_type")
         
         # Convert Pydantic references to dicts
-        references_list = [ref.model_dump() for ref in response_gen.references]
+        references_list = [ref.model_dump() for ref in get_attr_safe(response_gen,"references")]
         state["references"] = references_list
         
         # Set final answer
-        final_answer = response_gen.response_text
+        final_answer = get_attr_safe(response_gen,"response_text")
         
         # Add partial answer suffix if needed
-        if response_gen.response_type == "partial_answer":
+        if get_attr_safe(response_gen,"response_type") == "partial_answer":
             final_answer += PROMPTS["partial_answer_suffix"]
         
         state["final_answer"] = final_answer
@@ -231,7 +239,7 @@ def agent3_generate_response(state: QueryState) -> QueryState:
         
         # Log results
         print(f"[AGENT 3] ✓ Response generated")
-        print(f"[AGENT 3] Response type: {response_gen.response_type}")
+        print(f"[AGENT 3] Response type: {get_attr_safe(response_gen,"response_type")}")
         print(f"[AGENT 3] References: {len(references_list)}")
         print(f"[AGENT 3] Response length: {len(final_answer)} chars")
         
