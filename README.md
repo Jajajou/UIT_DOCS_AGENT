@@ -1,145 +1,147 @@
-# UIT Docs Crawler
+# UIT_DOCS_AGENT: AI Agent for Ho Chi Minh City University of Information Technology Documents
 
-Web crawler cho website UIT sử dụng Firecrawl self-hosted.
+This project develops a sophisticated, multi-component AI agent to process and answer queries based on content from Ho Chi Minh City University of Information Technology (UIT) websites. It features a complete RAG (Retrieval-Augmented Generation) pipeline, from data ingestion to intelligent query processing, orchestrated with Docker and Docker Compose.
 
-## Yêu cầu
+## Project Overview
 
-- Docker (cấp 4GB+ RAM)
-- 8GB+ RAM hệ thống
-- 10GB+ dung lượng trống
+The `UIT_DOCS_AGENT` system comprises three main parts:
 
-## Cách chạy
+1.  **Crawling System**: A self-hosted `firecrawl` instance responsible for scraping and ingesting documents from specified UIT web pages.
+2.  **Knowledge Base**: A `LightRAG` instance that processes crawled documents, creating a searchable knowledge base with a vector database backend.
+3.  **AI Agent System**: A multi-agent system built with `LangGraph` that manages both indexing new documents and intelligently answering user queries.
 
-### 1. Cài đặt
+## Key Technologies
+
+*   **Backend**: Python, FastAPI
+*   **AI/LLM**: LangGraph, LangChain, LightRAG, DeepSeek-OCR
+*   **Data Crawling**: Firecrawl, Playwright
+*   **Databases**: PostgreSQL with pgvector, Qdrant, Redis
+*   **Containerization**: Docker, Docker Compose
+
+## System Architecture
+
+The system is designed with a modular architecture, enabling scalable data ingestion and intelligent query processing.
+
+### 1. Data Ingestion Pipeline
+
+Data ingestion is a two-step process: crawling and indexing.
+
+#### Crawling (`firecrawl/docker-compose.yaml`)
+
+A `firecrawl` instance periodically crawls UIT websites based on the configuration in `firecrawl/config.yaml`. It utilizes a `playwright-service` for rendering JavaScript-heavy pages and `redis` for job queuing. Crawled documents are saved to the shared `./data/` directory.
+
+#### Indexing (`LangGraph/src/agent/indexing_graph.py`)
+
+The `indexing_graph` (a LangGraph workflow) processes and indexes new documents. It can be triggered by user commands (e.g., `upload /path/to/file`) or a manual `scan`. For PDF documents, it employs a `DeepSeekOCRClient` for high-quality text and layout extraction, and then uploads the processed content to the `LightRAG` knowledge base via a `LightRAGAPIClient`.
+
+### 2. Query & Response Pipeline (`LangGraph/src/agent/query_graph.py`)
+
+A sophisticated 3-agent RAG pipeline built with LangGraph handles query processing:
+
+*   **Agent 1: Query Understanding**: Analyzes the user's query, tunes retrieval parameters (e.g., `top_k`, `retrieval_mode`), and can ask clarifying questions.
+*   **Retrieval & Reranking**: Retrieves relevant data (entities, relationships, text chunks) from the `LightRAG` API. A `MultiSourceReranker` scores and re-ranks this data for optimal relevance.
+*   **Agent 2: Confidence Assessment**: Evaluates reranked data for a confidence score. Low confidence may trigger follow-up questions.
+*   **Agent 3: Response Generation**: Generates a context-aware answer (full, partial, or fallback) based on high-confidence, reranked data.
+
+### 3. Core Services (`docker-compose.yml`)
+
+The main Docker Compose setup orchestrates these services:
+
+*   **`lightrag_uit`**: The core `LightRAG` application, serving the knowledge base API.
+*   **`postgres_uit`**: PostgreSQL with `pgvector` for storing vector embeddings.
+*   **`qdrant_uit`**: A Qdrant vector database for efficient similarity search.
+
+## Building and Running
+
+The project is designed to be run using Docker and Docker Compose. Ensure you have Docker installed and allocated at least 4GB of RAM, and your system has 8GB+ RAM and 10GB+ free disk space.
+
+### 1. Installation
 
 ```bash
-# Clone repo
+# Clone the repository
 git clone https://github.com/Jajajou/UIT_DOCS_AGENT.git
 cd UIT_DOCS_AGENT
 
-# Copy file cấu hình
+# Copy example environment files
 cp .env.example .env
+cp env.lightrag.example env.lightrag
 ```
 
-### 2. Chạy
+### 2. Configuration
+
+*   **Main Configuration**: Edit `.env` for general project settings.
+    ```bash
+    # Crawler schedule in hours (e.g., 24 for daily)
+    SCHEDULE_HOURS=24
+    # Maximum concurrent workers for crawling
+    MAX_WORKERS=3
+    # Set to true to run the crawler once and then stop
+    RUN_ONCE=false
+    # Authentication key for Bull Queue UI (replace CHANGEME)
+    BULL_AUTH_KEY=CHANGEME
+    ```
+*   **LightRAG Configuration**: Edit `env.lightrag` for LightRAG specific settings.
+*   **Crawler URLs**: Modify `firecrawl/config.yaml` to change the URLs to be crawled and specify `include_patterns` and `exclude_patterns`.
+
+### 3. Running Services
 
 ```bash
-# Khởi động tất cả services
+# Start all services (crawler, LightRAG, databases)
 docker compose up -d
 
-# Lần đầu chạy mất 5-10 phút để khởi tạo
+# The first run may take 5-10 minutes for initialization.
 ```
 
-### 3. Kiểm tra
+### 4. Checking Status and Logs
 
 ```bash
-# Xem trạng thái
+# Check service status
 docker compose ps
 
-# Xem log crawler
+# View crawler logs
 docker logs firecrawl-uit-crawler -f
 
-# Xem tất cả log
+# View all service logs
 docker compose logs -f
 ```
 
-### 4. Truy cập Bull Queue UI
+### 5. Accessing Bull Queue UI
 
-Mở trình duyệt: http://localhost:3002/admin/CHANGEME/queues
+Open your browser to: `http://localhost:3002/admin/YOUR_BULL_AUTH_KEY/queues`
+(Replace `YOUR_BULL_AUTH_KEY` with the value set in your `.env` file for `BULL_AUTH_KEY`).
 
-(Đổi `CHANGEME` thành giá trị `BULL_AUTH_KEY` trong file `.env`)
-
-## Cấu hình
-
-Chỉnh sửa file `.env`:
+## Stopping Services
 
 ```bash
-# Thời gian chạy lại (giờ)
-SCHEDULE_HOURS=24
-
-# Số worker song song
-MAX_WORKERS=3
-
-# Chạy 1 lần rồi dừng
-RUN_ONCE=false
-```
-
-Chỉnh sửa file `config.yaml` để thay đổi URL crawl:
-
-```yaml
-seed_urls:
-  - https://daa.uit.edu.vn/qui-che-qui-dinh-qui-trinh
-  - https://daa.uit.edu.vn/thongbaochinhquy
-
-max_depth: 3
-
-include_patterns:
-  - /qui-dinh
-  - /thong-bao
-
-exclude_patterns:
-  - /news
-  - /blog
-```
-
-## Kết quả
-
-Dữ liệu crawl được lưu trong thư mục `data/`:
-
-```
-data/
-├── daa/
-│   ├── chuong-trinh-dao-tao/
-│   ├── quy-dinh/
-│   ├── quy-trinh/
-│   └── thong-bao/
-├── metadata.json
-├── metadata.jsonl
-├── crawl_stats.json
-└── failed_urls.jsonl
-```
-
-## Dừng crawler
-
-```bash
-# Dừng tất cả services
+# Stop all services
 docker compose down
 
-# Dừng và xóa dữ liệu
+# Stop services and remove associated volumes (data)
 docker compose down -v
 ```
 
-## Xử lý lỗi
+## Troubleshooting
 
-### Services không khởi động
+*   **Services not starting**:
+    *   Check logs: `docker logs <service_name>` (e.g., `docker logs firecrawl-api`)
+    *   Restart services: `docker compose restart`
+    *   Ensure Docker has at least 4GB RAM allocated.
+*   **Out of Memory**:
+    *   Increase Docker RAM allocation to 4GB+.
+    *   Reduce `MAX_WORKERS` in `.env` to 1 or 2.
+    *   Close other demanding applications.
+*   **Connection Refused**:
+    *   Allow 5-10 minutes for initial startup.
+    *   Verify all services are "healthy" with `docker compose ps`.
 
-```bash
-# Kiểm tra log
-docker logs firecrawl-api
+## Development Conventions
 
-# Khởi động lại
-docker compose restart
-
-# Kiểm tra Docker đã cấp đủ 4GB RAM
-```
-
-### Hết bộ nhớ
-
-- Tăng RAM cho Docker lên 4GB+
-- Giảm `MAX_WORKERS` xuống 2 hoặc 1
-- Đóng các ứng dụng khác
-
-### Kết nối bị từ chối
-
-- Đợi 5-10 phút cho lần khởi động đầu
-- Kiểm tra: `docker compose ps`
-- Tất cả services phải "healthy"
-
-## Tài nguyên
-
-- RAM: ~2-3GB (5 containers)
-- CPU: 2+ cores
-- Disk: ~10GB
+*   **Modular Architecture**: The project is highly modular, with separate directories/submodules for the crawler (`firecrawl`), knowledge base (`LightRAG`), and agent logic (`LangGraph`).
+*   **Dependency Management**: Python dependencies are managed with `uv` and defined in `pyproject.toml`.
+*   **Configuration**: Service configurations are managed through `.env` files. Use the provided `.example` files as templates.
+*   **Agent Logic**: The core AI agent logic is defined in `LangGraph/src/agent/` directory:
+    *   `indexing_graph.py`: Defines the data ingestion and indexing workflow.
+    *   `query_graph.py`: Defines the multi-agent query processing workflow.
 
 ## License
 
