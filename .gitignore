@@ -221,3 +221,13 @@ __marimo__/
 # Data directories
 data/**/*
 .gemini-clipboard/
+
+# Project specific
+
+.upload_checkpoint.jsonl
+
+eda_report.py
+
+CLAUDE.md
+
+lightrag-openapi.json
