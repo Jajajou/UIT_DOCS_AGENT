@@ -48,7 +48,7 @@ reranker = MultiSourceReranker()
 # Graph Nodes
 # ============================================================================
 
-def prepare_input(state: QueryState) -> QueryState:
+def prepare_input(state: QueryState) -> Dict[str, Any]:
     """
     Prepare input for the pipeline.
     
@@ -58,31 +58,33 @@ def prepare_input(state: QueryState) -> QueryState:
     # Extract query
     messages = state.get("messages", [])
     if not messages:
-        state["error"] = "No input provided"
-        state["status_message"] = "Error: No input"
-        return state
+        return {
+            "error": "No input provided",
+            "status_message": "Error: No input"
+        }
     
     # Get last human message
     last_msg = get_last_human_message(messages)
     if not last_msg:
-        state["error"] = "No human message found"
-        state["status_message"] = "Error: No human message"
-        return state
+        return {
+            "error": "No human message found",
+            "status_message": "Error: No human message"
+        }
 
     query = content_to_text(last_msg.content)
-    
-    # Store query
-    state["query"] = query
-    state["error"] = None  # type: ignore
     
     print("=" * 80)
     print(f"[PREPARE] Query: {query}")
     print("=" * 80)
     
-    return state
+    return {
+        "query": query,
+        "error": None,
+        "logs": [f"Prepared query: {query}"]
+    }
 
 
-def retrieve_data(state: QueryState) -> QueryState:
+def retrieve_data(state: QueryState) -> Dict[str, Any]:
     """
     Retrieve data from LightRAG using /query/data endpoint.
     
@@ -90,15 +92,14 @@ def retrieve_data(state: QueryState) -> QueryState:
     1. Uses parsed_intention from Agent 1
     2. Uses tuned parameters (mode, top_k, chunk_top_k) from Agent 1
     3. Calls LightRAG /query/data
-    4. Stores raw entities, relationships, chunks
+    4. Returns raw entities, relationships, chunks
     """
     
     # Get query (use parsed_intention if available)
     query = state.get("parsed_intention") or state.get("query", "")
     
     if not query:
-        state["error"] = "No query for retrieval"
-        return state
+        return {"error": "No query for retrieval"}
     
     # Get retrieval parameters (tuned by Agent 1)
     mode = state.get("retrieval_mode", settings.retrieval.default_mode)
@@ -131,52 +132,52 @@ def retrieve_data(state: QueryState) -> QueryState:
         chunks = result["data"]["chunks"]
         metadata = result["metadata"]
         
-        # Store in state
-        state["retrieved_entities"] = entities
-        state["retrieved_relationships"] = relationships
-        state["retrieved_chunks"] = chunks
-        state["retrieval_metadata"] = {
-            "mode": metadata["query_mode"],
-            "top_k": top_k,
-            "chunk_top_k": chunk_top_k,
-            "total_entities": len(entities),
-            "total_relationships": len(relationships),
-            "total_chunks": len(chunks)
-        }
-        
         print(f"[RETRIEVE] ✓ Retrieved {len(entities)} entities, {len(relationships)} relationships, {len(chunks)} chunks")
         
-        state["error"] = None  # type: ignore
+        return {
+            "retrieved_entities": entities,
+            "retrieved_relationships": relationships,
+            "retrieved_chunks": chunks,
+            "retrieval_metadata": {
+                "mode": metadata["query_mode"],
+                "top_k": top_k,
+                "chunk_top_k": chunk_top_k,
+                "total_entities": len(entities),
+                "total_relationships": len(relationships),
+                "total_chunks": len(chunks)
+            },
+            "error": None,
+            "logs": [f"Retrieved {len(entities)} entities, {len(relationships)} relationships, {len(chunks)} chunks"]
+        }
         
     except Exception as e:
         error_msg = f"Retrieval error: {str(e)}"
         print(f"[RETRIEVE] ✗ {error_msg}")
         
-        state["error"] = error_msg
-        state["retrieved_entities"] = []
-        state["retrieved_relationships"] = []
-        state["retrieved_chunks"] = []
-    
-    return state
+        return {
+            "error": error_msg,
+            "retrieved_entities": [],
+            "retrieved_relationships": [],
+            "retrieved_chunks": [],
+            "logs": [f"Retrieval error: {error_msg}"]
+        }
 
 
-def rerank_data(state: QueryState) -> QueryState:
+def rerank_data(state: QueryState) -> Dict[str, Any]:
     """
     Rerank all retrieved data using the reranker.
     
     This node:
     1. Gets query and retrieved data
     2. Calls reranker to score and re-rank all items
-    3. Stores reranked data with scores
-    4. Calculates aggregate confidence
+    3. Returns reranked data with scores
     """
     
     # Get query
     query = state.get("parsed_intention") or state.get("query", "")
     
     if not query:
-        state["error"] = "No query for reranking"
-        return state
+        return {"error": "No query for reranking"}
     
     # Get retrieved data
     entities = state.get("retrieved_entities", [])
@@ -185,15 +186,17 @@ def rerank_data(state: QueryState) -> QueryState:
     
     if not entities and not relationships and not chunks:
         print("[RERANK] No data to rerank, setting zero confidence")
-        state["reranked_entities"] = []
-        state["reranked_relationships"] = []
-        state["reranked_chunks"] = []
-        state["entity_scores"] = []
-        state["relationship_scores"] = []
-        state["chunk_scores"] = []
-        state["rerank_confidence"] = 0.0
-        state["rerank_metadata"] = {"error": "No data to rerank"}
-        return state
+        return {
+            "reranked_entities": [],
+            "reranked_relationships": [],
+            "reranked_chunks": [],
+            "entity_scores": [],
+            "relationship_scores": [],
+            "chunk_scores": [],
+            "rerank_confidence": 0.0,
+            "rerank_metadata": {"error": "No data to rerank"},
+            "logs": ["No data to rerank"]
+        }
     
     try:
         # Rerank all sources
@@ -207,36 +210,38 @@ def rerank_data(state: QueryState) -> QueryState:
             top_k_chunks=None
         )
         
-        # Store in state
-        state["reranked_entities"] = result["reranked_entities"]
-        state["reranked_relationships"] = result["reranked_relationships"]
-        state["reranked_chunks"] = result["reranked_chunks"]
-        state["entity_scores"] = result["entity_scores"]
-        state["relationship_scores"] = result["relationship_scores"]
-        state["chunk_scores"] = result["chunk_scores"]
-        state["rerank_confidence"] = result["overall_confidence"]
-        state["rerank_metadata"] = result["metadata"]
-        
-        state["error"] = None  # type: ignore
+        return {
+            "reranked_entities": result["reranked_entities"],
+            "reranked_relationships": result["reranked_relationships"],
+            "reranked_chunks": result["reranked_chunks"],
+            "entity_scores": result["entity_scores"],
+            "relationship_scores": result["relationship_scores"],
+            "chunk_scores": result["chunk_scores"],
+            "rerank_confidence": result["overall_confidence"],
+            "rerank_metadata": result["metadata"],
+            "error": None,
+            "logs": [f"Reranked data with confidence: {result['overall_confidence']:.2f}"]
+        }
         
     except Exception as e:
         error_msg = f"Reranking error: {str(e)}"
         print(f"[RERANK] ✗ {error_msg}")
         
-        state["error"] = error_msg
-        state["reranked_entities"] = []
-        state["reranked_relationships"] = []
-        state["reranked_chunks"] = []
-        state["entity_scores"] = []
-        state["relationship_scores"] = []
-        state["chunk_scores"] = []
-        state["rerank_confidence"] = 0.0
-        state["rerank_metadata"] = {"error": error_msg}
-    
-    return state
+        return {
+            "error": error_msg,
+            "reranked_entities": [],
+            "reranked_relationships": [],
+            "reranked_chunks": [],
+            "entity_scores": [],
+            "relationship_scores": [],
+            "chunk_scores": [],
+            "rerank_confidence": 0.0,
+            "rerank_metadata": {"error": error_msg},
+            "logs": [f"Reranking error: {error_msg}"]
+        }
 
 
-def format_final_answer(state: QueryState) -> QueryState:
+def format_final_answer(state: QueryState) -> Dict[str, Any]:
     """
     Format final answer with confidence summary.
     
@@ -257,20 +262,17 @@ def format_final_answer(state: QueryState) -> QueryState:
         "chunk_top_k": state.get("chunk_top_k", 0)
     }
     
-    state["confidence_summary"] = confidence_summary
-    
     # Final answer is already set by agent3_generate_response
     # Just add status message
     response_type = state.get("response_type", "unknown")
+    status_message = "Completed"
     
     if response_type == "full_answer":
-        state["status_message"] = "Success: Full answer generated"
+        status_message = "Success: Full answer generated"
     elif response_type == "partial_answer":
-        state["status_message"] = "Success: Partial answer generated"
+        status_message = "Success: Partial answer generated"
     elif response_type == "fallback":
-        state["status_message"] = "Fallback: Suggested to contact advisor"
-    else:
-        state["status_message"] = "Completed"
+        status_message = "Fallback: Suggested to contact advisor"
     
     print("=" * 80)
     print(f"[FINAL] Response Type: {response_type}")
@@ -279,7 +281,11 @@ def format_final_answer(state: QueryState) -> QueryState:
     print(f"[FINAL] Overall Confidence: {confidence_summary['overall_confidence']:.2f}")
     print("=" * 80)
     
-    return state
+    return {
+        "confidence_summary": confidence_summary,
+        "status_message": status_message,
+        "logs": [f"Final answer formatted ({response_type})"]
+    }
 
 
 # ============================================================================

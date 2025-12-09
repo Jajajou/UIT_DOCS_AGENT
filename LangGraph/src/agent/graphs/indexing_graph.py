@@ -18,9 +18,10 @@ from agent.clients.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClie
 from agent.states.indexing_state import IndexingState
 from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
+from agent.agents.agent_temporal_extraction import extract_temporal_metadata_node
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 
-load_dotenv()
+load_dotenv() 
 
 
 api_client = LightRAGAPIClient()
@@ -153,36 +154,25 @@ def _is_pdf(file_path: str) -> bool:
 
 # ---------------------- Graph Nodes ----------------------
 
-# def ingest_user_text(state: IndexingState) -> IndexingState:
-#     txt = state.get("input_text")
-#     if txt:
-#         state["messages"].append(HumanMessage(content=txt))
-#     return state
-
-def prepare_indexing(state: IndexingState) -> IndexingState:
+def prepare_indexing(state: IndexingState) -> Dict[str, Any]:
     """Prepare indexing request - determine command type."""
-    
-    # If direct input provided (from Graph tab), use it
-    # if state.get("source_type") and state.get("input_source") is not None:
-        # return state
     
     messages = state.get("messages", [])
     if not messages:
-        state["error"] = "No input provided"
-        state["status_message"] = "Error: No input"
-        return state
+        return {
+            "error": "No input provided",
+            "status_message": "Error: No input"
+        }
     
     # Get last human message
     print("Messages list length:", len(messages))
-    for i, m in enumerate(messages):
-        print(f"{i}: {m}")
-    
     last_msg = get_last_human_message(messages)
-    # state["status_message"] = last_msg['content']
+    
     if not last_msg:
-        state["error"] = "No input provided"
-        state["status_message"] = "Error: No input"
-        return state
+        return {
+            "error": "No input provided",
+            "status_message": "Error: No input"
+        }
     
     # Parse command
     parsed = _parse_chat_command(last_msg)
@@ -194,61 +184,63 @@ def prepare_indexing(state: IndexingState) -> IndexingState:
     
     # Store command type and data
     if command == "upload_path":
-        state["source_type"] = "file"
-        state["input_source"] = parsed["path"]  # Store path for next node
-        state["description"] = f"Upload from path: {parsed['path']}"
+        return {
+            "source_type": "file",
+            "input_source": parsed["path"],
+            "description": f"Upload from path: {parsed['path']}",
+            "error": None
+        }
     
     elif command == "scan":
-        state["source_type"] = "scan"
-        state["input_source"] = None  # type: ignore
-        state["description"] = "Manual scan triggered"
+        return {
+            "source_type": "scan",
+            "input_source": None,
+            "description": "Manual scan triggered",
+            "error": None
+        }
     
     elif command == "text":
-        state["source_type"] = "text"
-        state["input_source"] = parsed["text"]
-        state["description"] = "Insert text from chat"
+        return {
+            "source_type": "text",
+            "input_source": parsed["text"],
+            "description": "Insert text from chat",
+            "error": None
+        }
     
     else:
-        state["error"] = f"Unknown command: {command}"
-        state["status_message"] = "Error: Unknown command"
-        return state
-    
-    state["error"] = None  # type: ignore
-    return state
+        return {
+            "error": f"Unknown command: {command}",
+            "status_message": "Error: Unknown command"
+        }
 
 
-def prepare_file_list(state: IndexingState) -> IndexingState:
+def prepare_file_list(state: IndexingState) -> Dict[str, Any]:
     """Prepare list of files from path (file or directory)."""
     
     path = state.get("input_source")
     
     if not path or not isinstance(path, str):
-        state["error"] = "Invalid path"
-        return state
+        return {"error": "Invalid path"}
     
     # Check if path exists
     if not os.path.exists(path):
         error_msg = f"Path not found: {path}"
-        state["error"] = error_msg
-        state["status_message"] = "Error: Path not found"
-        
-        msgs = list(state.get("messages", []))
-        msgs.append(AIMessage(content=f"{error_msg}"))
-        state["messages"] = msgs
-        return state
+        return {
+            "error": error_msg,
+            "status_message": "Error: Path not found",
+            "messages": [AIMessage(content=f"{error_msg}")]
+        }
     
     # Get files from path
     file_paths = _get_files_from_path(path, recursive=False)
     
     if not file_paths:
         error_msg = f"No files found in: {path}"
-        state["error"] = error_msg
-        state["status_message"] = "Error: No files"
-        
-        msgs = list(state.get("messages", []))
-        msgs.append(AIMessage(content=f"{error_msg}"))
-        state["messages"] = msgs
-        return state
+        return {
+            "error": error_msg,
+            "status_message": "Error: No files",
+            "messages": [AIMessage(content=f"{error_msg}")]
+        }
     
     # Filter supported files
     supported_files = _filter_supported_files(file_paths)
@@ -263,13 +255,11 @@ def prepare_file_list(state: IndexingState) -> IndexingState:
             f"Found {total_files} file(s) but none are supported.\n"
             f"Skipped: {', '.join(skipped_files)}{more_text}"
         )
-        state["error"] = error_msg
-        state["status_message"] = "Error: No supported files"
-        
-        msgs = list(state.get("messages", []))
-        msgs.append(AIMessage(content=f"{error_msg}"))
-        state["messages"] = msgs
-        return state
+        return {
+            "error": error_msg,
+            "status_message": "Error: No supported files",
+            "messages": [AIMessage(content=f"{error_msg}")]
+        }
     
     # Show preview
     total_files = len(supported_files)
@@ -283,61 +273,59 @@ def prepare_file_list(state: IndexingState) -> IndexingState:
     # Initialize file processing state
     existing = state.get("file_list", [])
     merged = _dedupe_paths(existing + supported_files)
-    state["file_list"] = merged
-    # state["current_file_index"] = 0
-    # state["upload_results"] = []
-    state["error"] = None  # type: ignore
     
-    return state
+    # Only reset index if it's not set (initial run)
+    # Assuming 0 if not set
+    updates = {
+        "file_list": merged,
+        "error": None
+    }
+    
+    if "current_file_index" not in state:
+        updates["current_file_index"] = 0
+        
+    return updates
 
 
-def check_if_pdf(state: IndexingState) -> IndexingState:
+def check_if_pdf(state: IndexingState) -> Dict[str, Any]:
     """Check if current file is a PDF."""
-    
+
     file_list = state.get("file_list", [])
     current_index = state.get("current_file_index", 0)
 
-    print(f"current file list: {file_list} - current_index: {current_index}")
+    print(f"current file list: {len(file_list)} - current_index: {current_index}")
 
     if current_index >= len(file_list):
         # No more files
-        state["is_pdf"] = False
-        state["all_files_processed"] = True
-        return state
-    
+        return {
+            "is_pdf": False,
+            "all_files_processed": True
+        }
+
     current_file = file_list[current_index]
     print(f"current file path: {current_file}")
     is_pdf = _is_pdf(current_file)
-    
-    state["is_pdf"] = is_pdf
-    state["current_file_path"] = current_file
-    state["all_files_processed"] = False
-    
+
     print(f"[CHECK_PDF] File {current_index + 1}/{len(file_list)}: {os.path.basename(current_file)}")
     print(f"[CHECK_PDF] Is PDF: {is_pdf}")
-    
-    return state
+
+    # Set file_path and file_source for all files (for temporal extraction)
+    file_source = get_url(current_file)
+
+    return {
+        "is_pdf": is_pdf,
+        "current_file_path": current_file,
+        "file_path": current_file,
+        "file_source": file_source,
+        "all_files_processed": False
+    }
 
 
-def parse_with_DeepSeek_OCR(state: IndexingState) -> IndexingState:
-    """
-    Pre-processes and parses a PDF file with DeepSeek OCR.
-
-    This function performs the following steps:
-    1. Opens the PDF page as an image.
-    2. Uses Tesseract OSD to detect orientation.
-    3. Rotates the image to the correct orientation if needed.
-    4. Creates a standard A4-sized blank page.
-    5. Resizes the corrected image to fit the A4 page while maintaining aspect ratio.
-    6. Pastes the resized image onto the center of the A4 page.
-    7. Saves the final image to a temporary file.
-    8. Calls the DeepSeek OCR client with the path to the temporary file.
-    9. Cleans up the temporary file.
-    """
+def parse_with_DeepSeek_OCR(state: IndexingState) -> Dict[str, Any]:
+    """Pre-processes and parses a PDF file with DeepSeek OCR."""
     file_path = state.get("current_file_path")
     if not file_path:
-        state["error"] = "No file path for DeepSeek_OCR"
-        return state
+        return {"error": "No file path for DeepSeek_OCR"}
 
     temp_file_path = None
     try:
@@ -348,33 +336,41 @@ def parse_with_DeepSeek_OCR(state: IndexingState) -> IndexingState:
         # Parse the processed image with DeepSeek OCR
         file_stem = Path(file_path).stem
         output_dir = str((DEEPSEEK_OCR_DIR / file_stem).resolve())
-        
+
         md_content, output_path = dsocr_client.parse_and_get_markdown(
             temp_file_path,
             output_dir=output_dir,
         )
-        
+
         print(f"[DeepSeek_OCR] ✓ Success - {len(md_content):,} chars")
-        
-        state["parsed_content"] = md_content
-        state["deepseek_ocr_output_dir"] = output_path
-        state["deepseek_ocr_success"] = True
-        state["error"] = ""
+
+        # Set file_path and file_source for temporal extraction
+        file_source = get_url(file_path)
+
+        return {
+            "parsed_content": md_content,
+            "deepseek_ocr_output_dir": output_path,
+            "deepseek_ocr_success": True,
+            "file_path": file_path,
+            "file_source": file_source,
+            "error": ""
+        }
 
     except Exception as e:
         print(f"[DeepSeek_OCR] ✗ Failed: {str(e)}")
-        state["parsed_content"] = ""
-        state["deepseek_ocr_success"] = False
-        state["deepseek_ocr_error"] = str(e)
+        return {
+            "parsed_content": "",
+            "deepseek_ocr_success": False,
+            "deepseek_ocr_error": str(e)
+        }
     finally:
-        # Clean up the temporary file
-        if temp_file_path and os.path.exists(temp_file_path):
+        # Clean up the temporary file ONLY if it's different from the original
+        # (preprocess_image_for_ocr returns original path if preprocessing fails)
+        if temp_file_path and temp_file_path != file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-    return state
 
-
-def upload_to_lightrag(state: IndexingState) -> IndexingState:
+def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
     """Upload to LightRAG (handles text, scan, and files)."""
     
     source_type = state.get("source_type")
@@ -383,23 +379,20 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
     if source_type == "scan":
         try:
             result = api_client.trigger_scan()
-            state["api_response"] = result
-            state["status_message"] = "Scan initiated"
-            
             track_id = result.get("track_id", "N/A")
             response_text = f"✓ Scan initiated!\n\nTrack ID: `{track_id}`\n\nProcessing in background..."
             
-            msgs = list(state.get("messages", []))
-            msgs.append(AIMessage(content=response_text))
-            state["messages"] = msgs
+            return {
+                "api_response": result,
+                "status_message": "Scan initiated",
+                "messages": [AIMessage(content=response_text)]
+            }
             
         except Exception as e:
-            state["error"] = str(e)
-            msgs = list(state.get("messages", []))
-            msgs.append(AIMessage(content=f"Error: {str(e)}"))
-            state["messages"] = msgs
-        
-        return state
+            return {
+                "error": str(e),
+                "messages": [AIMessage(content=f"Error: {str(e)}")]
+            }
     
     # Handle text
     if source_type == "text":
@@ -410,120 +403,154 @@ def upload_to_lightrag(state: IndexingState) -> IndexingState:
             else:
                 result = api_client.insert_text(cast(str, input_source))
             
-            state["api_response"] = result
-            state["status_message"] = "Text inserted"
-            
             track_id = result.get("track_id", "N/A")
             response_text = f"✓ Text inserted!\n\nTrack ID: `{track_id}`\n\nProcessing in background..."
             
-            msgs = list(state.get("messages", []))
-            msgs.append(AIMessage(content=response_text))
-            state["messages"] = msgs
+            return {
+                "api_response": result,
+                "status_message": "Text inserted",
+                "messages": [AIMessage(content=response_text)]
+            }
             
         except Exception as e:
-            state["error"] = str(e)
-            msgs = list(state.get("messages", []))
-            msgs.append(AIMessage(content=f"Error: {str(e)}"))
-            state["messages"] = msgs
-        
-        return state
+            return {
+                "error": str(e),
+                "messages": [AIMessage(content=f"Error: {str(e)}")]
+            }
     
     # Handle file upload
     if source_type == "file":
         file_path = state.get("current_file_path")
-        
+
         if not file_path:
-            return state
-        
+            return {}
+
         file_name = os.path.basename(file_path)
         file_list = state.get("file_list", [])
         current_index = state.get("current_file_index", 0)
         url = get_url(file_path)
-        
+
         print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}, {url}")
-        
+
+        upload_result = {}
+        doc_id = None
+
         try:
             parsed_content = state.get("parsed_content")
-            
+
             if state.get("deepseek_ocr_success") and parsed_content:
                 # Upload parsed content
                 result = api_client.insert_text(
                     text=parsed_content,
                     file_source=url
                 )
-                
+
+                doc_id = result.get("doc_id")
+
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
                     "file_source": url,
                     "track_id": result.get("track_id"),
+                    "doc_id": doc_id,
                     "status": "success",
                     "parse_with_DeepSeek_OCR": True,
                     "output_dir": state.get("deepseek_ocr_output_dir"),
                     "markdown_length": len(parsed_content),
                     "response": result
                 }
-                
-                print(f"[UPLOAD] ✓ Success (DeepSeek_OCR) - Track: {result.get('track_id')}")
-            
+
+                print(f"[UPLOAD] ✓ Success (DeepSeek_OCR) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
+
             else:
                 # Direct file upload
                 result = api_client.upload_file(file_path)
-                
+
+                doc_id = result.get("doc_id")
+
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
                     "file_source": url,
                     "track_id": result.get("track_id"),
+                    "doc_id": doc_id,
                     "status": "success",
                     "parse_with_DeepSeek_OCR": False,
                     "response": result
                 }
-                
+
                 deepseek_ocr_error = state.get("deepseek_ocr_error")
                 if deepseek_ocr_error:
                     upload_result["fallback_reason"] = deepseek_ocr_error
-                
-                print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}")
-            
-            results = state.get("upload_results", [])
-            results.append(upload_result)
-            state["upload_results"] = results
-            
+
+                print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
+
+            # Save temporal metadata to PostgreSQL if we have it and doc_id
+            document_metadata = state.get("document_metadata", {})
+            if doc_id and document_metadata and state.get("temporal_extraction_complete"):
+                try:
+                    print(f"[METADATA] Saving temporal metadata for {file_name}...")
+
+                    # Wait a bit for LightRAG to process the document
+                    import time
+                    time.sleep(2)
+
+                    # Save metadata
+                    metadata_result = api_client.update_document_metadata(
+                        doc_id=doc_id,
+                        metadata=document_metadata,
+                        merge=True
+                    )
+
+                    if metadata_result.get("success"):
+                        print(f"[METADATA] ✓ Temporal metadata saved successfully")
+                        upload_result["temporal_metadata_saved"] = True
+                    else:
+                        print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
+                        upload_result["temporal_metadata_error"] = metadata_result.get("error")
+
+                except Exception as meta_error:
+                    print(f"[METADATA] ✗ Exception saving metadata: {str(meta_error)}")
+                    upload_result["temporal_metadata_error"] = str(meta_error)
+
         except Exception as e:
             print(f"[UPLOAD] ✗ Failed: {str(e)}")
-            
-            results = state.get("upload_results", [])
-            results.append({
+
+            upload_result = {
                 "file_path": file_path,
                 "file_name": file_name,
                 "file_source": url,
                 "status": "failed",
                 "error": str(e)
-            })
-            state["upload_results"] = results
-        
+            }
+
         # Move to next file
-        current_index = state.get("current_file_index", 0)
-        if current_index < len(file_list):
-            state["current_file_index"] = current_index + 1
-        
-        # Clear current file state
-        state["current_file_path"] = None  # type: ignore
-        state["parsed_content"] = None  # type: ignore
-        state["deepseek_ocr_success"] = False
-        state["deepseek_ocr_error"] = None  # type: ignore
+        next_index = current_index + 1
+
+        # Return updates
+        # Note: upload_results uses operator.add, so we return a list with the single result
+        return {
+            "upload_results": [upload_result],
+            "current_file_index": next_index,
+            "doc_id": doc_id,
+            # Reset per-file state
+            "current_file_path": None,
+            "parsed_content": None,
+            "deepseek_ocr_success": False,
+            "deepseek_ocr_error": None,
+            "document_metadata": {},
+            "temporal_extraction_complete": False
+        }
     
-    return state
+    return {}
 
-
-def finalize_upload(state: IndexingState) -> IndexingState:
+def finalize_upload(state: IndexingState) -> Dict[str, Any]:
     """Finalize and send summary."""
     
     upload_results = state.get("upload_results", [])
     
     if not upload_results:
-        return state
+        return {}
     
     success_count = sum(1 for r in upload_results if r["status"] == "success")
     failed_count = len(upload_results) - success_count
@@ -537,7 +564,13 @@ def finalize_upload(state: IndexingState) -> IndexingState:
         response_lines.append(f"**Batch Upload Complete**")
         response_lines.append(f"✓ {success_count} succeeded | ✗ {failed_count} failed | Total: {len(file_list)}")
     else:
-        file_name = os.path.basename(file_list[0])
+        # Use first file from results or list
+        file_name = "Unknown"
+        if file_list:
+            file_name = os.path.basename(file_list[0])
+        elif upload_results:
+            file_name = upload_results[0].get("file_name", "Unknown")
+            
         status_icon = "✓" if success_count > 0 else "✗"
         response_lines.append(f"{status_icon} **File:** `{file_name}`")
     
@@ -574,28 +607,32 @@ def finalize_upload(state: IndexingState) -> IndexingState:
     
     response_text = "\n".join(response_lines)
     
-    msgs = list(state.get("messages", []))
-    msgs.append(AIMessage(content=response_text))
-    state["messages"] = msgs
-    
-    state["status_message"] = "Complete"
-    state["api_response"] = {"results": upload_results}
-    
-    return state
+    return {
+        "messages": [AIMessage(content=response_text)],
+        "status_message": "Complete",
+        "api_response": {"results": upload_results}
+    }
 
 
-def error_handler(state: IndexingState) -> IndexingState:
+def error_handler(state: IndexingState) -> Dict[str, Any]:
     """Handle errors."""
-    error_msg = state.get("error", "Unknown error")
-    state["status_message"] = state.get("status_message") or "Error"
+    error_msg = state.get("error") or "Unknown error"
+    status_message = state.get("status_message") or "Error"
     
-    if "messages" in state:
-        msgs = list(state.get("messages", []))
-        if not msgs or not isinstance(msgs[-1], AIMessage):
-            msgs.append(AIMessage(content=f"Error: {error_msg}"))
-            state["messages"] = msgs
+    updates: Dict[str, Any] = {
+        "status_message": status_message
+    }
     
-    return state
+    # Only add message if it doesn't exist or last one isn't the same error
+    msgs = state.get("messages", [])
+    should_add = True
+    if msgs and isinstance(msgs[-1], AIMessage) and error_msg in str(msgs[-1].content):
+        should_add = False
+        
+    if should_add:
+        updates["messages"] = [AIMessage(content=f"Error: {error_msg}")]
+    
+    return updates
 
 
 # ---------------------- Router Functions ----------------------
@@ -614,22 +651,20 @@ def route_after_prepare(state: IndexingState) -> Literal["error_handler", "uploa
     
     return "upload_to_lightrag"
 
-
 def route_after_file_list(state: IndexingState) -> Literal["check_if_pdf", "error_handler"]:
     """Route after file list preparation."""
     if state.get("error"):
         return "error_handler"
     return "check_if_pdf"
 
-
-def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_DeepSeek_OCR", "upload_to_lightrag"]:
+def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_DeepSeek_OCR", "extract_temporal_metadata"]:
     """Route based on whether file is PDF."""
     if state.get("is_pdf"):
         return "parse_with_DeepSeek_OCR"
-    return "upload_to_lightrag"
+    # Non-PDF files go directly to temporal extraction
+    return "extract_temporal_metadata"
 
-
-def route_after_upload(state: IndexingState) -> Literal["prepare_file_list", "finalize_upload", "end"]:
+def route_after_upload(state: IndexingState) -> Literal["check_if_pdf", "finalize_upload", "end"]:
     """Route after upload: check if more files or done."""
     source_type = state.get("source_type")
     
@@ -643,7 +678,7 @@ def route_after_upload(state: IndexingState) -> Literal["prepare_file_list", "fi
 
         if current_index < len(file_list):
             # current_file_index
-            return "prepare_file_list"
+            return "check_if_pdf"
         else:
             return "finalize_upload"
     else:
@@ -661,6 +696,7 @@ builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
 builder.add_node("parse_with_DeepSeek_OCR", parse_with_DeepSeek_OCR)
+builder.add_node("extract_temporal_metadata", extract_temporal_metadata_node)
 builder.add_node("upload_to_lightrag", upload_to_lightrag)
 builder.add_node("finalize_upload", finalize_upload)
 builder.add_node("error_handler", error_handler)
@@ -693,17 +729,21 @@ builder.add_conditional_edges(
     route_after_pdf_check,
     {
         "parse_with_DeepSeek_OCR": "parse_with_DeepSeek_OCR",
-        "upload_to_lightrag": "upload_to_lightrag"
+        "extract_temporal_metadata": "extract_temporal_metadata"
     }
 )
 
-builder.add_edge("parse_with_DeepSeek_OCR", "upload_to_lightrag")
+# After parsing PDF, extract temporal metadata
+builder.add_edge("parse_with_DeepSeek_OCR", "extract_temporal_metadata")
+
+# After temporal extraction, upload to LightRAG
+builder.add_edge("extract_temporal_metadata", "upload_to_lightrag")
 
 builder.add_conditional_edges(
     "upload_to_lightrag",
     route_after_upload,
     {
-        "prepare_file_list": "prepare_file_list",
+        "check_if_pdf": "check_if_pdf",
         "finalize_upload": "finalize_upload",
         "end": END
     }

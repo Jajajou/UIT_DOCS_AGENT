@@ -2,6 +2,8 @@ import requests
 import os
 import typing as t
 import json
+import psycopg2
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 DEFAULT_TIMEOUT = 60  # seconds
@@ -361,7 +363,295 @@ class LightRAGAPIClient:
         r = self._post("/api/chat", json=payload)
         r.raise_for_status()
         return r.json()
-    
+
+    # ------------------------------ temporal metadata management ------------------------------
+
+    def _get_pg_connection(self):
+        """
+        Get PostgreSQL connection for direct metadata management.
+
+        LightRAG stores documents in PostgreSQL when using PGKVStorage.
+        This allows us to update document metadata directly.
+        """
+        load_dotenv(".env.lightrag")
+
+        return psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST", "localhost"),
+            port=int(os.getenv("POSTGRES_PORT", 5432)),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            database=os.getenv("POSTGRES_DATABASE", "lightrag")
+        )
+
+    def update_document_metadata(
+        self,
+        doc_id: str,
+        metadata: Dict[str, Any],
+        merge: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Update document metadata in PostgreSQL.
+
+        Since LightRAG API doesn't expose metadata update endpoint yet,
+        we update the metadata field directly in PostgreSQL.
+
+        Args:
+            doc_id: Document ID to update
+            metadata: Metadata dictionary to set/merge
+            merge: If True, merge with existing metadata. If False, replace.
+
+        Returns:
+            Result dictionary with status
+        """
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                # LightRAG stores document status in lightrag_kv table
+                # Key format: "doc_status:{doc_id}"
+                key = f"doc_status:{doc_id}"
+
+                # Fetch current document data
+                cur.execute(
+                    "SELECT value FROM lightrag_kv WHERE workspace = %s AND key = %s",
+                    (workspace, key)
+                )
+                row = cur.fetchone()
+
+                if not row:
+                    conn.close()
+                    return {
+                        "success": False,
+                        "error": f"Document {doc_id} not found in workspace {workspace}"
+                    }
+
+                # Parse document data
+                doc_data = json.loads(row[0])
+
+                # Update metadata
+                if merge:
+                    # Merge with existing metadata
+                    existing_metadata = doc_data.get("metadata", {})
+                    if existing_metadata:
+                        existing_metadata.update(metadata)
+                        doc_data["metadata"] = existing_metadata
+                    else:
+                        doc_data["metadata"] = metadata
+                else:
+                    # Replace metadata
+                    doc_data["metadata"] = metadata
+
+                # Update in database
+                cur.execute(
+                    "UPDATE lightrag_kv SET value = %s WHERE workspace = %s AND key = %s",
+                    (json.dumps(doc_data), workspace, key)
+                )
+
+                conn.commit()
+
+            conn.close()
+
+            return {
+                "success": True,
+                "doc_id": doc_id,
+                "metadata": doc_data["metadata"]
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def soft_delete_documents(
+        self,
+        doc_ids: List[str],
+        reason: str = "expired"
+    ) -> Dict[str, Any]:
+        """
+        Soft delete documents by marking them as archived in metadata.
+
+        Sets metadata.is_archived = True without removing from knowledge graph.
+
+        Args:
+            doc_ids: List of document IDs to archive
+            reason: Reason for archiving (expired, superseded, manual)
+
+        Returns:
+            Results of archiving operation
+        """
+        results = {"archived": [], "failed": []}
+
+        for doc_id in doc_ids:
+            archive_metadata = {
+                "is_archived": True,
+                "archived_at": datetime.now().isoformat(),
+                "archive_reason": reason
+            }
+
+            result = self.update_document_metadata(
+                doc_id=doc_id,
+                metadata=archive_metadata,
+                merge=True
+            )
+
+            if result.get("success"):
+                results["archived"].append(doc_id)
+            else:
+                results["failed"].append({
+                    "doc_id": doc_id,
+                    "error": result.get("error", "Unknown error")
+                })
+
+        return results
+
+    def get_active_documents(
+        self,
+        page: int = 1,
+        page_size: int = 50,
+        sort_field: str = "updated_at",
+        sort_direction: str = "desc",
+        filter_archived: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Get documents with optional filtering of archived items.
+
+        Args:
+            page: Page number
+            page_size: Items per page
+            sort_field: Field to sort by
+            sort_direction: Sort direction (asc/desc)
+            filter_archived: If True, exclude archived documents
+
+        Returns:
+            Paginated documents response
+        """
+        # Fetch documents from API
+        response = self.documents_paginated(
+            page=page,
+            page_size=page_size * 2 if filter_archived else page_size,  # Fetch more to account for filtering
+            sort_field=sort_field,
+            sort_direction=sort_direction
+        )
+
+        if not filter_archived:
+            return response
+
+        # Filter out archived documents
+        all_docs = response.get("documents", [])
+        active_docs = [
+            doc for doc in all_docs
+            if not doc.get("metadata", {}).get("is_archived", False)
+        ]
+
+        # Apply pagination to filtered results
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_docs = active_docs[start_idx:end_idx]
+
+        return {
+            "documents": paginated_docs,
+            "total": len(active_docs),
+            "page": page,
+            "page_size": page_size,
+            "total_filtered": len(all_docs) - len(active_docs)
+        }
+
+    def archive_expired_documents(
+        self,
+        cutoff_date: Optional[str] = None,
+        dry_run: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Archive documents that have passed their valid_until date.
+
+        Args:
+            cutoff_date: ISO date string. Documents expired before this are archived.
+                         Defaults to today.
+            dry_run: If True, return what would be archived without making changes
+
+        Returns:
+            Summary of archiving operation
+        """
+        if not cutoff_date:
+            cutoff_date = datetime.now().date().isoformat()
+
+        cutoff = datetime.fromisoformat(cutoff_date)
+
+        # Get all documents (large page size to get everything)
+        all_docs_response = self.documents_paginated(page_size=10000)
+        all_docs = all_docs_response.get("documents", [])
+
+        expired_doc_ids = []
+        expired_docs_info = []
+
+        for doc in all_docs:
+            metadata = doc.get("metadata", {})
+
+            # Skip already archived
+            if metadata.get("is_archived"):
+                continue
+
+            # Check expiration
+            valid_until = metadata.get("valid_until")
+            if valid_until:
+                try:
+                    expiry_date = datetime.fromisoformat(valid_until)
+                    if expiry_date.date() < cutoff.date():
+                        expired_doc_ids.append(doc["id"])
+                        expired_docs_info.append({
+                            "id": doc["id"],
+                            "file_path": doc.get("file_path", "unknown"),
+                            "valid_until": valid_until,
+                            "document_type": metadata.get("document_type", "unknown")
+                        })
+                except (ValueError, TypeError):
+                    # Invalid date format, skip
+                    continue
+
+        if dry_run:
+            return {
+                "dry_run": True,
+                "would_archive_count": len(expired_doc_ids),
+                "expired_documents": expired_docs_info,
+                "cutoff_date": cutoff_date
+            }
+
+        # Archive expired docs
+        if expired_doc_ids:
+            result = self.soft_delete_documents(expired_doc_ids, reason="expired")
+            result["expired_documents"] = expired_docs_info
+            result["cutoff_date"] = cutoff_date
+            return result
+        else:
+            return {
+                "archived": [],
+                "failed": [],
+                "message": "No expired documents found",
+                "cutoff_date": cutoff_date
+            }
+
+    def get_document_by_id(self, doc_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a single document by ID.
+
+        Args:
+            doc_id: Document ID
+
+        Returns:
+            Document data or None if not found
+        """
+        # LightRAG doesn't have a get-by-ID endpoint, so we fetch all and filter
+        # This is inefficient for large datasets - should be improved in upstream
+        all_docs_response = self.documents_paginated(page_size=1000)
+
+        for doc in all_docs_response.get("documents", []):
+            if doc["id"] == doc_id:
+                return doc
+
+        return None
+
 # if __name__ == "__main__":
 #     load_dotenv("LangGraph/.env")
 #     base_url = (os.getenv("LIGHTRAG_URL" ) or "").rstrip("/")

@@ -26,6 +26,8 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "pytesseract>=0.3.13",
     "python-multipart>=0.0.20",
+    "requests",
+    "scikit-learn",
     "transformers>=4.47.1",
     "unidecode>=1.4.0",
 ]

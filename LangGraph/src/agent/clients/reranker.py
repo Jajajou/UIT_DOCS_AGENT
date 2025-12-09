@@ -8,6 +8,7 @@ It scores and re-ranks retrieved entities, relationships, and chunks based on re
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 from agent.config import settings
@@ -195,6 +196,172 @@ class Reranker:
         # Ensure in [0,1] range
         return max(0.0, min(1.0, aggregate)) #type: ignore
 
+    def calculate_temporal_score(
+        self,
+        item: Dict[str, Any],
+        current_date: Optional[str] = None
+    ) -> float:
+        """
+        Calculate temporal relevance score for an item based on its metadata.
+
+        Research shows simple recency prior achieves 1.00 accuracy on freshness tasks.
+
+        Args:
+            item: Item dict (entity, relationship, or chunk)
+            current_date: ISO date string for comparison. Defaults to today.
+
+        Returns:
+            Temporal score (0.0-1.0)
+            - 1.0: Current and valid
+            - 0.5-1.0: Valid but older
+            - 0.0-0.5: Expired or very old
+        """
+        if current_date is None:
+            current = datetime.now()
+        else:
+            current = datetime.fromisoformat(current_date)
+
+        # Extract temporal metadata
+        metadata = item.get("metadata", {})
+
+        # Check if archived
+        if metadata.get("is_archived", False):
+            return 0.0  # Archived documents get zero temporal score
+
+        # Get validity dates
+        valid_from = metadata.get("valid_from")
+        valid_until = metadata.get("valid_until")
+        indexed_at = metadata.get("indexed_at")
+
+        # If no temporal info, assume always valid but not prioritized
+        if not valid_from and not valid_until and not indexed_at:
+            return 0.5  # Neutral score
+
+        # Check if currently valid
+        is_valid = True
+        if valid_from:
+            try:
+                from_date = datetime.fromisoformat(valid_from)
+                if current < from_date:
+                    is_valid = False  # Not yet valid
+            except (ValueError, TypeError):
+                pass
+
+        if valid_until:
+            try:
+                until_date = datetime.fromisoformat(valid_until)
+                if current > until_date:
+                    # Expired document
+                    days_expired = (current - until_date).days
+                    if days_expired > 365:
+                        return 0.1  # Very old, heavily penalized
+                    else:
+                        # Gradual decay: 0.5 at expiry, 0.1 at 1 year
+                        return max(0.1, 0.5 - (days_expired / 365) * 0.4)
+            except (ValueError, TypeError):
+                pass
+
+        # If not valid yet
+        if not is_valid:
+            return 0.3  # Not yet valid
+
+        # Document is currently valid - score based on recency
+        if indexed_at:
+            try:
+                index_date = datetime.fromisoformat(indexed_at)
+                days_old = (current - index_date).days
+
+                # Recency scoring with diminishing returns
+                # 1.0 for today, 0.9 for 30 days, 0.7 for 365 days, 0.5 for 2+ years
+                if days_old <= 30:
+                    return 1.0
+                elif days_old <= 365:
+                    return 0.9 - (days_old - 30) / 365 * 0.2  # Linear decay to 0.7
+                elif days_old <= 730:
+                    return 0.7 - (days_old - 365) / 365 * 0.2  # Decay to 0.5
+                else:
+                    return max(0.5, 0.7 - (days_old - 365) / 365 * 0.2)  # Floor at 0.5
+
+            except (ValueError, TypeError):
+                pass
+
+        # Default: valid but no recency info
+        return 0.8
+
+    def rerank_with_temporal_boost(
+        self,
+        query: str,
+        items: List[Dict[str, Any]],
+        text_field: str = "content",
+        top_k: Optional[int] = None,
+        temporal_weight: Optional[float] = None,
+        current_date: Optional[str] = None
+    ) -> List[Tuple[Dict[str, Any], float]]:
+        """
+        Rerank items with temporal boosting.
+
+        Combines semantic relevance with temporal relevance using weighted scoring.
+
+        Args:
+            query: The query text
+            items: List of items to rerank
+            text_field: Field containing text to score
+            top_k: Return only top K items
+            temporal_weight: Weight for temporal score (0.0-1.0).
+                           If None, uses config.temporal.recency_weight
+            current_date: ISO date for temporal comparison. Defaults to today.
+
+        Returns:
+            List of (item, combined_score) tuples, sorted by score (highest first)
+        """
+        if not items:
+            return []
+
+        # Get temporal weight from config if not provided
+        if temporal_weight is None:
+            temporal_config = getattr(settings, 'temporal', None)
+            if temporal_config:
+                temporal_weight = getattr(temporal_config, 'recency_weight', 0.3)
+            else:
+                temporal_weight = 0.3  # Default
+
+        semantic_weight = 1.0 - temporal_weight
+
+        # Extract texts for semantic scoring
+        texts = []
+        for item in items:
+            text = item.get(text_field, "")
+            if not text:
+                text = item.get("name", "") or item.get("description", "") or str(item)
+            texts.append(str(text))
+
+        # Compute semantic scores
+        semantic_scores = self.compute_scores(query, texts)
+
+        # Compute temporal scores
+        temporal_scores = [
+            self.calculate_temporal_score(item, current_date)
+            for item in items
+        ]
+
+        # Combine scores
+        combined_scores = [
+            semantic_weight * sem + temporal_weight * temp
+            for sem, temp in zip(semantic_scores, temporal_scores)
+        ]
+
+        # Zip items with combined scores
+        items_with_scores = list(zip(items, combined_scores))
+
+        # Sort by score (descending)
+        items_with_scores.sort(key=lambda x: x[1], reverse=True)
+
+        # Return top K if specified
+        if top_k is not None:
+            items_with_scores = items_with_scores[:top_k]
+
+        return items_with_scores
+
 
 class MultiSourceReranker:
     """
@@ -221,11 +388,12 @@ class MultiSourceReranker:
         chunks: List[Dict[str, Any]],
         top_k_entities: Optional[int] = None,
         top_k_relationships: Optional[int] = None,
-        top_k_chunks: Optional[int] = None
+        top_k_chunks: Optional[int] = None,
+        use_temporal_boost: bool = True
     ) -> Dict[str, Any]:
         """
         Rerank all sources and calculate overall confidence.
-        
+
         Args:
             query: The query text
             entities: List of entity dicts
@@ -234,7 +402,8 @@ class MultiSourceReranker:
             top_k_entities: Keep top K entities
             top_k_relationships: Keep top K relationships
             top_k_chunks: Keep top K chunks
-            
+            use_temporal_boost: If True, apply temporal boosting (default: True)
+
         Returns:
             Dict containing:
             - reranked_entities: List of (entity, score) tuples
@@ -248,42 +417,50 @@ class MultiSourceReranker:
         """
         print("=" * 80)
         print(f"[RERANKER] Reranking all sources for query: {query[:100]}...")
+        if use_temporal_boost:
+            print(f"[RERANKER] 📅 Temporal boosting: ENABLED")
         print("=" * 80)
-        
+
+        # Choose reranking method based on temporal boost setting
+        rerank_func = (
+            self.reranker.rerank_with_temporal_boost if use_temporal_boost
+            else self.reranker.rerank_items
+        )
+
         # Rerank entities
-        reranked_entities = self.reranker.rerank_items(
+        reranked_entities = rerank_func(
             query, entities, text_field="entity_name", top_k=top_k_entities
         )
         entity_scores = [score for _, score in reranked_entities]
-        
+
         print(f"[RERANKER] ✓ Reranked {len(reranked_entities)} entities")
         if entity_scores:
             print(f"[RERANKER]   Top entity score: {max(entity_scores):.4f}")
-        
+
         # Rerank relationships
-        reranked_relationships = self.reranker.rerank_items(
+        reranked_relationships = rerank_func(
             query, relationships, text_field="description", top_k=top_k_relationships
         )
         relationship_scores = [score for _, score in reranked_relationships]
-        
+
         print(f"[RERANKER] ✓ Reranked {len(reranked_relationships)} relationships")
         if relationship_scores:
             print(f"[RERANKER]   Top relationship score: {max(relationship_scores):.4f}")
-        
+
         # Rerank chunks
-        reranked_chunks = self.reranker.rerank_items(
+        reranked_chunks = rerank_func(
             query, chunks, text_field="content", top_k=top_k_chunks
         )
         chunk_scores = [score for _, score in reranked_chunks]
-        
+
         print(f"[RERANKER] ✓ Reranked {len(reranked_chunks)} chunks")
         if chunk_scores:
             print(f"[RERANKER]   Top chunk score: {max(chunk_scores):.4f}")
-        
+
         # Calculate overall confidence
         all_scores = entity_scores + relationship_scores + chunk_scores
         overall_confidence = self.reranker.calculate_aggregate_confidence(all_scores)
-        
+
         print(f"[RERANKER] ✓ Overall confidence: {overall_confidence:.4f}")
         print("=" * 80)
         

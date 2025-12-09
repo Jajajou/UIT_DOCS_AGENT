@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TypedDict, Literal, Optional, List, Dict, Any, Union, Annotated
+import operator
+from typing import TypedDict, Literal, List, Dict, Any, Union, Annotated, Optional
 from langgraph.graph.message import add_messages
 from langchain_core.messages import AnyMessage
 from typing_extensions import NotRequired
@@ -10,63 +11,59 @@ class Data(TypedDict):
     source: str
 
 class IndexingState(TypedDict):
-    """State for the document indexing pipeline/graph with Chat UI support."""
+    """
+    State for the document indexing pipeline/graph with Chat UI support.
     
-    # Messages field for Chat UI support
-    messages: Annotated[list[AnyMessage], add_messages]
+    Uses Annotated/reducers for fields that require accumulation (e.g., logs, results).
+    """
     
-    # Indexing parameters - all optional now since we can extract from messages
-    input_source: NotRequired[Union[Data, List[Data]]]
+    # ============ Required: Messages for Chat UI ============
+    messages: Annotated[List[AnyMessage], add_messages]
+    
+    # ============ Input ============
+    # Source configuration
+    input_source: NotRequired[Optional[Union[str, Data, List[Data]]]] # Changed to allow str path directly and Optional
     source_type: NotRequired[Literal["file", "text", "scan", "batch"]]
-    description: NotRequired[str]
+    description: NotRequired[Optional[str]]
     
-    # File processing fields (for batch uploads)
-    file_list: NotRequired[List[str]]  # List of all file paths to process
-    current_file_index: NotRequired[int]  # Index of current file being processed
-    current_file_path: NotRequired[str]  # Path of current file
-    all_files_processed: NotRequired[bool]  # Flag when all files are done
-    upload_results: NotRequired[List[Dict[str, Any]]]  # Results for each file
+    # ============ Batch Processing ============
+    # List of all files to process
+    file_list: NotRequired[List[str]]  
     
-    # PDF detection fields
-    is_pdf: NotRequired[bool]  # Whether current file is PDF
+    # Accumulate results from multiple file processing steps
+    # Usage: return {"upload_results": [new_result]} to append
+    upload_results: Annotated[List[Dict[str, Any]], operator.add]
     
-    # DeepSeek_OCR parsing fields
-    parsed_content: NotRequired[str]  # Markdown content from MinerU
-    deepseek_ocr_output_dir: NotRequired[str]  # Output directory from MinerU
-    deepseek_ocr_success: NotRequired[bool]  # Whether MinerU parsing succeeded
-    deepseek_ocr_error: NotRequired[str]  # Error message if MinerU failed
+    # Iteration state (overwrite default)
+    current_file_index: NotRequired[int]
+    current_file_path: NotRequired[Optional[str]]
+    all_files_processed: NotRequired[bool]
     
-    # API interaction fields
+    # ============ File Processing State ============
+    # PDF detection
+    is_pdf: NotRequired[bool]
+
+    # DeepSeek_OCR fields
+    parsed_content: NotRequired[Optional[str]]
+    deepseek_ocr_output_dir: NotRequired[Optional[str]]
+    deepseek_ocr_success: NotRequired[bool]
+    deepseek_ocr_error: NotRequired[Optional[str]]
+
+    # ============ Temporal Metadata Extraction ============
+    # Extracted temporal metadata (valid_from, valid_until, cohorts, etc.)
+    document_metadata: NotRequired[Dict[str, Any]]
+    temporal_extraction_complete: NotRequired[bool]
+
+    # File source tracking
+    file_path: NotRequired[str]
+    file_source: NotRequired[str]
+
+    # ============ API Interaction ============
     api_payload: NotRequired[Dict[str, Any]]
     api_response: NotRequired[Dict[str, Any]]
-    status_message: NotRequired[str]
-    error: NotRequired[str]
+    upload_result: NotRequired[Dict[str, Any]]
+    doc_id: NotRequired[Optional[str]]
 
-
-class QueryState(TypedDict):
-    """State for the querying pipeline/graph."""
-    # Messages field with reducer - REQUIRED for Chat UI
-    messages: Annotated[list[AnyMessage], add_messages]
-    
-    # Query parameters - all optional
-    query: NotRequired[str]
-    mode: NotRequired[Literal["default", "naive", "local", "global", "hybrid", "mix"]]
-    only_need_context: NotRequired[bool]
-    only_need_prompt: NotRequired[bool]
-    response_type: NotRequired[str]
-    top_k: NotRequired[int]
-    chunk_top_k: NotRequired[int]
-    max_entity_tokens: NotRequired[int]
-    max_relation_tokens: NotRequired[int]
-    max_total_tokens: NotRequired[int]
-    conversation_history: NotRequired[List[Dict[str, Any]]]
-    user_prompt: NotRequired[str]
-    enable_rerank: NotRequired[bool]
-    include_references: NotRequired[bool]
-    stream: NotRequired[bool]
-    
-    # API interaction fields
-    api_payload: NotRequired[Dict[str, Any]]
-    api_response: NotRequired[Dict[str, Any]]
-    final_answer: NotRequired[str]
-    error: NotRequired[str]
+    # ============ Status & Errors ============
+    status_message: NotRequired[Optional[str]]
+    error: NotRequired[Optional[str]]

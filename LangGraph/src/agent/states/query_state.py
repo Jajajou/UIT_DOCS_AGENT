@@ -10,6 +10,7 @@ This module defines the state schema for an advanced RAG pipeline that includes:
 
 from __future__ import annotations
 
+import operator
 from typing_extensions import TypedDict, Literal, Optional, List, Dict, Any, Annotated, Tuple
 from langgraph.graph.message import add_messages
 from langchain_core.messages import AnyMessage
@@ -132,10 +133,6 @@ class ResponseGeneration(BaseModel):
     response_type: Literal["full_answer", "partial_answer", "fallback"] = Field(
         description="Loại response: full_answer (đầy đủ), partial_answer (một phần + suggest advisor), fallback (chỉ suggest advisor)"
     )
-    references: List[Reference] = Field(
-        default_factory=list,
-        description="Danh sách tài liệu tham khảo với hyperlinks"
-    )
 
 
 # ============================================================================
@@ -158,34 +155,39 @@ class QueryState(TypedDict):
     """
     
     # ============ Required: Messages for Chat UI ============
+    # Use add_messages to handle message history updates (append/update by ID)
     messages: Annotated[List[AnyMessage], add_messages]
     
+    # ============ Logging & Tracing ============
+    # Accumulate logs from steps (return {"logs": ["step completed"]} to append)
+    logs: Annotated[List[str], operator.add]
+    
     # ============ Input ============
-    query: NotRequired[str]  
+    query: NotRequired[Optional[str]]  
     
     # ============ Agent 1: Query Understanding + Parameter Tuning ============
     # Agent 1 Output
-    parsed_intention: NotRequired[str]  
+    parsed_intention: NotRequired[Optional[str]]  
     extracted_entities: NotRequired[List[str]] 
     extracted_topics: NotRequired[List[str]]  
     query_confidence: NotRequired[float]  
-    query_confidence_reason: NotRequired[str]  
+    query_confidence_reason: NotRequired[Optional[str]]  
     
     # Agent 1 Decision
     needs_clarification: NotRequired[bool]  
-    clarification_question: NotRequired[str]  
+    clarification_question: NotRequired[Optional[str]]  
     
     # Tuned parameters từ Agent 1
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]
-    top_k: NotRequired[int]
-    chunk_top_k: NotRequired[int]
-    tuning_reason: NotRequired[str]  # Explanation for parameter choices
+    top_k: NotRequired[Optional[int]]
+    chunk_top_k: NotRequired[Optional[int]]
+    tuning_reason: NotRequired[Optional[str]]  # Explanation for parameter choices
     
     # ============ Data Retrieval (LightRAG) ============
     # Optional parameters for fine-tuning
-    max_entity_tokens: NotRequired[int]
-    max_relation_tokens: NotRequired[int]
-    max_total_tokens: NotRequired[int]
+    max_entity_tokens: NotRequired[Optional[int]]
+    max_relation_tokens: NotRequired[Optional[int]]
+    max_total_tokens: NotRequired[Optional[int]]
     
     # Raw data from LightRAG /query/data endpoint
     retrieved_entities: NotRequired[List[Dict[str, Any]]]  
@@ -210,23 +212,23 @@ class QueryState(TypedDict):
     # Overall confidence combining query + rerank
     overall_confidence: NotRequired[float]  
     needs_followup: NotRequired[bool]  
-    followup_question: NotRequired[str]  
-    confidence_reason: NotRequired[str]  
+    followup_question: NotRequired[Optional[str]]  
+    confidence_reason: NotRequired[Optional[str]]  
     
     # ============ Agent 3: Response Generation ============
-    generated_response: NotRequired[str]  
+    generated_response: NotRequired[Optional[str]]  
     response_type: NotRequired[Literal["full_answer", "partial_answer", "fallback"]]
     references: NotRequired[List[Dict[str, Any]]]  
     
     # ============ Final Output ============
-    final_answer: NotRequired[str]  
+    final_answer: NotRequired[Optional[str]]  
     confidence_summary: NotRequired[Dict[str, Any]]  
     
     # ============ Legacy/Compatibility Fields ============
     # Keep for backward compatibility
     mode: NotRequired[Literal["default", "naive", "local", "global", "hybrid", "mix"]]
     conversation_history: NotRequired[List[Dict[str, Any]]]
-    user_prompt: NotRequired[str]
+    user_prompt: NotRequired[Optional[str]]
     enable_rerank: NotRequired[bool]
     include_references: NotRequired[bool]
     stream: NotRequired[bool]
@@ -236,8 +238,8 @@ class QueryState(TypedDict):
     api_response: NotRequired[Dict[str, Any]]
     
     # ============ Error Handling ============
-    error: NotRequired[str]
-    status_message: NotRequired[str]
+    error: NotRequired[Optional[str]]
+    status_message: NotRequired[Optional[str]]
 
 
 # ============================================================================

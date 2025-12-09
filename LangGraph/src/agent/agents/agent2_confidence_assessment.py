@@ -14,7 +14,7 @@ Based on overall confidence, it decides whether to:
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Dict
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from agent.core.prompts import PROMPTS
 from agent.states.query_state import (
@@ -25,9 +25,9 @@ from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
 
 
-# ============================================================================
+# ============================================================================ 
 # Configuration
-# ============================================================================
+# ============================================================================ 
 
 llm = init_chat_model(
     model_provider="openai",
@@ -38,17 +38,17 @@ llm = init_chat_model(
 )
 
 
-# ============================================================================
+# ============================================================================ 
 # Prompt Template
-# ============================================================================
+# ============================================================================ 
 
 
 
-# ============================================================================
+# ============================================================================ 
 # Agent 2 Node
-# ============================================================================
+# ============================================================================ 
 
-def agent2_assess_confidence(state: QueryState) -> QueryState:
+def agent2_assess_confidence(state: QueryState) -> Dict[str, Any]:
     """
     Agent 2: Assess overall confidence and decide next action.
     
@@ -56,14 +56,13 @@ def agent2_assess_confidence(state: QueryState) -> QueryState:
     1. Combines query_confidence and rerank_confidence
     2. Analyzes top rerank scores
     3. Calculates overall_confidence
-    4. Decides whether to generate response or ask follow-up
-    5. Generates follow-up question if needed
+    4. Returns partial state update with confidence assessment
     
     Args:
         state: Current QueryState
         
     Returns:
-        Updated state with confidence assessment
+        Partial state update with confidence assessment
     """
     
     # Get inputs
@@ -112,44 +111,55 @@ def agent2_assess_confidence(state: QueryState) -> QueryState:
         if not assessment:
             raise ValueError("LLM did not return structured output")
         
-        # Update state
-        state["overall_confidence"] = get_attr_safe(assessment,"overall_confidence")
-        state["needs_followup"] = get_attr_safe(assessment,"needs_followup")
-        state["confidence_reason"] = get_attr_safe(assessment,"confidence_reason")
-        
-        if get_attr_safe(assessment,"followup_question") != None:
-            state["followup_question"] = get_attr_safe(assessment,"followup_question")
+        # Extract values safely
+        overall_confidence = get_attr_safe(assessment,"overall_confidence")
+        needs_followup = get_attr_safe(assessment,"needs_followup")
+        confidence_reason = get_attr_safe(assessment,"confidence_reason")
+        followup_question = get_attr_safe(assessment,"followup_question")
         
         # Log results
-        print(f"[AGENT 2] Overall Confidence: {get_attr_safe(assessment,"overall_confidence"):.2f}")
-        print(f"[AGENT 2] Needs Follow-up: {get_attr_safe(assessment,"needs_followup")}")
-        print(f"[AGENT 2] Reason: {get_attr_safe(assessment,"confidence_reason")}")
+        print(f"[AGENT 2] Overall Confidence: {overall_confidence:.2f}")
+        print(f"[AGENT 2] Needs Follow-up: {needs_followup}")
+        print(f"[AGENT 2] Reason: {confidence_reason}")
         
-        if get_attr_safe(assessment,"needs_followup"):
-            print(f"[AGENT 2] Follow-up Question: {get_attr_safe(assessment,"followup_question")}")
+        if needs_followup:
+            print(f"[AGENT 2] Follow-up Question: {followup_question}")
         
-        state["error"] = None  # type: ignore
+        # Return partial update
+        return {
+            "overall_confidence": overall_confidence,
+            "needs_followup": needs_followup,
+            "confidence_reason": confidence_reason,
+            "followup_question": followup_question if followup_question is not None else None,
+            "error": None,
+            "logs": ["Agent 2 assessed confidence"]
+        }
         
     except Exception as e:
         error_msg = f"Agent 2 error: {str(e)}"
         print(f"[AGENT 2] ✗ {error_msg}")
-        state["error"] = error_msg
         
         # Fallback to simple calculation
-        overall_confidence = 0.4 * query_confidence + 0.6 * rerank_confidence
-        state["overall_confidence"] = overall_confidence
-        state["needs_followup"] = overall_confidence < settings.query_thresholds.overall_confidence_threshold
-        state["confidence_reason"] = f"Simple calculation: 0.4*{query_confidence:.2f} + 0.6*{rerank_confidence:.2f} = {overall_confidence:.2f}"
+        fallback_confidence = 0.4 * query_confidence + 0.6 * rerank_confidence
+        needs_followup_fallback = fallback_confidence < settings.query_thresholds.overall_confidence_threshold
         
-        if state["needs_followup"]:
-            state["followup_question"] = "Bạn có thể cung cấp thêm thông tin để tôi có thể trả lời chính xác hơn được không?"
-    
-    return state
+        fallback_update = {
+            "error": error_msg,
+            "overall_confidence": fallback_confidence,
+            "needs_followup": needs_followup_fallback,
+            "confidence_reason": f"Simple calculation: 0.4*{query_confidence:.2f} + 0.6*{rerank_confidence:.2f} = {fallback_confidence:.2f}",
+            "logs": [f"Agent 2 error: {error_msg}"]
+        }
+        
+        if needs_followup_fallback:
+            fallback_update["followup_question"] = "Bạn có thể cung cấp thêm thông tin để tôi có thể trả lời chính xác hơn được không?"
+            
+        return fallback_update
 
 
-# ============================================================================
+# ============================================================================ 
 # Decision Function
-# ============================================================================
+# ============================================================================ 
 
 def decide_after_agent2(state: QueryState) -> str:
     """
@@ -164,11 +174,11 @@ def decide_after_agent2(state: QueryState) -> str:
     return "generate_response"
 
 
-# ============================================================================
+# ============================================================================ 
 # Follow-up Question Node
-# ============================================================================
+# ============================================================================ 
 
-def ask_followup(state: QueryState) -> QueryState:
+def ask_followup(state: QueryState) -> Dict[str, Any]:
     """
     Ask follow-up question to user.
     
@@ -180,19 +190,16 @@ def ask_followup(state: QueryState) -> QueryState:
     print(f"[FOLLOW-UP] Asking user: {question}")
     print("=" * 80)
     
-    # Add AI message with follow-up question
-    msgs = list(state.get("messages", []))
-    msgs.append(AIMessage(content=question))
-    state["messages"] = msgs
-    
-    state["status_message"] = "Waiting for user follow-up response"
-    
-    return state
+    # Return partial update with new message
+    return {
+        "messages": [AIMessage(content=question)],
+        "status_message": "Waiting for user follow-up response"
+    }
 
 
-# ============================================================================
+# ============================================================================ 
 # Export
-# ============================================================================
+# ============================================================================ 
 
 __all__ = [
     "agent2_assess_confidence",

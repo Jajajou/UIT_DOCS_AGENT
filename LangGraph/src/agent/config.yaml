@@ -37,3 +37,34 @@ reranker:
   batch_size: 32
   normalize_scores: True
   max_length: 512
+
+# Temporal Document Management Configuration
+temporal:
+  # Enable temporal awareness features
+  enabled: true
+
+  # Recency bias weight in reranking (0.0 = no bias, 1.0 = only recency)
+  # Research shows 0.3 weight achieves optimal balance
+  recency_weight: 0.3
+
+  # Document freshness thresholds
+  freshness_thresholds:
+    warning_days: 30      # Warn if document expires within 30 days
+    critical_days: 0      # Critical if already expired
+
+  # Data quality penalties for expired content
+  quality_penalties:
+    expired_penalty: 0.5       # Multiply quality score by 0.5 if expired
+    expiring_soon_penalty: 0.8 # Multiply by 0.8 if expiring within warning_days
+
+  # Version management
+  versioning:
+    strategy: "soft_delete"  # Options: "soft_delete", "hard_delete", "keep_all"
+    retention_days: 1825     # Keep historical versions for 5 years (for cohort queries)
+
+  # Validity period extraction (used by temporal extraction agent)
+  date_extraction:
+    enabled: true
+    # Vietnamese date patterns are defined in agent code
+    # Confidence thresholds
+    min_confidence_for_auto_archive: 0.7  # Only auto-archive if extraction confidence >= 0.7

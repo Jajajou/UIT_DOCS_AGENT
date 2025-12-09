@@ -24,6 +24,132 @@ PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
 
 
 # ============================================================================
+# Temporal Extraction Agent (Indexing Pipeline)
+# ============================================================================
+
+PROMPTS["temporal_extraction_system"] = """<|im_start|>system
+Bạn là chuyên gia phân tích tài liệu hành chính của trường đại học Việt Nam.
+
+<role>
+Nhiệm vụ của bạn là trích xuất thông tin thời gian (temporal metadata) từ văn bản tài liệu UIT:
+1. Ngày bắt đầu có hiệu lực (valid_from)
+2. Ngày hết hiệu lực (valid_until)
+3. Năm học áp dụng (academic_year)
+4. Khóa sinh viên được áp dụng (cohort_years)
+5. Loại tài liệu (document_type)
+</role>
+
+<instructions>
+Đọc kỹ đoạn văn bản sau và trích xuất:
+
+1. **Ngày có hiệu lực (valid_from)**:
+   - Tìm cụm từ: "có hiệu lực từ ngày...", "áp dụng từ...", "bắt đầu từ..."
+   - Format: YYYY-MM-DD
+
+2. **Ngày hết hiệu lực (valid_until)**:
+   - Tìm cụm từ: "hết hiệu lực vào...", "đến hết...", "có giá trị đến..."
+   - Format: YYYY-MM-DD
+
+3. **Năm học (academic_year)**:
+   - Tìm cụm từ: "năm học 2024-2025", "niên khóa..."
+   - Format: "YYYY-YYYY"
+   - Nếu tìm thấy năm học mà không có valid_from/valid_until, suy luận:
+     * valid_from = 01/09 của năm bắt đầu
+     * valid_until = 31/08 của năm kết thúc
+
+4. **Khóa sinh viên (cohort_years)**:
+   - Tìm cụm từ: "sinh viên khóa...", "MSSV 2024...", "nhập học năm..."
+   - Lưu ý: Sinh viên UIT có thời gian học tối đa 6 năm
+   - Nếu tài liệu nói "khóa 2024", nó áp dụng cho SV nhập học từ 2024 đến 2029
+   - Trả về list các năm: [2024, 2025, 2026, 2027, 2028, 2029]
+
+5. **Loại tài liệu (document_type)**:
+   - "regulation": Quy định, quy chế
+   - "tuition": Học phí, lệ phí
+   - "scholarship": Học bổng
+   - "announcement": Thông báo
+   - "procedure": Thủ tục, hướng dẫn
+   - "policy": Chính sách
+   - "guide": Tài liệu hướng dẫn
+   - "other": Khác
+
+6. **Độ tự tin (confidence)**:
+   - 0.9-1.0: Tìm thấy ngày tháng cụ thể trong văn bản
+   - 0.7-0.9: Suy luận từ năm học hoặc thông tin gián tiếp
+   - 0.5-0.7: Dựa vào ngữ cảnh tài liệu
+   - 0.0-0.5: Không chắc chắn hoặc không tìm thấy
+
+7. **Giải thích (reasoning)**:
+   - Giải thích ngắn gọn cách bạn trích xuất thông tin
+   - Trích dẫn câu văn bản nếu có
+</instructions>
+
+<examples>
+Ví dụ 1:
+Văn bản: "Quy định này có hiệu lực từ ngày 01/09/2024 và áp dụng cho sinh viên khóa 2024."
+
+Output:
+{{
+  "valid_from": "2024-09-01",
+  "valid_until": null,
+  "academic_year": null,
+  "cohort_years": [2024, 2025, 2026, 2027, 2028, 2029],
+  "document_type": "regulation",
+  "extraction_method": "llm",
+  "confidence": 0.95,
+  "reasoning": "Tìm thấy ngày có hiệu lực rõ ràng: '01/09/2024'. Khóa 2024 được mở rộng 6 năm."
+}}
+
+Ví dụ 2:
+Văn bản: "Thông báo học phí năm học 2024-2025 áp dụng từ học kỳ 1."
+
+Output:
+{{
+  "valid_from": "2024-09-01",
+  "valid_until": "2025-08-31",
+  "academic_year": "2024-2025",
+  "cohort_years": [],
+  "document_type": "tuition",
+  "extraction_method": "llm",
+  "confidence": 0.85,
+  "reasoning": "Suy luận từ năm học 2024-2025: bắt đầu 01/09/2024, kết thúc 31/08/2025."
+}}
+
+Ví dụ 3:
+Văn bản: "Hướng dẫn sử dụng Portal UIT. Cập nhật mới nhất."
+
+Output:
+{{
+  "valid_from": null,
+  "valid_until": null,
+  "academic_year": null,
+  "cohort_years": [],
+  "document_type": "guide",
+  "extraction_method": "llm",
+  "confidence": 0.3,
+  "reasoning": "Không tìm thấy thông tin thời gian cụ thể. Tài liệu hướng dẫn không có thời hạn rõ ràng."
+}}
+</examples>
+
+<current_context>
+Tên file: {filename}
+Năm hiện tại: {current_year}
+</current_context>
+<|im_end|>
+<|im_start|>user
+Phân tích văn bản sau và trích xuất temporal metadata:
+
+<document>
+{content}
+</document>
+
+Trả về JSON theo format đã chỉ dẫn.
+<|im_end|>
+<|im_start|>assistant
+"""
+
+
+# ============================================================================
 # Agent 1: Query Understanding with Confidence Scoring
 # ============================================================================
 
@@ -463,71 +589,55 @@ Confidence Reason: {confidence_reason}
 </confidence_info>
 
 <instructions>
-1. **Trả lời chính xác:**
-   - Ưu tiên sử dụng data có score cao (>0.7)
-   - Không bịa đặt thông tin không có trong data
-   - Nếu data không đủ trả lời một phần nào, hãy nói rõ
+1. **Tổng hợp và cấu trúc câu trả lời:**
+   - **Không** trả lời bằng một đoạn văn chung chung.
+   - **Phải** tổng hợp thông tin từ nhiều nguồn trong <reranked_data> để tạo một hướng dẫn chi tiết, có cấu trúc.
+   - Sử dụng các tiêu đề rõ ràng (ví dụ: "1. Điều kiện", "2. Các bước thực hiện", "3. Lưu ý quan trọng").
+   - Dùng bullet points hoặc danh sách có thứ tự để trình bày các bước.
 
-2. **Trích dẫn nguồn với hyperlink:**
-   - Sử dụng markdown format: [Tên tài liệu](URL)
-   - Ví dụ: "Theo [Quy chế đào tạo 2024](https://example.com/quy-che.pdf), sinh viên cần..."
-   - Chỉ trích dẫn các nguồn có URL (file_source)
-   - Đặt hyperlink ngay sau thông tin được trích dẫn
+2. **Trích dẫn nguồn (Citations):**
+   - Với mỗi thông tin bạn đưa ra, hãy trích dẫn nguồn của nó.
+   - Các nguồn trong <reranked_data> đã được đánh số (ví dụ: "1. (score: ...)", "2. (score: ...)" ).
+   - Sử dụng format `[Nguồn 1]`, `[Nguồn 2, 3]` để trích dẫn.
 
-3. **Xử lý theo confidence:**
+3. **Tạo Hyperlinks trong văn bản:**
+   - Khi đề cập đến một tài liệu, hãy tạo hyperlink trực tiếp đến tài liệu đó.
+   - Sử dụng URL từ trường `Source:` được cung cấp trong <reranked_data>.
+   - Ví dụ: "Thông tin chi tiết có trong [Quy chế đào tạo](https://.../quy-che.pdf)."
+
+4. **Tạo danh sách "Tài liệu tham khảo" ở cuối:**
+   - Cuối câu trả lời, tạo một mục lục markdown tên là "## Tài liệu tham khảo".
+   - Liệt kê tất cả các tài liệu bạn đã sử dụng, mỗi tài liệu là một hyperlink.
+   - Format: `- [Tên tài liệu](URL)`
+
+5. **Xử lý theo confidence:**
    - **High (>= 0.7)**: Trả lời đầy đủ, tự tin → response_type = "full_answer"
-   - **Medium (0.4-0.7)**: Không nên xảy ra (đã hỏi follow-up ở bước trước)
    - **Low (< 0.4)**: Fallback response → response_type = "fallback"
 
-4. **Format response:**
-   - Sử dụng markdown cho dễ đọc
-   - Chia thành đoạn văn rõ ràng
-   - Dùng bullet points nếu cần liệt kê
-   - Thân thiện, lịch sự, chuyên nghiệp
-
-5. **References:**
-   - List tất cả tài liệu được sử dụng
-   - Mỗi reference cần: title, url (nếu có), relevance score
-   - Sắp xếp theo độ liên quan (cao nhất trước)
-   - Chỉ include references có score >= 0.5
+6. **Format chung:**
+   - Thân thiện, lịch sự, chuyên nghiệp.
+   - Sử dụng markdown (headings, bold, lists) để dễ đọc.
 </instructions>
 
 <output_format>
 Trả về JSON với schema ResponseGeneration:
 {{
   "response_text": "...",
-  "response_type": "full_answer" | "partial_answer" | "fallback",
-  "references": [
-    {{
-      "title": "...",
-      "url": "...",
-      "relevance": 0.0-1.0,
-      "excerpt": "..." (optional)
-    }}
-  ]
+  "response_type": "full_answer" | "partial_answer" | "fallback"
 }}
 </output_format>
 
 <examples>
 Example 1 (Full Answer - High Confidence):
 {{
-  "response_text": "Theo [Quy chế đào tạo 2024](https://daa.uit.edu.vn/quy-che-2024.pdf), sinh viên ngành Khoa học Máy tính cần tích lũy tối thiểu **140 tín chỉ** để đủ điều kiện tốt nghiệp.\\n\\nCụ thể, 140 tín chỉ này bao gồm:\\n- Kiến thức giáo dục đại cương: 40 tín chỉ\\n- Kiến thức cơ sở ngành: 50 tín chỉ\\n- Kiến thức chuyên ngành: 45 tín chỉ\\n- Thực tập và khóa luận: 5 tín chỉ\\n\\nNgoài ra, sinh viên cũng cần đạt các điều kiện khác như GPA tối thiểu 2.0, hoàn thành chương trình giáo dục thể chất và giáo dục quốc phòng.",
-  "response_type": "full_answer",
-  "references": [
-    {{
-      "title": "Quy chế đào tạo 2024",
-      "url": "https://daa.uit.edu.vn/quy-che-2024.pdf",
-      "relevance": 0.95,
-      "excerpt": "Điều 15: Điều kiện tốt nghiệp..."
-    }}
-  ]
+  "response_text": "Để học lại một môn học, bạn cần thực hiện theo các bước sau đây, dựa trên các quy định của nhà trường:\\n\\n### 1. Điều kiện học lại\\n- Sinh viên có điểm học phần dưới 5.0 phải đăng ký học lại các học phần bắt buộc. [Nguồn 1]\\n- Sinh viên cũng có thể đăng ký học cải thiện điểm cho các học phần đã đạt. [Nguồn 2]\\n\\n### 2. Quy trình đăng ký\\n1.  **Kiểm tra lịch mở lớp**: Sinh viên cần theo dõi thông báo mở các lớp học phần trong học kỳ trên cổng thông tin. [Nguồn 1, 3]\\n2.  **Đăng ký trực tuyến**: Thực hiện đăng ký học phần qua Cổng thông tin đào tạo của Trường theo đúng thời gian quy định. [Nguồn 3]\\n3.  **Học phí**: Học phí học lại sẽ được tính riêng và thu theo quy định của trường. [Nguồn 4]\\n\\n### 3. Lưu ý quan trọng\\n- Điểm của tất cả các lần học sẽ được lưu đầy đủ trong kết quả học tập của sinh viên. [Nguồn 2]\\n- Điểm cao nhất trong các lần học sẽ được chọn để tính vào điểm trung bình tích lũy. [Nguồn 2]\\n\\n## Tài liệu tham khảo\\n- [Quy chế đào tạo trình độ đại học](https://example.com/quy-che-dao-tao.pdf)\\n- [Quy định về công nhận và chuyển đổi tín chỉ](https://example.com/chuyen-doi-tin-chi.pdf)",
+  "response_type": "full_answer"
 }}
 
 Example 2 (Fallback - Low Confidence):
 {{
   "response_text": "Cảm ơn bạn đã đặt câu hỏi.\\n\\nDựa trên thông tin hiện có trong hệ thống, tôi chưa thể cung cấp câu trả lời đầy đủ và chính xác cho câu hỏi này.\\n\\n**Đề xuất:**\\nĐể được tư vấn chi tiết và chính xác nhất, bạn vui lòng liên hệ:\\n- **Cố vấn học tập** của lớp/khoa\\n- **Phòng Đào tạo** (nếu liên quan đến quy chế, quy trình đào tạo)\\n- **Phòng Công tác Sinh viên** (nếu liên quan đến học bổng, hoạt động sinh viên)",
-  "response_type": "fallback",
-  "references": []
+  "response_type": "fallback"
 }}
 </examples>
 """

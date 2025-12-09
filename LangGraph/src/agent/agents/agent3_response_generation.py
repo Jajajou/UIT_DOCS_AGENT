@@ -8,13 +8,14 @@ It creates a comprehensive answer with hyperlinked references.
 from __future__ import annotations
 
 import os
+import json
+import json
 from typing import Any, Dict, List, Tuple
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from agent.core.prompts import PROMPTS
 from agent.states.query_state import (
     QueryState,
     ResponseGeneration,
-    Reference,
 )
 from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
@@ -124,7 +125,7 @@ def _extract_references(
 # Agent 3 Node
 # ============================================================================
 
-def agent3_generate_response(state: QueryState) -> QueryState:
+def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
     """
     Agent 3: Generate response using reranked data.
     
@@ -132,14 +133,13 @@ def agent3_generate_response(state: QueryState) -> QueryState:
     1. Formats reranked data for LLM
     2. Calls LLM to generate response
     3. Extracts references from reranked chunks
-    4. Updates state with final answer
-    5. Adds AI message to chat
+    4. Returns partial state update with generated response and final answer
     
     Args:
         state: Current QueryState
         
     Returns:
-        Updated state with generated response
+        Partial state update with generated response
     """
     
     # Get inputs
@@ -167,17 +167,14 @@ def agent3_generate_response(state: QueryState) -> QueryState:
             fallback_reason=confidence_reason
         )
         
-        state["generated_response"] = fallback_text
-        state["response_type"] = "fallback"
-        state["references"] = []
-        state["final_answer"] = fallback_text
-        
-        # Add to messages
-        msgs = list(state.get("messages", []))
-        msgs.append(AIMessage(content=fallback_text))
-        state["messages"] = msgs
-        
-        return state
+        return {
+            "generated_response": fallback_text,
+            "response_type": "fallback",
+            "references": [],
+            "final_answer": fallback_text,
+            "messages": [AIMessage(content=fallback_text)],
+            "logs": ["Agent 3 used fallback response"]
+        }
     
     try:
         # Format reranked data
@@ -206,62 +203,61 @@ def agent3_generate_response(state: QueryState) -> QueryState:
 
         msgs = [
             SystemMessage(content=prompt_text),
-            HumanMessage(content=f"{parsed_intention}\n\nGenerate response cho query trên.")
+            HumanMessage(content=f"{parsed_intention}\n\nGenerate JSON response.")
         ]
         print(f"GOI LLM: {prompt_text}")
-        response_gen = llm_structured_output.invoke(input=prompt_text)
+        response_gen = llm_structured_output.invoke(input=msgs)
         
         if not response_gen:
             raise ValueError("LLM did not return structured output")
         
-        # Update state
-        state["generated_response"] = get_attr_safe(response_gen,"response_text")
-        state["response_type"] = get_attr_safe(response_gen,"response_type")
-        
-        # Convert Pydantic references to dicts
-        references_list = [ref.model_dump() for ref in get_attr_safe(response_gen,"references")]
-        state["references"] = references_list
+        # Extract references from reranked chunks
+        references_list = _extract_references(reranked_chunks)
+
+        # Get response parts
+        generated_response = get_attr_safe(response_gen, "response_text")
+        response_type = get_attr_safe(response_gen, "response_type")
         
         # Set final answer
-        final_answer = get_attr_safe(response_gen,"response_text")
+        final_answer = generated_response
+        print(f"FINAL ANSWER BEFORE SUFFIX: {final_answer}")
         
         # Add partial answer suffix if needed
-        if get_attr_safe(response_gen,"response_type") == "partial_answer":
+        if response_type == "partial_answer":
             final_answer += PROMPTS["partial_answer_suffix"]
-        
-        state["final_answer"] = final_answer
-        
-        # Add to messages
-        msgs = list(state.get("messages", []))
-        msgs.append(AIMessage(content=final_answer))
-        state["messages"] = msgs
         
         # Log results
         print(f"[AGENT 3] ✓ Response generated")
-        print(f"[AGENT 3] Response type: {get_attr_safe(response_gen,"response_type")}")
+        print(f"[AGENT 3] Response type: {response_type}")
         print(f"[AGENT 3] References: {len(references_list)}")
         print(f"[AGENT 3] Response length: {len(final_answer)} chars")
         
-        state["error"] = None  # type: ignore
+        return {
+            "generated_response": generated_response,
+            "response_type": response_type,
+            "references": references_list,
+            "final_answer": final_answer,
+            "messages": [AIMessage(content=final_answer)],
+            "error": "",
+            "logs": ["Agent 3 generated response"]
+        }
         
     except Exception as e:
         error_msg = f"Agent 3 error: {str(e)}"
         print(f"[AGENT 3] ✗ {error_msg}")
-        state["error"] = error_msg
         
         # Fallback to simple response
         fallback_text = "Xin lỗi, tôi gặp lỗi khi tạo câu trả lời. Vui lòng thử lại hoặc liên hệ cố vấn học tập."
-        state["generated_response"] = fallback_text
-        state["response_type"] = "fallback"
-        state["references"] = []
-        state["final_answer"] = fallback_text
         
-        # Add to messages
-        msgs = list(state.get("messages", []))
-        msgs.append(AIMessage(content=fallback_text))
-        state["messages"] = msgs
-    
-    return state
+        return {
+            "error": error_msg,
+            "generated_response": fallback_text,
+            "response_type": "fallback",
+            "references": [],
+            "final_answer": fallback_text,
+            "messages": [AIMessage(content=fallback_text)],
+            "logs": [f"Agent 3 error: {error_msg}"]
+        }
 
 
 # ============================================================================
