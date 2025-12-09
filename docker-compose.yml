@@ -1,5 +1,7 @@
 services:
-# LightRAG for document knowledge base
+  # ============================================
+  # LightRAG - Document Knowledge Base
+  # ============================================
   lightrag_uit:
     container_name: lightrag_uit
     image: ghcr.io/hkuds/lightrag:latest
@@ -10,39 +12,39 @@ services:
         - ghcr.io/hkuds/lightrag:latest
     env_file: .env.lightrag
     ports: ["9622:9621"]
-    depends_on:
-      postgres_uit:
-        condition: service_started
-      qdrant_uit:
-        condition: service_started
     volumes:
-      - ./data/rag_storage:/app/data/rag_storage
+      - ./data/rag_storage:/app/rag_storage
       - ./data/inputs:/app/data/inputs
       - ./data/tiktoken:/app/data/tiktoken
+      - ./LightRAG/.log:/app/logs
     environment:
-      - TIKTOKEN_CACHE_DIR_DOC=./data/tiktoken
-    # restart: unless-stopped
-    
-  postgres_uit:
-    image: pgvector/pgvector:pg16
-    env_file: .env.lightrag
-    ports: ["5433:5432"]
-    environment: 
-      POSTGRES_DB: lightrag
-    volumes:
-      - ./data/pg_data:/var/lib/postgresql/data
+      - TIKTOKEN_CACHE_DIR=/app/data/tiktoken
+      - RAG_DIR=/app/rag_storage
+    restart: unless-stopped
+    networks:
+      - uit_network
 
-  qdrant_uit:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6336:6333"
-      - "6337:6334"
+  # ============================================
+  # LangGraph - Agent Orchestration
+  # ============================================
+  langgraph_uit:
+    container_name: langgraph_uit
+    build:
+      context: ./LangGraph
+      dockerfile: Dockerfile
+    env_file: LangGraph/.env
+    ports: ["8123:8123"]
     volumes:
-      - ./data/qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://localhost:6336/readyz || curl -fsS http://localhost:6336/readyz || wget -q -O- http://localhost:6336/healthz || curl -fsS http://localhost:6336/healthz || exit 1"]
-      interval: 3s
-      timeout: 2s
-      retries: 40
-      start_period: 5s
+      - ./LangGraph/src:/app/src
+      - ./data:/app/data
+    environment:
+      - LIGHTRAG_URL=http://lightrag_uit:9621
+    depends_on:
+      - lightrag_uit
+    restart: unless-stopped
+    networks:
+      - uit_network
 
+networks:
+  uit_network:
+    driver: bridge

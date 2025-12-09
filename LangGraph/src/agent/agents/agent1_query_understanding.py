@@ -13,7 +13,7 @@ New capabilities:
 from __future__ import annotations
 
 import os
-from typing import Any, List, Dict
+from typing import Any, List
 from openai import OpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from agent.states.query_state import (
@@ -72,20 +72,22 @@ def _last_human_text(messages: List[AnyMessage]) -> str:
 # Agent 1 Node
 # ============================================================================
 
-def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
+def agent1_understand_query(state: QueryState) -> QueryState:
     """
     Agent 1: Analyze user query and automatically tune retrieval parameters.
     
     This node:
     1. Extracts query from messages or state
     2. Calls LLM with structured output to analyze query
-    3. Returns partial state update with parsed intention, entities, topics, confidence, etc.
+    3. Updates state with parsed intention, entities, topics, confidence
+    4. Determines if clarification is needed
+    5. Suggests optimal retrieval mode, top_k and chunk_top_k
     
     Args:
         state: Current QueryState
         
     Returns:
-        Partial state update with Agent 1 outputs
+        Updated state with Agent 1 outputs
     """
     
     # Extract query
@@ -94,15 +96,18 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query = _last_human_text(state.get("messages", []))
     
     if not query:
-        return {
-            "error": "No query provided",
-            "status_message": "Error: No query"
-        }
+        state["error"] = "No query provided"
+        state["status_message"] = "Error: No query"
+        return state
+    
+    # Store original query
+    state["query"] = query
     
     print("=" * 80)
     print(f"[AGENT 1] Analyzing query: {query}")
     print("=" * 80)
     
+    # try:
     try:
         # Call LLM with structured output
         llm_json = llm.bind(response_format={"type": "json_object"})
@@ -124,73 +129,59 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         if not understanding:
             raise ValueError("LLM did not return structured output")
         
-        # Extract values safely
-        parsed_intention = get_attr_safe(understanding,"parsed_intention")
-        extracted_entities = get_attr_safe(understanding,"extracted_entities")
-        extracted_topics = get_attr_safe(understanding,"extracted_topics")
-        query_confidence = get_attr_safe(understanding,"confidence")
-        query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
-        needs_clarification = get_attr_safe(understanding,"needs_clarification")
-        clarification_question = get_attr_safe(understanding,"clarification_question")
+        # Update state with Agent 1 outputs
+        state["parsed_intention"] = get_attr_safe(understanding,"parsed_intention")
+        state["extracted_entities"] = get_attr_safe(understanding,"extracted_entities")
+        state["extracted_topics"] = get_attr_safe(understanding,"extracted_topics")
+        state["query_confidence"] = get_attr_safe(understanding,"confidence")
+        state["query_confidence_reason"] = get_attr_safe(understanding,"confidence_reason")
+        state["needs_clarification"] = get_attr_safe(understanding,"needs_clarification")
         
-        # Retrieval parameters
-        suggested_mode = get_attr_safe(understanding,"suggested_mode")
-        suggested_top_k = get_attr_safe(understanding,"suggested_top_k")
-        suggested_chunk_top_k = get_attr_safe(understanding,"suggested_chunk_top_k")
-        tuning_reason = get_attr_safe(understanding,"tuning_reason")
+        if get_attr_safe(understanding,"clarification_question") != None:
+            state["clarification_question"] = get_attr_safe(understanding,"clarification_question")
+        
+        # Update retrieval parameters
+        state["retrieval_mode"] = get_attr_safe(understanding,"suggested_mode")
+        state["top_k"] = get_attr_safe(understanding,"suggested_top_k")
+        state["chunk_top_k"] = get_attr_safe(understanding,"suggested_chunk_top_k")
+        state["tuning_reason"] = get_attr_safe(understanding,"tuning_reason")
         
         # Log results
-        print(f"[AGENT 1] Parsed Intention: {parsed_intention}")
-        print(f"[AGENT 1] Entities: {extracted_entities}")
-        print(f"[AGENT 1] Topics: {extracted_topics}")
-        print(f"[AGENT 1] Confidence: {query_confidence:.2f}")
-        print(f"[AGENT 1] Reason: {query_confidence_reason}")
-        print(f"[AGENT 1] Needs Clarification: {needs_clarification}")
+        print(f'[AGENT 1] Parsed Intention: {get_attr_safe(understanding,"parsed_intention")}')
+        print(f'[AGENT 1] Entities: {get_attr_safe(understanding,"extracted_entities")}')
+        print(f'[AGENT 1] Topics: {get_attr_safe(understanding,"extracted_topics")}')
+        print(f'[AGENT 1] Confidence: {get_attr_safe(understanding,"confidence"):.2f}')
+        print(f'[AGENT 1] Reason: {get_attr_safe(understanding,"confidence_reason")}')
+        print(f'[AGENT 1] Needs Clarification: {get_attr_safe(understanding,"needs_clarification")}')
         
         # Log parameter tuning
-        print(f"[AGENT 1] Suggested Mode: {suggested_mode}")
-        print(f"[AGENT 1] Suggested Top-K: {suggested_top_k}")
-        print(f"[AGENT 1] Tuning Reason: {tuning_reason}")
+        print(f'[AGENT 1] Suggested Mode: {get_attr_safe(understanding,"suggested_mode")}')
+        print(f'[AGENT 1] Suggested Top-K: {get_attr_safe(understanding,"suggested_top_k")}')
+        print(f'[AGENT 1] Tuning Reason: {get_attr_safe(understanding,"tuning_reason")}')
         
-        if needs_clarification:
-            print(f"[AGENT 1] Clarification Question: {clarification_question}")
-            
-        # Return partial update
-        return {
-            "query": query,
-            "parsed_intention": parsed_intention,
-            "extracted_entities": extracted_entities,
-            "extracted_topics": extracted_topics,
-            "query_confidence": query_confidence,
-            "query_confidence_reason": query_confidence_reason,
-            "needs_clarification": needs_clarification,
-            "clarification_question": clarification_question if clarification_question is not None else None,
-            "retrieval_mode": suggested_mode,
-            "top_k": suggested_top_k,
-            "chunk_top_k": suggested_chunk_top_k,
-            "tuning_reason": tuning_reason,
-            "error": None,
-            "logs": [f"Agent 1 analyzed query: {query}"]
-        }
+        if get_attr_safe(understanding,"needs_clarification"):
+            print(f'[AGENT 1] Clarification Question: {get_attr_safe(understanding,"clarification_question")}')
+        
+        state["error"] = None  # type: ignore
         
     except Exception as e:
         error_msg = f"{e}"
         print(f"[AGENT 1] ✗ {error_msg}")
+        state["error"] = error_msg
+        state["status_message"] = "Error in query understanding"
         
-        # Return error state and default values to allow graceful degradation
-        return {
-            "error": error_msg,
-            "status_message": "Error in query understanding",
-            "query": query,
-            "query_confidence": 0.0,
-            "needs_clarification": True,
-            "clarification_question": "Xin lỗi, tôi gặp lỗi khi phân tích câu hỏi. Bạn có thể diễn đạt lại câu hỏi được không?",
-            "retrieval_mode": settings.retrieval.default_mode,
-            "top_k": settings.retrieval.default_top_k,
-            "chunk_top_k": settings.retrieval.default_chunk_top_k,
-            "tuning_reason": "Error occurred, using default parameters",
-            "logs": [f"Agent 1 error: {error_msg}"]
-        }
+        # Set default values on error
+        state["query_confidence"] = 0.0
+        state["needs_clarification"] = True
+        state["clarification_question"] = "Xin lỗi, tôi gặp lỗi khi phân tích câu hỏi. Bạn có thể diễn đạt lại câu hỏi được không?"
+        
+        # Set default retrieval params
+        state["retrieval_mode"] = settings.retrieval.default_mode
+        state["top_k"] = settings.retrieval.default_top_k
+        state["chunk_top_k"] = settings.retrieval.default_chunk_top_k
+        state["tuning_reason"] = "Error occurred, using default parameters"
+    
+    return state
 
 
 # ============================================================================

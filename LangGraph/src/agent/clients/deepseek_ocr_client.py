@@ -10,8 +10,17 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from typing import Optional, Dict, Any, Tuple, List, Literal
 from PIL import Image
-from mlx_vlm import load, apply_chat_template, generate
-# from mlx_vlm.utils import load_image
+
+# MLX-VLM is optional (only works on Apple Silicon)
+try:
+    from mlx_vlm import load, apply_chat_template, generate
+    MLX_AVAILABLE = True
+except ImportError:
+    MLX_AVAILABLE = False
+    load = None
+    apply_chat_template = None
+    generate = None
+
 from agent.config import settings
 
 DEFAULT_TIMEOUT = 300  # 5 minutes for 1 PDF parsing
@@ -40,6 +49,11 @@ class DeepSeekOCRClient:
     
     def _load_model(self):
         """Load the DeepSeek OCR model."""
+        if not MLX_AVAILABLE:
+            raise DeepSeekOCRClientError(
+                "mlx_vlm is not available. This feature requires Apple Silicon (MLX). "
+                "Use an alternative OCR method or run on Apple Silicon hardware."
+            )
         if self.model is not None and self.processor is not None:
             return
         print(f"[DeepSeek OCR] Loading model: {self.model_name}")
