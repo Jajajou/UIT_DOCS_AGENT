@@ -22,6 +22,71 @@ PROMPTS: dict[str, Any] = {}
 PROMPTS["DEFAULT_TUPLE_DELIMITER"] = "<|#|>"
 PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
 
+# --- PROMPTS (Temporal Aware) ---
+METADATA_PROMPTS = {
+    "document_number": """
+Bạn là trợ lý AI chuyên trích xuất số hiệu văn bản pháp quy.
+Tìm "Số hiệu văn bản" (thường dạng: 123/QĐ-ĐHCNTT, 45/TB-KHTC...).
+- Chỉ trả về chuỗi số hiệu.
+- Nếu không thấy, trả về "NULL".
+- KHÔNG lấy số hiệu từ tên file, chỉ lấy trong nội dung.
+""",
+    
+    "valid_dates": """
+Bạn là chuyên gia pháp lý. Nhiệm vụ: Xác định ngày hiệu lực và hết hiệu lực.
+Context thời gian: Hôm nay là {current_date}.
+
+Nội dung văn bản:
+{context}
+
+Yêu cầu:
+1. **valid_from**: Ngày bắt đầu có hiệu lực. 
+   - Nếu ghi "có hiệu lực từ ngày ký", hãy tìm ngày ký (thường ở cuối văn bản).
+   - Format: YYYY-MM-DD.
+2. **valid_until**: Ngày hết hiệu lực (nếu có).
+   - Nếu văn bản này thay thế văn bản cũ -> văn bản cũ hết hiệu lực, nhưng văn bản NÀY thì chưa.
+   - Nếu không ghi ngày hết hạn -> trả về "NULL".
+
+Output JSON: {{"valid_from": "...", "valid_until": "..."}}
+""",
+
+    "cohorts": """
+Bạn là trợ lý tuyển sinh. Xác định văn bản áp dụng cho KHÓA SINH VIÊN (Cohort) nào.
+
+Context thời gian: Hôm nay là {current_date}
+
+Nội dung văn bản:
+{context}
+
+Quy tắc phân loại:
+
+1. NẾU văn bản CHỈ ĐỊNH KHÓA CỤ THỂ:
+   VD: "Áp dụng cho sinh viên khóa 2024"
+   VD: "Dành riêng cho khóa tuyển sinh từ năm 2024 đến năm 2028"
+   -> Trả về các khóa được nêu rõ ràng
+   -> cohort_scope: "explicit"
+
+   Ví dụ output:
+   - "khóa 2024" -> {{"cohort_years": [2024], "cohort_scope": "explicit"}}
+   - "khóa tuyển sinh từ năm 2024 đến năm 2028" -> {{"cohort_years": [2024, 2025, 2026, 2027, 2028], "cohort_scope": "explicit"}}
+
+2. NẾU văn bản là QUY ĐỊNH CHUNG (áp dụng cho TẤT CẢ sinh viên):
+   VD: "Quy chế đào tạo", "Quy định điểm danh chung", "Học phí"
+   Không có từ "khóa 20XX" cụ thể
+   -> {{"cohort_years": ["*"], "cohort_scope": "universal"}}
+
+3. NẾU KHÔNG RÕ hoặc không đủ thông tin:
+   -> {{"cohort_years": [], "cohort_scope": "unspecified"}}
+
+CHÚ Ý:
+- Với "từ năm X đến năm Y", hãy liệt kê ĐẦY ĐỦ: [X, X+1, ..., Y]
+- Chỉ đánh dấu "explicit" khi văn bản NÊU RÕ khóa
+- Nếu chỉ nói "sinh viên" chung chung -> "universal"
+
+Output JSON: {{"cohort_years": [...], "cohort_scope": "..."}}
+"""
+}
+
 
 # ============================================================================
 # Temporal Extraction Agent (Indexing Pipeline)
@@ -31,12 +96,14 @@ PROMPTS["temporal_extraction_system"] = """<|im_start|>system
 Bạn là chuyên gia phân tích tài liệu hành chính của trường đại học Việt Nam.
 
 <role>
-Nhiệm vụ của bạn là trích xuất thông tin thời gian (temporal metadata) từ văn bản tài liệu UIT:
+Nhiệm vụ của bạn là trích xuất thông tin thời gian và định danh (temporal & identity metadata) từ văn bản tài liệu UIT:
 1. Ngày bắt đầu có hiệu lực (valid_from)
 2. Ngày hết hiệu lực (valid_until)
 3. Năm học áp dụng (academic_year)
 4. Khóa sinh viên được áp dụng (cohort_years)
 5. Loại tài liệu (document_type)
+6. Số hiệu văn bản (document_number)
+7. Văn bản bị sửa đổi/bổ sung (amends_documents)
 </role>
 
 <instructions>
@@ -57,11 +124,28 @@ Nhiệm vụ của bạn là trích xuất thông tin thời gian (temporal meta
      * valid_from = 01/09 của năm bắt đầu
      * valid_until = 31/08 của năm kết thúc
 
-4. **Khóa sinh viên (cohort_years)**:
+4. **Khóa sinh viên (cohort_years) và phạm vi áp dụng (cohort_scope)**:
+
+   **Quy tắc quan trọng:**
+   - Nếu văn bản KHÔNG ĐỀ CẬP bất kỳ khóa/nhóm sinh viên cụ thể nào → cohort_years: ["*"], cohort_scope: "universal"
+   - Nếu văn bản ĐỀ CẬP khóa cụ thể → cohort_years: [2024, ...], cohort_scope: "explicit"
+   - Nếu không rõ ràng → cohort_years: null, cohort_scope: "unspecified"
+
+   **Trường hợp Universal (áp dụng cho TẤT CẢ sinh viên):**
+   - Văn bản về quy định chung, học phí chung, thủ tục chung
+   - Không đề cập "khóa X", "sinh viên khóa Y", "MSSV 20XX"
+   - Ví dụ: "Quy định học vụ", "Học phí năm học 2024-2025"
+   → cohort_years: ["*"], cohort_scope: "universal"
+
+   **Trường hợp Explicit (chỉ áp dụng cho khóa cụ thể):**
    - Tìm cụm từ: "sinh viên khóa...", "MSSV 2024...", "nhập học năm..."
    - Lưu ý: Sinh viên UIT có thời gian học tối đa 6 năm
    - Nếu tài liệu nói "khóa 2024", nó áp dụng cho SV nhập học từ 2024 đến 2029
-   - Trả về list các năm: [2024, 2025, 2026, 2027, 2028, 2029]
+   - Trả về list các năm: [2024, 2025, 2026, 2027, 2028, 2029], cohort_scope: "explicit"
+
+   **Lưu ý đặc biệt về học phí:**
+   - Nếu văn bản là học phí/lệ phí và KHÔNG nói rõ khóa nào → Universal (áp dụng cho tất cả SV còn theo học)
+   - Ví dụ: "Học phí năm học 2024-2025" → ["*"], không phải cohort cụ thể
 
 5. **Loại tài liệu (document_type)**:
    - "regulation": Quy định, quy chế
@@ -73,20 +157,49 @@ Nhiệm vụ của bạn là trích xuất thông tin thời gian (temporal meta
    - "guide": Tài liệu hướng dẫn
    - "other": Khác
 
-6. **Độ tự tin (confidence)**:
-   - 0.9-1.0: Tìm thấy ngày tháng cụ thể trong văn bản
-   - 0.7-0.9: Suy luận từ năm học hoặc thông tin gián tiếp
-   - 0.5-0.7: Dựa vào ngữ cảnh tài liệu
-   - 0.0-0.5: Không chắc chắn hoặc không tìm thấy
+6. **Số hiệu văn bản (document_number)**:
+   - **CHỈ** trích xuất từ NỘI DUNG văn bản, KHÔNG từ tên file
+   - Tìm số hiệu chính thức: "Số: 123/QĐ-ĐHCNTT", "456/TB-CTSV"
+   - Thường nằm ở góc trên bên trái, header, hoặc phần đầu văn bản
+   - Nếu KHÔNG tìm thấy trong nội dung → trả về null (không phải tên file!)
+   - Format chuẩn: [Số]/[Loại]-[Đơn vị] (ví dụ: "108/2024/QĐ-ĐHQGTP")
 
-7. **Giải thích (reasoning)**:
+7. **Văn bản bị sửa đổi (amends_documents)**:
+   - Tìm xem văn bản này có sửa đổi, bổ sung hay thay thế văn bản nào không.
+   - Tìm cụm từ: "Sửa đổi khoản X điều Y Quyết định số...", "Thay thế Thông báo số..."
+   - Trích xuất danh sách các số hiệu văn bản bị sửa đổi.
+   - Ví dụ: ["123/QĐ-ĐHCNTT", "98/TB-KHTC"]
+
+8. **Độ tự tin (confidence)** - Dựa trên số lượng fields thiếu:
+
+   **Công thức tính:**
+   - Core fields (quan trọng nhất): document_number, valid_from, cohort_years/cohort_scope
+   - Secondary fields: valid_until, document_type, amends_documents
+
+   **Thang điểm:**
+   - 0.9-1.0 (Excellent): Có đầy đủ core fields + hầu hết secondary fields
+     * Ví dụ: document_number ✓, valid_from ✓, cohort_scope ✓, document_type ✓
+
+   - 0.7-0.9 (Good): Có 2-3 core fields, thiếu 1-2 secondary fields
+     * Ví dụ: document_number ✓, valid_from ✓, cohort_scope: universal ✓, nhưng thiếu document_type
+
+   - 0.5-0.7 (Fair): Chỉ có 1-2 core fields, thiếu nhiều thông tin
+     * Ví dụ: Chỉ có valid_from và document_type, không có document_number và cohort info
+
+   - 0.3-0.5 (Poor): Thiếu hầu hết core fields, chỉ suy luận được 1-2 fields
+     * Ví dụ: Chỉ có document_type từ tên file, không extract được gì từ content
+
+   - 0.0-0.3 (Very Poor): Không extract được gì hoặc gần như toàn null
+     * Ví dụ: Tất cả fields đều null hoặc chỉ có 1 field từ filename
+
+9. **Giải thích (reasoning)**:
    - Giải thích ngắn gọn cách bạn trích xuất thông tin
    - Trích dẫn câu văn bản nếu có
 </instructions>
 
 <examples>
 Ví dụ 1:
-Văn bản: "Quy định này có hiệu lực từ ngày 01/09/2024 và áp dụng cho sinh viên khóa 2024."
+Văn bản: "Quyết định số 15/QĐ-ĐHCNTT về việc ban hành quy định học vụ. Có hiệu lực từ ngày 01/09/2024 và áp dụng cho sinh viên khóa 2024."
 
 Output:
 {{
@@ -95,39 +208,47 @@ Output:
   "academic_year": null,
   "cohort_years": [2024, 2025, 2026, 2027, 2028, 2029],
   "document_type": "regulation",
+  "document_number": "15/QĐ-ĐHCNTT",
+  "amends_documents": [],
   "extraction_method": "llm",
   "confidence": 0.95,
-  "reasoning": "Tìm thấy ngày có hiệu lực rõ ràng: '01/09/2024'. Khóa 2024 được mở rộng 6 năm."
+  "reasoning": "Tìm thấy số hiệu 15/QĐ-ĐHCNTT và ngày hiệu lực 01/09/2024."
 }}
 
-Ví dụ 2:
-Văn bản: "Thông báo học phí năm học 2024-2025 áp dụng từ học kỳ 1."
+Ví dụ 2 (Universal document - học phí chung):
+Văn bản: "Thông báo số 20/TB-KHTC về việc điều chỉnh mức thu học phí. Sửa đổi mục 2 trong Thông báo số 05/TB-KHTC ngày 10/01/2024. Áp dụng từ học kỳ 1 năm học 2024-2025."
 
 Output:
 {{
   "valid_from": "2024-09-01",
   "valid_until": "2025-08-31",
   "academic_year": "2024-2025",
-  "cohort_years": [],
+  "cohort_years": ["*"],
+  "cohort_scope": "universal",
   "document_type": "tuition",
-  "extraction_method": "llm",
-  "confidence": 0.85,
-  "reasoning": "Suy luận từ năm học 2024-2025: bắt đầu 01/09/2024, kết thúc 31/08/2025."
+  "document_number": "20/TB-KHTC",
+  "amends_documents": ["05/TB-KHTC"],
+  "extraction_method": "deepseek_ocr",
+  "confidence": 0.95,
+  "reasoning": "Văn bản số 20/TB-KHTC sửa đổi văn bản 05/TB-KHTC. Học phí áp dụng cho TẤT CẢ sinh viên còn theo học (không đề cập khóa cụ thể). Thời gian: năm học 2024-2025."
 }}
 
-Ví dụ 3:
-Văn bản: "Hướng dẫn sử dụng Portal UIT. Cập nhật mới nhất."
+Ví dụ 3 (Missing document_number):
+Văn bản: "Hướng dẫn sử dụng Portal UIT. Cập nhật mới nhất. Áp dụng cho tất cả sinh viên UIT."
 
 Output:
 {{
   "valid_from": null,
   "valid_until": null,
   "academic_year": null,
-  "cohort_years": [],
+  "cohort_years": ["*"],
+  "cohort_scope": "universal",
   "document_type": "guide",
-  "extraction_method": "llm",
-  "confidence": 0.3,
-  "reasoning": "Không tìm thấy thông tin thời gian cụ thể. Tài liệu hướng dẫn không có thời hạn rõ ràng."
+  "document_number": null,
+  "amends_documents": [],
+  "extraction_method": "deepseek_ocr",
+  "confidence": 0.4,
+  "reasoning": "Không tìm thấy số hiệu văn bản hay thời gian cụ thể. Chỉ xác định được document_type=guide và áp dụng universal (cho tất cả SV). Confidence thấp do thiếu core fields."
 }}
 </examples>
 

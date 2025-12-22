@@ -17,7 +17,7 @@ Uses multi-strategy approach:
 import re
 import hashlib
 from datetime import datetime
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from pydantic import BaseModel, Field
 
 
@@ -36,13 +36,25 @@ class TemporalMetadata(BaseModel):
         None,
         description="Academic year like '2024-2025'"
     )
-    cohort_years: List[int] = Field(
+    cohort_years: List[Union[int, str]] = Field(
         default_factory=list,
-        description="Student cohorts this applies to (enrollment years)"
+        description="Student cohorts this applies to. Use ['*'] for universal documents, [2024, 2025, ...] for specific cohorts, [] or null for unspecified"
+    )
+    cohort_scope: Optional[str] = Field(
+        None,
+        description="Cohort scope: 'universal' (all students), 'explicit' (specific cohorts), 'unspecified' (unclear)"
     )
     document_type: str = Field(
         "other",
         description="Type of document: regulation, announcement, tuition, scholarship, procedure, guide, other"
+    )
+    document_number: Optional[str] = Field(
+        None,
+        description="Official document number (e.g., '123/QĐ-ĐHCNTT')"
+    )
+    amends_documents: List[str] = Field(
+        default_factory=list,
+        description="List of document numbers that this document amends or supplements"
     )
     extraction_method: str = Field(
         "unknown",
@@ -66,6 +78,7 @@ class TemporalExtractionAgent:
     - Specific validity periods
     - Academic year contexts
     - Student cohort applicability (6-year maximum study duration)
+    - Document references (document number, amendments)
     """
 
     def __init__(self, llm_model, config):
@@ -121,6 +134,18 @@ class TemporalExtractionAgent:
                 r"lần\s+(\d+)",
                 r"v(\d+\.?\d*)",
                 r"version\s+(\d+\.?\d*)",
+            ],
+            "document_number": [
+                r"số\s*[:\.]?\s*(\d+/[A-ZĐƯ0-9\-]+)", # Số: 123/QĐ-ĐHCNTT
+                r"số hiệu\s*[:\.]?\s*(\d+/[A-ZĐƯ0-9\-]+)",
+                r"^(\d+/[A-ZĐƯ0-9\-]+)$", # Line starts with Doc Number
+            ],
+            "amends": [
+                r"sửa đổi.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)",
+                r"bổ sung.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)",
+                r"thay thế.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)",
+                r"điều chỉnh.*văn bản số\s*(\d+/[A-ZĐƯ0-9\-]+)",
+                r"căn cứ.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)", # Broad, careful with false positives
             ]
         }
 
@@ -136,7 +161,7 @@ class TemporalExtractionAgent:
         Returns:
             TemporalMetadata with extracted information
         """
-        metadata = TemporalMetadata(extraction_method="regex")
+        metadata = TemporalMetadata(extraction_method="regex") #type: ignore
         reasoning_parts = []
 
         # Extract valid_from date
@@ -197,6 +222,25 @@ class TemporalExtractionAgent:
             metadata.cohort_years = sorted(set(expanded_cohorts))
             reasoning_parts.append(f"Found cohorts: {base_cohorts}, expanded for 6-year duration: {metadata.cohort_years[:3]}...")
 
+        # Extract document number
+        for pattern in self.regex_patterns["document_number"]:
+            match = re.search(pattern, content, re.IGNORECASE)
+            if match:
+                metadata.document_number = match.group(1)
+                reasoning_parts.append(f"Found document number: {metadata.document_number}")
+                break
+
+        # Extract amended documents
+        amends_set = set()
+        for pattern in self.regex_patterns["amends"]:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            if matches:
+                amends_set.update(matches)
+        
+        if amends_set:
+            metadata.amends_documents = sorted(list(amends_set))
+            reasoning_parts.append(f"Found amended documents: {metadata.amends_documents}")
+
         metadata.reasoning = " | ".join(reasoning_parts) if reasoning_parts else "No temporal patterns found"
 
         return metadata
@@ -228,16 +272,39 @@ class TemporalExtractionAgent:
 
         # Call LLM with structured output
         try:
-            response = await self.llm.with_structured_output(TemporalMetadata).ainvoke(prompt)
+            # Use response_format for JSON mode if available
+            response = await self.llm.with_structured_output(
+                TemporalMetadata,
+                method="json_mode"  # Force JSON mode instead of function calling
+            ).ainvoke(prompt)
             response.extraction_method = "llm"
             return response
         except Exception as e:
-            print(f"[Temporal Extraction LLM Error] {e}")
+            error_str = str(e)
+            print(f"[Temporal Extraction LLM Error] {error_str}")
+
+            # If error is JSON parsing from markdown code blocks, try to clean it
+            if "Invalid JSON" in error_str and "```json" in error_str:
+                try:
+                    # Extract JSON from markdown code block
+                    import re
+                    json_match = re.search(r'```json\s*\n(.*?)\n```', error_str, re.DOTALL)
+                    if json_match:
+                        json_str = json_match.group(1)
+                        import json
+                        data = json.loads(json_str)
+                        response = TemporalMetadata(**data) #type: ignore
+                        response.extraction_method = "llm"
+                        print(f"[Temporal Extraction] ✓ Recovered from markdown JSON")
+                        return response
+                except Exception as recovery_error:
+                    print(f"[Temporal Extraction] Failed to recover: {recovery_error}")
+
             # Return empty metadata on error
-            return TemporalMetadata(
+            return TemporalMetadata( #type: ignore
                 extraction_method="llm",
                 confidence=0.0,
-                reasoning=f"LLM extraction failed: {str(e)}"
+                reasoning=f"LLM extraction failed: {error_str[:200]}"
             )
 
     def extract_from_filename(self, filename: str) -> TemporalMetadata:
@@ -252,7 +319,7 @@ class TemporalExtractionAgent:
         Returns:
             TemporalMetadata with filename-based extraction
         """
-        metadata = TemporalMetadata(extraction_method="filename")
+        metadata = TemporalMetadata(extraction_method="filename") #type: ignore
 
         # Pattern: QuyDinh_2024.pdf or HocPhi_2024-2025.pdf
         year_match = re.search(r'(\d{4})', filename)
@@ -359,12 +426,31 @@ class TemporalExtractionAgent:
                 result = regex_result
                 print(f"[Temporal Extraction] Using regex result (confidence: {result.confidence})")
 
-        # Strategy 3: Filename fallback if nothing found
-        if not result.valid_from and not result.academic_year:
-            filename_result = self.extract_from_filename(filename)
-            if filename_result.confidence > 0:
-                result = filename_result
-                print(f"[Temporal Extraction] Using filename fallback (confidence: {result.confidence})")
+        # Strategy 3: Filename fallback (Merge missing fields)
+        filename_result = self.extract_from_filename(filename)
+
+        if filename_result.confidence > 0:
+            merged_info = []
+            
+            # Fill valid_from/until if missing
+            if not result.valid_from and filename_result.valid_from:
+                result.valid_from = filename_result.valid_from
+                result.valid_until = filename_result.valid_until
+                merged_info.append("dates from filename")
+                
+                # If we rely entirely on filename for dates, ensure confidence isn't 0
+                if result.confidence == 0:
+                    result.confidence = filename_result.confidence
+                    result.extraction_method = "filename_fallback"
+
+            # Fill academic_year if missing
+            if not result.academic_year and filename_result.academic_year:
+                result.academic_year = filename_result.academic_year
+                merged_info.append("academic year from filename")
+
+            if merged_info:
+                print(f"[Temporal Extraction] Merged info: {', '.join(merged_info)}")
+                result.reasoning += f" | Merged: {', '.join(merged_info)}"
 
         # Classify document type
         result.document_type = self._classify_document_type(filename, content)
@@ -382,6 +468,11 @@ class TemporalExtractionAgent:
 
             # Document classification
             "document_type": result.document_type,
+            "document_number": result.document_number,
+
+            # Document relationships
+            "amends_documents": result.amends_documents,
+            "amended_by": [], # Will be populated by reverse linking logic
 
             # Extraction metadata
             "temporal_extraction_method": result.extraction_method,
@@ -415,7 +506,7 @@ async def extract_temporal_metadata_node(state: dict) -> Dict[str, Any]:
     """
     LangGraph node: Extract temporal metadata from parsed document.
 
-    Runs in indexing pipeline after DeepSeek OCR, before uploading to LightRAG.
+    Runs in indexing pipeline before uploading to LightRAG.
 
     Args:
         state: IndexingState dictionary
@@ -433,7 +524,7 @@ async def extract_temporal_metadata_node(state: dict) -> Dict[str, Any]:
     filename = file_path.split("/")[-1] if file_path else "unknown"
 
     if not parsed_content:
-        print(f"[Temporal Extraction] ⚠️ No parsed content found for {filename}")
+        print(f"[Temporal Extraction] WARNING: No parsed content found for {filename}")
         return {
             "document_metadata": {},
             "temporal_extraction_complete": False
@@ -463,11 +554,14 @@ async def extract_temporal_metadata_node(state: dict) -> Dict[str, Any]:
 
     # Log results
     print(f"  ├─ Type: {temporal_metadata.get('document_type')}")
+    print(f"  ├─ Doc Number: {temporal_metadata.get('document_number') or 'N/A'}")
     print(f"  ├─ Valid: {temporal_metadata.get('valid_from') or 'N/A'} → {temporal_metadata.get('valid_until') or 'N/A'}")
     print(f"  ├─ Academic Year: {temporal_metadata.get('academic_year') or 'N/A'}")
     if temporal_metadata.get('cohort_years'):
         cohorts = temporal_metadata['cohort_years']
         print(f"  ├─ Cohorts: {cohorts[:3]}{'...' if len(cohorts) > 3 else ''} ({len(cohorts)} total)")
+    if temporal_metadata.get('amends_documents'):
+        print(f"  ├─ Amends: {temporal_metadata.get('amends_documents')}")
     print(f"  ├─ Method: {temporal_metadata.get('temporal_extraction_method')}")
     print(f"  └─ Confidence: {temporal_metadata.get('temporal_confidence'):.2f}")
 

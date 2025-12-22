@@ -44,6 +44,13 @@ class RerankerConfig(BaseModel):
     normalize_scores: bool
     max_length: int
 
+class TemporalConfig(BaseModel):
+    enabled: bool
+    recency_weight: float
+    freshness_thresholds: Dict[str, int]
+    quality_penalties: Dict[str, float]
+    versioning: Dict[str, Any]
+
 class Config(BaseModel):
     """Main configuration class for the application."""
     project_root: Path = PROJECT_ROOT
@@ -55,6 +62,7 @@ class Config(BaseModel):
     query_thresholds: QueryThresholdsConfig
     retrieval: RetrievalConfig
     reranker: RerankerConfig
+    temporal: TemporalConfig
 
     # Environment variables
     openai_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
@@ -75,7 +83,8 @@ settings = Config(
     deepseek_ocr=_yaml_config.get("deepseek_ocr", {}),
     query_thresholds=_yaml_config.get("query_thresholds", {}),
     retrieval=_yaml_config.get("retrieval", {}),
-    reranker=_yaml_config.get("reranker", {})
+    reranker=_yaml_config.get("reranker", {}),
+    temporal=_yaml_config.get("temporal", {})
 )
 
 def get_attr_safe(obj: Any, attr: str, default: Any = None) -> Any:
