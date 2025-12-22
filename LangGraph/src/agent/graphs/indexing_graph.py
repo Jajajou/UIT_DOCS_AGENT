@@ -438,32 +438,36 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
         try:
             parsed_content = state.get("parsed_content")
 
-            if state.get("deepseek_ocr_success") and parsed_content:
+            # Upload as text if we have parsed content (from OCR or direct file read)
+            if parsed_content:
                 # Upload parsed content
                 result = api_client.insert_text(
                     text=parsed_content,
                     file_source=url
                 )
 
-                doc_id = result.get("doc_id")
+                track_id = result.get("track_id")
+
+                if track_id:
+                    print(f"[UPLOAD] ✓ Upload started (Text) - Track: {track_id}")
+                else:
+                    print(f"[UPLOAD] WARNING: No track_id returned")
 
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
                     "file_source": url,
-                    "track_id": result.get("track_id"),
-                    "doc_id": doc_id,
+                    "track_id": track_id,
+                    "doc_id": None,  # Will be retrieved when saving metadata
                     "status": "success",
-                    "parse_with_DeepSeek_OCR": True,
+                    "parse_with_DeepSeek_OCR": state.get("deepseek_ocr_success", False),
                     "output_dir": state.get("deepseek_ocr_output_dir"),
                     "markdown_length": len(parsed_content),
                     "response": result
                 }
 
-                print(f"[UPLOAD] ✓ Success (DeepSeek_OCR) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
-
             else:
-                # Direct file upload
+                # Direct file upload (binary files without parsed content)
                 result = api_client.upload_file(file_path)
 
                 doc_id = result.get("doc_id")
@@ -485,29 +489,58 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
 
                 print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
 
-            # Save temporal metadata to PostgreSQL if we have it and doc_id
+            # Save temporal metadata to separate table (to avoid LightRAG overwrite)
             document_metadata = state.get("document_metadata", {})
-            if doc_id and document_metadata and state.get("temporal_extraction_complete"):
+            if track_id and document_metadata and state.get("temporal_extraction_complete"): #type: ignore
                 try:
-                    print(f"[METADATA] Saving temporal metadata for {file_name}...")
+                    print(f"[METADATA] Saving temporal metadata for {file_name} (track_id: {track_id})...")
 
-                    # Wait a bit for LightRAG to process the document
-                    import time
-                    time.sleep(2)
+                    # Get doc_id from LightRAG first
+                    # LightRAG creates doc_status during upload, we need to find the doc_id
+                    conn = api_client._get_pg_connection()
+                    workspace = os.getenv("WORKSPACE", "default")
 
-                    # Save metadata
-                    metadata_result = api_client.update_document_metadata(
-                        doc_id=doc_id,
-                        metadata=document_metadata,
-                        merge=True
-                    )
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
+                            (workspace, track_id)
+                        )
+                        row = cur.fetchone()
+                        doc_id = row[0] if row else None
+                    conn.close()
 
-                    if metadata_result.get("success"):
-                        print(f"[METADATA] ✓ Temporal metadata saved successfully")
-                        upload_result["temporal_metadata_saved"] = True
+                    if doc_id:
+                        # Save to separate temporal_metadata table
+                        metadata_result = api_client.save_temporal_metadata(
+                            track_id=track_id,
+                            doc_id=doc_id,
+                            metadata=document_metadata
+                        )
+
+                        if metadata_result.get("success"):
+                            print(f"[METADATA] ✓ Temporal metadata saved to separate table (doc_id: {doc_id})")
+                            upload_result["temporal_metadata_saved"] = True
+                            upload_result["doc_id"] = doc_id
+
+                            # Handle reverse linking for amended documents
+                            amended_docs = document_metadata.get("amends_documents", [])
+                            if amended_docs and doc_id:
+                                print(f"[LINKING] Processing amendments for {len(amended_docs)} documents...")
+                                link_result = api_client.link_amended_documents(doc_id, amended_docs)
+
+                                linked_count = len(link_result.get("linked_docs", []))
+                                upload_result["linked_amendments"] = linked_count
+
+                                if linked_count > 0:
+                                    print(f"[LINKING] ✓ Successfully linked to {linked_count} old documents")
+                                else:
+                                    print(f"[LINKING] WARNING: No matching old documents found to link")
+                        else:
+                            print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
+                            upload_result["temporal_metadata_error"] = metadata_result.get("error")
                     else:
-                        print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
-                        upload_result["temporal_metadata_error"] = metadata_result.get("error")
+                        print(f"[METADATA] WARNING: Document not found in LightRAG (track_id: {track_id})")
+                        upload_result["temporal_metadata_error"] = "Document not found in LightRAG"
 
                 except Exception as meta_error:
                     print(f"[METADATA] ✗ Exception saving metadata: {str(meta_error)}")
@@ -532,7 +565,7 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
         return {
             "upload_results": [upload_result],
             "current_file_index": next_index,
-            "doc_id": doc_id,
+            "doc_id": upload_result.get("doc_id"),
             # Reset per-file state
             "current_file_path": None,
             "parsed_content": None,
@@ -696,7 +729,7 @@ builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
 builder.add_node("parse_with_DeepSeek_OCR", parse_with_DeepSeek_OCR)
-builder.add_node("extract_temporal_metadata", extract_temporal_metadata_node)
+builder.add_node("extract_temporal_metadata", extract_temporal_metadata_node) #type: ignore
 builder.add_node("upload_to_lightrag", upload_to_lightrag)
 builder.add_node("finalize_upload", finalize_upload)
 builder.add_node("error_handler", error_handler)
