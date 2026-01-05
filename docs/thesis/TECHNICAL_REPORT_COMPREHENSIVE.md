@@ -228,45 +228,31 @@ def route_after_agent1(state):
 - Không xử lý validity dates (valid_from, valid_until)
 - Không hỗ trợ amendment relationships (sửa đổi/bổ sung)
 
-### 2.5. Bối cảnh Việt Nam
+#### 2.5. Tổng quan các giải pháp RAG hỗ trợ tra cứu thông tin học vụ
 
-#### 2.5.1. URAG - ĐH Bách Khoa TP.HCM
+Trong miền dữ liệu giáo dục đại học, các hệ thống hỏi đáp (QA Systems) đang chuyển dịch từ chatbot dựa trên quy tắc (rule-based) sang mô hình sinh văn bản có truy xuất (RAG). Tại Việt Nam, một số nghiên cứu tiêu biểu như URAG [12] hay REBot [13] đã bước đầu giải quyết bài toán tư vấn tuyển sinh.
 
-**Scope:** Tư vấn tuyển sinh
+Tuy nhiên, hạn chế chung của các hệ thống hiện có là phụ thuộc quá lớn vào **tìm kiếm tương đồng vector** (Vector Similarity Search). Cách tiếp cận này thường gặp khó khăn với hai thách thức đặc thù của văn bản hành chính nhà trường:
+1.  **Sự phân mảnh thông tin:** Câu trả lời nằm rải rác ở nhiều văn bản (ví dụ: điều kiện ở Quyết định A, mức tiền ở Thông báo B).
+2.  **Tính biến động theo thời gian:** Hệ thống RAG cơ bản thường bỏ qua trạng thái hiệu lực (validity), dẫn đến việc cung cấp thông tin từ các quy chế đã hết hạn.
 
-**Công nghệ:**
-- Basic RAG với vector search
-- Không có graph structure
-- Không có temporal management
+### 2.6. Phân tích so sánh và Lựa chọn giải pháp
 
-**Hạn chế:**
-- Scope hẹp (chỉ tuyển sinh)
-- Không hỗ trợ multi-hop reasoning
-- Không quản lý thời gian tài liệu
+Để làm rõ vị trí của giải pháp đề xuất, chúng tôi so sánh các mô hình dựa trên các tiêu chí kỹ thuật:
+* **Cấu trúc tri thức (Knowledge Structure):** Vector phẳng hay Đồ thị.
+* **Suy luận đa bước (Multi-hop Reasoning):** Khả năng kết nối thông tin rời rạc.
+* **Xử lý siêu dữ liệu (Metadata Strategy):** Phương pháp trích xuất thông tin thời gian.
 
-#### 2.5.2. REBot - ĐH Cần Thơ
+**Bảng 2.6. So sánh các hướng tiếp cận RAG hiện nay**
 
-**Scope:** Tư vấn chung
-
-**Công nghệ:**
-- Rule-based + retrieval
-- Không có global reasoning
-
-**Hạn chế:**
-- Chưa bao phủ toàn bộ tài nguyên chính thức
-- Không có temporal awareness
-
-### 2.6. So sánh các approaches
-
-| Approach | Multi-hop | Global Queries | Temporal | Metadata Extraction | Cost | Vietnamese |
-|----------|-----------|----------------|----------|---------------------|------|------------|
-| Naive RAG | ❌ | ❌ | ❌ | ❌ | $ | ✅ |
-| GraphRAG | ✅ | ✅ | ❌ | ❌ | $$$$ | ❌ |
-| LightRAG | ✅ | ✅ | ❌ | ❌ | $ | ✅ |
-| T-GRAG | ✅ | ✅ | ⚠️ (evolution only) | ❌ | $$$ | ❌ |
-| VersionRAG | ✅ | ❌ | ⚠️ (versions only) | ⚠️ (rule-based) | $ | ❌ |
-| **UITRaph (Ours)** | ✅ | ✅ | ✅ (full temporal) | ✅ (RAG-based, 0.92 confidence) | $ | ✅ |
-
+| Đặc điểm | Naive RAG (URAG, REBot) | GraphRAG (Microsoft) | T-GRAG | **UITRaph (Đề xuất)** |
+| :--- | :--- | :--- | :--- | :--- |
+| **Cấu trúc tri thức** | Vector thuần túy | Đồ thị toàn cục | Đồ thị có nhãn thời gian | **Đồ thị + Temporal Metadata** |
+| **Multi-hop** | ❌ (Thấp) | ✅ (Cao) | ✅ (Trung bình) | **✅ (Cao - LightRAG)** |
+| **Xử lý thời gian** | ❌ | ❌ | ✅ (Tiến hóa tri thức) | **✅ (Hiệu lực & Sửa đổi)** |
+| **Cơ chế Metadata** | Không có / Regex | NER (Thực thể) | Regex / Rule-based | **Metadata RAG Subgraph** |
+| **Chi phí** | Thấp ($) | Rất cao ($$$$) | Trung bình ($$) | **Tối ưu ($ - Track_id)** |
+ 
 **Chú thích:**
 - $ = Low cost (<$1 per 1M tokens)
 - $$$$ = Very high cost (>$40 per 1M tokens)
@@ -2594,22 +2580,19 @@ Toàn bộ source code được public tại GitHub:
 
 ### 9.1. Hạn chế hiện tại
 
-#### 9.1.1. Hạn chế về temporal extraction
+#### 9.1.1. Hạn chế về độ trễ xử lý (Processing Latency)
 
-**Limitation 1**: LLM fallback vẫn chưa đủ chính xác
-- Current accuracy: 95% cho valid_from, 85% cho valid_until
-- Problem: LLM hallucination đôi khi tạo ra dates không tồn tại trong văn bản
-- Impact: 5-15% documents có temporal metadata sai
+**Limitation 1**: Quy trình Metadata RAG Subgraph tốn tài nguyên hơn Regex thuần túy.
+- **Current performance**: Trung bình 2.3s/tài liệu (Metadata RAG) so với 0.2s (Regex).
+- **Problem**: Mặc dù độ chính xác tăng vượt trội (92% vs 60%), việc khởi tạo vector store tạm thời (In-memory ChromaDB) và chạy 2 bước retrieval tạo ra overhead nhất định khi index số lượng lớn tài liệu (>10.000 docs).
+- **Impact**: Thời gian "cold start" khi hệ thống khởi động lại và re-index toàn bộ dữ liệu sẽ lâu hơn.
 
 **Mitigation**:
-- Validate dates với confidence score
-- Cross-check với filename và document metadata
-- Manual review cho high-stakes documents
+- Sử dụng cơ chế **Incremental Indexing** (chỉ index tài liệu mới).
+- Tối ưu hóa kích thước model embedding cho tác vụ metadata (dùng model nhỏ hơn BGE-M3).
 
 **Future work**:
-- Fine-tune LLM trên dataset Vietnamese administrative documents
-- Use retrieval-augmented LLM (provide examples in prompt)
-- Implement human-in-the-loop validation workflow
+- Nghiên cứu cơ chế "Distillation" để huấn luyện một model nhỏ (Student) học theo kết quả của Metadata RAG (Teacher) để thay thế quy trình RAG phức tạp.
 
 #### 9.1.2. Hạn chế về cohort detection
 
