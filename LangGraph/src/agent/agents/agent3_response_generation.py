@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import os
 import json
-import json
 from typing import Any, Dict, List, Tuple
+from datetime import datetime
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from agent.core.prompts import PROMPTS
 from agent.states.query_state import (
@@ -39,6 +39,130 @@ llm = init_chat_model(
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
+def _generate_expiration_warnings(
+    reranked_chunks: List[Tuple[Dict[str, Any], float]],
+    current_date: str = None
+) -> str:
+    """
+    Generate warnings for expired, expiring, or amended documents.
+
+    Checks three temporal conditions:
+    1. Expired documents (past valid_until date)
+    2. Expiring soon (within warning_days of valid_until)
+    3. Amended documents (superseded by newer versions via amended_by field)
+
+    Args:
+        reranked_chunks: List of (chunk, score) tuples with metadata
+        current_date: ISO date string for comparison. Defaults to today.
+
+    Returns:
+        Warning message string (empty if no warnings needed)
+    """
+    if current_date is None:
+        current = datetime.now()
+    else:
+        current = datetime.fromisoformat(current_date)
+
+    # Get thresholds from config
+    temporal_config = getattr(settings, 'temporal', None)
+    if temporal_config:
+        warning_days = getattr(temporal_config.freshness_thresholds, 'warning_days', 30)
+    else:
+        warning_days = 30
+
+    expired_docs = []
+    expiring_soon_docs = []
+    amended_docs = []
+
+    # Track unique documents by file_source
+    seen_sources = set()
+
+    for chunk, score in reranked_chunks:
+        metadata = chunk.get("metadata", {})
+        file_source = chunk.get("file_source", "")
+
+        # Skip if already processed this source
+        if file_source in seen_sources:
+            continue
+        seen_sources.add(file_source)
+
+        doc_number = metadata.get("document_number", "Tài liệu")
+
+        # Check for amended_by field (document has been superseded)
+        amended_by = metadata.get("amended_by")
+        if amended_by:
+            # amended_by can be a list or string
+            if isinstance(amended_by, list) and len(amended_by) > 0:
+                amended_docs.append({
+                    "number": doc_number,
+                    "amended_by": amended_by,
+                    "source": file_source
+                })
+            elif isinstance(amended_by, str) and amended_by.strip():
+                amended_docs.append({
+                    "number": doc_number,
+                    "amended_by": [amended_by],
+                    "source": file_source
+                })
+
+        # Check for valid_until (expiration)
+        valid_until = metadata.get("valid_until")
+        if not valid_until:
+            continue
+
+        try:
+            until_date = datetime.fromisoformat(valid_until)
+
+            # Check if expired
+            if current > until_date:
+                days_expired = (current - until_date).days
+                expired_docs.append({
+                    "number": doc_number,
+                    "expired_date": valid_until,
+                    "days_expired": days_expired,
+                    "source": file_source
+                })
+            else:
+                # Check if expiring soon
+                days_until_expiry = (until_date - current).days
+                if days_until_expiry <= warning_days:
+                    expiring_soon_docs.append({
+                        "number": doc_number,
+                        "expiry_date": valid_until,
+                        "days_remaining": days_until_expiry,
+                        "source": file_source
+                    })
+
+        except (ValueError, TypeError):
+            pass
+
+    # Build warning message
+    warnings = []
+
+    if expired_docs:
+        warnings.append("\n**[Cảnh báo] Tài liệu đã hết hạn:**")
+        for doc in expired_docs:
+            warnings.append(f"- {doc['number']} đã hết hiệu lực từ ngày {doc['expired_date']} ({doc['days_expired']} ngày trước)")
+
+    if expiring_soon_docs:
+        warnings.append("\n**[Lưu ý] Tài liệu sắp hết hạn:**")
+        for doc in expiring_soon_docs:
+            warnings.append(f"- {doc['number']} sẽ hết hiệu lực vào ngày {doc['expiry_date']} (còn {doc['days_remaining']} ngày)")
+
+    if amended_docs:
+        warnings.append("\n**[Thông báo] Tài liệu đã được sửa đổi/bổ sung:**")
+        for doc in amended_docs:
+            amended_list = ", ".join(doc["amended_by"])
+            warnings.append(f"- {doc['number']} đã được sửa đổi/thay thế bởi: {amended_list}")
+        warnings.append("  Vui lòng tham khảo văn bản mới nhất để có thông tin chính xác.")
+
+    if warnings:
+        warnings.append("\n**Khuyến nghị:** Vui lòng kiểm tra với phòng Đào tạo hoặc cố vấn học tập để xác nhận thông tin mới nhất.")
+        return "\n".join(warnings)
+
+    return ""
+
 
 def _format_reranked_data(
     reranked_entities: List[Tuple[Dict[str, Any], float]],
@@ -217,11 +341,18 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
         # Get response parts
         generated_response = get_attr_safe(response_gen, "response_text")
         response_type = get_attr_safe(response_gen, "response_type")
-        
+
+        # Generate expiration warnings
+        expiration_warnings = _generate_expiration_warnings(reranked_chunks)
+
         # Set final answer
         final_answer = generated_response
         print(f"FINAL ANSWER BEFORE SUFFIX: {final_answer}")
-        
+
+        # Add expiration warnings if any
+        if expiration_warnings:
+            final_answer += "\n\n---\n" + expiration_warnings
+
         # Add partial answer suffix if needed
         if response_type == "partial_answer":
             final_answer += PROMPTS["partial_answer_suffix"]
@@ -230,6 +361,7 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
         print(f"[AGENT 3] ✓ Response generated")
         print(f"[AGENT 3] Response type: {response_type}")
         print(f"[AGENT 3] References: {len(references_list)}")
+        print(f"[AGENT 3] Expiration warnings: {'Yes' if expiration_warnings else 'No'}")
         print(f"[AGENT 3] Response length: {len(final_answer)} chars")
         
         return {
