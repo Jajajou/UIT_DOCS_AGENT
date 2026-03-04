@@ -962,6 +962,69 @@ class LightRAGAPIClient:
 
         return None
 
+    def get_all_documents_with_metadata(
+        self,
+        include_archived: bool = False
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all documents with their metadata from PostgreSQL.
+
+        Used by ping_service for automated archiving.
+
+        Args:
+            include_archived: If True, include already archived documents
+
+        Returns:
+            List of documents with id, file_source, and metadata
+        """
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                if include_archived:
+                    cur.execute(
+                        """
+                        SELECT id, file_source, metadata, created_at, updated_at
+                        FROM lightrag_doc_status
+                        WHERE workspace = %s
+                        ORDER BY created_at DESC
+                        """,
+                        (workspace,)
+                    )
+                else:
+                    # Exclude already archived documents
+                    cur.execute(
+                        """
+                        SELECT id, file_source, metadata, created_at, updated_at
+                        FROM lightrag_doc_status
+                        WHERE workspace = %s
+                        AND (metadata->>'is_archived' IS NULL OR metadata->>'is_archived' = 'false')
+                        ORDER BY created_at DESC
+                        """,
+                        (workspace,)
+                    )
+
+                rows = cur.fetchall()
+
+            conn.close()
+
+            documents = []
+            for row in rows:
+                documents.append({
+                    "id": row[0],
+                    "file_source": row[1],
+                    "metadata": row[2] if row[2] else {},
+                    "created_at": row[3].isoformat() if row[3] else None,
+                    "updated_at": row[4].isoformat() if row[4] else None
+                })
+
+            return documents
+
+        except Exception as e:
+            print(f"[LightRAG Client] Error fetching all documents: {e}")
+            return []
+
     def get_doc_id_by_track_id(
         self,
         track_id: str,

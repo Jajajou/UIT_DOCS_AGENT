@@ -237,3 +237,19 @@ ping_service.py
 ping_service.sh
 
 
+BAO_CAO_TIEN_DO.md
+check_db_connection.py
+check_doc_status.py
+check_schema.py
+report.tex
+TECHNICAL_REPORT_COMPREHENSIVE_tmp.html
+TECHNICAL_REPORT_COMPREHENSIVE.md.pdf
+QWEN.md
+
+# Test scripts (temporary testing files)
+test_metadata_rag.py
+test_*.py
+*_test.py
+inspect_*.py
+inspect_*.ipynb
+test_*.ipynb
