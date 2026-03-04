@@ -34,7 +34,7 @@ reranker:
   default_model: "namdp-ptit/ViRanker"
   top_n_for_confidence: 5
   use_fp16: True
-  batch_size: 32
+  batch_size: 8
   normalize_scores: True
   max_length: 512
 
@@ -56,6 +56,7 @@ temporal:
   quality_penalties:
     expired_penalty: 0.5       # Multiply quality score by 0.5 if expired
     expiring_soon_penalty: 0.8 # Multiply by 0.8 if expiring within warning_days
+    amended_penalty: 0.7       # Multiply by 0.7 if document has been amended by newer version
 
   # Version management
   versioning:

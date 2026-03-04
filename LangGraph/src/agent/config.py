@@ -50,6 +50,7 @@ class TemporalConfig(BaseModel):
     freshness_thresholds: Dict[str, int]
     quality_penalties: Dict[str, float]
     versioning: Dict[str, Any]
+    date_extraction: Dict[str, Any] = {}
 
 class Config(BaseModel):
     """Main configuration class for the application."""
@@ -74,6 +75,11 @@ class Config(BaseModel):
     lightrag_url: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_URL"))
     lightrag_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_API_KEY"))
     lightrag_access_token: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_ACCESS_TOKEN"))
+
+    # Embedding configuration
+    embedding_base_url: Optional[str] = Field(default_factory=lambda: os.getenv("EMBEDDING_BASE_URL", "http://localhost:8000/v1"))
+    embedding_model: str = Field(default_factory=lambda: os.getenv("EMBEDDING_MODEL", "AITeamVN/Vietnamese_Embedding_v2"))
+    embedding_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("EMBEDDING_API_KEY", "EMPTY"))
     
     class Config:
         arbitrary_types_allowed = True
