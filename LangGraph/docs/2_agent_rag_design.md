@@ -1,17 +1,21 @@
-# Thiết kế 2-Agent RAG Pipeline với Confidence Scoring
+# Thiết kế 3-Agent RAG Pipeline với Confidence Scoring
+
+**Last Updated:** 2026-01-04
+**Current Phase:** Phase 1.5 COMPLETE (Metadata RAG Subgraph), Phase 2 pending
 
 ## Tổng quan kiến trúc
 
 ### Flow tổng thể
 
 ```
-User Query 
+User Query
     ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ AGENT 1: Query Understanding & Confidence Scoring           │
+│ AGENT 1: Query Understanding & Tuning                       │
 │ - Parse user intention                                      │
 │ - Extract key entities/topics                               │
 │ - Calculate confidence score (0-1)                          │
+│ - Tune retrieval parameters (mode, top_k)                   │
 │ - Decision: confident enough to proceed?                    │
 └─────────────────────────────────────────────────────────────┘
     ↓
@@ -23,22 +27,105 @@ User Query
 │ Data Retrieval (LightRAG /query/data endpoint)             │
 │ - Query với parsed intention                                │
 │ - Lấy raw data (entities, relationships, chunks)            │
+│ - Fetch temporal metadata from PostgreSQL                   │
 │ - KHÔNG generate response                                   │
 └─────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ AGENT 2: Data Quality Assessment & Response Generation     │
+│ ViRanker Reranking + Temporal Scoring                       │
+│ - Vietnamese cross-encoder reranking                        │
+│ - Temporal scoring: 70% semantic + 30% temporal             │
+│ - Penalties for expired/amended documents                   │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│ AGENT 2: Confidence Assessment                              │
 │ - Evaluate retrieved data quality                           │
 │ - Calculate data confidence score (0-1)                     │
+│ - Apply freshness penalties for expired documents           │
 │ - Decision: data sufficient to answer?                      │
 └─────────────────────────────────────────────────────────────┘
     ↓
-    ├─── [Low Data Quality] ──→ Fallback Response
-    │                          "Vui lòng liên hệ cố vấn học tập"
+    ├─── [Low Data Quality] ──→ Continue with fallback marker
     │
-    └─── [High Data Quality] ──→ Generate Full Response
-                                  with references & hyperlinks
+    └─── [High Data Quality] ──→ Continue
+                ↓
+┌─────────────────────────────────────────────────────────────┐
+│ AGENT 3: Response Generation                                │
+│ - Generate answer based on confidence level                 │
+│ - Full answer (quality >= 0.7)                              │
+│ - Partial answer (quality 0.4-0.7)                          │
+│ - Fallback (quality < 0.4)                                  │
+│ - Add expiration warnings for documents                     │
+│ - Format references with hyperlinks                         │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+Final Answer with References
 ```
+
+### Metadata RAG Subgraph (Indexing Pipeline)
+
+**Mục đích:** Extract temporal metadata từ documents (dates, cohorts, amendments) với độ chính xác cao
+
+**6-Node Workflow:**
+
+```
+PDF Document
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Chunk Document                                            │
+│    - Split text: 1024 tokens, 200 overlap                   │
+│    - Large chunks for metadata context                      │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. Index to ChromaDB (In-Memory)                            │
+│    - Temporary vector database                              │
+│    - Vietnamese_Embedding_V2 (1024-dim)                     │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 3. Query Metadata Fields                                     │
+│    - Query 4 fields: document_number, dates, cohorts,       │
+│      amendments                                             │
+│    - Bi-encoder retrieval (top-50)                          │
+│    - Cross-encoder reranking (ViRanker, top-5)              │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 4. Calculate Confidence                                      │
+│    - 40% Completeness (fields extracted)                    │
+│    - 40% LLM confidence (extraction quality)                │
+│    - 20% Chunk quality (relevance scores)                   │
+│    - Rating: 0.9+ Excellent, 0.7-0.9 Good, <0.5 Low         │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 5. Format & Validate Metadata                               │
+│    - Pydantic DocumentMetadata model                        │
+│    - Date format validation (YYYY-MM-DD)                    │
+│    - Cohort year expansion (2024-2028 → [2024,2025,...])    │
+│    - Temporal awareness with current_date                   │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 6. Cleanup                                                   │
+│    - Delete temporary ChromaDB collection                   │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+Save to PostgreSQL (lightrag_doc_status)
+```
+
+**Performance:** 0.92 confidence trên test documents (Vietnamese university regulations)
+
+**Metadata Fields:**
+- `document_number`: Official ID (e.g., "108/QĐ-ĐHCNTT")
+- `valid_from`, `valid_until`: Validity period (YYYY-MM-DD)
+- `academic_year`: Academic year (e.g., "2024-2025")
+- `cohort_years`: Student cohorts [2024, 2025, 2026, 2027, 2028]
+- `cohort_scope`: "explicit" | "universal" | "unspecified"
+- `amends_documents`: Documents this amends (e.g., ["141/QĐ-ĐHCNTT"])
+- `temporal_confidence`: Extraction confidence (0-1)
 
 ## State Schema - Passing data giữa các Agent
 

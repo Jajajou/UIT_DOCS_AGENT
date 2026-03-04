@@ -669,7 +669,7 @@ sequenceDiagram
     participant Firecrawl
     participant IndexGraph
     participant OCR as DeepSeek-OCR
-    participant TE as Temporal Extraction
+    participant MRSG as Metadata RAG<br/>Subgraph
     participant LR as LightRAG
     participant PG as PostgreSQL
 
@@ -681,23 +681,26 @@ sequenceDiagram
         OCR->>IndexGraph: Markdown content
     end
 
-    IndexGraph->>TE: Parse content
-    TE->>TE: Regex extraction (90% accuracy)
+    IndexGraph->>MRSG: Extract metadata
 
-    alt Low confidence?
-        TE->>TE: LLM extraction
+    Note over MRSG: 6-Node Workflow
+    MRSG->>MRSG: 1. Chunk (1024 tokens)
+    MRSG->>MRSG: 2. Index to ChromaDB
+    MRSG->>MRSG: 3. RAG Query<br/>(Bi-encoder + Cross-encoder)
+    MRSG->>MRSG: 4. Confidence Scoring<br/>(40% + 40% + 20%)
+    MRSG->>MRSG: 5. Pydantic Validation
+    MRSG->>MRSG: 6. Cleanup ChromaDB
+
+    alt Confidence < 0.5?
+        MRSG->>MRSG: Fallback to Regex
     end
 
-    alt Missing fields?
-        TE->>TE: Filename fallback
-    end
-
-    TE->>IndexGraph: Temporal metadata
+    MRSG->>IndexGraph: Temporal metadata<br/>(confidence: 0.92)
     IndexGraph->>LR: upload text (get track_id)
     LR-->>IndexGraph: track_id
 
     IndexGraph->>PG: save metadata by track_id
-    PG-->>IndexGraph: doc_id
+    PG-->>IndexGraph: doc_id (instant!)
 
     alt Has amendments?
         IndexGraph->>PG: link amended documents
