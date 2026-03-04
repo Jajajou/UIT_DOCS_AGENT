@@ -253,3 +253,23 @@ test_*.py
 inspect_*.py
 inspect_*.ipynb
 test_*.ipynb
+
+# Claude Code local config
+.claude/
+
+# Session and planning docs (local only)
+SESSION_HANDOFF.md
+SESSION_HANDOFF_TEMPLATE.md
+TODO.md
+COMMIT_PLAN.md
+QUICK_START_NEXT_SESSION.md
+QUICK_REFERENCE_PERFORMANCE.md
+PERFORMANCE_COMPARISON.md
+PERFORMANCE_OPTIMIZATION_M1.md
+WORD_DOC_UPDATES.md
+TESTING_CHECKLIST.md
+BAO_CAO_TIEN_DO_22_12_2024.md
+
+# Binary files
+*.pdf
+"UIT Assistant Chatbot.docx.md"
