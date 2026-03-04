@@ -25,16 +25,22 @@ PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
 # --- PROMPTS (Temporal Aware) ---
 METADATA_PROMPTS = {
     "document_number": """
-Bạn là trợ lý AI chuyên trích xuất số hiệu văn bản pháp quy.
+Bạn là trợ lý AI chuyên trích xuất số hiệu văn bản pháp quy của UIT.
 Tìm "Số hiệu văn bản" (thường dạng: 123/QĐ-ĐHCNTT, 45/TB-KHTC...).
+
+Tên file hiện tại: {filename}
+
+Yêu cầu:
 - Chỉ trả về chuỗi số hiệu.
-- Nếu không thấy, trả về "NULL".
-- KHÔNG lấy số hiệu từ tên file, chỉ lấy trong nội dung.
+- Nếu không thấy trong nội dung, trả về "NULL".
+- Ưu tiên trích xuất từ nội dung (header, footer). 
+- KHÔNG lấy trực tiếp từ tên file trừ khi không còn cách nào khác.
 """,
     
     "valid_dates": """
 Bạn là chuyên gia pháp lý. Nhiệm vụ: Xác định ngày hiệu lực và hết hiệu lực.
 Context thời gian: Hôm nay là {current_date}.
+Tên file hiện tại: {filename}
 
 Nội dung văn bản:
 {context}
@@ -42,18 +48,18 @@ Nội dung văn bản:
 Yêu cầu:
 1. **valid_from**: Ngày bắt đầu có hiệu lực. 
    - Nếu ghi "có hiệu lực từ ngày ký", hãy tìm ngày ký (thường ở cuối văn bản).
+   - Nếu không thấy ngày cụ thể nhưng thấy năm, hãy trả về YYYY-01-01.
    - Format: YYYY-MM-DD.
 2. **valid_until**: Ngày hết hiệu lực (nếu có).
-   - Nếu văn bản này thay thế văn bản cũ -> văn bản cũ hết hiệu lực, nhưng văn bản NÀY thì chưa.
    - Nếu không ghi ngày hết hạn -> trả về "NULL".
 
 Output JSON: {{"valid_from": "...", "valid_until": "..."}}
 """,
 
     "cohorts": """
-Bạn là trợ lý tuyển sinh. Xác định văn bản áp dụng cho KHÓA SINH VIÊN (Cohort) nào.
-
+Bạn là trợ lý tuyển sinh UIT. Xác định văn bản áp dụng cho KHÓA SINH VIÊN (Cohort) nào.
 Context thời gian: Hôm nay là {current_date}
+Tên file hiện tại: {filename}
 
 Nội dung văn bản:
 {context}
@@ -61,27 +67,26 @@ Nội dung văn bản:
 Quy tắc phân loại:
 
 1. NẾU văn bản CHỈ ĐỊNH KHÓA CỤ THỂ:
-   VD: "Áp dụng cho sinh viên khóa 2024"
+   VD: "Áp dụng cho sinh viên khóa 2014, 2015"
    VD: "Dành riêng cho khóa tuyển sinh từ năm 2024 đến năm 2028"
-   -> Trả về các khóa được nêu rõ ràng
+   -> Trả về danh sách TẤT CẢ các khóa được nêu.
    -> cohort_scope: "explicit"
 
    Ví dụ output:
-   - "khóa 2024" -> {{"cohort_years": [2024], "cohort_scope": "explicit"}}
+   - "khóa 2014, 2015" -> {{"cohort_years": [2014, 2015], "cohort_scope": "explicit"}}
    - "khóa tuyển sinh từ năm 2024 đến năm 2028" -> {{"cohort_years": [2024, 2025, 2026, 2027, 2028], "cohort_scope": "explicit"}}
 
 2. NẾU văn bản là QUY ĐỊNH CHUNG (áp dụng cho TẤT CẢ sinh viên):
-   VD: "Quy chế đào tạo", "Quy định điểm danh chung", "Học phí"
-   Không có từ "khóa 20XX" cụ thể
+   VD: "Quy chế đào tạo", "Quy định điểm danh chung"
    -> {{"cohort_years": ["*"], "cohort_scope": "universal"}}
 
 3. NẾU KHÔNG RÕ hoặc không đủ thông tin:
    -> {{"cohort_years": [], "cohort_scope": "unspecified"}}
 
 CHÚ Ý:
+- Liệt kê ĐẦY ĐỦ các năm nếu có nhiều khóa (VD: [2014, 2015]).
 - Với "từ năm X đến năm Y", hãy liệt kê ĐẦY ĐỦ: [X, X+1, ..., Y]
-- Chỉ đánh dấu "explicit" khi văn bản NÊU RÕ khóa
-- Nếu chỉ nói "sinh viên" chung chung -> "universal"
+- Chỉ đánh dấu "explicit" khi văn bản NÊU RÕ khóa cụ thể.
 
 Output JSON: {{"cohort_years": [...], "cohort_scope": "..."}}
 """
@@ -492,7 +497,8 @@ Bạn được cung cấp:
 1. **Query confidence** (từ Agent 1): Độ tự tin về việc hiểu đúng câu hỏi (0.0-1.0)
 2. **Rerank confidence** (từ Reranker): Độ liên quan của dữ liệu đã retrieve (0.0-1.0)
 3. **Top rerank scores**: Điểm của các kết quả hàng đầu
-4. **Query**: Câu hỏi gốc của sinh viên
+4. **Temporal Freshness Assessment**: Đánh giá về độ mới của tài liệu (số lượng tài liệu hết hạn/sắp hết hạn, freshness penalty)
+5. **Query**: Câu hỏi gốc của sinh viên
 </inputs>
 
 <assessment_criteria>
@@ -512,12 +518,19 @@ Bạn được cung cấp:
 - Nếu top scores đều cao và đồng đều → tăng confidence
 - Nếu top scores thấp hoặc chênh lệch lớn → giảm confidence
 
+**4. Temporal Freshness (QUAN TRỌNG):**
+- Tài liệu hết hạn: Giảm độ tin cậy đáng kể
+- Tài liệu sắp hết hạn: Cảnh báo cho user
+- Freshness penalty được áp dụng tự động vào overall confidence
+
 **Overall Confidence Formula:**
-overall_confidence = 0.4 * query_confidence + 0.6 * rerank_confidence
+base_confidence = 0.4 * query_confidence + 0.6 * rerank_confidence
+overall_confidence = base_confidence * freshness_penalty
 
 **Adjustments:**
 - Nếu top score < 0.5 → giảm 0.1
 - Nếu std(top_scores) > 0.3 → giảm 0.05 (không nhất quán)
+- Freshness penalty đã được tính sẵn, cần xem xét trong confidence_reason
 </assessment_criteria>
 
 <decision_rules>

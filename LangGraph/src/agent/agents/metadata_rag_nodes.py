@@ -8,7 +8,7 @@ from datetime import datetime
 
 # LangChain & Models
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer, CrossEncoder
+from sentence_transformers import CrossEncoder
 import chromadb
 from chromadb.config import Settings
 import numpy as np
@@ -34,12 +34,8 @@ llm = init_chat_model(
 logger = logging.getLogger(__name__)
 
 # --- GLOBAL MODELS (Singleton Pattern) ---
-# Load 1 lần để tránh tốn RAM mỗi khi gọi node
-# Trong production có thể để lazy loading hoặc dependency injection
+# Load reranker locally, use vLLM API for embeddings
 try:
-    logger.info("Loading Embedding Model: AITeamVN/Vietnamese_Embedding_V2...")
-    EMBEDDING_MODEL = SentenceTransformer("AITeamVN/Vietnamese_Embedding_V2")
-
     logger.info("Loading Reranker Model: namdp-ptit/ViRanker...")
     RERANKER_MODEL = CrossEncoder("namdp-ptit/ViRanker")
 
@@ -49,20 +45,63 @@ try:
         allow_reset=True,
         is_persistent=False
     ))
-    logger.info("Models & Vector DB Loaded Successfully.")
+    logger.info("Reranker Model & Vector DB Loaded Successfully.")
+    print("Reranker Model & Vector DB Loaded Successfully.")
 except Exception as e:
     logger.error(f"Error loading models: {e}")
+    print(f"Error loading models: {e}")
     raise e
+
+
+# --- EMBEDDING API CLIENT ---
+def get_embeddings_from_vllm(texts: List[str]) -> List[List[float]]:
+    """
+    Get embeddings from vLLM API.
+
+    Args:
+        texts: List of text strings to embed
+
+    Returns:
+        List of embedding vectors
+    """
+    import requests
+
+    try:
+        url = f"{settings.embedding_base_url}/embeddings"
+        headers = {
+            "Content-Type": "application/json",
+        }
+        if settings.embedding_api_key and settings.embedding_api_key != "EMPTY":
+            headers["Authorization"] = f"Bearer {settings.embedding_api_key}"
+
+        payload = {
+            "input": texts,
+            "model": settings.embedding_model
+        }
+
+        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        response.raise_for_status()
+
+        result = response.json()
+        embeddings = [item["embedding"] for item in result["data"]]
+
+        logger.info(f"Generated {len(embeddings)} embeddings via vLLM API")
+        return embeddings
+
+    except Exception as e:
+        logger.error(f"Error calling vLLM embeddings API: {e}")
+        print(f"Error calling vLLM embeddings API: {e}")
+        raise e
 
 
 
 # --- NODES IMPLEMENTATION ---
 
-def chunk_document_node(state: MetadataRAGState) -> MetadataRAGState:
+def chunk_document_node(state: MetadataRAGState) -> Dict[str, Any]:
     """Chia nhỏ văn bản thành chunks 1024 tokens."""
     try:
         text = state["doc_text"]
-        
+
         # Sử dụng RecursiveCharacterTextSplitter
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=1024,
@@ -72,99 +111,120 @@ def chunk_document_node(state: MetadataRAGState) -> MetadataRAGState:
         chunks = splitter.split_text(text)
 
         logger.info(f"Document split into {len(chunks)} chunks.")
-        
+        print(f"Document split into {len(chunks)} chunks.")
+
         return {
             "chunks": chunks,
             "chunk_count": len(chunks)
         }
     except Exception as e:
         logger.error(f"Error chunking: {e}")
+        print(f"Error chunking: {e}")
         return {"error": str(e), "success": False}
 
-def index_to_vector_db_node(state: MetadataRAGState) -> MetadataRAGState:
-    """Embed chunks và lưu vào ChromaDB in-memory tạm thời."""
+def index_to_vector_db_node(state: MetadataRAGState) -> Dict[str, Any]:
+    """Embed chunks and save to ChromaDB in-memory temporarily."""
     try:
-        chunks = state["chunks"]
+        chunks = state.get("chunks")
         if not chunks:
             return {"error": "No chunks to index", "success": False}
-            
-        # Tạo tên collection unique cho session này
+
+        # Create unique collection name for this session
         clean_source = ''.join(e for e in state['file_source'] if e.isalnum())[-10:]
         collection_name = f"temp_{uuid.uuid4().hex[:8]}_{clean_source}"
-        
+
         collection = CHROMA_CLIENT.create_collection(
             name=collection_name,
             metadata={"hnsw:space": "cosine"}
         )
-        
-        # Embedding (Batch processing)
-        logger.info("Generating embeddings...")
-        embeddings = EMBEDDING_MODEL.encode(chunks, show_progress_bar=False)
-        
+
+        # Embedding (Batch processing via vLLM API)
+        logger.info("Generating embeddings via vLLM API...")
+        print("Generating embeddings via vLLM API...")
+        embeddings_list = get_embeddings_from_vllm(chunks)
+
+        # Convert to numpy array for ChromaDB compatibility
+        embeddings_array = np.array(embeddings_list, dtype=np.float32)
+
         # Add to Chroma
         ids = [f"id_{i}" for i in range(len(chunks))]
         collection.add(
             documents=chunks,
-            embeddings=embeddings.tolist(),
+            embeddings=embeddings_array.tolist(),
             ids=ids
         )
-        
+
         logger.info(f"Indexed {len(chunks)} chunks to collection '{collection_name}'")
+        print(f"Indexed {len(chunks)} chunks to collection '{collection_name}'")
         return {"collection_name": collection_name}
-        
+
     except Exception as e:
         logger.error(f"Error indexing: {e}")
+        print(f"Error indexing: {e}")
         return {"error": str(e), "success": False}
 
 def _rag_retrieve_and_rerank(collection_name: str, query: str, top_k_retrieve=50, top_k_rerank=5) -> List[str]:
     """Helper function: Retrieve (Bi-encoder) -> Rerank (Cross-encoder)."""
     collection = CHROMA_CLIENT.get_collection(collection_name)
-    
-    # 1. Bi-encoder Retrieval
-    query_vec = EMBEDDING_MODEL.encode([query])[0].tolist()
+
+    # 1. Bi-encoder Retrieval (using vLLM API)
+    query_vec = get_embeddings_from_vllm([query])[0]
     results = collection.query(
         query_embeddings=[query_vec],
         n_results=top_k_retrieve
     )
-    
-    candidates = results['documents'][0]
-    if not candidates:
+
+    candidates_list = results.get('documents', [[]])
+    if not candidates_list or not candidates_list[0]:
         return []
-        
+
+    candidates = candidates_list[0]
+
     # 2. Cross-encoder Reranking
-    # Tạo pairs (query, doc)
+    # Create pairs (query, doc)
     pairs = [[query, doc] for doc in candidates]
     scores = RERANKER_MODEL.predict(pairs)
-    
+
     # Sort & take top K
-    # scores là numpy array, cần sort index
+    # scores is numpy array, need to sort by index
     sorted_indices = np.argsort(scores)[::-1][:top_k_rerank]
     top_docs = [candidates[i] for i in sorted_indices]
-    
+
     return top_docs
 
-def query_metadata_fields_node(state: MetadataRAGState) -> MetadataRAGState:
+def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
     """
-    Node tổng hợp: Query tất cả các trường metadata.
-    Gộp lại 1 node để tránh overhead chuyển state quá nhiều, 
-    nhưng vẫn đảm bảo logic tách biệt.
+    Aggregate node: Query all metadata fields.
+    Combines into 1 node to avoid overhead of state transfers,
+    while maintaining logical separation.
     """
     try:
-        col_name = state["collection_name"]
-        # llm = get_llm_client() # Hàm này bạn đã có
-        updates = {}
-        
+        col_name = state.get("collection_name")
+        if not col_name:
+            return {"error": "No collection_name in state"}
+
+        file_source = state.get("file_source", "")
+        filename = os.path.basename(file_source) if file_source else "unknown"
+
+        updates: Dict[str, Any] = {}
+
         # --- 1. Document Number ---
-        q_doc = "Số hiệu văn bản, số quyết định, số thông báo"
+        q_doc = "So hieu van ban, so quyet dinh, so thong bao"
         docs_num = _rag_retrieve_and_rerank(col_name, q_doc)
         updates["document_number_chunks"] = docs_num
-        
+
         # LLM Extract
         context_num = "\n---\n".join(docs_num)
-        prompt_num = f"{METADATA_PROMPTS['document_number']}\n\nCONTEXT:\n{context_num}"
+        prompt_num = METADATA_PROMPTS['document_number'].format(
+            filename=filename,
+            context=context_num
+        )
         res_num = llm.invoke(prompt_num)
         # Extract content from response
         content = res_num.content if hasattr(res_num, 'content') else str(res_num)
+        # Ensure content is a string before calling strip
+        if not isinstance(content, str):
+            content = str(content)
         updates["document_number"] = content.strip().replace("NULL", "").strip() or None
         
         # --- 2. Valid Dates (Temporal Aware) ---
@@ -175,6 +235,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> MetadataRAGState:
         current_date = datetime.now().strftime("%Y-%m-%d")
         prompt_date = METADATA_PROMPTS['valid_dates'].format(
             current_date=current_date,
+            filename=filename,
             context="\n---\n".join(docs_date)
         )
         res_date = llm.invoke(prompt_date)
@@ -185,8 +246,6 @@ def query_metadata_fields_node(state: MetadataRAGState) -> MetadataRAGState:
             content_date = str(content_date)
 
         # Try to parse JSON from response
-        import json
-        import re
         try:
             json_match = re.search(r'\{.*?"valid_from".*?\}', content_date, re.DOTALL)
             if json_match:
@@ -198,6 +257,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> MetadataRAGState:
                 updates["valid_until"] = None
         except Exception as e:
             logger.warning(f"Error parsing date JSON: {e}")
+            print(f"Error parsing date JSON: {e}")
             updates["valid_from"] = None
             updates["valid_until"] = None
         
@@ -209,6 +269,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> MetadataRAGState:
         # Use current_date for temporal awareness (already defined above)
         prompt_cohort = METADATA_PROMPTS['cohorts'].format(
             current_date=current_date,
+            filename=filename,
             context="\n---\n".join(docs_cohort)
         )
         res_cohort = llm.invoke(prompt_cohort)
@@ -230,6 +291,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> MetadataRAGState:
                 updates["cohort_scope"] = "unspecified"
         except Exception as e:
             logger.warning(f"Error parsing cohort JSON: {e}")
+            print(f"Error parsing cohort JSON: {e}")
             updates["cohort_years"] = []
             updates["cohort_scope"] = "unspecified"
         
@@ -260,7 +322,7 @@ Tìm số hiệu các văn bản được sửa đổi (VD: "108/QĐ-ĐHCNTT", "
                     content_amends = str(content_amends)
 
                 # Try to find JSON in response
-                json_match = re.search(r'\{.*"amends_documents".*\}', content_amends.strip(), re.DOTALL)
+                json_match = re.search(r'\{.*?"amends_documents".*\}', content_amends.strip(), re.DOTALL)
                 if json_match:
                     amends_data = json.loads(json_match.group())
                     updates["amends_documents"] = amends_data.get("amends_documents", [])
@@ -270,17 +332,70 @@ Tìm số hiệu các văn bản được sửa đổi (VD: "108/QĐ-ĐHCNTT", "
                     updates["amends_documents"] = list(set(doc_numbers))[:5]  # Limit to 5 unique
             except Exception as e:
                 logger.warning(f"Error extracting amends: {e}")
+                print(f"Error extracting amends: {e}")
                 updates["amends_documents"] = []
         else:
             updates["amends_documents"] = []
+            
+        # --- Fallback: Extract from Filename if RAG failed or is imprecise ---
+        # Checks if document_number or valid_from is missing/imprecise
+        extracted_date = updates.get("valid_from")
+        is_generic_date = extracted_date and extracted_date.endswith("-01-01")
+        
+        if not updates.get("document_number") or not extracted_date or is_generic_date:
+            if file_source:
+                try:
+                    logger.info(f"Attempting filename extraction for: {filename}")
+                    print(f"Attempting filename extraction for: {filename}")
+                    
+                    # Pattern: 03-tb-dhcntt_17-1-2017.pdf
+                    # Group 1: Doc Number (03-tb-dhcntt)
+                    # Group 2: Date (17-1-2017)
+                    match = re.search(r'([\d\w-]+)_(\d{1,2}-\d{1,2}-\d{4})', filename)
+                    
+                    if match:
+                        # Extract Document Number
+                        if not updates.get("document_number"):
+                            raw_num = match.group(1)
+                            # Heuristic formatting: 03-tb-dhcntt -> 03/TB-ĐHCNTT
+                            parts = raw_num.split('-')
+                            if len(parts) >= 2:
+                                # First part is usually the number, second is the type
+                                fmt_num = f"{parts[0]}/{parts[1].upper()}"
+                                if len(parts) > 2:
+                                    suffix = "-".join(p.upper() for p in parts[2:])
+                                    suffix = suffix.replace("DHCNTT", "ĐHCNTT")
+                                    fmt_num = f"{fmt_num}-{suffix}"
+                                
+                                updates["document_number"] = fmt_num
+                                logger.info(f"Fallback extracted doc number: {fmt_num}")
+                            else:
+                                updates["document_number"] = raw_num
+                        
+                        # Extract Date - Overwrite if generic or missing
+                        raw_date = match.group(2)
+                        try:
+                            # Parse 17-1-2017 -> 2017-01-17
+                            dt = datetime.strptime(raw_date, "%d-%m-%Y")
+                            fmt_date = dt.strftime("%Y-%m-%d")
+                            
+                            # Overwrite if LLM only guessed the year (01-01) or if missing
+                            if not extracted_date or is_generic_date:
+                                updates["valid_from"] = fmt_date
+                                logger.info(f"Fallback extracted date: {fmt_date} (Replaced generic: {is_generic_date})")
+                        except ValueError:
+                            logger.warning(f"Could not parse date from filename: {raw_date}")
+                except Exception as e:
+                    logger.warning(f"Filename extraction failed: {e}")
 
         return updates
         
     except Exception as e:
         logger.error(f"Error querying metadata: {e}")
+        print(f"Error querying metadata: {e}")
         return {"error": str(e)}
 
-def calculate_confidence_node(state: MetadataRAGState) -> MetadataRAGState:
+def calculate_confidence_node(state: MetadataRAGState) -> Dict[str, Any]:
     """
     Calculate extraction confidence based on:
     1. Field completeness (how many required fields extracted?)
@@ -339,11 +454,13 @@ def calculate_confidence_node(state: MetadataRAGState) -> MetadataRAGState:
         )
 
         logger.info(f"Extraction confidence: {final_confidence:.2f} (completeness: {completeness_score:.2f}, llm: {llm_confidence:.2f}, chunks: {chunk_quality:.2f})")
+        print(f"Extraction confidence: {final_confidence:.2f} (completeness: {completeness_score:.2f}, llm: {llm_confidence:.2f}, chunks: {chunk_quality:.2f})")
 
         return {"extraction_confidence": round(final_confidence, 3)}
 
     except Exception as e:
         logger.error(f"Error calculating confidence: {e}")
+        print(f"Error calculating confidence: {e}")
         return {"extraction_confidence": 0.0}
 
 
@@ -370,6 +487,7 @@ class DocumentMetadata(BaseModel):
             return v
         except (ValueError, TypeError):
             logger.warning(f"Invalid date format: {v}, setting to None")
+            print(f"Invalid date format: {v}, setting to None")
             return None
 
     @validator("cohort_years", pre=True)
@@ -395,6 +513,7 @@ class DocumentMetadata(BaseModel):
                     normalized.append(int(year))
                 else:
                     logger.warning(f"Invalid cohort year: {year}")
+                    print(f"Invalid cohort year: {year}")
 
         return normalized if normalized else []
 
@@ -411,7 +530,7 @@ class DocumentMetadata(BaseModel):
             return "explicit"
 
 
-def format_metadata_node(state: MetadataRAGState) -> MetadataRAGState:
+def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
     """Validate and format metadata using Pydantic."""
     try:
         # Extract values from state
@@ -429,6 +548,7 @@ def format_metadata_node(state: MetadataRAGState) -> MetadataRAGState:
         final_metadata = metadata.dict(exclude_none=True)
 
         logger.info(f"Metadata validated and formatted: {final_metadata}")
+        print(f"Metadata validated and formatted: {final_metadata}")
 
         return {
             "final_metadata": final_metadata,
@@ -437,19 +557,22 @@ def format_metadata_node(state: MetadataRAGState) -> MetadataRAGState:
 
     except Exception as e:
         logger.error(f"Metadata validation failed: {e}")
+        print(f"Metadata validation failed: {e}")
         return {
             "error": str(e),
             "success": False
         }
 
 
-def cleanup_node(state: MetadataRAGState) -> MetadataRAGState:
+def cleanup_node(state: MetadataRAGState) -> Dict[str, Any]:
     """Dọn dẹp Vector DB."""
     try:
         col_name = state.get("collection_name")
         if col_name:
             CHROMA_CLIENT.delete_collection(col_name)
             logger.info(f"Deleted temp collection {col_name}")
+            print(f"Deleted temp collection {col_name}")
     except Exception as e:
         logger.warning(f"Cleanup failed: {e}")
+        print(f"Cleanup failed: {e}")
     return {"success": True}

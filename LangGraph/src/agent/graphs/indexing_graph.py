@@ -19,6 +19,7 @@ from agent.states.indexing_state import IndexingState
 from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
 from agent.agents.agent_temporal_extraction import extract_temporal_metadata_node
+from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
 
 load_dotenv() 
@@ -368,6 +369,69 @@ def parse_with_DeepSeek_OCR(state: IndexingState) -> Dict[str, Any]:
         # (preprocess_image_for_ocr returns original path if preprocessing fails)
         if temp_file_path and temp_file_path != file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+
+
+async def extract_temporal_metadata_rag(state: IndexingState) -> Dict[str, Any]:
+    """
+    Extract temporal metadata using the Metadata RAG subgraph.
+
+    This is an async wrapper that invokes the async metadata RAG subgraph.
+    Maps between IndexingState and MetadataRAGState.
+    """
+    from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
+
+    try:
+        # Get document text from either parsed_content (PDF) or file
+        doc_text = state.get("parsed_content", "")
+        if not doc_text:
+            # For non-PDF files, try reading from file
+            file_path = state.get("current_file_path")
+            if file_path:
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        doc_text = f.read()
+                except Exception as e:
+                    print(f"[Metadata RAG] WARNING: Could not read file {file_path}: {e}")
+
+        file_source = state.get("file_source", state.get("current_file_path", "unknown"))
+        doc_id = state.get("doc_id", "")
+
+        if not doc_text:
+            print(f"[Metadata RAG] WARNING: No document text for {file_source}, falling back to regex")
+            # Use old extraction as fallback
+            return await extract_temporal_metadata_node(state)
+
+        # Prepare subgraph input
+        subgraph_input = {
+            "doc_text": doc_text,
+            "file_source": file_source,
+            "doc_id": doc_id,
+            "success": False
+        }
+
+        print(f"[Metadata RAG] Processing: {file_source}")
+
+        # Invoke async subgraph
+        result = await metadata_rag_subgraph.ainvoke(subgraph_input)
+
+        success = result.get("success", False)
+        final_metadata = result.get("final_metadata", {})
+        confidence = result.get("extraction_confidence", 0.0)
+
+        if success:
+            print(f"[Metadata RAG] Confidence: {confidence:.2f} | Metadata: {final_metadata}")
+            return {
+                "document_metadata": final_metadata,
+                "temporal_extraction_complete": True
+            }
+        else:
+            error = result.get("error", "Unknown error")
+            print(f"[Metadata RAG] Failed: {error}, falling back to regex")
+            return await extract_temporal_metadata_node(state)
+
+    except Exception as e:
+        print(f"[Metadata RAG] Exception: {str(e)}, falling back to regex")
+        return await extract_temporal_metadata_node(state)
 
 
 def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
@@ -729,7 +793,7 @@ builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
 builder.add_node("parse_with_DeepSeek_OCR", parse_with_DeepSeek_OCR)
-builder.add_node("extract_temporal_metadata", extract_temporal_metadata_node) #type: ignore
+builder.add_node("extract_temporal_metadata", extract_temporal_metadata_rag)
 builder.add_node("upload_to_lightrag", upload_to_lightrag)
 builder.add_node("finalize_upload", finalize_upload)
 builder.add_node("error_handler", error_handler)
