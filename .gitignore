@@ -225,6 +225,11 @@ data/**/*
 # Project specific
 
 .upload_checkpoint.jsonl
+*.log
+*_tmp.*
+*_tmp/
+.DS_Store
+LangGraph/tests/notebooks/
 
 eda_report.py
 
