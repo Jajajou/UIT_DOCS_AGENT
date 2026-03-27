@@ -43,7 +43,7 @@ class DeepSeekOCRClient:
         if self.model is not None and self.processor is not None:
             return
         print(f"[DeepSeek OCR] Loading model: {self.model_name}")
-        self.model, self.processor = load(self.model_name)
+        self.model, self.processor = load(self.model_name, trust_remote_code=True)
         self.config = self.model.config
         print("[DeepSeek OCR] Model loaded successfully")
 
@@ -171,11 +171,12 @@ class DeepSeekOCRClient:
                 num_images=1
             )
             
+            img_size = getattr(settings.deepseek_ocr, "page_image_size", 1024)
             output = generate(
                 model=self.model, # type: ignore
                 processor=self.processor, # type: ignore
                 prompt=formatted, # type: ignore
-                image=[image.resize((1024, 1024))], # type: ignore
+                image=[image.resize((img_size, img_size))], # type: ignore
                 temperature=0.0,
                 max_tokens=2048,
                 verbose=False
@@ -374,18 +375,25 @@ class DeepSeekOCRClient:
         Returns:
             Tuple of (markdown_content, output_dir_path)
         """
-        self._ensure_loaded()
-
         # Set default output directory
         file_stem = Path(file_path).stem
         if output_dir is None:
             output_dir = str(Path("./output") / file_stem)
         else:
             output_dir = str(settings.deepseek_ocr_dir / file_stem)
-        
+
+        # skip_repeat: return cached markdown if it already exists
+        if settings.deepseek_ocr.skip_repeat:
+            cached = self.get_markdown_from_output(output_dir)
+            if cached:
+                print(f"[DeepSeek OCR] Cache hit - skipping OCR for: {file_stem}")
+                return cached, output_dir
+
+        self._ensure_loaded()
+
         # Parse the PDF
         result = self.parse_pdf(file_path, output_dir=output_dir, return_md=True, **kwargs)
-        
+
         if "markdown" not in result or not result["markdown"]:
             raise DeepSeekOCRClientError(f"No text extracted from PDF: {file_path}")
         

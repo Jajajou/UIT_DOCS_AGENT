@@ -79,7 +79,7 @@ def get_embeddings_from_vllm(texts: List[str]) -> List[List[float]]:
             "model": settings.embedding_model
         }
 
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        response = requests.post(url, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
 
         result = response.json()
@@ -130,7 +130,8 @@ def index_to_vector_db_node(state: MetadataRAGState) -> Dict[str, Any]:
             return {"error": "No chunks to index", "success": False}
 
         # Create unique collection name for this session
-        clean_source = ''.join(e for e in state['file_source'] if e.isalnum())[-10:]
+        file_source = state.get('file_source') or ''
+        clean_source = ''.join(e for e in file_source if e.isalnum())[-10:] or uuid.uuid4().hex[:10]
         collection_name = f"temp_{uuid.uuid4().hex[:8]}_{clean_source}"
 
         collection = CHROMA_CLIENT.create_collection(
@@ -225,7 +226,9 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
         # Ensure content is a string before calling strip
         if not isinstance(content, str):
             content = str(content)
-        updates["document_number"] = content.strip().replace("NULL", "").strip() or None
+        raw_num = content.strip().replace("NULL", "").strip()
+        # Validate: real document numbers are short (e.g. "108/QĐ-ĐHCNTT"), max 80 chars
+        updates["document_number"] = raw_num if raw_num and len(raw_num) <= 80 else None
         
         # --- 2. Valid Dates (Temporal Aware) ---
         q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
@@ -262,7 +265,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             updates["valid_until"] = None
         
         # --- 3. Cohorts ---
-        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng?"
+        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng? Khóa 1 khóa 2 khóa 3?"
         docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
         updates["cohort_years_chunks"] = docs_cohort
 
@@ -474,7 +477,7 @@ class DocumentMetadata(BaseModel):
     cohort_years: List[int | str] = Field(default_factory=list)
     cohort_scope: str = "unspecified"  # "universal", "explicit", "unspecified"
     amends_documents: List[str] = Field(default_factory=list)
-    temporal_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+    extraction_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
 
     @validator("valid_from", "valid_until")
     def validate_date_format(cls, v):
@@ -541,7 +544,7 @@ def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
             cohort_years=state.get("cohort_years", []),
             cohort_scope=state.get("cohort_scope", "unspecified"),
             amends_documents=state.get("amends_documents", []),
-            temporal_confidence=state.get("extraction_confidence", 0.0)
+            extraction_confidence=state.get("extraction_confidence", 0.0)
         )
 
         # Convert to dict, excluding None values

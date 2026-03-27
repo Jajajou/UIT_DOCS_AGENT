@@ -2,7 +2,7 @@
 
 # DeepSeek OCR Configuration
 deepseek_ocr:
-  model_name: "mlx-community/DeepSeek-OCR-8bit"
+  model_name: "mlx-community/DeepSeek-OCR-2-bf16"
   model_configs:
     Gundam: {base_size: 1024, image_size: 640, crop_mode: True}
     Tiny: {base_size: 512, image_size: 512, crop_mode: False}
@@ -15,6 +15,7 @@ deepseek_ocr:
     Locate: {prompt: "Locate <|ref|>text<|/ref|> in the image.", has_grounding: True}
     Describe: {prompt: "Describe this image in detail.", has_grounding: False}
     Custom: {prompt: "", has_grounding: False}
+  page_image_size: 768
   skip_repeat: True
 
 # Query Confidence Thresholds

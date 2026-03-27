@@ -24,6 +24,7 @@ class DeepSeekOCRConfig(BaseModel):
     model_name: str
     model_configs: Dict[str, Any]
     task_prompts: Dict[str, Any]
+    page_image_size: int = 1024
     skip_repeat: bool
 
 class QueryThresholdsConfig(BaseModel):
