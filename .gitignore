@@ -60,6 +60,7 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+tmp/
 
 # Flask stuff:
 instance/
@@ -256,6 +257,7 @@ test_*.ipynb
 
 # Claude Code local config
 .claude/
+.agent/
 
 # Session and planning docs (local only)
 SESSION_HANDOFF.md
