@@ -8,7 +8,6 @@ from datetime import datetime
 
 # LangChain & Models
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import CrossEncoder
 import chromadb
 from chromadb.config import Settings
 import numpy as np
@@ -34,23 +33,45 @@ llm = init_chat_model(
 logger = logging.getLogger(__name__)
 
 # --- GLOBAL MODELS (Singleton Pattern) ---
-# Load reranker locally, use vLLM API for embeddings
+# Reranker uses HTTP API; only load ChromaDB in-memory client
 try:
-    logger.info("Loading Reranker Model: namdp-ptit/ViRanker...")
-    RERANKER_MODEL = CrossEncoder("namdp-ptit/ViRanker")
-
-    # ChromaDB In-Memory Client
     CHROMA_CLIENT = chromadb.Client(Settings(
         anonymized_telemetry=False,
         allow_reset=True,
         is_persistent=False
     ))
-    logger.info("Reranker Model & Vector DB Loaded Successfully.")
-    print("Reranker Model & Vector DB Loaded Successfully.")
+    logger.info("Vector DB Loaded Successfully.")
+    print("Vector DB Loaded Successfully.")
 except Exception as e:
-    logger.error(f"Error loading models: {e}")
-    print(f"Error loading models: {e}")
+    logger.error(f"Error loading vector DB: {e}")
+    print(f"Error loading vector DB: {e}")
     raise e
+
+
+# --- RERANKER HTTP CLIENT ---
+def compute_rerank_scores_http(query: str, docs: List[str]) -> List[float]:
+    """
+    Call vLLM /v1/score endpoint to rerank documents.
+
+    Args:
+        query: Query string
+        docs: List of candidate documents
+
+    Returns:
+        List of relevance scores (floats)
+    """
+    import requests
+
+    url = f"{settings.reranker_base_url}/v1/score"
+    payload = {
+        "model": settings.reranker.default_model,
+        "text_1": query,
+        "text_2": docs
+    }
+    response = requests.post(url, json=payload, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+    return [item["score"] for item in data["data"]]
 
 
 # --- EMBEDDING API CLIENT ---
@@ -181,10 +202,8 @@ def _rag_retrieve_and_rerank(collection_name: str, query: str, top_k_retrieve=50
 
     candidates = candidates_list[0]
 
-    # 2. Cross-encoder Reranking
-    # Create pairs (query, doc)
-    pairs = [[query, doc] for doc in candidates]
-    scores = RERANKER_MODEL.predict(pairs)
+    # 2. Cross-encoder Reranking via HTTP API
+    scores = compute_rerank_scores_http(query, candidates)
 
     # Sort & take top K
     # scores is numpy array, need to sort by index
