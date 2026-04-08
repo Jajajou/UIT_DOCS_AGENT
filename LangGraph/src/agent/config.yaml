@@ -32,7 +32,7 @@ retrieval:
 
 # Reranker Configuration
 reranker:
-  default_model: "namdp-ptit/ViRanker"
+  default_model: "AITeamVN/Vietnamese_Reranker"
   top_n_for_confidence: 5
   use_fp16: True
   batch_size: 8

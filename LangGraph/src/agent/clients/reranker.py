@@ -32,17 +32,20 @@ class Reranker:
         self._load_model()
     
     def _load_model(self):
-        """Load reranker model using FlagEmbedding."""
+        """Load reranker model. If reranker_base_url is configured, skip local model load."""
+        if settings.reranker_base_url:
+            print(f"[RERANKER] HTTP mode: using {settings.reranker_base_url}")
+            return
         try:
             from FlagEmbedding import FlagReranker
-            
+
             print(f"[RERANKER] Loading model: {self.config.default_model}")
             self._model = FlagReranker(
                 self.config.default_model,
                 use_fp16=self.config.use_fp16
             )
-            print(f"[RERANKER] ✓ Model loaded successfully")
-            
+            print(f"[RERANKER] Model loaded successfully")
+
         except ImportError:
             raise ImportError(
                 "FlagEmbedding is required for reranker. "
@@ -70,13 +73,26 @@ class Reranker:
         """
         if not texts:
             raise RuntimeError("Texts empty")
-        
+
+        if settings.reranker_base_url:
+            import requests
+            url = f"{settings.reranker_base_url}/v1/score"
+            payload = {
+                "model": self.config.default_model,
+                "text_1": query,
+                "text_2": texts
+            }
+            response = requests.post(url, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            return [item["score"] for item in data["data"]]
+
         if self._model is None:
             raise RuntimeError("Reranker model not loaded")
-        
+
         # Prepare pairs
         pairs = [(query, text) for text in texts]
-        
+
         # Compute scores
         batch_size = batch_size or self.config.batch_size
         scores = self._model.compute_score(
@@ -84,16 +100,6 @@ class Reranker:
             batch_size=batch_size,
             normalize=self.config.normalize_scores
         )
-        
-        # Ensure scores is a list
-        # if isinstance(scores, (int, float)):
-        #     scores = [scores]
-        # elif hasattr(scores, 'tolist'):
-        #     if scores != None: 
-        #         scores = scores.tolist()
-        #         return scores
-        # else:
-        #     return []
 
         return scores #type: ignore
     

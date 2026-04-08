@@ -81,7 +81,10 @@ class Config(BaseModel):
     embedding_base_url: Optional[str] = Field(default_factory=lambda: os.getenv("EMBEDDING_BASE_URL", "http://localhost:8000/v1"))
     embedding_model: str = Field(default_factory=lambda: os.getenv("EMBEDDING_MODEL", "AITeamVN/Vietnamese_Embedding_v2"))
     embedding_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("EMBEDDING_API_KEY", "EMPTY"))
-    
+    reranker_base_url: Optional[str] = Field(
+        default_factory=lambda: os.getenv("RERANKER_BASE_URL")
+    )
+
     class Config:
         arbitrary_types_allowed = True
 
