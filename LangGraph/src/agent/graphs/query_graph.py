@@ -261,7 +261,8 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             chunks=chunks,
             top_k_entities=None,  # Keep all
             top_k_relationships=None,
-            top_k_chunks=None
+            top_k_chunks=None,
+            query_cohort_year=state.get("query_cohort_year")
         )
         
         return {

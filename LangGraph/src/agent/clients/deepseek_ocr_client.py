@@ -10,9 +10,11 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from typing import Optional, Dict, Any, Tuple, List, Literal
 from PIL import Image
-from mlx_vlm import load, apply_chat_template, generate
-# from mlx_vlm.utils import load_image
+
 from agent.config import settings
+
+# mlx_vlm is imported lazily inside _load_model() to avoid hard import at module load time.
+# (mlx_vlm is only installed in the root venv, not the LangGraph venv used by langgraph dev)
 
 DEFAULT_TIMEOUT = 300  # 5 minutes for 1 PDF parsing
 
@@ -42,6 +44,17 @@ class DeepSeekOCRClient:
         """Load the DeepSeek OCR model."""
         if self.model is not None and self.processor is not None:
             return
+        # LlamaFlashAttention2 was removed in transformers 4.46+.
+        # Inject shim before mlx_vlm loads the model's custom code.
+        try:
+            from transformers.models.llama import modeling_llama as _llama_mod
+            if not hasattr(_llama_mod, "LlamaFlashAttention2"):
+                _llama_mod.LlamaFlashAttention2 = _llama_mod.LlamaAttention
+        except Exception:
+            pass
+        from mlx_vlm import load, apply_chat_template, generate
+        self._mlx_apply_chat_template = apply_chat_template
+        self._mlx_generate = generate
         print(f"[DeepSeek OCR] Loading model: {self.model_name}")
         self.model, self.processor = load(self.model_name, trust_remote_code=True)
         self.config = self.model.config
@@ -164,15 +177,15 @@ class DeepSeekOCRClient:
                 {"role": "user", "content": f"{prompt}"}
             ]
             
-            formatted = apply_chat_template(
+            formatted = self._mlx_apply_chat_template(
                 self.processor,
                 self.config,
                 messages,
                 num_images=1
             )
-            
+
             img_size = getattr(settings.deepseek_ocr, "page_image_size", 1024)
-            output = generate(
+            output = self._mlx_generate(
                 model=self.model, # type: ignore
                 processor=self.processor, # type: ignore
                 prompt=formatted, # type: ignore

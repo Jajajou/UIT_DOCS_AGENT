@@ -93,10 +93,11 @@ class LightRAGAPIClient:
         return r.json()
 
     # ------------------------------ documents ------------------------------
-    def upload_file(self, file_path: str) -> dict:
+    def upload_file(self, file_path: str, file_source: str | None = None) -> dict:
         with open(file_path, "rb") as f:
             files = {"file": (os.path.basename(file_path), f)}
-            r = self._post("/documents/upload", files=files)
+            data = {"file_source": file_source} if file_source else None
+            r = self._post("/documents/upload", files=files, data=data)
         r.raise_for_status()
         return r.json()
 

@@ -1,0 +1,146 @@
+{
+  "description": "Cohort-specific test pairs for ablation evaluation. FROZEN before weight calibration.",
+  "version": "1.0",
+  "created": "2026-04-09",
+  "split": {
+    "validation": [0, 1, 2, 3, 4],
+    "test": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  },
+  "pairs": [
+    {
+      "id": 0,
+      "type": "cohort_specific",
+      "query": "sinh vien K2022 co can lam khoa luan tot nghiep khong?",
+      "query_cohort_year": 2022,
+      "expected_contains": ["khoa luan", "tot nghiep", "2022"],
+      "expected_not_contains": ["K2021", "K2020"],
+      "note": "Validation pair 1 — khoa luan policy changed between cohorts"
+    },
+    {
+      "id": 1,
+      "type": "cohort_specific",
+      "query": "sinh vien K2021 co can lam khoa luan tot nghiep khong?",
+      "query_cohort_year": 2021,
+      "expected_contains": ["tot nghiep", "2021"],
+      "expected_not_contains": ["K2022", "K2023"],
+      "note": "Validation pair 2 — contrast with id=0"
+    },
+    {
+      "id": 2,
+      "type": "cohort_specific",
+      "query": "Quy che dao tao ap dung cho khoa 2022 la gi?",
+      "query_cohort_year": 2022,
+      "expected_contains": ["quy che", "2022"],
+      "expected_not_contains": [],
+      "note": "Validation pair 3 — direct cohort regulation lookup"
+    },
+    {
+      "id": 3,
+      "type": "cohort_specific",
+      "query": "sinh vien nhap hoc nam 2023 can bao nhieu tin chi de tot nghiep?",
+      "query_cohort_year": 2023,
+      "expected_contains": ["tin chi", "2023"],
+      "expected_not_contains": [],
+      "note": "Validation pair 4 — credit requirement by cohort"
+    },
+    {
+      "id": 4,
+      "type": "cohort_specific",
+      "query": "K2024 co duoc dang ky hoc phan tu chon nhu the nao?",
+      "query_cohort_year": 2024,
+      "expected_contains": ["hoc phan", "tu chon", "2024"],
+      "expected_not_contains": [],
+      "note": "Validation pair 5 — elective registration for newest cohort"
+    },
+    {
+      "id": 5,
+      "type": "cohort_specific",
+      "query": "Dieu kien xet hoc bong KKHT cho sinh vien K2022?",
+      "query_cohort_year": 2022,
+      "expected_contains": ["hoc bong", "KKHT", "2022"],
+      "expected_not_contains": [],
+      "note": "Test pair 1 — scholarship eligibility by cohort"
+    },
+    {
+      "id": 6,
+      "type": "cohort_specific",
+      "query": "Thu tuc bao luu hoc tap danh cho khoa 2023?",
+      "query_cohort_year": 2023,
+      "expected_contains": ["bao luu", "2023"],
+      "expected_not_contains": [],
+      "note": "Test pair 2 — leave of absence procedure by cohort"
+    },
+    {
+      "id": 7,
+      "type": "cohort_specific",
+      "query": "Sinh vien K2020 co the chuyen nganh sang CNTT theo quy dinh nao?",
+      "query_cohort_year": 2020,
+      "expected_contains": ["chuyen nganh", "2020"],
+      "expected_not_contains": [],
+      "note": "Test pair 3 — major transfer rules for older cohort"
+    },
+    {
+      "id": 8,
+      "type": "cohort_specific",
+      "query": "Chuong trinh dao tao cua khoa 2022 nganh Ky thuat phan mem gom nhung mon nao?",
+      "query_cohort_year": 2022,
+      "expected_contains": ["chuong trinh", "Ky thuat phan mem", "2022"],
+      "expected_not_contains": [],
+      "note": "Test pair 4 — curriculum by program and cohort"
+    },
+    {
+      "id": 9,
+      "type": "cohort_specific",
+      "query": "K2021 co duoc mien hoc mon giao duc the chat khong?",
+      "query_cohort_year": 2021,
+      "expected_contains": ["giao duc the chat", "mien hoc", "2021"],
+      "expected_not_contains": [],
+      "note": "Test pair 5 — physical education exemption by cohort"
+    },
+    {
+      "id": 10,
+      "type": "cohort_specific",
+      "query": "Quy dinh ve diem ren luyen cho sinh vien K2023?",
+      "query_cohort_year": 2023,
+      "expected_contains": ["diem ren luyen", "2023"],
+      "expected_not_contains": [],
+      "note": "Test pair 6 — conduct score regulations by cohort"
+    },
+    {
+      "id": 11,
+      "type": "cohort_specific",
+      "query": "Khoa 2022 phai hoan thanh bao nhieu hoc phan bat buoc trong nam dau?",
+      "query_cohort_year": 2022,
+      "expected_contains": ["hoc phan bat buoc", "2022"],
+      "expected_not_contains": [],
+      "note": "Test pair 7 — mandatory courses in first year by cohort"
+    },
+    {
+      "id": 12,
+      "type": "cohort_specific",
+      "query": "Thu tuc canh bao hoc vu ap dung cho sinh vien K2019 nhu the nao?",
+      "query_cohort_year": 2019,
+      "expected_contains": ["canh bao hoc vu", "2019"],
+      "expected_not_contains": [],
+      "note": "Test pair 8 — academic probation for older cohort (historical query)"
+    },
+    {
+      "id": 13,
+      "type": "cohort_specific",
+      "query": "Sinh vien nhap hoc 2024 co duoc dang ky thuc tap trong nam 2 khong?",
+      "query_cohort_year": 2024,
+      "expected_contains": ["thuc tap", "2024"],
+      "expected_not_contains": [],
+      "note": "Test pair 9 — internship eligibility for newest cohort"
+    },
+    {
+      "id": 14,
+      "type": "cohort_specific",
+      "query": "Cac mon hoc ngoai ngu bat buoc cho K2022 la gi?",
+      "query_cohort_year": 2022,
+      "expected_contains": ["ngoai ngu", "2022"],
+      "expected_not_contains": [],
+      "note": "Test pair 10 — foreign language requirements by cohort"
+    }
+  ]
+}

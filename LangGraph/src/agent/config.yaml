@@ -48,6 +48,12 @@ temporal:
   # Research shows 0.3 weight achieves optimal balance
   recency_weight: 0.3
 
+  # Cohort-aware reranking weights (must sum to 1.0)
+  # Used when use_cohort_boost=True AND query has a cohort year
+  cohort_weight: 0.25           # Weight for cohort match score (1.0/0.5/0.0)
+  semantic_weight_cohort: 0.55  # Weight for semantic score in cohort mode
+  temporal_weight_cohort: 0.20  # Weight for temporal freshness in cohort mode
+
   # Document freshness thresholds
   freshness_thresholds:
     warning_days: 30      # Warn if document expires within 30 days

@@ -52,6 +52,10 @@ class TemporalConfig(BaseModel):
     quality_penalties: Dict[str, float]
     versioning: Dict[str, Any]
     date_extraction: Dict[str, Any] = {}
+    # Cohort-aware reranking weights
+    cohort_weight: float = 0.25
+    semantic_weight_cohort: float = 0.55
+    temporal_weight_cohort: float = 0.20
 
 class Config(BaseModel):
     """Main configuration class for the application."""
@@ -83,6 +87,9 @@ class Config(BaseModel):
     embedding_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("EMBEDDING_API_KEY", "EMPTY"))
     reranker_base_url: Optional[str] = Field(
         default_factory=lambda: os.getenv("RERANKER_BASE_URL")
+    )
+    use_cohort_boost: bool = Field(
+        default_factory=lambda: os.getenv("USE_COHORT_BOOST", "true").lower() != "false"
     )
 
     class Config:

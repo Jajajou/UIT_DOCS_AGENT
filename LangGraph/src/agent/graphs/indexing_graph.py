@@ -7,6 +7,7 @@ import glob
 import requests
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Literal, List, Dict, Any, Union, Optional, cast
 
@@ -532,15 +533,16 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
 
             else:
                 # Direct file upload (binary files without parsed content)
-                result = api_client.upload_file(file_path)
+                result = api_client.upload_file(file_path, file_source=url)
 
                 doc_id = result.get("doc_id")
+                track_id = result.get("track_id")
 
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
                     "file_source": url,
-                    "track_id": result.get("track_id"),
+                    "track_id": track_id,
                     "doc_id": doc_id,
                     "status": "success",
                     "parse_with_DeepSeek_OCR": False,
@@ -559,19 +561,25 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                 try:
                     print(f"[METADATA] Saving temporal metadata for {file_name} (track_id: {track_id})...")
 
-                    # Get doc_id from LightRAG first
-                    # LightRAG creates doc_status during upload, we need to find the doc_id
-                    conn = api_client._get_pg_connection()
-                    workspace = os.getenv("WORKSPACE", "default")
-
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
-                            (workspace, track_id)
-                        )
-                        row = cur.fetchone()
-                        doc_id = row[0] if row else None
-                    conn.close()
+                    # LightRAG processes insert_text asynchronously — poll until the
+                    # lightrag_doc_status row appears (usually < 10s after upload).
+                    doc_id = None
+                    workspace = None
+                    for _attempt in range(60):
+                        conn = api_client._get_pg_connection()
+                        workspace = os.getenv("WORKSPACE", "default")
+                        with conn.cursor() as cur:
+                            cur.execute(
+                                "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
+                                (workspace, track_id)
+                            )
+                            row = cur.fetchone()
+                            doc_id = row[0] if row else None
+                        conn.close()
+                        if doc_id:
+                            break
+                        print(f"[METADATA] Waiting for LightRAG to create doc row (attempt {_attempt + 1}/60)...")
+                        time.sleep(2)
 
                     if doc_id:
                         # Save to separate temporal_metadata table

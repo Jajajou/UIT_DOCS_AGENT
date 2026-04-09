@@ -421,6 +421,12 @@ Tự động chọn tham số retrieval dựa trên query type:
 - Nếu không chắc → dùng mặc định (mode="mix", top_k=8, chunk_top_k=5)
 </parameter_tuning>
 
+<cohort_extraction>
+Nếu câu hỏi đề cập khóa sinh viên cụ thể (K2022, k2022, khóa 2022, năm nhập học 2022),
+trích xuất năm nhập học vào query_cohort_year (ví dụ: 2022 cho "K2022" hoặc "khóa 2022").
+Nếu không đề cập khóa cụ thể, để query_cohort_year = null.
+</cohort_extraction>
+
 <output_format>
 Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
 {
@@ -431,6 +437,7 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "confidence_reason": "...",
   "needs_clarification": true/false,
   "clarification_question": "..." (nếu needs_clarification=true),
+  "query_cohort_year": null hoặc số năm (ví dụ: 2022),
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
   "suggested_top_k": 3-5,
   "suggested_chunk_top_k:" 10-20,
