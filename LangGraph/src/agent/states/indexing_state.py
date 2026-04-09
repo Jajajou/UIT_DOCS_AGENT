@@ -57,6 +57,8 @@ class IndexingState(TypedDict):
     # File source tracking
     file_path: NotRequired[str]
     file_source: NotRequired[str]
+    # Admin-supplied URL (overrides auto-discovered URL from get_url())
+    explicit_url: NotRequired[Optional[str]]
 
     # ============ API Interaction ============
     api_payload: NotRequired[Dict[str, Any]]

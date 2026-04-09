@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import glob
 import requests
 import sys
@@ -44,38 +45,46 @@ def _dedupe_paths(paths: list[str]) -> list[str]:
 def _parse_chat_command(msg: AnyMessage) -> Dict[str, Any]:
     """
     Parse chat message to determine command.
-    
+
     Supported commands:
     - "upload /path/to/file.pdf" -> Upload single file
+    - "upload /path/to/file.pdf --url https://..." -> Upload with explicit source URL
     - "upload /path/to/folder" -> Upload all files in folder
     - "scan" -> Trigger scan
     - anything else -> insert as text
     """
     content = getattr(msg, "content", "")
     text = content_to_text(content).strip()
-    
+
     print("=" * 80)
     print(f"[PARSE] Input text: '{text}'")
     print("=" * 80)
-    
+
     # Check for upload command with path
     if text.lower().startswith("upload ") and len(text.split(maxsplit=1)) > 1:
-        parts = text.split(maxsplit=1)
-        path = parts[1].strip()
-        
-        # Expand user home directory
+        rest = text.split(maxsplit=1)[1].strip()
+
+        # Extract optional --url flag before processing the path
+        explicit_url = None
+        url_match = re.search(r'\s+--url\s+(\S+)', rest)
+        if url_match:
+            explicit_url = url_match.group(1)
+            rest = rest[:url_match.start()].strip()
+
+        path = rest
         path = os.path.expanduser(path)
-        
-        # Remove quotes if present
         if (path.startswith('"') and path.endswith('"')) or \
            (path.startswith("'") and path.endswith("'")):
             path = path[1:-1]
-        
+
         print(f"[PARSE] Detected upload command with path: {path}")
-        
+        if explicit_url:
+            print(f"[PARSE] Explicit source URL: {explicit_url}")
+
         return {
             "command": "upload_path",
             "path": path,
+            "explicit_url": explicit_url,
             "text": text
         }
     
@@ -122,6 +131,34 @@ def _get_files_from_path(path: str, recursive: bool = False) -> List[str]:
         return sorted(files)
     
     return []
+
+
+def _dedupe_file_copies(file_paths: List[str]) -> List[str]:
+    """
+    Remove Firecrawl dedup copies (file_001.pdf, file_001_001.pdf etc.).
+    Keeps the shortest-named version for each base stem so the URL lookup
+    always matches the original filename rather than a deep copy.
+    """
+    import re
+    from urllib.parse import unquote
+    _DEDUP_RE = re.compile(r"([_ ]+\d+)+$")
+
+    def base_stem(path: str) -> str:
+        name = unquote(Path(path).stem).lower()
+        return _DEDUP_RE.sub("", name)
+
+    seen_bases: dict[str, str] = {}
+    for fp in sorted(file_paths, key=lambda p: len(Path(p).name)):
+        b = base_stem(fp)
+        if b not in seen_bases:
+            seen_bases[b] = fp
+
+    original_count = len(file_paths)
+    deduped = list(seen_bases.values())
+    skipped = original_count - len(deduped)
+    if skipped:
+        print(f"[FILE_LIST] Skipped {skipped} duplicate copies (keeping shortest-named per stem)")
+    return deduped
 
 
 def _filter_supported_files(file_paths: List[str]) -> List[str]:
@@ -189,6 +226,7 @@ def prepare_indexing(state: IndexingState) -> Dict[str, Any]:
         return {
             "source_type": "file",
             "input_source": parsed["path"],
+            "explicit_url": parsed.get("explicit_url"),
             "description": f"Upload from path: {parsed['path']}",
             "error": None
         }
@@ -246,6 +284,11 @@ def prepare_file_list(state: IndexingState) -> Dict[str, Any]:
     
     # Filter supported files
     supported_files = _filter_supported_files(file_paths)
+    # Deduplicate: skip files whose stem is a _NNN copy of an already-seen stem.
+    # Firecrawl saves duplicate PDFs as file_001.pdf, file_001_001.pdf etc.
+    # We only need one copy; LightRAG deduplicates by content hash anyway, and
+    # uploading the deep copies last risks overwriting a correctly-stored URL.
+    supported_files = _dedupe_file_copies(supported_files)
     
     if not supported_files:
         total_files = len(file_paths)
@@ -394,7 +437,7 @@ async def extract_temporal_metadata_rag(state: IndexingState) -> Dict[str, Any]:
                 except Exception as e:
                     print(f"[Metadata RAG] WARNING: Could not read file {file_path}: {e}")
 
-        file_source = state.get("file_source", state.get("current_file_path", "unknown"))
+        file_source = state.get("file_source") or state.get("current_file_path", "unknown")
         doc_id = state.get("doc_id", "")
 
         if not doc_text:
@@ -493,7 +536,8 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
         file_name = os.path.basename(file_path)
         file_list = state.get("file_list", [])
         current_index = state.get("current_file_index", 0)
-        url = get_url(file_path)
+        # Prefer admin-supplied URL over auto-discovered URL
+        url = state.get("explicit_url") or get_url(file_path)
 
         print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}, {url}")
 

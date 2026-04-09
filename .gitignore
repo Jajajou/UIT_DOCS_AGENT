@@ -224,7 +224,8 @@ data/**/*
 
 # Project specific
 
-.upload_checkpoint.jsonl
+.upload_checkpoint*.jsonl
+.upload_checkpoint*.jsonl.bak*
 *.log
 *_tmp.*
 *_tmp/

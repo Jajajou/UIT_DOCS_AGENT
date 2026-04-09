@@ -35,7 +35,8 @@ llm = init_chat_model(
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
     model=settings.llm_model,
-    temperature=settings.agent2_temperature
+    temperature=settings.agent2_temperature,
+    model_kwargs={}
 )
 
 

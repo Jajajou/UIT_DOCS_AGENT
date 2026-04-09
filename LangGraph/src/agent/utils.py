@@ -60,49 +60,89 @@ def read_text_from(path: str) -> str:
     return Path(path).read_text(encoding="utf-8")
 
 
+_PDF_URL_LOOKUP: Optional[dict] = None
+
+def _load_pdf_url_lookup() -> dict:
+    """Load the pre-built filename->URL lookup from firecrawl metadata."""
+    global _PDF_URL_LOOKUP
+    if _PDF_URL_LOOKUP is not None:
+        return _PDF_URL_LOOKUP
+    lookup_path = Path(project_dir) / "firecrawl" / "data" / "pdf_url_lookup.json"
+    if lookup_path.exists():
+        import json
+        with open(lookup_path, encoding="utf-8") as f:
+            _PDF_URL_LOOKUP = json.load(f)
+    else:
+        _PDF_URL_LOOKUP = {}
+    return _PDF_URL_LOOKUP
+
+def _lookup_url_by_stem(filename: str) -> Optional[str]:
+    """
+    Look up the source URL for a PDF file using the pre-built lookup.
+    Strips trailing dedup suffixes (_001, _002 etc) and decodes percent-encoding.
+    """
+    from urllib.parse import unquote
+    lookup = _load_pdf_url_lookup()
+    stem = unquote(filename).lower()
+    if stem.endswith(".pdf"):
+        stem = stem[:-4]
+    # Try exact match then progressively strip trailing _NNN dedup suffixes.
+    # Use a while loop so we always check the stem AFTER stripping (fixes off-by-one
+    # for deeply nested duplicates like _001_001_001_001_001).
+    for _ in range(20):
+        if stem in lookup:
+            return lookup[stem]
+        new = re.sub(r"[_ ]+\d+$", "", stem)
+        if new == stem:
+            break
+        stem = new
+    # Check the fully stripped base one final time
+    if stem in lookup:
+        return lookup[stem]
+    return None
+
 def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
     """
     Given:  /.../website1/pdf/file.pdf
     Search in:
       1) *.md files in the SAME FOLDER as the PDF     -> /.../website1/pdf/*.md
       2) /.../website1/markdown/**/*.md  (recursive)
+      3) Pre-built pdf_url_lookup.json from firecrawl metadata (fallback)
     Return: direct URL to the PDF (https://.../file.pdf) if found, else None.
     """
     pdf_path: Path = Path(pdf_path_input)
     parents = list(pdf_path.parents)
-    if len(parents) < 2:
-        return None
+    if len(parents) >= 2:
+        root = parents[1]                   # .../website1
+        md_dir = root / "markdown"
+        pdf_dir = pdf_path.parent
 
-    root = parents[1]                   # .../website1
-    md_dir = root / "markdown"
-    pdf_dir = pdf_path.parent
+        target_name = pdf_path.name.lower()
 
-    target_name = pdf_path.name.lower()
+        # Build candidate .md sources: same-folder .md first, then markdown/**.md
+        candidate_iters = []
+        if pdf_dir.is_dir():
+            candidate_iters.append(pdf_dir.glob("*.md"))
+        if md_dir.is_dir():
+            candidate_iters.append(md_dir.rglob("*.md"))
 
-    # Build candidate .md sources: same-folder .md first (non-recursive), then markdown/**.md
-    candidate_iters = []
-    if pdf_dir.is_dir():
-        candidate_iters.append(pdf_dir.glob("*.md"))           # shallow search next to the PDF
-    if md_dir.is_dir():
-        candidate_iters.append(md_dir.rglob("*.md"))           # existing recursive search
+        seen: set[Path] = set()
+        for it in candidate_iters:
+            for md_file in it:
+                if md_file in seen:
+                    continue
+                seen.add(md_file)
+                try:
+                    text = md_file.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    continue
+                urls = extract_pdf_links(text)
+                result = find_urls_by_filename(urls, target_name)
+                if result:
+                    return result
 
-    seen: set[Path] = set()
-    for it in candidate_iters:
-        for md_file in it:
-            if md_file in seen:
-                continue
-            seen.add(md_file)
-
-            try:
-                text = md_file.read_text(encoding="utf-8", errors="ignore")
-            except Exception:
-                continue
-
-            urls = extract_pdf_links(text)
-
-            return find_urls_by_filename(urls, target_name)
-        
-    return None
+    # Fallback: pre-built lookup from firecrawl metadata.jsonl
+    return _lookup_url_by_stem(pdf_path.name)
 
 def content_to_text(content: Any) -> str:
     """Extract text from message content."""

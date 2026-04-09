@@ -19,6 +19,8 @@ services:
       - ./data/rag_storage:/app/data/rag_storage
       - ./data/inputs:/app/data/inputs
       - ./data/tiktoken:/app/data/tiktoken
+      - ./LightRAG/lightrag/prompt.py:/app/lightrag/prompt.py:ro
+      - ./LightRAG/lightrag/llm/openai.py:/app/lightrag/llm/openai.py:ro
     environment:
       - TIKTOKEN_CACHE_DIR_DOC=./data/tiktoken
     # restart: unless-stopped
