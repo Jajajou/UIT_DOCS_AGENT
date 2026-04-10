@@ -68,8 +68,8 @@ temporal:
 
   # Amendment override: force a low temporal score on any item that has been
   # superseded by a newer document (amended_by field is non-empty).
-  # Off by default; enable via USE_AMENDMENT_OVERRIDE=true or for ablation.
-  use_amendment_override: false
+  # Controlled by USE_AMENDMENT_OVERRIDE env var (default: false).
+  # Note: this setting is env-var only; the YAML value here is not loaded.
 
   # Version management
   versioning:

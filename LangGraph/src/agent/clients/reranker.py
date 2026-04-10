@@ -360,12 +360,20 @@ class Reranker:
         # Amendment override: any item superseded by a newer document gets a
         # fixed low temporal score, ensuring it ranks below the amending doc.
         if getattr(settings, 'use_amendment_override', False):
-            override_score = settings.temporal.quality_penalties.get("amendment_override_score", 0.3)
-            temporal_scores = [
-                override_score if item.get("metadata", {}).get("amended_by")
-                else score
-                for item, score in zip(items, temporal_scores)
-            ]
+            raw_override = settings.temporal.quality_penalties.get("amendment_override_score", 0.3)
+            override_score = max(0.0, min(1.0, float(raw_override)))
+            overridden = []
+            new_temporal_scores = []
+            for item, score in zip(items, temporal_scores):
+                amended_by = item.get("metadata", {}).get("amended_by")
+                if isinstance(amended_by, list) and len(amended_by) > 0:
+                    new_temporal_scores.append(override_score)
+                    overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
+                else:
+                    new_temporal_scores.append(score)
+            if overridden:
+                print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
+            temporal_scores = new_temporal_scores
 
         # Combine scores: 3-weight formula when cohort active, 2-weight otherwise
         use_cohort = getattr(settings, 'use_cohort_boost', True)
