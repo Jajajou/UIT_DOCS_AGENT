@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.1] - 2026-04-10
+
+### Added
+- **Amendment override**: when `USE_AMENDMENT_OVERRIDE=true`, any retrieved item
+  whose `metadata.amended_by` is non-empty gets its temporal score forced to 0.3,
+  ensuring superseded documents rank below the documents that supersede them.
+  Controlled per-query via env var; off by default.
+- **4-way ablation**: `System+Amend` config added to `run_evaluation.py` for
+  measuring amendment override impact against the 15 frozen test pairs.
+
+### Fixed
+- Amendment override `amended_by` check uses explicit `isinstance(list)` guard
+  (defensive against schema drift where field arrives as a non-list falsy value).
+- Override score clamped to `[0.0, 1.0]` to prevent config errors from inverting
+  ranking behavior.
+- Audit log printed when override fires (helps debug ranking decisions).
+- `use_amendment_override` comment in `config.yaml` clarified: value is env-var only.
+
 ## [0.1.0] - 2026-04-10
 
 ### Added

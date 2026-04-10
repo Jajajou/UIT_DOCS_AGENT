@@ -95,6 +95,9 @@ class Config(BaseModel):
     use_temporal_scoring: bool = Field(
         default_factory=lambda: os.getenv("USE_TEMPORAL_SCORING", "true").lower() != "false"
     )
+    use_amendment_override: bool = Field(
+        default_factory=lambda: os.getenv("USE_AMENDMENT_OVERRIDE", "false").lower() == "true"
+    )
 
     class Config:
         arbitrary_types_allowed = True
