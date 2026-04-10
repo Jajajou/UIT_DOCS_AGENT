@@ -224,7 +224,8 @@ data/**/*
 
 # Project specific
 
-.upload_checkpoint.jsonl
+.upload_checkpoint*.jsonl
+.upload_checkpoint*.jsonl.bak*
 *.log
 *_tmp.*
 *_tmp/
@@ -251,13 +252,15 @@ TECHNICAL_REPORT_COMPREHENSIVE_tmp.html
 TECHNICAL_REPORT_COMPREHENSIVE.md.pdf
 QWEN.md
 
-# Test scripts (temporary testing files)
+# Test scripts (temporary testing files, root-level only)
 test_metadata_rag.py
 test_*.py
 *_test.py
 inspect_*.py
 inspect_*.ipynb
 test_*.ipynb
+# Exception: tracked pytest test suites inside LangGraph/tests/
+!LangGraph/tests/**/*.py
 
 # Claude Code local config
 .claude/

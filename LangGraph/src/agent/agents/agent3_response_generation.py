@@ -8,6 +8,7 @@ It creates a comprehensive answer with hyperlinked references.
 from __future__ import annotations
 
 import os
+import re
 import json
 from typing import Any, Dict, List, Tuple
 from datetime import datetime
@@ -19,6 +20,7 @@ from agent.states.query_state import (
 )
 from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
+from agent.utils import strip_think_tags
 
 
 # ============================================================================
@@ -317,21 +319,22 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             confidence_reason=confidence_reason
         )
         
-        # Call LLM with structured output
+        # Call LLM directly, strip think tags, parse manually
         llm_json = llm.bind(response_format={"type": "json_object"})
-        llm_structured_output = llm_json.with_structured_output( #type: ignore
-            ResponseGeneration,          
-            method="json_schema",       
-            include_raw=False             
-        ) 
 
         msgs = [
             SystemMessage(content=prompt_text),
             HumanMessage(content=f"{parsed_intention}\n\nGenerate JSON response.")
         ]
         print(f"GOI LLM: {prompt_text}")
-        response_gen = llm_structured_output.invoke(input=msgs)
-        
+        raw_response = llm_json.invoke(input=msgs)
+        content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
+
+        content = strip_think_tags(content)
+
+        data = json.loads(content)
+        response_gen = ResponseGeneration(**data)
+
         if not response_gen:
             raise ValueError("LLM did not return structured output")
         

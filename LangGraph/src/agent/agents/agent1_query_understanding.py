@@ -13,6 +13,8 @@ New capabilities:
 from __future__ import annotations
 
 import os
+import re
+import json as json_module
 from typing import Any, List, Dict
 from openai import OpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
@@ -24,6 +26,7 @@ from agent.states.query_state import (
 from langchain.chat_models import init_chat_model
 from agent.core.prompts import PROMPTS
 from agent.config import get_attr_safe, settings
+from agent.utils import strip_think_tags
 
 
 # ============================================================================
@@ -104,22 +107,21 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
     print("=" * 80)
     
     try:
-        # Call LLM with structured output
+        # Call LLM directly, strip think tags, parse manually
         llm_json = llm.bind(response_format={"type": "json_object"})
-        llm_structured_output = llm_json.with_structured_output( #type: ignore
-            QueryUnderstanding,          
-            method="json_schema",       
-            include_raw=False             
-        )           
 
         msgs = [
                 SystemMessage(content=PROMPTS["query_understanding_system"]),
                 HumanMessage(content=f"Phân tích câu hỏi sau:\n\n{query}")
                 ]
 
-        understanding = llm_structured_output.invoke(
-            input=msgs
-        )
+        raw_response = llm_json.invoke(input=msgs)
+        content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
+
+        content = strip_think_tags(content)
+
+        data = json_module.loads(content)
+        understanding = QueryUnderstanding(**data)
         print(understanding)
         if not understanding:
             raise ValueError("LLM did not return structured output")
@@ -132,13 +134,14 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
         needs_clarification = get_attr_safe(understanding,"needs_clarification")
         clarification_question = get_attr_safe(understanding,"clarification_question")
-        
+        query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
+
         # Retrieval parameters
         suggested_mode = get_attr_safe(understanding,"suggested_mode")
         suggested_top_k = get_attr_safe(understanding,"suggested_top_k")
         suggested_chunk_top_k = get_attr_safe(understanding,"suggested_chunk_top_k")
         tuning_reason = get_attr_safe(understanding,"tuning_reason")
-        
+
         # Log results
         print(f"[AGENT 1] Parsed Intention: {parsed_intention}")
         print(f"[AGENT 1] Entities: {extracted_entities}")
@@ -146,15 +149,16 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         print(f"[AGENT 1] Confidence: {query_confidence:.2f}")
         print(f"[AGENT 1] Reason: {query_confidence_reason}")
         print(f"[AGENT 1] Needs Clarification: {needs_clarification}")
-        
+        print(f"[AGENT 1] Cohort Year: {query_cohort_year}")
+
         # Log parameter tuning
         print(f"[AGENT 1] Suggested Mode: {suggested_mode}")
         print(f"[AGENT 1] Suggested Top-K: {suggested_top_k}")
         print(f"[AGENT 1] Tuning Reason: {tuning_reason}")
-        
+
         if needs_clarification:
             print(f"[AGENT 1] Clarification Question: {clarification_question}")
-            
+
         # Return partial update
         return {
             "query": query,
@@ -163,6 +167,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "extracted_topics": extracted_topics,
             "query_confidence": query_confidence,
             "query_confidence_reason": query_confidence_reason,
+            "query_cohort_year": query_cohort_year,
             "needs_clarification": needs_clarification,
             "clarification_question": clarification_question if clarification_question is not None else None,
             "retrieval_mode": suggested_mode,

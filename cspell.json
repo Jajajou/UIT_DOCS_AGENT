@@ -1,0 +1,40 @@
+{
+  "version": "0.2",
+  "language": "en,vi",
+  "words": [
+    "reranked",
+    "reranking",
+    "reranker",
+    "normalise",
+    "normalised",
+    "DHCNTT",
+    "DHQG",
+    "BGDDT",
+    "langgraph",
+    "lightrag",
+    "qdrant",
+    "vllm",
+    "firecrawl",
+    "cohort",
+    "cohorts",
+    "ablation",
+    "pydantic",
+    "langchain"
+  ],
+  "ignoreWords": [],
+  "ignorePaths": [
+    "**/*.pckl",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/data/**"
+  ],
+  "overrides": [
+    {
+      "filename": "**/*.py",
+      "ignoreRegExpList": [
+        "[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]+",
+        "[ÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ]+"
+      ]
+    }
+  ]
+}

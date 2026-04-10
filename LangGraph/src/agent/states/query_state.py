@@ -57,6 +57,12 @@ class QueryUnderstanding(BaseModel):
         description="Câu hỏi để clarify nếu needs_clarification=True"
     )
     
+    # Cohort year extracted from query (e.g. 2022 for "K2022", "khoa 2022")
+    query_cohort_year: Optional[int] = Field(
+        default=None,
+        description="Nam nhap hoc cua khoa sinh vien neu co (vi du: 2022 cho 'K2022', 'khoa 2022')"
+    )
+
     # NEW: Parameter tuning outputs
     suggested_mode: Literal["naive", "local", "global", "hybrid", "mix"] = Field(
         default=settings.retrieval.default_mode,
@@ -167,16 +173,17 @@ class QueryState(TypedDict):
     
     # ============ Agent 1: Query Understanding + Parameter Tuning ============
     # Agent 1 Output
-    parsed_intention: NotRequired[Optional[str]]  
-    extracted_entities: NotRequired[List[str]] 
-    extracted_topics: NotRequired[List[str]]  
-    query_confidence: NotRequired[float]  
-    query_confidence_reason: NotRequired[Optional[str]]  
-    
+    parsed_intention: NotRequired[Optional[str]]
+    extracted_entities: NotRequired[List[str]]
+    extracted_topics: NotRequired[List[str]]
+    query_confidence: NotRequired[float]
+    query_confidence_reason: NotRequired[Optional[str]]
+    query_cohort_year: NotRequired[Optional[int]]  # e.g. 2022 for "K2022" queries
+
     # Agent 1 Decision
-    needs_clarification: NotRequired[bool]  
-    clarification_question: NotRequired[Optional[str]]  
-    
+    needs_clarification: NotRequired[bool]
+    clarification_question: NotRequired[Optional[str]]
+
     # Tuned parameters từ Agent 1
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]
     top_k: NotRequired[Optional[int]]

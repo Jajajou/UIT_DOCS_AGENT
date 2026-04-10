@@ -3,12 +3,15 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import glob
 import requests
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Literal, List, Dict, Any, Union, Optional, cast
+from urllib.parse import unquote
 
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END, START
@@ -43,38 +46,46 @@ def _dedupe_paths(paths: list[str]) -> list[str]:
 def _parse_chat_command(msg: AnyMessage) -> Dict[str, Any]:
     """
     Parse chat message to determine command.
-    
+
     Supported commands:
     - "upload /path/to/file.pdf" -> Upload single file
+    - "upload /path/to/file.pdf --url https://..." -> Upload with explicit source URL
     - "upload /path/to/folder" -> Upload all files in folder
     - "scan" -> Trigger scan
     - anything else -> insert as text
     """
     content = getattr(msg, "content", "")
     text = content_to_text(content).strip()
-    
+
     print("=" * 80)
     print(f"[PARSE] Input text: '{text}'")
     print("=" * 80)
-    
+
     # Check for upload command with path
     if text.lower().startswith("upload ") and len(text.split(maxsplit=1)) > 1:
-        parts = text.split(maxsplit=1)
-        path = parts[1].strip()
-        
-        # Expand user home directory
+        rest = text.split(maxsplit=1)[1].strip()
+
+        # Extract optional --url flag before processing the path
+        explicit_url = None
+        url_match = re.search(r'\s+--url\s+(\S+)', rest)
+        if url_match:
+            explicit_url = url_match.group(1)
+            rest = rest[:url_match.start()].strip()
+
+        path = rest
         path = os.path.expanduser(path)
-        
-        # Remove quotes if present
         if (path.startswith('"') and path.endswith('"')) or \
            (path.startswith("'") and path.endswith("'")):
             path = path[1:-1]
-        
+
         print(f"[PARSE] Detected upload command with path: {path}")
-        
+        if explicit_url:
+            print(f"[PARSE] Explicit source URL: {explicit_url}")
+
         return {
             "command": "upload_path",
             "path": path,
+            "explicit_url": explicit_url,
             "text": text
         }
     
@@ -121,6 +132,32 @@ def _get_files_from_path(path: str, recursive: bool = False) -> List[str]:
         return sorted(files)
     
     return []
+
+
+def _dedupe_file_copies(file_paths: List[str]) -> List[str]:
+    """
+    Remove Firecrawl dedup copies (file_001.pdf, file_001_001.pdf etc.).
+    Keeps the shortest-named version for each base stem so the URL lookup
+    always matches the original filename rather than a deep copy.
+    """
+    _DEDUP_RE = re.compile(r"([_ ]+\d+)+$")
+
+    def base_stem(path: str) -> str:
+        name = unquote(Path(path).stem).lower()
+        return _DEDUP_RE.sub("", name)
+
+    seen_bases: dict[str, str] = {}
+    for fp in sorted(file_paths, key=lambda p: len(Path(p).name)):
+        b = base_stem(fp)
+        if b not in seen_bases:
+            seen_bases[b] = fp
+
+    original_count = len(file_paths)
+    deduped = list(seen_bases.values())
+    skipped = original_count - len(deduped)
+    if skipped:
+        print(f"[FILE_LIST] Skipped {skipped} duplicate copies (keeping shortest-named per stem)")
+    return deduped
 
 
 def _filter_supported_files(file_paths: List[str]) -> List[str]:
@@ -188,6 +225,7 @@ def prepare_indexing(state: IndexingState) -> Dict[str, Any]:
         return {
             "source_type": "file",
             "input_source": parsed["path"],
+            "explicit_url": parsed.get("explicit_url"),
             "description": f"Upload from path: {parsed['path']}",
             "error": None
         }
@@ -245,6 +283,11 @@ def prepare_file_list(state: IndexingState) -> Dict[str, Any]:
     
     # Filter supported files
     supported_files = _filter_supported_files(file_paths)
+    # Deduplicate: skip files whose stem is a _NNN copy of an already-seen stem.
+    # Firecrawl saves duplicate PDFs as file_001.pdf, file_001_001.pdf etc.
+    # We only need one copy; LightRAG deduplicates by content hash anyway, and
+    # uploading the deep copies last risks overwriting a correctly-stored URL.
+    supported_files = _dedupe_file_copies(supported_files)
     
     if not supported_files:
         total_files = len(file_paths)
@@ -393,7 +436,7 @@ async def extract_temporal_metadata_rag(state: IndexingState) -> Dict[str, Any]:
                 except Exception as e:
                     print(f"[Metadata RAG] WARNING: Could not read file {file_path}: {e}")
 
-        file_source = state.get("file_source", state.get("current_file_path", "unknown"))
+        file_source = state.get("file_source") or state.get("current_file_path", "unknown")
         doc_id = state.get("doc_id", "")
 
         if not doc_text:
@@ -492,7 +535,8 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
         file_name = os.path.basename(file_path)
         file_list = state.get("file_list", [])
         current_index = state.get("current_file_index", 0)
-        url = get_url(file_path)
+        # explicit_url is only meaningful for single-file uploads; ignore for batch
+        url = (state.get("explicit_url") if len(file_list) == 1 else None) or get_url(file_path)
 
         print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}, {url}")
 
@@ -532,15 +576,16 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
 
             else:
                 # Direct file upload (binary files without parsed content)
-                result = api_client.upload_file(file_path)
+                result = api_client.upload_file(file_path, file_source=url)
 
                 doc_id = result.get("doc_id")
+                track_id = result.get("track_id")
 
                 upload_result = {
                     "file_path": file_path,
                     "file_name": file_name,
                     "file_source": url,
-                    "track_id": result.get("track_id"),
+                    "track_id": track_id,
                     "doc_id": doc_id,
                     "status": "success",
                     "parse_with_DeepSeek_OCR": False,
@@ -559,19 +604,27 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                 try:
                     print(f"[METADATA] Saving temporal metadata for {file_name} (track_id: {track_id})...")
 
-                    # Get doc_id from LightRAG first
-                    # LightRAG creates doc_status during upload, we need to find the doc_id
-                    conn = api_client._get_pg_connection()
-                    workspace = os.getenv("WORKSPACE", "default")
-
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
-                            (workspace, track_id)
-                        )
-                        row = cur.fetchone()
-                        doc_id = row[0] if row else None
-                    conn.close()
+                    # LightRAG processes insert_text asynchronously — poll until the
+                    # lightrag_doc_status row appears (usually < 10s after upload).
+                    doc_id = None
+                    workspace = None
+                    for _attempt in range(60):
+                        conn = api_client._get_pg_connection()
+                        workspace = os.getenv("WORKSPACE", "default")
+                        try:
+                            with conn.cursor() as cur:
+                                cur.execute(
+                                    "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
+                                    (workspace, track_id)
+                                )
+                                row = cur.fetchone()
+                                doc_id = row[0] if row else None
+                        finally:
+                            conn.close()
+                        if doc_id:
+                            break
+                        print(f"[METADATA] Waiting for LightRAG to create doc row (attempt {_attempt + 1}/60)...")
+                        time.sleep(2)
 
                     if doc_id:
                         # Save to separate temporal_metadata table

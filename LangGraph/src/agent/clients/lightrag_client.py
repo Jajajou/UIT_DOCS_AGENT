@@ -93,10 +93,11 @@ class LightRAGAPIClient:
         return r.json()
 
     # ------------------------------ documents ------------------------------
-    def upload_file(self, file_path: str) -> dict:
+    def upload_file(self, file_path: str, file_source: str | None = None) -> dict:
         with open(file_path, "rb") as f:
             files = {"file": (os.path.basename(file_path), f)}
-            r = self._post("/documents/upload", files=files)
+            data = {"file_source": file_source} if file_source else None
+            r = self._post("/documents/upload", files=files, data=data)
         r.raise_for_status()
         return r.json()
 
@@ -858,6 +859,9 @@ class LightRAGAPIClient:
         """
         Find document IDs by their official document number using PostgreSQL.
 
+        Queries temporal_metadata.document_number (the authoritative source).
+        Falls back to a fuzzy match to handle minor formatting differences.
+
         Args:
             doc_number: Document number (e.g., "123/QĐ-ĐHCNTT")
 
@@ -870,15 +874,27 @@ class LightRAGAPIClient:
             workspace = os.getenv("WORKSPACE", "default")
 
             with conn.cursor() as cur:
-                # Query JSONB for matching document_number in metadata
+                # Exact match in temporal_metadata (authoritative source)
                 query = """
-                    SELECT id
-                    FROM lightrag_doc_status
+                    SELECT doc_id
+                    FROM temporal_metadata
                     WHERE workspace = %s
-                    AND metadata->>'document_number' = %s
+                    AND document_number = %s
                 """
                 cur.execute(query, (workspace, doc_number))
                 rows = cur.fetchall()
+
+                if not rows:
+                    # Fuzzy match: strip spaces and compare case-insensitively
+                    query_fuzzy = """
+                        SELECT doc_id
+                        FROM temporal_metadata
+                        WHERE workspace = %s
+                        AND REPLACE(LOWER(document_number), ' ', '') =
+                            REPLACE(LOWER(%s), ' ', '')
+                    """
+                    cur.execute(query_fuzzy, (workspace, doc_number))
+                    rows = cur.fetchall()
 
                 for row in rows:
                     doc_ids.append(row[0])
@@ -886,8 +902,59 @@ class LightRAGAPIClient:
             conn.close()
         except Exception as e:
             print(f"[LightRAG Client] Error searching for doc number {doc_number}: {e}")
-        
+
         return doc_ids
+
+    def backfill_amendment_links(self) -> Dict[str, Any]:
+        """
+        Post-reindex pass: for every document that has amends_documents set,
+        try to populate amended_by_documents on the referenced old documents.
+
+        Run this once after a full reindex to ensure bidirectional links are
+        complete regardless of indexing order.
+
+        Returns:
+            Summary dict with counts of linked, skipped, not_found, errors.
+        """
+        summary = {"total_amending_docs": 0, "linked": 0, "not_found": 0, "errors": 0}
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT doc_id, amends_documents
+                    FROM temporal_metadata
+                    WHERE workspace = %s
+                    AND amends_documents IS NOT NULL
+                    AND jsonb_array_length(amends_documents) > 0
+                    """,
+                    (workspace,)
+                )
+                rows = cur.fetchall()
+
+            conn.close()
+
+            summary["total_amending_docs"] = len(rows)
+            print(f"[Backfill] Found {len(rows)} documents with amends_documents to process")
+
+            for doc_id, amends_list in rows:
+                amended_numbers = amends_list if isinstance(amends_list, list) else []
+                if not amended_numbers:
+                    continue
+
+                result = self.link_amended_documents(doc_id, amended_numbers)
+                summary["linked"] += len(result.get("linked_docs", []))
+                summary["not_found"] += len(result.get("not_found", []))
+                summary["errors"] += len(result.get("errors", []))
+
+        except Exception as e:
+            print(f"[Backfill] Fatal error: {e}")
+            summary["errors"] += 1
+
+        print(f"[Backfill] Done: {summary}")
+        return summary
 
     def link_amended_documents(
         self, 

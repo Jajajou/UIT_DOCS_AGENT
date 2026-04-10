@@ -14,6 +14,8 @@ Based on overall confidence, it decides whether to:
 from __future__ import annotations
 
 import os
+import re
+import json as json_module
 from typing import Any, Dict, List, Tuple
 from datetime import datetime
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
@@ -24,6 +26,7 @@ from agent.states.query_state import (
 )
 from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
+from agent.utils import strip_think_tags
 
 
 # ============================================================================ 
@@ -35,7 +38,8 @@ llm = init_chat_model(
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
     model=settings.llm_model,
-    temperature=settings.agent2_temperature
+    temperature=settings.agent2_temperature,
+    model_kwargs={}
 )
 
 
@@ -259,17 +263,22 @@ def agent2_assess_confidence(state: QueryState) -> Dict[str, Any]:
                 - Combined freshness penalty: {freshness_penalty:.2f}
                 """
         
-        # Call LLM with structured output
-        llm_structured_output = llm.with_structured_output(ConfidenceAssessment)
+        # Call LLM directly, strip think tags, parse manually
+        llm_json = llm.bind(response_format={"type": "json_object"})
 
         msgs = [
             SystemMessage(content=PROMPTS["confidence_assessment_system_prompt"]),
             HumanMessage(content=f"Đánh giá confidence cho trường hợp sau:\n\n{context}")
         ]
 
-        assessment = llm_structured_output.invoke(input=msgs)
-        
-        
+        raw_response = llm_json.invoke(input=msgs)
+        content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
+
+        content = strip_think_tags(content)
+
+        data = json_module.loads(content)
+        assessment = ConfidenceAssessment(**data)
+
         if not assessment:
             raise ValueError("LLM did not return structured output")
         
