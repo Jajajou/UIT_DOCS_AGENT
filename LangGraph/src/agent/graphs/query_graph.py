@@ -262,6 +262,7 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             top_k_entities=None,  # Keep all
             top_k_relationships=None,
             top_k_chunks=None,
+            use_temporal_boost=settings.use_temporal_scoring,
             query_cohort_year=state.get("query_cohort_year")
         )
         

@@ -92,6 +92,9 @@ class Config(BaseModel):
     use_cohort_boost: bool = Field(
         default_factory=lambda: os.getenv("USE_COHORT_BOOST", "true").lower() != "false"
     )
+    use_temporal_scoring: bool = Field(
+        default_factory=lambda: os.getenv("USE_TEMPORAL_SCORING", "true").lower() != "false"
+    )
 
     class Config:
         arbitrary_types_allowed = True

@@ -13,6 +13,8 @@ New capabilities:
 from __future__ import annotations
 
 import os
+import re
+import json as json_module
 from typing import Any, List, Dict
 from openai import OpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
@@ -104,22 +106,22 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
     print("=" * 80)
     
     try:
-        # Call LLM with structured output
+        # Call LLM directly, strip think tags, parse manually
         llm_json = llm.bind(response_format={"type": "json_object"})
-        llm_structured_output = llm_json.with_structured_output( #type: ignore
-            QueryUnderstanding,          
-            method="json_schema",       
-            include_raw=False             
-        )           
 
         msgs = [
                 SystemMessage(content=PROMPTS["query_understanding_system"]),
                 HumanMessage(content=f"Phân tích câu hỏi sau:\n\n{query}")
                 ]
 
-        understanding = llm_structured_output.invoke(
-            input=msgs
-        )
+        raw_response = llm_json.invoke(input=msgs)
+        content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
+
+        # Strip Qwen3 chain-of-thought tokens before JSON parsing
+        content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+
+        data = json_module.loads(content)
+        understanding = QueryUnderstanding(**data)
         print(understanding)
         if not understanding:
             raise ValueError("LLM did not return structured output")
