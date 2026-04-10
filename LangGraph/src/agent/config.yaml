@@ -61,9 +61,15 @@ temporal:
 
   # Data quality penalties for expired content
   quality_penalties:
-    expired_penalty: 0.5       # Multiply quality score by 0.5 if expired
-    expiring_soon_penalty: 0.8 # Multiply by 0.8 if expiring within warning_days
-    amended_penalty: 0.7       # Multiply by 0.7 if document has been amended by newer version
+    expired_penalty: 0.5          # Multiply quality score by 0.5 if expired
+    expiring_soon_penalty: 0.8    # Multiply by 0.8 if expiring within warning_days
+    amended_penalty: 0.7          # Multiply by 0.7 if document has been amended by newer version
+    amendment_override_score: 0.3 # Temporal score forced onto superseded docs in reranking
+
+  # Amendment override: force a low temporal score on any item that has been
+  # superseded by a newer document (amended_by field is non-empty).
+  # Off by default; enable via USE_AMENDMENT_OVERRIDE=true or for ablation.
+  use_amendment_override: false
 
   # Version management
   versioning:

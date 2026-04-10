@@ -1,11 +1,12 @@
 """
 Temporal-Aware Retrieval Ablation Evaluation
 
-Runs 3-way ablation over frozen test pairs.
+Runs 4-way ablation over frozen test pairs.
 Conditions:
-  Baseline-S : USE_TEMPORAL_SCORING=false  USE_COHORT_BOOST=false
-  Baseline-T : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=false
-  System     : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true
+  Baseline-S    : USE_TEMPORAL_SCORING=false  USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
+  Baseline-T    : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
+  System        : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=false
+  System+Amend  : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=true
 
 Metrics:
   accuracy@1  — expected doc number appears in final answer
@@ -49,17 +50,26 @@ ABLATION_CONFIGS: dict[str, dict[str, str]] = {
     "Baseline-S": {
         "USE_TEMPORAL_SCORING": "false",
         "USE_COHORT_BOOST": "false",
+        "USE_AMENDMENT_OVERRIDE": "false",
         "description": "Pure semantic reranking",
     },
     "Baseline-T": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "false",
+        "USE_AMENDMENT_OVERRIDE": "false",
         "description": "Temporal scoring, no cohort boost",
     },
     "System": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "true",
+        "USE_AMENDMENT_OVERRIDE": "false",
         "description": "Full system (temporal + cohort)",
+    },
+    "System+Amend": {
+        "USE_TEMPORAL_SCORING": "true",
+        "USE_COHORT_BOOST": "true",
+        "USE_AMENDMENT_OVERRIDE": "true",
+        "description": "Full system + amendment override",
     },
 }
 
@@ -72,6 +82,7 @@ def set_env_for_config(config_name: str) -> None:
     cfg = ABLATION_CONFIGS[config_name]
     os.environ["USE_TEMPORAL_SCORING"] = cfg["USE_TEMPORAL_SCORING"]
     os.environ["USE_COHORT_BOOST"] = cfg["USE_COHORT_BOOST"]
+    os.environ["USE_AMENDMENT_OVERRIDE"] = cfg.get("USE_AMENDMENT_OVERRIDE", "false")
 
 
 def call_pipeline(query: str, cohort_year: int | None) -> dict[str, Any]:  # noqa: ARG001
