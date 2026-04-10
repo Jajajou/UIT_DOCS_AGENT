@@ -1173,7 +1173,7 @@ class LightRAGAPIClient:
                 cur.execute(
                     """
                     SELECT
-                      lds.file_source,
+                      lds.file_path AS file_source,
                       tm.doc_id,
                       tm.document_number,
                       tm.document_type,
@@ -1191,7 +1191,7 @@ class LightRAGAPIClient:
                     FROM lightrag_doc_status lds
                     INNER JOIN temporal_metadata tm ON tm.doc_id = lds.id
                     WHERE lds.workspace = %s
-                      AND lds.file_source = ANY(%s)
+                      AND lds.file_path = ANY(%s)
                     """,
                     (workspace, list(file_sources))
                 )
