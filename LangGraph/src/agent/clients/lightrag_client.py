@@ -916,8 +916,7 @@ class LightRAGAPIClient:
         Returns:
             Summary dict with counts of linked, skipped, not_found, errors.
         """
-        summary = {"total_amending_docs": 0, "linked": 0, "already_linked": 0,
-                   "not_found": 0, "errors": 0}
+        summary = {"total_amending_docs": 0, "linked": 0, "not_found": 0, "errors": 0}
         try:
             conn = self._get_pg_connection()
             workspace = os.getenv("WORKSPACE", "default")

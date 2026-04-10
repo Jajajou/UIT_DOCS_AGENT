@@ -17,6 +17,7 @@ from ..states.metadata_rag_state import MetadataRAGState
 from ..core.prompts import METADATA_PROMPTS
 from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
+from agent.utils import strip_think_tags
 from pydantic import BaseModel, Field, validator
 
 llm = init_chat_model(
@@ -247,10 +248,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
         # Ensure content is a string before calling strip
         if not isinstance(content, str):
             content = str(content)
-        # Strip Qwen3 thinking tokens (<think>...</think>) before length check
-        think_match = re.search(r'</think>\s*(.*)', content, re.DOTALL)
-        if think_match:
-            content = think_match.group(1)
+        content = strip_think_tags(content)
         raw_num = content.strip().replace("NULL", "").strip()
         # Validate: real document numbers are short (e.g. "108/QĐ-ĐHCNTT"), max 80 chars
         updates["document_number"] = raw_num if raw_num and len(raw_num) <= 80 else None

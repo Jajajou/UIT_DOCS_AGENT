@@ -300,14 +300,14 @@ class Reranker:
 
         Returns:
             1.0 if item's cohort_years contains query_cohort_year
-            0.0 if item has cohort_years but query_cohort_year is not in it
-            0.5 (neutral) if no cohort specified in query or no metadata for this item
+            0.0 if item has cohort_years and query_cohort_year is not in it
+            0.5 (neutral) if no cohort in query, no metadata, or empty cohort_years list
         """
         if query_cohort_year is None:
             return 0.5  # neutral — no cohort specified in query
         cohort_years = item.get("metadata", {}).get("cohort_years", None)
-        if cohort_years is None:
-            return 0.5  # neutral — no metadata for this doc
+        if not cohort_years:
+            return 0.5  # neutral — no cohort metadata or empty list
         return 1.0 if query_cohort_year in cohort_years else 0.0
 
     def rerank_with_temporal_boost(

@@ -11,6 +11,7 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Literal, List, Dict, Any, Union, Optional, cast
+from urllib.parse import unquote
 
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END, START
@@ -139,8 +140,6 @@ def _dedupe_file_copies(file_paths: List[str]) -> List[str]:
     Keeps the shortest-named version for each base stem so the URL lookup
     always matches the original filename rather than a deep copy.
     """
-    import re
-    from urllib.parse import unquote
     _DEDUP_RE = re.compile(r"([_ ]+\d+)+$")
 
     def base_stem(path: str) -> str:
@@ -536,8 +535,8 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
         file_name = os.path.basename(file_path)
         file_list = state.get("file_list", [])
         current_index = state.get("current_file_index", 0)
-        # Prefer admin-supplied URL over auto-discovered URL
-        url = state.get("explicit_url") or get_url(file_path)
+        # explicit_url is only meaningful for single-file uploads; ignore for batch
+        url = (state.get("explicit_url") if len(file_list) == 1 else None) or get_url(file_path)
 
         print(f"[UPLOAD] {current_index + 1}/{len(file_list)}: {file_name}, {url}")
 
@@ -612,14 +611,16 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                     for _attempt in range(60):
                         conn = api_client._get_pg_connection()
                         workspace = os.getenv("WORKSPACE", "default")
-                        with conn.cursor() as cur:
-                            cur.execute(
-                                "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
-                                (workspace, track_id)
-                            )
-                            row = cur.fetchone()
-                            doc_id = row[0] if row else None
-                        conn.close()
+                        try:
+                            with conn.cursor() as cur:
+                                cur.execute(
+                                    "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
+                                    (workspace, track_id)
+                                )
+                                row = cur.fetchone()
+                                doc_id = row[0] if row else None
+                        finally:
+                            conn.close()
                         if doc_id:
                             break
                         print(f"[METADATA] Waiting for LightRAG to create doc row (attempt {_attempt + 1}/60)...")

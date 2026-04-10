@@ -26,6 +26,7 @@ from agent.states.query_state import (
 from langchain.chat_models import init_chat_model
 from agent.core.prompts import PROMPTS
 from agent.config import get_attr_safe, settings
+from agent.utils import strip_think_tags
 
 
 # ============================================================================
@@ -117,8 +118,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         raw_response = llm_json.invoke(input=msgs)
         content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
 
-        # Strip Qwen3 chain-of-thought tokens before JSON parsing
-        content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+        content = strip_think_tags(content)
 
         data = json_module.loads(content)
         understanding = QueryUnderstanding(**data)

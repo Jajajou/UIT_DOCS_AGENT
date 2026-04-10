@@ -301,7 +301,7 @@ def main() -> None:
 
         config_results = []
         for pair in pairs:
-            result = eval_pair(pair, config_name, verbose=args.verbose or True)
+            result = eval_pair(pair, config_name, verbose=args.verbose)
             config_results.append(result)
             time.sleep(2)
 

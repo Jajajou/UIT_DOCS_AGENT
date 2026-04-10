@@ -81,7 +81,6 @@ def _lookup_url_by_stem(filename: str) -> Optional[str]:
     Look up the source URL for a PDF file using the pre-built lookup.
     Strips trailing dedup suffixes (_001, _002 etc) and decodes percent-encoding.
     """
-    from urllib.parse import unquote
     lookup = _load_pdf_url_lookup()
     stem = unquote(filename).lower()
     if stem.endswith(".pdf"):
@@ -143,6 +142,11 @@ def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
 
     # Fallback: pre-built lookup from firecrawl metadata.jsonl
     return _lookup_url_by_stem(pdf_path.name)
+
+def strip_think_tags(content: str) -> str:
+    """Strip Qwen3 chain-of-thought <think>...</think> tokens before JSON parsing."""
+    return re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+
 
 def content_to_text(content: Any) -> str:
     """Extract text from message content."""
