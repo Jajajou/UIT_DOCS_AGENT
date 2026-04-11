@@ -801,7 +801,7 @@ class LightRAGAPIClient:
                     """
                     SELECT
                       tm.doc_id, tm.valid_until::text, tm.document_number,
-                      tm.document_type, lds.file_source
+                      tm.document_type, lds.file_path AS file_source
                     FROM temporal_metadata tm
                     LEFT JOIN lightrag_doc_status lds ON lds.id = tm.doc_id
                     WHERE tm.workspace = %s
@@ -1103,7 +1103,7 @@ class LightRAGAPIClient:
                 if include_archived:
                     cur.execute(
                         """
-                        SELECT id, file_source, metadata, created_at, updated_at
+                        SELECT id, file_path AS file_source, metadata, created_at, updated_at
                         FROM lightrag_doc_status
                         WHERE workspace = %s
                         ORDER BY created_at DESC
@@ -1114,7 +1114,7 @@ class LightRAGAPIClient:
                     # Exclude already archived documents
                     cur.execute(
                         """
-                        SELECT id, file_source, metadata, created_at, updated_at
+                        SELECT id, file_path AS file_source, metadata, created_at, updated_at
                         FROM lightrag_doc_status
                         WHERE workspace = %s
                         AND (metadata->>'is_archived' IS NULL OR metadata->>'is_archived' = 'false')

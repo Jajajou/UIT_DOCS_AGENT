@@ -177,26 +177,28 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     entities = state.get("retrieved_entities", [])
     relationships = state.get("retrieved_relationships", [])
 
-    all_file_sources = {
-        item.get("file_source", "")
+    all_file_paths = {
+        item.get("file_path", "")
         for item in chunks + entities + relationships
-        if item.get("file_source")
+        if item.get("file_path")
     }
 
-    if not all_file_sources:
+    if not all_file_paths:
+        print("[ENRICH] No file_path found in retrieved items, skipping enrichment")
         return {}
 
-    temporal_map = api_client.get_temporal_metadata_by_file_sources(list(all_file_sources))
+    temporal_map = api_client.get_temporal_metadata_by_file_sources(list(all_file_paths))
 
     if not temporal_map:
+        print(f"[ENRICH] No temporal metadata found for {len(all_file_paths)} file paths")
         return {}
 
     def enrich(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result = []
         for item in items:
-            fs = item.get("file_source", "")
-            if fs in temporal_map:
-                enriched = {**item, "metadata": {**item.get("metadata", {}), **temporal_map[fs]}}
+            fp = item.get("file_path", "")
+            if fp in temporal_map:
+                enriched = {**item, "metadata": {**item.get("metadata", {}), **temporal_map[fp]}}
                 result.append(enriched)
             else:
                 result.append(item)
@@ -206,7 +208,7 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     enriched_entities = enrich(entities)
     enriched_relationships = enrich(relationships)
 
-    matched = sum(1 for item in chunks + entities + relationships if item.get("file_source", "") in temporal_map)
+    matched = sum(1 for item in chunks + entities + relationships if item.get("file_path", "") in temporal_map)
     total = len(chunks) + len(entities) + len(relationships)
     print(f"[ENRICH] Enriched {matched}/{total} items with temporal metadata")
 
