@@ -93,10 +93,11 @@ class LightRAGAPIClient:
         return r.json()
 
     # ------------------------------ documents ------------------------------
-    def upload_file(self, file_path: str) -> dict:
+    def upload_file(self, file_path: str, file_source: str | None = None) -> dict:
         with open(file_path, "rb") as f:
             files = {"file": (os.path.basename(file_path), f)}
-            r = self._post("/documents/upload", files=files)
+            data = {"file_source": file_source} if file_source else None
+            r = self._post("/documents/upload", files=files, data=data)
         r.raise_for_status()
         return r.json()
 
@@ -693,6 +694,29 @@ class LightRAGAPIClient:
                     "error": result.get("error", "Unknown error")
                 })
 
+        # Also update temporal_metadata table for accurate archival tracking
+        if results["archived"]:
+            try:
+                conn = self._get_pg_connection()
+                workspace = os.getenv("WORKSPACE", "default")
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        UPDATE temporal_metadata
+                        SET
+                          is_archived = TRUE,
+                          archived_at = CURRENT_TIMESTAMP,
+                          archive_reason = %s,
+                          updated_at = CURRENT_TIMESTAMP
+                        WHERE doc_id = ANY(%s) AND workspace = %s
+                        """,
+                        (reason, results["archived"], workspace)
+                    )
+                    conn.commit()
+                conn.close()
+            except Exception as e:
+                print(f"[Soft Delete] Warning: failed to update temporal_metadata: {e}")
+
         return results
 
     def get_active_documents(
@@ -766,38 +790,48 @@ class LightRAGAPIClient:
         if not cutoff_date:
             cutoff_date = datetime.now().date().isoformat()
 
-        cutoff = datetime.fromisoformat(cutoff_date)
-
-        # Get all documents (large page size to get everything)
-        all_docs_response = self.documents_paginated(page_size=10000)
-        all_docs = all_docs_response.get("documents", [])
-
         expired_doc_ids = []
         expired_docs_info = []
 
-        for doc in all_docs:
-            metadata = doc.get("metadata", {})
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                      tm.doc_id, tm.valid_until::text, tm.document_number,
+                      tm.document_type, lds.file_source
+                    FROM temporal_metadata tm
+                    LEFT JOIN lightrag_doc_status lds ON lds.id = tm.doc_id
+                    WHERE tm.workspace = %s
+                      AND tm.is_archived = FALSE
+                      AND tm.valid_until IS NOT NULL
+                      AND tm.valid_until < %s::date
+                    """,
+                    (workspace, cutoff_date)
+                )
+                rows = cur.fetchall()
+            conn.close()
 
-            # Skip already archived
-            if metadata.get("is_archived"):
-                continue
-
-            # Check expiration
-            valid_until = metadata.get("valid_until")
-            if valid_until:
-                try:
-                    expiry_date = datetime.fromisoformat(valid_until)
-                    if expiry_date.date() < cutoff.date():
-                        expired_doc_ids.append(doc["id"])
-                        expired_docs_info.append({
-                            "id": doc["id"],
-                            "file_path": doc.get("file_path", "unknown"),
-                            "valid_until": valid_until,
-                            "document_type": metadata.get("document_type", "unknown")
-                        })
-                except (ValueError, TypeError):
-                    # Invalid date format, skip
-                    continue
+            for row in rows:
+                doc_id, valid_until, doc_number, doc_type, file_source = row
+                expired_doc_ids.append(doc_id)
+                expired_docs_info.append({
+                    "id": doc_id,
+                    "file_path": file_source or "unknown",
+                    "valid_until": valid_until,
+                    "document_number": doc_number or "unknown",
+                    "document_type": doc_type or "unknown"
+                })
+        except Exception as e:
+            print(f"[Archive Expired] Error querying temporal_metadata: {e}")
+            return {
+                "archived": [],
+                "failed": [],
+                "error": str(e),
+                "cutoff_date": cutoff_date
+            }
 
         if dry_run:
             return {
@@ -825,6 +859,9 @@ class LightRAGAPIClient:
         """
         Find document IDs by their official document number using PostgreSQL.
 
+        Queries temporal_metadata.document_number (the authoritative source).
+        Falls back to a fuzzy match to handle minor formatting differences.
+
         Args:
             doc_number: Document number (e.g., "123/QĐ-ĐHCNTT")
 
@@ -837,15 +874,27 @@ class LightRAGAPIClient:
             workspace = os.getenv("WORKSPACE", "default")
 
             with conn.cursor() as cur:
-                # Query JSONB for matching document_number in metadata
+                # Exact match in temporal_metadata (authoritative source)
                 query = """
-                    SELECT id
-                    FROM lightrag_doc_status
+                    SELECT doc_id
+                    FROM temporal_metadata
                     WHERE workspace = %s
-                    AND metadata->>'document_number' = %s
+                    AND document_number = %s
                 """
                 cur.execute(query, (workspace, doc_number))
                 rows = cur.fetchall()
+
+                if not rows:
+                    # Fuzzy match: strip spaces and compare case-insensitively
+                    query_fuzzy = """
+                        SELECT doc_id
+                        FROM temporal_metadata
+                        WHERE workspace = %s
+                        AND REPLACE(LOWER(document_number), ' ', '') =
+                            REPLACE(LOWER(%s), ' ', '')
+                    """
+                    cur.execute(query_fuzzy, (workspace, doc_number))
+                    rows = cur.fetchall()
 
                 for row in rows:
                     doc_ids.append(row[0])
@@ -853,8 +902,59 @@ class LightRAGAPIClient:
             conn.close()
         except Exception as e:
             print(f"[LightRAG Client] Error searching for doc number {doc_number}: {e}")
-        
+
         return doc_ids
+
+    def backfill_amendment_links(self) -> Dict[str, Any]:
+        """
+        Post-reindex pass: for every document that has amends_documents set,
+        try to populate amended_by_documents on the referenced old documents.
+
+        Run this once after a full reindex to ensure bidirectional links are
+        complete regardless of indexing order.
+
+        Returns:
+            Summary dict with counts of linked, skipped, not_found, errors.
+        """
+        summary = {"total_amending_docs": 0, "linked": 0, "not_found": 0, "errors": 0}
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT doc_id, amends_documents
+                    FROM temporal_metadata
+                    WHERE workspace = %s
+                    AND amends_documents IS NOT NULL
+                    AND jsonb_array_length(amends_documents) > 0
+                    """,
+                    (workspace,)
+                )
+                rows = cur.fetchall()
+
+            conn.close()
+
+            summary["total_amending_docs"] = len(rows)
+            print(f"[Backfill] Found {len(rows)} documents with amends_documents to process")
+
+            for doc_id, amends_list in rows:
+                amended_numbers = amends_list if isinstance(amends_list, list) else []
+                if not amended_numbers:
+                    continue
+
+                result = self.link_amended_documents(doc_id, amended_numbers)
+                summary["linked"] += len(result.get("linked_docs", []))
+                summary["not_found"] += len(result.get("not_found", []))
+                summary["errors"] += len(result.get("errors", []))
+
+        except Exception as e:
+            print(f"[Backfill] Fatal error: {e}")
+            summary["errors"] += 1
+
+        print(f"[Backfill] Done: {summary}")
+        return summary
 
     def link_amended_documents(
         self, 
@@ -914,16 +1014,34 @@ class LightRAGAPIClient:
                         if row:
                             metadata = row[0] if row[0] else {}
 
-                            # Update amended_by list
+                            # Update amended_by list in lightrag_doc_status (backward compat)
                             amended_by = metadata.get("amended_by", [])
                             if new_doc_id not in amended_by:
                                 amended_by.append(new_doc_id)
                                 metadata["amended_by"] = amended_by
 
-                                # Save back
+                                # Save back to lightrag_doc_status
                                 cur.execute(
                                     "UPDATE lightrag_doc_status SET metadata = %s WHERE workspace = %s AND id = %s",
                                     (json.dumps(metadata), workspace, old_doc_id)
+                                )
+                                conn.commit()
+
+                                # Also update temporal_metadata for durable amended_by tracking
+                                cur.execute(
+                                    """
+                                    UPDATE temporal_metadata
+                                    SET
+                                      amended_by_documents = CASE
+                                        WHEN amended_by_documents IS NULL THEN to_jsonb(ARRAY[%s::text])
+                                        WHEN NOT (amended_by_documents @> to_jsonb(ARRAY[%s::text]))
+                                          THEN amended_by_documents || to_jsonb(ARRAY[%s::text])
+                                        ELSE amended_by_documents
+                                      END,
+                                      updated_at = CURRENT_TIMESTAMP
+                                    WHERE doc_id = %s AND workspace = %s
+                                    """,
+                                    (new_doc_id, new_doc_id, new_doc_id, old_doc_id, workspace)
                                 )
                                 conn.commit()
 
@@ -931,7 +1049,7 @@ class LightRAGAPIClient:
                                     "old_doc_id": old_doc_id,
                                     "old_doc_number": old_doc_number
                                 })
-                                print(f"[Temporal Linking] ✓ Linked: {old_doc_number} ({old_doc_id}) <- amended by {new_doc_id}")
+                                print(f"[Temporal Linking] Linked: {old_doc_number} ({old_doc_id}) <- amended by {new_doc_id}")
 
                     conn.close()
 
@@ -1024,6 +1142,92 @@ class LightRAGAPIClient:
         except Exception as e:
             print(f"[LightRAG Client] Error fetching all documents: {e}")
             return []
+
+    def get_temporal_metadata_by_file_sources(
+        self,
+        file_sources: List[str]
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Batch-fetch temporal metadata for a list of file_sources.
+
+        Joins lightrag_doc_status with temporal_metadata in a single query.
+        Returns a mapping of file_source -> temporal metadata dict so callers
+        can enrich retrieved items without N+1 queries.
+
+        Key names in the returned dicts match what calculate_temporal_score()
+        and assess_temporal_freshness() expect:
+          valid_from, valid_until, is_archived, indexed_at,
+          amended_by (mapped from amended_by_documents),
+          document_number, cohort_years, extraction_confidence
+
+        On any error, returns {} (graceful fallback — items scored neutral 0.5).
+        """
+        if not file_sources:
+            return {}
+
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                      lds.file_source,
+                      tm.doc_id,
+                      tm.document_number,
+                      tm.document_type,
+                      tm.valid_from::text,
+                      tm.valid_until::text,
+                      tm.cohort_years,
+                      tm.cohort_scope,
+                      tm.amends_documents,
+                      tm.amended_by_documents,
+                      tm.is_archived,
+                      tm.archived_at::text,
+                      tm.archive_reason,
+                      tm.extraction_confidence,
+                      tm.extraction_timestamp::text AS indexed_at
+                    FROM lightrag_doc_status lds
+                    INNER JOIN temporal_metadata tm ON tm.doc_id = lds.id
+                    WHERE lds.workspace = %s
+                      AND lds.file_source = ANY(%s)
+                    """,
+                    (workspace, list(file_sources))
+                )
+                rows = cur.fetchall()
+            conn.close()
+
+            result: Dict[str, Dict[str, Any]] = {}
+            for row in rows:
+                (
+                    file_source, doc_id, document_number, document_type,
+                    valid_from, valid_until, cohort_years, cohort_scope,
+                    amends_documents, amended_by_documents, is_archived,
+                    archived_at, archive_reason, extraction_confidence, indexed_at
+                ) = row
+                if file_source:
+                    result[file_source] = {
+                        "doc_id": doc_id,
+                        "document_number": document_number,
+                        "document_type": document_type,
+                        "valid_from": valid_from,
+                        "valid_until": valid_until,
+                        "cohort_years": cohort_years or [],
+                        "cohort_scope": cohort_scope,
+                        "amends_documents": amends_documents or [],
+                        "amended_by": amended_by_documents or [],
+                        "is_archived": bool(is_archived),
+                        "archived_at": archived_at,
+                        "archive_reason": archive_reason,
+                        "extraction_confidence": extraction_confidence,
+                        "indexed_at": indexed_at,
+                    }
+            return result
+
+        except Exception as e:
+            print(f"[LightRAG Client] Error fetching temporal metadata by file_sources: {e}")
+            return {}
 
     def get_doc_id_by_track_id(
         self,

@@ -2,7 +2,7 @@
 
 # DeepSeek OCR Configuration
 deepseek_ocr:
-  model_name: "mlx-community/DeepSeek-OCR-8bit"
+  model_name: "mlx-community/DeepSeek-OCR-2-bf16"
   model_configs:
     Gundam: {base_size: 1024, image_size: 640, crop_mode: True}
     Tiny: {base_size: 512, image_size: 512, crop_mode: False}
@@ -15,6 +15,7 @@ deepseek_ocr:
     Locate: {prompt: "Locate <|ref|>text<|/ref|> in the image.", has_grounding: True}
     Describe: {prompt: "Describe this image in detail.", has_grounding: False}
     Custom: {prompt: "", has_grounding: False}
+  page_image_size: 768
   skip_repeat: True
 
 # Query Confidence Thresholds
@@ -31,7 +32,7 @@ retrieval:
 
 # Reranker Configuration
 reranker:
-  default_model: "namdp-ptit/ViRanker"
+  default_model: "AITeamVN/Vietnamese_Reranker"
   top_n_for_confidence: 5
   use_fp16: True
   batch_size: 8
@@ -47,6 +48,12 @@ temporal:
   # Research shows 0.3 weight achieves optimal balance
   recency_weight: 0.3
 
+  # Cohort-aware reranking weights (must sum to 1.0)
+  # Used when use_cohort_boost=True AND query has a cohort year
+  cohort_weight: 0.25           # Weight for cohort match score (1.0/0.5/0.0)
+  semantic_weight_cohort: 0.55  # Weight for semantic score in cohort mode
+  temporal_weight_cohort: 0.20  # Weight for temporal freshness in cohort mode
+
   # Document freshness thresholds
   freshness_thresholds:
     warning_days: 30      # Warn if document expires within 30 days
@@ -54,9 +61,15 @@ temporal:
 
   # Data quality penalties for expired content
   quality_penalties:
-    expired_penalty: 0.5       # Multiply quality score by 0.5 if expired
-    expiring_soon_penalty: 0.8 # Multiply by 0.8 if expiring within warning_days
-    amended_penalty: 0.7       # Multiply by 0.7 if document has been amended by newer version
+    expired_penalty: 0.5          # Multiply quality score by 0.5 if expired
+    expiring_soon_penalty: 0.8    # Multiply by 0.8 if expiring within warning_days
+    amended_penalty: 0.7          # Multiply by 0.7 if document has been amended by newer version
+    amendment_override_score: 0.3 # Temporal score forced onto superseded docs in reranking
+
+  # Amendment override: force a low temporal score on any item that has been
+  # superseded by a newer document (amended_by field is non-empty).
+  # Controlled by USE_AMENDMENT_OVERRIDE env var (default: false).
+  # Note: this setting is env-var only; the YAML value here is not loaded.
 
   # Version management
   versioning:

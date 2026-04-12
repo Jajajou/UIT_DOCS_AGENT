@@ -8,7 +8,6 @@ from datetime import datetime
 
 # LangChain & Models
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import CrossEncoder
 import chromadb
 from chromadb.config import Settings
 import numpy as np
@@ -18,39 +17,64 @@ from ..states.metadata_rag_state import MetadataRAGState
 from ..core.prompts import METADATA_PROMPTS
 from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
+from agent.utils import strip_think_tags
 from pydantic import BaseModel, Field, validator
 
 llm = init_chat_model(
     model_provider="openai",
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
-    model=settings.llm_model,
+    model=settings.indexing_llm_model,
     streaming=False,
-    temperature=settings.agent2_temperature,
-    model_kwargs={"tool_choice": "none"}
+    temperature=0,
+    model_kwargs={
+        "tool_choice": "none"
+    }
 )
 
 # Setup Logging
 logger = logging.getLogger(__name__)
 
 # --- GLOBAL MODELS (Singleton Pattern) ---
-# Load reranker locally, use vLLM API for embeddings
+# Reranker uses HTTP API; only load ChromaDB in-memory client
 try:
-    logger.info("Loading Reranker Model: namdp-ptit/ViRanker...")
-    RERANKER_MODEL = CrossEncoder("namdp-ptit/ViRanker")
-
-    # ChromaDB In-Memory Client
     CHROMA_CLIENT = chromadb.Client(Settings(
         anonymized_telemetry=False,
         allow_reset=True,
         is_persistent=False
     ))
-    logger.info("Reranker Model & Vector DB Loaded Successfully.")
-    print("Reranker Model & Vector DB Loaded Successfully.")
+    logger.info("Vector DB Loaded Successfully.")
+    print("Vector DB Loaded Successfully.")
 except Exception as e:
-    logger.error(f"Error loading models: {e}")
-    print(f"Error loading models: {e}")
+    logger.error(f"Error loading vector DB: {e}")
+    print(f"Error loading vector DB: {e}")
     raise e
+
+
+# --- RERANKER HTTP CLIENT ---
+def compute_rerank_scores_http(query: str, docs: List[str]) -> List[float]:
+    """
+    Call vLLM /v1/score endpoint to rerank documents.
+
+    Args:
+        query: Query string
+        docs: List of candidate documents
+
+    Returns:
+        List of relevance scores (floats)
+    """
+    import requests
+
+    url = f"{settings.reranker_base_url}/v1/score"
+    payload = {
+        "model": settings.reranker.default_model,
+        "text_1": query,
+        "text_2": docs
+    }
+    response = requests.post(url, json=payload, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+    return [item["score"] for item in data["data"]]
 
 
 # --- EMBEDDING API CLIENT ---
@@ -79,7 +103,7 @@ def get_embeddings_from_vllm(texts: List[str]) -> List[List[float]]:
             "model": settings.embedding_model
         }
 
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        response = requests.post(url, headers=headers, json=payload, timeout=300)
         response.raise_for_status()
 
         result = response.json()
@@ -130,7 +154,8 @@ def index_to_vector_db_node(state: MetadataRAGState) -> Dict[str, Any]:
             return {"error": "No chunks to index", "success": False}
 
         # Create unique collection name for this session
-        clean_source = ''.join(e for e in state['file_source'] if e.isalnum())[-10:]
+        file_source = state.get('file_source') or ''
+        clean_source = ''.join(e for e in file_source if e.isalnum())[-10:] or uuid.uuid4().hex[:10]
         collection_name = f"temp_{uuid.uuid4().hex[:8]}_{clean_source}"
 
         collection = CHROMA_CLIENT.create_collection(
@@ -180,10 +205,8 @@ def _rag_retrieve_and_rerank(collection_name: str, query: str, top_k_retrieve=50
 
     candidates = candidates_list[0]
 
-    # 2. Cross-encoder Reranking
-    # Create pairs (query, doc)
-    pairs = [[query, doc] for doc in candidates]
-    scores = RERANKER_MODEL.predict(pairs)
+    # 2. Cross-encoder Reranking via HTTP API
+    scores = compute_rerank_scores_http(query, candidates)
 
     # Sort & take top K
     # scores is numpy array, need to sort by index
@@ -225,7 +248,10 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
         # Ensure content is a string before calling strip
         if not isinstance(content, str):
             content = str(content)
-        updates["document_number"] = content.strip().replace("NULL", "").strip() or None
+        content = strip_think_tags(content)
+        raw_num = content.strip().replace("NULL", "").strip()
+        # Validate: real document numbers are short (e.g. "108/QĐ-ĐHCNTT"), max 80 chars
+        updates["document_number"] = raw_num if raw_num and len(raw_num) <= 80 else None
         
         # --- 2. Valid Dates (Temporal Aware) ---
         q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
@@ -262,7 +288,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             updates["valid_until"] = None
         
         # --- 3. Cohorts ---
-        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng?"
+        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng? Khóa 1 khóa 2 khóa 3?"
         docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
         updates["cohort_years_chunks"] = docs_cohort
 
@@ -321,15 +347,19 @@ Tìm số hiệu các văn bản được sửa đổi (VD: "108/QĐ-ĐHCNTT", "
                 if not isinstance(content_amends, str):
                     content_amends = str(content_amends)
 
-                # Try to find JSON in response
-                json_match = re.search(r'\{.*?"amends_documents".*\}', content_amends.strip(), re.DOTALL)
-                if json_match:
-                    amends_data = json.loads(json_match.group())
-                    updates["amends_documents"] = amends_data.get("amends_documents", [])
-                else:
+                # Try to parse JSON from response — use raw_decode to stop at first valid object
+                try:
+                    decoder = json.JSONDecoder()
+                    start = content_amends.find('{')
+                    if start >= 0:
+                        amends_data, _ = decoder.raw_decode(content_amends, start)
+                        updates["amends_documents"] = amends_data.get("amends_documents", [])
+                    else:
+                        raise ValueError("No JSON object found")
+                except (ValueError, json.JSONDecodeError):
                     # Fallback: regex search for document numbers
                     doc_numbers = re.findall(r'\d+/[A-ZĐ\-]+', context_amends)
-                    updates["amends_documents"] = list(set(doc_numbers))[:5]  # Limit to 5 unique
+                    updates["amends_documents"] = list(set(doc_numbers))[:5]
             except Exception as e:
                 logger.warning(f"Error extracting amends: {e}")
                 print(f"Error extracting amends: {e}")
@@ -357,20 +387,33 @@ Tìm số hiệu các văn bản được sửa đổi (VD: "108/QĐ-ĐHCNTT", "
                         # Extract Document Number
                         if not updates.get("document_number"):
                             raw_num = match.group(1)
-                            # Heuristic formatting: 03-tb-dhcntt -> 03/TB-ĐHCNTT
-                            parts = raw_num.split('-')
-                            if len(parts) >= 2:
-                                # First part is usually the number, second is the type
-                                fmt_num = f"{parts[0]}/{parts[1].upper()}"
-                                if len(parts) > 2:
-                                    suffix = "-".join(p.upper() for p in parts[2:])
-                                    suffix = suffix.replace("DHCNTT", "ĐHCNTT")
-                                    fmt_num = f"{fmt_num}-{suffix}"
-                                
+                            # Handle two filename patterns:
+                            # Pattern A: 03-tb-dhcntt    -> 03/TB-ĐHCNTT      (QD, TB from UIT)
+                            # Pattern B: 02_2022-tt-bgddt -> 02/2022/TT-BGDĐT  (TT from Ministry, year encoded with _)
+                            fmt_num = None
+                            # Check for Ministry-style: NUM_YEAR-TYPE-ISSUER
+                            ministry_match = re.match(r'^(\d+)_(\d{4})-([a-zA-Z]+)-([a-zA-Z]+)$', raw_num)
+                            if ministry_match:
+                                num = ministry_match.group(1)
+                                year = ministry_match.group(2)
+                                doc_type = ministry_match.group(3).upper()
+                                issuer = ministry_match.group(4).upper()
+                                issuer = issuer.replace("BGDDT", "BGDĐT")
+                                fmt_num = f"{num}/{year}/{doc_type}-{issuer}"
+                            else:
+                                parts = raw_num.split('-')
+                                if len(parts) >= 2:
+                                    fmt_num = f"{parts[0]}/{parts[1].upper()}"
+                                    if len(parts) > 2:
+                                        suffix = "-".join(p.upper() for p in parts[2:])
+                                        suffix = suffix.replace("DHCNTT", "ĐHCNTT")
+                                        fmt_num = f"{fmt_num}-{suffix}"
+                                else:
+                                    fmt_num = raw_num
+
+                            if fmt_num:
                                 updates["document_number"] = fmt_num
                                 logger.info(f"Fallback extracted doc number: {fmt_num}")
-                            else:
-                                updates["document_number"] = raw_num
                         
                         # Extract Date - Overwrite if generic or missing
                         raw_date = match.group(2)
@@ -474,7 +517,7 @@ class DocumentMetadata(BaseModel):
     cohort_years: List[int | str] = Field(default_factory=list)
     cohort_scope: str = "unspecified"  # "universal", "explicit", "unspecified"
     amends_documents: List[str] = Field(default_factory=list)
-    temporal_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+    extraction_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
 
     @validator("valid_from", "valid_until")
     def validate_date_format(cls, v):
@@ -541,7 +584,7 @@ def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
             cohort_years=state.get("cohort_years", []),
             cohort_scope=state.get("cohort_scope", "unspecified"),
             amends_documents=state.get("amends_documents", []),
-            temporal_confidence=state.get("extraction_confidence", 0.0)
+            extraction_confidence=state.get("extraction_confidence", 0.0)
         )
 
         # Convert to dict, excluding None values

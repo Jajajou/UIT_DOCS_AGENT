@@ -11,17 +11,10 @@ from PIL import Image, ImageDraw, ImageFont
 from typing import Optional, Dict, Any, Tuple, List, Literal
 from PIL import Image
 
-# MLX-VLM is optional (only works on Apple Silicon)
-try:
-    from mlx_vlm import load, apply_chat_template, generate
-    MLX_AVAILABLE = True
-except ImportError:
-    MLX_AVAILABLE = False
-    load = None
-    apply_chat_template = None
-    generate = None
-
 from agent.config import settings
+
+# mlx_vlm is imported lazily inside _load_model() to avoid hard import at module load time.
+# (mlx_vlm is only installed in the root venv, not the LangGraph venv used by langgraph dev)
 
 DEFAULT_TIMEOUT = 300  # 5 minutes for 1 PDF parsing
 
@@ -49,15 +42,21 @@ class DeepSeekOCRClient:
     
     def _load_model(self):
         """Load the DeepSeek OCR model."""
-        if not MLX_AVAILABLE:
-            raise DeepSeekOCRClientError(
-                "mlx_vlm is not available. This feature requires Apple Silicon (MLX). "
-                "Use an alternative OCR method or run on Apple Silicon hardware."
-            )
         if self.model is not None and self.processor is not None:
             return
+        # LlamaFlashAttention2 was removed in transformers 4.46+.
+        # Inject shim before mlx_vlm loads the model's custom code.
+        try:
+            from transformers.models.llama import modeling_llama as _llama_mod
+            if not hasattr(_llama_mod, "LlamaFlashAttention2"):
+                _llama_mod.LlamaFlashAttention2 = _llama_mod.LlamaAttention
+        except Exception:
+            pass
+        from mlx_vlm import load, apply_chat_template, generate
+        self._mlx_apply_chat_template = apply_chat_template
+        self._mlx_generate = generate
         print(f"[DeepSeek OCR] Loading model: {self.model_name}")
-        self.model, self.processor = load(self.model_name)
+        self.model, self.processor = load(self.model_name, trust_remote_code=True)
         self.config = self.model.config
         print("[DeepSeek OCR] Model loaded successfully")
 
@@ -178,18 +177,19 @@ class DeepSeekOCRClient:
                 {"role": "user", "content": f"{prompt}"}
             ]
             
-            formatted = apply_chat_template(
+            formatted = self._mlx_apply_chat_template(
                 self.processor,
                 self.config,
                 messages,
                 num_images=1
             )
-            
-            output = generate(
+
+            img_size = getattr(settings.deepseek_ocr, "page_image_size", 1024)
+            output = self._mlx_generate(
                 model=self.model, # type: ignore
                 processor=self.processor, # type: ignore
                 prompt=formatted, # type: ignore
-                image=[image.resize((1024, 1024))], # type: ignore
+                image=[image.resize((img_size, img_size))], # type: ignore
                 temperature=0.0,
                 max_tokens=2048,
                 verbose=False
@@ -388,18 +388,25 @@ class DeepSeekOCRClient:
         Returns:
             Tuple of (markdown_content, output_dir_path)
         """
-        self._ensure_loaded()
-
         # Set default output directory
         file_stem = Path(file_path).stem
         if output_dir is None:
             output_dir = str(Path("./output") / file_stem)
         else:
             output_dir = str(settings.deepseek_ocr_dir / file_stem)
-        
+
+        # skip_repeat: return cached markdown if it already exists
+        if settings.deepseek_ocr.skip_repeat:
+            cached = self.get_markdown_from_output(output_dir)
+            if cached:
+                print(f"[DeepSeek OCR] Cache hit - skipping OCR for: {file_stem}")
+                return cached, output_dir
+
+        self._ensure_loaded()
+
         # Parse the PDF
         result = self.parse_pdf(file_path, output_dir=output_dir, return_md=True, **kwargs)
-        
+
         if "markdown" not in result or not result["markdown"]:
             raise DeepSeekOCRClientError(f"No text extracted from PDF: {file_path}")
         

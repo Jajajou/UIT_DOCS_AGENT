@@ -30,10 +30,13 @@ Tìm "Số hiệu văn bản" (thường dạng: 123/QĐ-ĐHCNTT, 45/TB-KHTC...)
 
 Tên file hiện tại: {filename}
 
+Nội dung văn bản:
+{context}
+
 Yêu cầu:
-- Chỉ trả về chuỗi số hiệu.
-- Nếu không thấy trong nội dung, trả về "NULL".
-- Ưu tiên trích xuất từ nội dung (header, footer). 
+- Chỉ trả về chuỗi số hiệu (tối đa 50 ký tự). Không giải thích, không thêm văn bản.
+- Nếu không thấy trong nội dung, trả về "NULL". Không được viết giải thích.
+- Ưu tiên trích xuất từ nội dung (header, footer).
 - KHÔNG lấy trực tiếp từ tên file trừ khi không còn cách nào khác.
 """,
     
@@ -76,6 +79,13 @@ Quy tắc phân loại:
    - "khóa 2014, 2015" -> {{"cohort_years": [2014, 2015], "cohort_scope": "explicit"}}
    - "khóa tuyển sinh từ năm 2024 đến năm 2028" -> {{"cohort_years": [2024, 2025, 2026, 2027, 2028], "cohort_scope": "explicit"}}
 
+   ĐẶC BIỆT - Định dạng "Khóa N (YYYY_start - YYYY_end)":
+   Đây là CHƯƠNG TRÌNH ĐÀO TẠO cho sinh viên NHẬP HỌC năm YYYY_start.
+   -> cohort_years chỉ gồm NĂM NHẬP HỌC (YYYY_start), KHÔNG liệt kê các năm giữa.
+   VD: "Khóa đào tạo: Khóa 2 (2007 - 2012)" -> {{"cohort_years": [2007], "cohort_scope": "explicit"}}
+   VD: "Khóa 3 (2008 - 2013)"               -> {{"cohort_years": [2008], "cohort_scope": "explicit"}}
+   VD: "Khóa 15 (2022 - 2026)"              -> {{"cohort_years": [2022], "cohort_scope": "explicit"}}
+
 2. NẾU văn bản là QUY ĐỊNH CHUNG (áp dụng cho TẤT CẢ sinh viên):
    VD: "Quy chế đào tạo", "Quy định điểm danh chung"
    -> {{"cohort_years": ["*"], "cohort_scope": "universal"}}
@@ -85,7 +95,8 @@ Quy tắc phân loại:
 
 CHÚ Ý:
 - Liệt kê ĐẦY ĐỦ các năm nếu có nhiều khóa (VD: [2014, 2015]).
-- Với "từ năm X đến năm Y", hãy liệt kê ĐẦY ĐỦ: [X, X+1, ..., Y]
+- Với "từ năm X đến năm Y" trong các quy định áp dụng, liệt kê ĐẦY ĐỦ: [X, X+1, ..., Y]. Giới hạn tối đa 10 năm.
+- Với "Khóa N (X - Y)" trong chương trình đào tạo, chỉ lấy NĂM ĐẦU X.
 - Chỉ đánh dấu "explicit" khi văn bản NÊU RÕ khóa cụ thể.
 
 Output JSON: {{"cohort_years": [...], "cohort_scope": "..."}}
@@ -410,6 +421,12 @@ Tự động chọn tham số retrieval dựa trên query type:
 - Nếu không chắc → dùng mặc định (mode="mix", top_k=8, chunk_top_k=5)
 </parameter_tuning>
 
+<cohort_extraction>
+Nếu câu hỏi đề cập khóa sinh viên cụ thể (K2022, k2022, khóa 2022, năm nhập học 2022),
+trích xuất năm nhập học vào query_cohort_year (ví dụ: 2022 cho "K2022" hoặc "khóa 2022").
+Nếu không đề cập khóa cụ thể, để query_cohort_year = null.
+</cohort_extraction>
+
 <output_format>
 Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
 {
@@ -420,6 +437,7 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "confidence_reason": "...",
   "needs_clarification": true/false,
   "clarification_question": "..." (nếu needs_clarification=true),
+  "query_cohort_year": null hoặc số năm (ví dụ: 2022),
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
   "suggested_top_k": 3-5,
   "suggested_chunk_top_k:" 10-20,

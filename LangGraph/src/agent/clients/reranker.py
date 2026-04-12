@@ -32,17 +32,20 @@ class Reranker:
         self._load_model()
     
     def _load_model(self):
-        """Load reranker model using FlagEmbedding."""
+        """Load reranker model. If reranker_base_url is configured, skip local model load."""
+        if settings.reranker_base_url:
+            print(f"[RERANKER] HTTP mode: using {settings.reranker_base_url}")
+            return
         try:
             from FlagEmbedding import FlagReranker
-            
+
             print(f"[RERANKER] Loading model: {self.config.default_model}")
             self._model = FlagReranker(
                 self.config.default_model,
                 use_fp16=self.config.use_fp16
             )
-            print(f"[RERANKER] ✓ Model loaded successfully")
-            
+            print(f"[RERANKER] Model loaded successfully")
+
         except ImportError:
             raise ImportError(
                 "FlagEmbedding is required for reranker. "
@@ -70,13 +73,26 @@ class Reranker:
         """
         if not texts:
             raise RuntimeError("Texts empty")
-        
+
+        if settings.reranker_base_url:
+            import requests
+            url = f"{settings.reranker_base_url}/v1/score"
+            payload = {
+                "model": self.config.default_model,
+                "text_1": query,
+                "text_2": texts
+            }
+            response = requests.post(url, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            return [item["score"] for item in data["data"]]
+
         if self._model is None:
             raise RuntimeError("Reranker model not loaded")
-        
+
         # Prepare pairs
         pairs = [(query, text) for text in texts]
-        
+
         # Compute scores
         batch_size = batch_size or self.config.batch_size
         scores = self._model.compute_score(
@@ -84,16 +100,6 @@ class Reranker:
             batch_size=batch_size,
             normalize=self.config.normalize_scores
         )
-        
-        # Ensure scores is a list
-        # if isinstance(scores, (int, float)):
-        #     scores = [scores]
-        # elif hasattr(scores, 'tolist'):
-        #     if scores != None: 
-        #         scores = scores.tolist()
-        #         return scores
-        # else:
-        #     return []
 
         return scores #type: ignore
     
@@ -288,6 +294,22 @@ class Reranker:
         # Default: valid but no recency info
         return 0.8
 
+    def _compute_cohort_score(self, item: Dict[str, Any], query_cohort_year: Optional[int]) -> float:
+        """
+        Compute cohort match score for an item.
+
+        Returns:
+            1.0 if item's cohort_years contains query_cohort_year
+            0.0 if item has cohort_years and query_cohort_year is not in it
+            0.5 (neutral) if no cohort in query, no metadata, or empty cohort_years list
+        """
+        if query_cohort_year is None:
+            return 0.5  # neutral — no cohort specified in query
+        cohort_years = item.get("metadata", {}).get("cohort_years", None)
+        if not cohort_years:
+            return 0.5  # neutral — no cohort metadata or empty list
+        return 1.0 if query_cohort_year in cohort_years else 0.0
+
     def rerank_with_temporal_boost(
         self,
         query: str,
@@ -295,7 +317,8 @@ class Reranker:
         text_field: str = "content",
         top_k: Optional[int] = None,
         temporal_weight: Optional[float] = None,
-        current_date: Optional[str] = None
+        current_date: Optional[str] = None,
+        query_cohort_year: Optional[int] = None
     ) -> List[Tuple[Dict[str, Any], float]]:
         """
         Rerank items with temporal boosting.
@@ -317,16 +340,6 @@ class Reranker:
         if not items:
             return []
 
-        # Get temporal weight from config if not provided
-        if temporal_weight is None:
-            temporal_config = getattr(settings, 'temporal', None)
-            if temporal_config:
-                temporal_weight = getattr(temporal_config, 'recency_weight', 0.3)
-            else:
-                temporal_weight = 0.3  # Default
-
-        semantic_weight = 1.0 - temporal_weight
-
         # Extract texts for semantic scoring
         texts = []
         for item in items:
@@ -344,11 +357,49 @@ class Reranker:
             for item in items
         ]
 
-        # Combine scores
-        combined_scores = [
-            semantic_weight * sem + temporal_weight * temp
-            for sem, temp in zip(semantic_scores, temporal_scores)
-        ]
+        # Amendment override: any item superseded by a newer document gets a
+        # fixed low temporal score, ensuring it ranks below the amending doc.
+        if getattr(settings, 'use_amendment_override', False):
+            raw_override = settings.temporal.quality_penalties.get("amendment_override_score", 0.3)
+            override_score = max(0.0, min(1.0, float(raw_override)))
+            overridden = []
+            new_temporal_scores = []
+            for item, score in zip(items, temporal_scores):
+                amended_by = item.get("metadata", {}).get("amended_by")
+                if isinstance(amended_by, list) and len(amended_by) > 0:
+                    new_temporal_scores.append(override_score)
+                    overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
+                else:
+                    new_temporal_scores.append(score)
+            if overridden:
+                print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
+            temporal_scores = new_temporal_scores
+
+        # Combine scores: 3-weight formula when cohort active, 2-weight otherwise
+        use_cohort = getattr(settings, 'use_cohort_boost', True)
+        if use_cohort and query_cohort_year is not None:
+            temporal_config = getattr(settings, 'temporal', None)
+            s_w = getattr(temporal_config, 'semantic_weight_cohort', 0.55)
+            t_w = getattr(temporal_config, 'temporal_weight_cohort', 0.20)
+            c_w = getattr(temporal_config, 'cohort_weight', 0.25)
+            cohort_scores = [self._compute_cohort_score(item, query_cohort_year) for item in items]
+            combined_scores = [
+                s_w * s + t_w * t + c_w * c
+                for s, t, c in zip(semantic_scores, temporal_scores, cohort_scores)
+            ]
+        else:
+            # Original 2-weight formula
+            if temporal_weight is None:
+                temporal_config = getattr(settings, 'temporal', None)
+                if temporal_config:
+                    temporal_weight = getattr(temporal_config, 'recency_weight', 0.3)
+                else:
+                    temporal_weight = 0.3
+            semantic_weight = 1.0 - temporal_weight
+            combined_scores = [
+                semantic_weight * sem + temporal_weight * temp
+                for sem, temp in zip(semantic_scores, temporal_scores)
+            ]
 
         # Zip items with combined scores
         items_with_scores = list(zip(items, combined_scores))
@@ -389,7 +440,8 @@ class MultiSourceReranker:
         top_k_entities: Optional[int] = None,
         top_k_relationships: Optional[int] = None,
         top_k_chunks: Optional[int] = None,
-        use_temporal_boost: bool = True
+        use_temporal_boost: bool = True,
+        query_cohort_year: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Rerank all sources and calculate overall confidence.
@@ -422,10 +474,14 @@ class MultiSourceReranker:
         print("=" * 80)
 
         # Choose reranking method based on temporal boost setting
-        rerank_func = (
-            self.reranker.rerank_with_temporal_boost if use_temporal_boost
-            else self.reranker.rerank_items
-        )
+        if use_temporal_boost:
+            def rerank_func(q, items, text_field, top_k):
+                return self.reranker.rerank_with_temporal_boost(
+                    q, items, text_field=text_field, top_k=top_k,
+                    query_cohort_year=query_cohort_year
+                )
+        else:
+            rerank_func = self.reranker.rerank_items  # type: ignore
 
         # Rerank entities
         reranked_entities = rerank_func(
@@ -433,7 +489,7 @@ class MultiSourceReranker:
         )
         entity_scores = [score for _, score in reranked_entities]
 
-        print(f"[RERANKER] ✓ Reranked {len(reranked_entities)} entities")
+        print(f"[RERANKER] Reranked {len(reranked_entities)} entities")
         if entity_scores:
             print(f"[RERANKER]   Top entity score: {max(entity_scores):.4f}")
 
@@ -443,7 +499,7 @@ class MultiSourceReranker:
         )
         relationship_scores = [score for _, score in reranked_relationships]
 
-        print(f"[RERANKER] ✓ Reranked {len(reranked_relationships)} relationships")
+        print(f"[RERANKER] Reranked {len(reranked_relationships)} relationships")
         if relationship_scores:
             print(f"[RERANKER]   Top relationship score: {max(relationship_scores):.4f}")
 

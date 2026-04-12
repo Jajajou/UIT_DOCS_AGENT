@@ -163,6 +163,60 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
         }
 
 
+def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
+    """
+    Enrich retrieved items with temporal metadata from PostgreSQL.
+
+    Joins temporal_metadata via file_source for all retrieved chunks,
+    entities, and relationships in a single batch query, then merges
+    the temporal fields into each item's metadata dict so that
+    calculate_temporal_score() and assess_temporal_freshness() receive
+    real data instead of empty dicts.
+    """
+    chunks = state.get("retrieved_chunks", [])
+    entities = state.get("retrieved_entities", [])
+    relationships = state.get("retrieved_relationships", [])
+
+    all_file_sources = {
+        item.get("file_source", "")
+        for item in chunks + entities + relationships
+        if item.get("file_source")
+    }
+
+    if not all_file_sources:
+        return {}
+
+    temporal_map = api_client.get_temporal_metadata_by_file_sources(list(all_file_sources))
+
+    if not temporal_map:
+        return {}
+
+    def enrich(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        result = []
+        for item in items:
+            fs = item.get("file_source", "")
+            if fs in temporal_map:
+                enriched = {**item, "metadata": {**item.get("metadata", {}), **temporal_map[fs]}}
+                result.append(enriched)
+            else:
+                result.append(item)
+        return result
+
+    enriched_chunks = enrich(chunks)
+    enriched_entities = enrich(entities)
+    enriched_relationships = enrich(relationships)
+
+    matched = sum(1 for item in chunks + entities + relationships if item.get("file_source", "") in temporal_map)
+    total = len(chunks) + len(entities) + len(relationships)
+    print(f"[ENRICH] Enriched {matched}/{total} items with temporal metadata")
+
+    return {
+        "retrieved_chunks": enriched_chunks,
+        "retrieved_entities": enriched_entities,
+        "retrieved_relationships": enriched_relationships,
+    }
+
+
 def rerank_data(state: QueryState) -> Dict[str, Any]:
     """
     Rerank all retrieved data using the reranker.
@@ -207,7 +261,9 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             chunks=chunks,
             top_k_entities=None,  # Keep all
             top_k_relationships=None,
-            top_k_chunks=None
+            top_k_chunks=None,
+            use_temporal_boost=settings.use_temporal_scoring,
+            query_cohort_year=state.get("query_cohort_year")
         )
         
         return {
@@ -299,6 +355,7 @@ builder.add_node("prepare_input", prepare_input)
 builder.add_node("agent1_understand_query", agent1_understand_query)
 builder.add_node("ask_clarification", ask_clarification)
 builder.add_node("retrieve_data", retrieve_data)
+builder.add_node("enrich_with_temporal_metadata", enrich_with_temporal_metadata)
 builder.add_node("rerank_data", rerank_data)
 builder.add_node("agent2_assess_confidence", agent2_assess_confidence)
 builder.add_node("ask_followup", ask_followup)
@@ -326,7 +383,8 @@ builder.add_conditional_edges(
 builder.add_edge("ask_clarification", END)
 
 # Continue with retrieval and reranking
-builder.add_edge("retrieve_data", "rerank_data")
+builder.add_edge("retrieve_data", "enrich_with_temporal_metadata")
+builder.add_edge("enrich_with_temporal_metadata", "rerank_data")
 builder.add_edge("rerank_data", "agent2_assess_confidence")
 
 # Conditional edge after Agent 2

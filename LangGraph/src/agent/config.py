@@ -24,6 +24,7 @@ class DeepSeekOCRConfig(BaseModel):
     model_name: str
     model_configs: Dict[str, Any]
     task_prompts: Dict[str, Any]
+    page_image_size: int = 1024
     skip_repeat: bool
 
 class QueryThresholdsConfig(BaseModel):
@@ -51,6 +52,10 @@ class TemporalConfig(BaseModel):
     quality_penalties: Dict[str, float]
     versioning: Dict[str, Any]
     date_extraction: Dict[str, Any] = {}
+    # Cohort-aware reranking weights
+    cohort_weight: float = 0.25
+    semantic_weight_cohort: float = 0.55
+    temporal_weight_cohort: float = 0.20
 
 class Config(BaseModel):
     """Main configuration class for the application."""
@@ -69,6 +74,7 @@ class Config(BaseModel):
     openai_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
     openai_base_url: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_BASE_URL"))
     llm_model: str = Field(default_factory=lambda: os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"))
+    indexing_llm_model: str = Field(default_factory=lambda: os.getenv("INDEXING_LLM_MODEL", os.getenv("LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")))
     agent1_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT1_TEMPERATURE", "0.1")))
     agent2_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT2_TEMPERATURE", "0.2")))
     agent3_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT3_TEMPERATURE", "0.3")))
@@ -80,7 +86,19 @@ class Config(BaseModel):
     embedding_base_url: Optional[str] = Field(default_factory=lambda: os.getenv("EMBEDDING_BASE_URL", "http://localhost:8000/v1"))
     embedding_model: str = Field(default_factory=lambda: os.getenv("EMBEDDING_MODEL", "AITeamVN/Vietnamese_Embedding_v2"))
     embedding_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("EMBEDDING_API_KEY", "EMPTY"))
-    
+    reranker_base_url: Optional[str] = Field(
+        default_factory=lambda: os.getenv("RERANKER_BASE_URL")
+    )
+    use_cohort_boost: bool = Field(
+        default_factory=lambda: os.getenv("USE_COHORT_BOOST", "true").lower() != "false"
+    )
+    use_temporal_scoring: bool = Field(
+        default_factory=lambda: os.getenv("USE_TEMPORAL_SCORING", "true").lower() != "false"
+    )
+    use_amendment_override: bool = Field(
+        default_factory=lambda: os.getenv("USE_AMENDMENT_OVERRIDE", "false").lower() == "true"
+    )
+
     class Config:
         arbitrary_types_allowed = True
 

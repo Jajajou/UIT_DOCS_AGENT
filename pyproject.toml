@@ -22,7 +22,7 @@ dependencies = [
     "langgraph-cli[inmem]>=0.4.11",
     "lightrag-hku[api]",
     "matplotlib>=3.10.7",
-    "mlx-vlm[torch]",
+    "mlx-vlm[torch]>=0.3.10",
     "nltk>=3.9.2",
     "ollama>=0.6.0",
     "psycopg2-binary>=2.9.11",
