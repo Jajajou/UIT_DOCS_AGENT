@@ -24,6 +24,33 @@ services:
     environment:
       - TIKTOKEN_CACHE_DIR_DOC=./data/tiktoken
     # restart: unless-stopped
+
+  lightrag_public_uit:
+    container_name: lightrag_public_uit
+    image: ghcr.io/hkuds/lightrag:latest
+    build:
+      context: LightRAG
+      dockerfile: Dockerfile
+      tags:
+        - ghcr.io/hkuds/lightrag:latest
+    env_file: .env.lightrag
+    ports: ["9623:9621"]
+    depends_on:
+      postgres_uit:
+        condition: service_started
+      qdrant_uit:
+        condition: service_started
+    volumes:
+      - ./data/rag_storage:/app/data/rag_storage
+      - ./data/inputs:/app/data/inputs
+      - ./data/tiktoken:/app/data/tiktoken
+      - ./LightRAG/lightrag/prompt.py:/app/lightrag/prompt.py:ro
+      - ./LightRAG/lightrag/llm/openai.py:/app/lightrag/llm/openai.py:ro
+    environment:
+      - TIKTOKEN_CACHE_DIR_DOC=./data/tiktoken
+      - WORKSPACE=public
+      - WEBUI_TITLE=LightRAG UIT Public
+    # restart: unless-stopped
     
   postgres_uit:
     image: pgvector/pgvector:pg16
@@ -33,6 +60,7 @@ services:
       POSTGRES_DB: lightrag
     volumes:
       - ./data/pg_data:/var/lib/postgresql/data
+      - ./docker/init-admin-dashboard-db.sql:/docker-entrypoint-initdb.d/20-admin-dashboard.sql:ro
 
   qdrant_uit:
     image: qdrant/qdrant:latest
@@ -42,9 +70,8 @@ services:
     volumes:
       - ./data/qdrant_data:/qdrant/storage
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://localhost:6336/readyz || curl -fsS http://localhost:6336/readyz || wget -q -O- http://localhost:6336/healthz || curl -fsS http://localhost:6336/healthz || exit 1"]
+      test: ["CMD-SHELL", "bash -lc \"exec 3<>/dev/tcp/127.0.0.1/6333 && printf 'GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3\""]
       interval: 3s
       timeout: 2s
       retries: 40
       start_period: 5s
-
