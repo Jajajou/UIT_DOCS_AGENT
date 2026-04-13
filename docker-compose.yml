@@ -23,6 +23,8 @@ services:
       - ./LightRAG/lightrag/llm/openai.py:/app/lightrag/llm/openai.py:ro
     environment:
       - TIKTOKEN_CACHE_DIR_DOC=./data/tiktoken
+    networks:
+      - uit_network
     # restart: unless-stopped
 
   lightrag_public_uit:
@@ -50,17 +52,21 @@ services:
       - TIKTOKEN_CACHE_DIR_DOC=./data/tiktoken
       - WORKSPACE=public
       - WEBUI_TITLE=LightRAG UIT Public
+    networks:
+      - uit_network
     # restart: unless-stopped
-    
+
   postgres_uit:
     image: pgvector/pgvector:pg16
     env_file: .env.lightrag
     ports: ["5433:5432"]
-    environment: 
+    environment:
       POSTGRES_DB: lightrag
     volumes:
       - ./data/pg_data:/var/lib/postgresql/data
       - ./docker/init-admin-dashboard-db.sql:/docker-entrypoint-initdb.d/20-admin-dashboard.sql:ro
+    networks:
+      - uit_network
 
   qdrant_uit:
     image: qdrant/qdrant:latest
@@ -75,3 +81,9 @@ services:
       timeout: 2s
       retries: 40
       start_period: 5s
+    networks:
+      - uit_network
+
+networks:
+  uit_network:
+    name: uit_network
