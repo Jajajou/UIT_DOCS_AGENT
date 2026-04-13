@@ -48,11 +48,25 @@ class TestComputeCohortScore:
         score = reranker._compute_cohort_score(item, 2022)
         assert score == 1.0
 
-    def test_cohort_no_match_returns_0(self, reranker):
-        """query_cohort_year=2022, cohort_years=[2021] -> 0.0"""
+    def test_cohort_no_match_returns_neutral(self, reranker):
+        """Explicit mismatch returns 0.5 (neutral), not 0.0.
+        Rationale: Agent 1 may hallucinate cohort year for non-cohort queries;
+        universal-scope docs should not be demoted by cohort component."""
         item = make_item([2021])
         score = reranker._compute_cohort_score(item, 2022)
-        assert score == 0.0
+        assert score == 0.5  # neutral on mismatch (Bug 3 fix)
+
+    def test_cohort_str_input_normalized(self, reranker):
+        """str query_cohort_year is normalized to int before comparison (Bug 1 fix)."""
+        item = make_item([2020, 2021, 2022])
+        score = reranker._compute_cohort_score(item, "2020")
+        assert score == 1.0, "str '2020' should match int 2020 after normalization"
+
+    def test_cohort_bad_str_returns_neutral(self, reranker):
+        """Non-numeric query_cohort_year triggers ValueError catch -> 0.5."""
+        item = make_item([2020, 2021])
+        score = reranker._compute_cohort_score(item, "not_a_year")
+        assert score == 0.5
 
     def test_no_metadata_returns_neutral(self, reranker):
         """query_cohort_year=2022, cohort_years=None (no metadata) -> 0.5"""
