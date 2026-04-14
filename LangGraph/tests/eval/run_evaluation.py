@@ -1,12 +1,16 @@
 """
 Temporal-Aware Retrieval Ablation Evaluation
 
-Runs 4-way ablation over frozen test pairs.
-Conditions:
-  Baseline-S    : USE_TEMPORAL_SCORING=false  USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
-  Baseline-T    : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
-  System        : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=false
-  System+Amend  : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=true
+Runs ablation over frozen test pairs.
+Conditions (v0.2.0 reranker ablation):
+  Baseline-S       : USE_TEMPORAL_SCORING=false  USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
+  Baseline-T       : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
+  System           : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=false
+  System+Amend     : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=true
+
+Conditions (v0.3.0 metadata routing):
+  v0.3.0_No_Routing: v0.2.0 best config, routing disabled (control)
+  v0.3.0_Full      : tri-mode routing enabled (COHORT/AMENDMENT/GENERAL paths)
 
 Metrics:
   accuracy@1  — expected doc number appears in final answer
@@ -44,32 +48,50 @@ sys.path.insert(0, str(ROOT / "src"))
 
 LANGGRAPH_URL = os.getenv("LANGGRAPH_URL", "http://localhost:2024")
 RETRIEVAL_ASSISTANT_ID = os.getenv("RETRIEVAL_ASSISTANT_ID", "5bbc8364-e383-5087-8a2f-b6d27677f7a1")
-REQUEST_TIMEOUT = 180
+REQUEST_TIMEOUT = 300
 
 ABLATION_CONFIGS: dict[str, dict[str, str]] = {
     "Baseline-S": {
         "USE_TEMPORAL_SCORING": "false",
         "USE_COHORT_BOOST": "false",
         "USE_AMENDMENT_OVERRIDE": "false",
+        "USE_METADATA_ROUTING": "false",
         "description": "Pure semantic reranking",
     },
     "Baseline-T": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "false",
         "USE_AMENDMENT_OVERRIDE": "false",
+        "USE_METADATA_ROUTING": "false",
         "description": "Temporal scoring, no cohort boost",
     },
     "System": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "true",
         "USE_AMENDMENT_OVERRIDE": "false",
+        "USE_METADATA_ROUTING": "false",
         "description": "Full system (temporal + cohort)",
     },
     "System+Amend": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "true",
         "USE_AMENDMENT_OVERRIDE": "true",
-        "description": "Full system + amendment override",
+        "USE_METADATA_ROUTING": "false",
+        "description": "Full system + amendment override (v0.2.0, no routing)",
+    },
+    "v0.3.0_No_Routing": {
+        "USE_TEMPORAL_SCORING": "true",
+        "USE_COHORT_BOOST": "true",
+        "USE_AMENDMENT_OVERRIDE": "true",
+        "USE_METADATA_ROUTING": "false",
+        "description": "v0.2.0 best — reranker-only, routing disabled",
+    },
+    "v0.3.0_Full": {
+        "USE_TEMPORAL_SCORING": "true",
+        "USE_COHORT_BOOST": "true",
+        "USE_AMENDMENT_OVERRIDE": "true",
+        "USE_METADATA_ROUTING": "true",
+        "description": "v0.3.0 full tri-mode metadata routing",
     },
 }
 
@@ -83,10 +105,12 @@ def set_env_for_config(config_name: str) -> None:
     os.environ["USE_TEMPORAL_SCORING"] = cfg["USE_TEMPORAL_SCORING"]
     os.environ["USE_COHORT_BOOST"] = cfg["USE_COHORT_BOOST"]
     os.environ["USE_AMENDMENT_OVERRIDE"] = cfg.get("USE_AMENDMENT_OVERRIDE", "false")
+    os.environ["USE_METADATA_ROUTING"] = cfg.get("USE_METADATA_ROUTING", "true")
     print(
         f"[CONFIG] temporal={os.environ['USE_TEMPORAL_SCORING']} "
         f"cohort={os.environ['USE_COHORT_BOOST']} "
-        f"amendment={os.environ['USE_AMENDMENT_OVERRIDE']}"
+        f"amendment={os.environ['USE_AMENDMENT_OVERRIDE']} "
+        f"routing={os.environ['USE_METADATA_ROUTING']}"
     )
 
 
@@ -116,14 +140,18 @@ def call_pipeline(query: str, cohort_year: int | None) -> dict[str, Any]:  # noq
 # Evaluation helpers
 # ---------------------------------------------------------------------------
 
-def extract_text(state: dict[str, Any]) -> str:
+def extract_text(state: dict[str, Any], include_raw: bool = False) -> str:
     """
-    Flatten retrieved content for evaluation.
-    Includes: final_answer, AI messages, AND reranked chunk content.
-    This allows evaluation even when Agent 3 routes to ask_followup.
+    Flatten content for evaluation.
+    
+    By default (include_raw=False), this ONLY includes the final_answer and AI messages.
+    This ensures that evaluation reflects what the user actually sees.
+    
+    If include_raw=True, it includes all retrieved and reranked data (for debugging).
     """
     parts: list[str] = []
 
+    # 1. User-facing content (The ground truth for response evaluation)
     fa = state.get("final_answer", "") or ""
     if fa:
         parts.append(fa)
@@ -139,28 +167,29 @@ def extract_text(state: dict[str, Any]) -> str:
             if content:
                 parts.append(content)
 
-    # Also include reranked chunk content and entity descriptions.
-    # This is the primary signal for retrieval evaluation.
-    for chunk_wrapper in state.get("reranked_chunks", []):
-        chunk = chunk_wrapper[0] if isinstance(chunk_wrapper, list) else chunk_wrapper
-        if isinstance(chunk, dict):
-            parts.append(chunk.get("content", ""))
+    # 2. Raw retrieval data (ONLY for debugging or if specifically requested)
+    if include_raw:
+        # Include reranked chunk content and entity descriptions.
+        for chunk_wrapper in state.get("reranked_chunks", []):
+            chunk = chunk_wrapper[0] if isinstance(chunk_wrapper, list) else chunk_wrapper
+            if isinstance(chunk, dict):
+                parts.append(chunk.get("content", ""))
 
-    for ent_wrapper in state.get("reranked_entities", []):
-        ent = ent_wrapper[0] if isinstance(ent_wrapper, list) else ent_wrapper
-        if isinstance(ent, dict):
-            parts.append(ent.get("description", ""))
-            parts.append(ent.get("entity_name", ""))
+        for ent_wrapper in state.get("reranked_entities", []):
+            ent = ent_wrapper[0] if isinstance(ent_wrapper, list) else ent_wrapper
+            if isinstance(ent, dict):
+                parts.append(ent.get("description", ""))
+                parts.append(ent.get("entity_name", ""))
 
-    for rel_wrapper in state.get("reranked_relationships", []):
-        rel = rel_wrapper[0] if isinstance(rel_wrapper, list) else rel_wrapper
-        if isinstance(rel, dict):
-            parts.append(rel.get("description", ""))
+        for rel_wrapper in state.get("reranked_relationships", []):
+            rel = rel_wrapper[0] if isinstance(rel_wrapper, list) else rel_wrapper
+            if isinstance(rel, dict):
+                parts.append(rel.get("description", ""))
 
-    # Also include raw retrieved data (before reranking) for coverage
-    for item in state.get("retrieved_chunks", []):
-        if isinstance(item, dict):
-            parts.append(item.get("content", ""))
+        # Also include raw retrieved data (before reranking) for coverage
+        for item in state.get("retrieved_chunks", []):
+            if isinstance(item, dict):
+                parts.append(item.get("content", ""))
 
     return " ".join(parts)
 

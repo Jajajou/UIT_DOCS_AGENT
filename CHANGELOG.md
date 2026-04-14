@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.3.0] - 2026-04-14
+
+### Added
+- **Tri-mode metadata retrieval routing** (`feat/metadata-filtered-retrieval`):
+  - `COHORT` queries bypass LightRAG entirely, hitting Qdrant directly with a
+    `cohort_years HAS [year OR "*"]` + `must_not is_archived` pre-filter vector search.
+    Falls back to GENERAL path if 0 results.
+  - `AMENDMENT` queries traverse a PostgreSQL recursive CTE (`lightrag_doc_status`)
+    to find the amendment chain leaf, then fetch those chunks from Qdrant.
+    Falls back to GENERAL path if no `query_document_ref` or 0 results.
+  - `GENERAL` queries continue through the existing LightRAG → enrich → filter → rerank path.
+- **`QdrantCohortClient`** (`clients/qdrant_cohort_client.py`): embeds queries using
+  the same endpoint as LightRAG (`settings.embedding_base_url`) for vector parity,
+  performs filtered Qdrant search, converts `ScoredPoint` to standard chunk shape.
+- **`AmendmentChainClient`** (`clients/amendment_chain_client.py`): PostgreSQL recursive
+  CTE resolves amendment chains (max depth 10), fetches leaf-doc chunks from Qdrant
+  via `full_doc_id` filter + vector search.
+- **`retrieve_cohort_data` node** (`agents/retrieve_cohort.py`): COHORT retrieval path.
+- **`retrieve_amendment_data` node** (`agents/retrieve_amendment.py`): AMENDMENT retrieval path.
+- **`USE_METADATA_ROUTING` flag**: env var / `settings.use_metadata_routing` toggle.
+  When `false`, `route_retrieval` bypasses tri-mode logic and all queries use GENERAL
+  path (enables clean v0.2.0 vs v0.3.0 ablation comparison).
+- **New ablation configs** in `run_evaluation.py`:
+  - `v0.3.0_No_Routing`: reranker-only best config, routing disabled (ablation control)
+  - `v0.3.0_Full`: tri-mode routing fully enabled
+- **QueryState fields**: `cohort_fallback`, `amendment_fallback`, `query_document_ref`.
+- **Unit tests**: 49 tests covering `QdrantCohortClient._point_to_chunk`, `route_retrieval`
+  (including bypass), `route_after_cohort`, `retrieve_cohort_data`, `AmendmentChainClient`
+  chain traversal (mocked psycopg2), `route_after_amendment`, `retrieve_amendment_data`.
+
+### Changed
+- `route_retrieval` now checks `settings.use_metadata_routing` first; when disabled it
+  routes everything to `retrieve_data` regardless of `query_type`.
+- `set_env_for_config` in eval harness now also sets `USE_METADATA_ROUTING`.
+- Existing ablation configs (`Baseline-S`, `Baseline-T`, `System`, `System+Amend`) all
+  carry explicit `USE_METADATA_ROUTING=false` to preserve v0.2.0 evaluation semantics.
+
 ## [0.2.0] - 2026-04-14
 
 ### Changed

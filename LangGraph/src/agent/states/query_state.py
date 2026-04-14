@@ -55,6 +55,23 @@ class QueryUnderstanding(BaseModel):
         description="Nam nhap hoc cua khoa sinh vien neu co (vi du: 2022 cho 'K2022', 'khoa 2022')"
     )
 
+    # Query type for dual-mode retrieval routing (v0.3.0)
+    query_type: Literal["COHORT", "AMENDMENT", "GENERAL"] = Field(
+        default="GENERAL",
+        description=(
+            "COHORT: query asks about rules for a specific cohort year (K2022, khoa 2022). "
+            "AMENDMENT: query asks about a specific document by number, or which doc supersedes another, "
+            "or uses keywords: mới nhất, sửa đổi, thay thế, bổ sung. "
+            "GENERAL: everything else."
+        )
+    )
+    # Document number reference extracted for AMENDMENT queries
+    # e.g. '108/QD-DHCNTT' from 'Quyet dinh 108 co bi sua doi chua?'
+    query_document_ref: Optional[str] = Field(
+        default=None,
+        description="Document number extracted from query for AMENDMENT path. None if not applicable."
+    )
+
     # NEW: Parameter tuning outputs
     suggested_mode: Literal["naive", "local", "global", "hybrid", "mix"] = Field(
         default=settings.retrieval.default_mode,
@@ -146,6 +163,10 @@ class QueryState(TypedDict):
     query_confidence: NotRequired[float]
     query_confidence_reason: NotRequired[Optional[str]]
     query_cohort_year: NotRequired[Optional[int]]  # e.g. 2022 for "K2022" queries
+    query_type: NotRequired[Optional[Literal["COHORT", "AMENDMENT", "GENERAL"]]]
+    query_document_ref: NotRequired[Optional[str]]  # e.g. '108/QD-DHCNTT' for AMENDMENT path
+    cohort_fallback: NotRequired[bool]  # True if COHORT path returned 0 results
+    amendment_fallback: NotRequired[bool]  # True if AMENDMENT path returned 0 results
 
     # Tuned parameters từ Agent 1
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]

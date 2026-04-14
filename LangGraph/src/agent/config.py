@@ -98,6 +98,9 @@ class Config(BaseModel):
     use_amendment_override: bool = Field(
         default_factory=lambda: os.getenv("USE_AMENDMENT_OVERRIDE", "false").lower() == "true"
     )
+    use_metadata_routing: bool = Field(
+        default_factory=lambda: os.getenv("USE_METADATA_ROUTING", "true").lower() != "false"
+    )
 
     class Config:
         arbitrary_types_allowed = True

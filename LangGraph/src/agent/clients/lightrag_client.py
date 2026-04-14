@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from agent.config import PROJECT_ROOT
-DEFAULT_TIMEOUT = 60  # seconds
+DEFAULT_TIMEOUT = 300  # seconds
 
 
 class LightRAGAPIError(RuntimeError):
@@ -1206,6 +1206,16 @@ class LightRAGAPIClient:
                     amends_documents, amended_by_documents, is_archived,
                     archived_at, archive_reason, extraction_confidence, indexed_at
                 ) = row
+                
+                # Ensure jsonb columns are parsed correctly if they come back as strings
+                def ensure_list(val):
+                    if isinstance(val, str):
+                        try:
+                            return json.loads(val)
+                        except:
+                            return []
+                    return val or []
+
                 if file_source:
                     result[file_source] = {
                         "doc_id": doc_id,
@@ -1213,10 +1223,10 @@ class LightRAGAPIClient:
                         "document_type": document_type,
                         "valid_from": valid_from,
                         "valid_until": valid_until,
-                        "cohort_years": cohort_years or [],
+                        "cohort_years": ensure_list(cohort_years),
                         "cohort_scope": cohort_scope,
-                        "amends_documents": amends_documents or [],
-                        "amended_by": amended_by_documents or [],
+                        "amends_documents": ensure_list(amends_documents),
+                        "amended_by": ensure_list(amended_by_documents),
                         "is_archived": bool(is_archived),
                         "archived_at": archived_at,
                         "archive_reason": archive_reason,
