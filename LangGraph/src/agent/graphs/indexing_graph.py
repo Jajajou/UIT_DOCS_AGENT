@@ -20,6 +20,7 @@ from agent.config import DEEPSEEK_OCR_DIR
 from agent.clients.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClientError
 from agent.states.indexing_state import IndexingState
 from agent.clients.lightrag_client import LightRAGAPIClient
+from agent.clients.qdrant_payload_injector import QdrantPayloadInjector, QdrantPayloadInjectorError
 from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
 from agent.agents.agent_temporal_extraction import extract_temporal_metadata_node
 from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
@@ -30,6 +31,7 @@ load_dotenv()
 
 api_client = LightRAGAPIClient()
 dsocr_client = DeepSeekOCRClient()
+qdrant_injector = QdrantPayloadInjector()
 
 # ---------------------- Helper Functions ----------------------
 
@@ -638,6 +640,39 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                             print(f"[METADATA] ✓ Temporal metadata saved to separate table (doc_id: {doc_id})")
                             upload_result["temporal_metadata_saved"] = True
                             upload_result["doc_id"] = doc_id
+
+                            # Wait for LightRAG to finish processing (status='processed')
+                            # so that chunks are present in Qdrant before injecting payload.
+                            processed = False
+                            for _p in range(45):
+                                pg_conn = api_client._get_pg_connection()
+                                try:
+                                    with pg_conn.cursor() as pcur:
+                                        pcur.execute(
+                                            "SELECT status FROM lightrag_doc_status WHERE id = %s",
+                                            (doc_id,)
+                                        )
+                                    prow = pcur.fetchone()
+                                    processed = prow and prow[0] == "processed"
+                                finally:
+                                    pg_conn.close()
+                                if processed:
+                                    break
+                                print(f"[QDRANT] Waiting for LightRAG to finish chunking (attempt {_p + 1}/45)...")
+                                time.sleep(3)
+
+                            if processed:
+                                try:
+                                    qdrant_injector.inject_doc_metadata(doc_id, document_metadata)
+                                    print(f"[QDRANT] ✓ Temporal payload injected for {doc_id}")
+                                    upload_result["qdrant_payload_injected"] = True
+                                except QdrantPayloadInjectorError as qe:
+                                    print(f"[QDRANT] WARNING: Payload injection failed (non-fatal): {qe}")
+                                    upload_result["qdrant_payload_error"] = str(qe)
+                            else:
+                                print(f"[QDRANT] WARNING: Timed out waiting for processed status — "
+                                      f"run inject_qdrant_payloads.py backfill for {doc_id}")
+                                upload_result["qdrant_payload_error"] = "timeout waiting for processed"
 
                             # Handle reverse linking for amended documents
                             amended_docs = document_metadata.get("amends_documents", [])
