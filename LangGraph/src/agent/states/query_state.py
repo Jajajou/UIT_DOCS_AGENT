@@ -166,6 +166,7 @@ class QueryState(TypedDict):
     query_type: NotRequired[Optional[Literal["COHORT", "AMENDMENT", "GENERAL"]]]
     query_document_ref: NotRequired[Optional[str]]  # e.g. '108/QD-DHCNTT' for AMENDMENT path
     cohort_fallback: NotRequired[bool]  # True if COHORT path returned 0 results
+    amendment_fallback: NotRequired[bool]  # True if AMENDMENT path returned 0 results
 
     # Tuned parameters từ Agent 1
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]

@@ -100,12 +100,15 @@ def route_retrieval(state: QueryState) -> str:
     """
     Conditional edge: route after agent1_understand_query.
 
-    COHORT queries → retrieve_cohort_data
-    All others     → retrieve_data (LightRAG)
+    COHORT     → retrieve_cohort_data
+    AMENDMENT  → retrieve_amendment_data
+    GENERAL    → retrieve_data (LightRAG)
     """
     query_type = state.get("query_type", "GENERAL")
     if query_type == "COHORT":
         return "retrieve_cohort_data"
+    if query_type == "AMENDMENT":
+        return "retrieve_amendment_data"
     return "retrieve_data"
 
 

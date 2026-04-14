@@ -108,9 +108,9 @@ class TestRouteRetrieval:
         state: QueryState = {"messages": [], "logs": [], "query_type": "GENERAL"}
         assert route_retrieval(state) == "retrieve_data"
 
-    def test_amendment_routes_to_retrieve_data(self):
+    def test_amendment_routes_to_amendment_node(self):
         state: QueryState = {"messages": [], "logs": [], "query_type": "AMENDMENT"}
-        assert route_retrieval(state) == "retrieve_data"
+        assert route_retrieval(state) == "retrieve_amendment_data"
 
     def test_missing_query_type_defaults_to_retrieve_data(self):
         state: QueryState = {"messages": [], "logs": []}

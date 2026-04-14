@@ -28,6 +28,10 @@ from agent.agents.retrieve_cohort import (
     route_retrieval,
     route_after_cohort,
 )
+from agent.agents.retrieve_amendment import (
+    retrieve_amendment_data,
+    route_after_amendment,
+)
 from agent.utils import content_to_text, get_last_human_message
 from agent.config import settings
 
@@ -409,6 +413,7 @@ builder = StateGraph(state_schema=QueryState)
 builder.add_node("prepare_input", prepare_input)
 builder.add_node("agent1_understand_query", agent1_understand_query)
 builder.add_node("retrieve_cohort_data", retrieve_cohort_data)
+builder.add_node("retrieve_amendment_data", retrieve_amendment_data)
 builder.add_node("retrieve_data", retrieve_data)
 builder.add_node("enrich_with_temporal_metadata", enrich_with_temporal_metadata)
 builder.add_node("filter_by_metadata", filter_by_metadata)
@@ -420,23 +425,34 @@ builder.add_node("format_final_answer", format_final_answer)
 builder.add_edge(START, "prepare_input")
 builder.add_edge("prepare_input", "agent1_understand_query")
 
-# Dual-mode routing after Agent 1:
-#   COHORT  → retrieve_cohort_data
-#   GENERAL → retrieve_data (LightRAG)
+# Tri-mode routing after Agent 1:
+#   COHORT    → retrieve_cohort_data
+#   AMENDMENT → retrieve_amendment_data
+#   GENERAL   → retrieve_data (LightRAG)
 builder.add_conditional_edges(
     "agent1_understand_query",
     route_retrieval,
     {
         "retrieve_cohort_data": "retrieve_cohort_data",
+        "retrieve_amendment_data": "retrieve_amendment_data",
         "retrieve_data": "retrieve_data",
     },
 )
 
-# COHORT path: after cohort retrieval, either skip to rerank (has results)
-# or fall back to GENERAL retrieve_data (0 results)
+# COHORT path: results → rerank, 0 results → fallback to GENERAL
 builder.add_conditional_edges(
     "retrieve_cohort_data",
     route_after_cohort,
+    {
+        "rerank_data": "rerank_data",
+        "retrieve_data": "retrieve_data",
+    },
+)
+
+# AMENDMENT path: results → rerank, no ref / 0 results → fallback to GENERAL
+builder.add_conditional_edges(
+    "retrieve_amendment_data",
+    route_after_amendment,
     {
         "rerank_data": "rerank_data",
         "retrieve_data": "retrieve_data",
