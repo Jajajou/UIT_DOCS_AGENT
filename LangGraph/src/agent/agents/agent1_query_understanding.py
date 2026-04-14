@@ -133,6 +133,8 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_confidence = get_attr_safe(understanding,"confidence")
         query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
         query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
+        query_type = get_attr_safe(understanding,"query_type", "GENERAL")
+        query_document_ref = get_attr_safe(understanding,"query_document_ref")
 
         # Retrieval parameters
         suggested_mode = get_attr_safe(understanding,"suggested_mode")
@@ -147,6 +149,8 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         print(f"[AGENT 1] Confidence: {query_confidence:.2f}")
         print(f"[AGENT 1] Reason: {query_confidence_reason}")
         print(f"[AGENT 1] Cohort Year: {query_cohort_year}")
+        print(f"[AGENT 1] Query Type: {query_type}")
+        print(f"[AGENT 1] Document Ref: {query_document_ref}")
 
         # Log parameter tuning
         print(f"[AGENT 1] Suggested Mode: {suggested_mode}")
@@ -162,6 +166,8 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_confidence": query_confidence,
             "query_confidence_reason": query_confidence_reason,
             "query_cohort_year": query_cohort_year,
+            "query_type": query_type,
+            "query_document_ref": query_document_ref,
             "retrieval_mode": suggested_mode,
             "top_k": suggested_top_k,
             "chunk_top_k": suggested_chunk_top_k,
