@@ -1,12 +1,10 @@
 """
-Query Graph V3: 3-Agent RAG Pipeline with Reranker
+Query Graph: Temporal-Aware RAG Pipeline
 
-This graph implements an advanced RAG pipeline with:
+This graph implements a temporal-aware RAG pipeline with:
 - Agent 1: Query Understanding with automatic parameter tuning
-- Reranker: Score and re-rank all retrieved data
-- Agent 2: Confidence Assessment based on combined scores
-- Agent 3: Response Generation with high-quality reranked data
-- Multi-level confidence thresholds and fallback mechanisms
+- Reranker: Temporal scoring (semantic + temporal + cohort + amendment)
+- Agent 3: Response Generation — always produces a direct answer
 """
 
 from __future__ import annotations
@@ -23,13 +21,6 @@ from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.clients.reranker import MultiSourceReranker
 from agent.agents.agent1_query_understanding import (
     agent1_understand_query,
-    decide_after_agent1,
-    ask_clarification
-)
-from agent.agents.agent2_confidence_assessment import (
-    agent2_assess_confidence,
-    decide_after_agent2,
-    ask_followup
 )
 from agent.agents.agent3_response_generation import agent3_generate_response
 from agent.utils import content_to_text, get_last_human_message
@@ -177,26 +168,28 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     entities = state.get("retrieved_entities", [])
     relationships = state.get("retrieved_relationships", [])
 
-    all_file_sources = {
-        item.get("file_source", "")
+    all_file_paths = {
+        item.get("file_path", "")
         for item in chunks + entities + relationships
-        if item.get("file_source")
+        if item.get("file_path")
     }
 
-    if not all_file_sources:
+    if not all_file_paths:
+        print("[ENRICH] No file_path found in retrieved items, skipping enrichment")
         return {}
 
-    temporal_map = api_client.get_temporal_metadata_by_file_sources(list(all_file_sources))
+    temporal_map = api_client.get_temporal_metadata_by_file_sources(list(all_file_paths))
 
     if not temporal_map:
+        print(f"[ENRICH] No temporal metadata found for {len(all_file_paths)} file paths")
         return {}
 
     def enrich(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result = []
         for item in items:
-            fs = item.get("file_source", "")
-            if fs in temporal_map:
-                enriched = {**item, "metadata": {**item.get("metadata", {}), **temporal_map[fs]}}
+            fp = item.get("file_path", "")
+            if fp in temporal_map:
+                enriched = {**item, "metadata": {**item.get("metadata", {}), **temporal_map[fp]}}
                 result.append(enriched)
             else:
                 result.append(item)
@@ -206,7 +199,7 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     enriched_entities = enrich(entities)
     enriched_relationships = enrich(relationships)
 
-    matched = sum(1 for item in chunks + entities + relationships if item.get("file_source", "") in temporal_map)
+    matched = sum(1 for item in chunks + entities + relationships if item.get("file_path", "") in temporal_map)
     total = len(chunks) + len(entities) + len(relationships)
     print(f"[ENRICH] Enriched {matched}/{total} items with temporal metadata")
 
@@ -309,8 +302,6 @@ def format_final_answer(state: QueryState) -> Dict[str, Any]:
         "query_confidence": state.get("query_confidence", 0.0),
         "query_confidence_reason": state.get("query_confidence_reason", ""),
         "rerank_confidence": state.get("rerank_confidence", 0.0),
-        "overall_confidence": state.get("overall_confidence", 0.0),
-        "confidence_reason": state.get("confidence_reason", ""),
         "response_type": state.get("response_type", "unknown"),
         "tuning_reason": state.get("tuning_reason", ""),
         "retrieval_mode": state.get("retrieval_mode", ""),
@@ -334,7 +325,6 @@ def format_final_answer(state: QueryState) -> Dict[str, Any]:
     print(f"[FINAL] Response Type: {response_type}")
     print(f"[FINAL] Query Confidence: {confidence_summary['query_confidence']:.2f}")
     print(f"[FINAL] Rerank Confidence: {confidence_summary['rerank_confidence']:.2f}")
-    print(f"[FINAL] Overall Confidence: {confidence_summary['overall_confidence']:.2f}")
     print("=" * 80)
     
     return {
@@ -353,54 +343,21 @@ builder = StateGraph(state_schema=QueryState)
 # Add nodes
 builder.add_node("prepare_input", prepare_input)
 builder.add_node("agent1_understand_query", agent1_understand_query)
-builder.add_node("ask_clarification", ask_clarification)
 builder.add_node("retrieve_data", retrieve_data)
 builder.add_node("enrich_with_temporal_metadata", enrich_with_temporal_metadata)
 builder.add_node("rerank_data", rerank_data)
-builder.add_node("agent2_assess_confidence", agent2_assess_confidence)
-builder.add_node("ask_followup", ask_followup)
 builder.add_node("agent3_generate_response", agent3_generate_response)
 builder.add_node("format_final_answer", format_final_answer)
 
 # Set entry point
 builder.add_edge(START, "prepare_input")
 
-# Add edges
+# Linear pipeline: parse -> retrieve -> enrich -> rerank -> answer
 builder.add_edge("prepare_input", "agent1_understand_query")
-
-# Conditional edge after Agent 1
-builder.add_conditional_edges(
-    "agent1_understand_query",
-    decide_after_agent1,
-    {
-        "ask_clarification": "ask_clarification",
-        # "agent3_generate_response": "agent3_generate_response",
-        "retrieve_data": "retrieve_data"
-    }
-)
-
-# Clarification ends the flow (wait for user)
-builder.add_edge("ask_clarification", END)
-
-# Continue with retrieval and reranking
+builder.add_edge("agent1_understand_query", "retrieve_data")
 builder.add_edge("retrieve_data", "enrich_with_temporal_metadata")
 builder.add_edge("enrich_with_temporal_metadata", "rerank_data")
-builder.add_edge("rerank_data", "agent2_assess_confidence")
-
-# Conditional edge after Agent 2
-builder.add_conditional_edges(
-    "agent2_assess_confidence",
-    decide_after_agent2,
-    {
-        "ask_followup": "ask_followup",
-        "generate_response": "agent3_generate_response"
-    }
-)
-
-# Follow-up ends the flow (wait for user)
-builder.add_edge("ask_followup", END)
-
-# Continue with response generation
+builder.add_edge("rerank_data", "agent3_generate_response")
 builder.add_edge("agent3_generate_response", "format_final_answer")
 builder.add_edge("format_final_answer", END)
 
