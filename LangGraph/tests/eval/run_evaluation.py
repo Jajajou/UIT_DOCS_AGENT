@@ -105,7 +105,7 @@ def set_env_for_config(config_name: str) -> None:
     os.environ["USE_TEMPORAL_SCORING"] = cfg["USE_TEMPORAL_SCORING"]
     os.environ["USE_COHORT_BOOST"] = cfg["USE_COHORT_BOOST"]
     os.environ["USE_AMENDMENT_OVERRIDE"] = cfg.get("USE_AMENDMENT_OVERRIDE", "false")
-    os.environ["USE_METADATA_ROUTING"] = cfg.get("USE_METADATA_ROUTING", "false")
+    os.environ["USE_METADATA_ROUTING"] = cfg.get("USE_METADATA_ROUTING", "true")
     print(
         f"[CONFIG] temporal={os.environ['USE_TEMPORAL_SCORING']} "
         f"cohort={os.environ['USE_COHORT_BOOST']} "

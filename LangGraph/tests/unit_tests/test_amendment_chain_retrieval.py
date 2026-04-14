@@ -12,6 +12,7 @@ Tests cover:
 
 from __future__ import annotations
 
+import os
 import pytest
 from unittest.mock import MagicMock, patch, call
 from typing import Any, Dict
@@ -38,7 +39,6 @@ class TestGetLatestInChain:
     def test_single_doc_no_amenders(self, mock_psycopg2):
         """Doc exists but nothing amends it — it IS the leaf."""
         mock_conn = MagicMock()
-        mock_cursor = MagicMock()
         mock_psycopg2.connect.return_value = mock_conn
         mock_conn.__enter__ = lambda s: s
         mock_conn.__exit__ = MagicMock(return_value=False)
@@ -127,6 +127,12 @@ class TestGetLatestInChain:
 
 class TestRouteRetrievalAmendment:
 
+    def setup_method(self):
+        os.environ["USE_METADATA_ROUTING"] = "true"
+
+    def teardown_method(self):
+        os.environ.pop("USE_METADATA_ROUTING", None)
+
     def test_amendment_routes_to_amendment_node(self):
         state: QueryState = {"messages": [], "logs": [], "query_type": "AMENDMENT"}
         assert route_retrieval(state) == "retrieve_amendment_data"
@@ -212,6 +218,7 @@ class TestRetrieveAmendmentDataNode:
         assert result["error"] is None
         assert result["retrieval_metadata"]["mode"] == "amendment_qdrant"
         assert result["retrieval_metadata"]["doc_number_ref"] == "108/QD-DHCNTT"
+        assert result["retrieval_metadata"]["total_chunks"] == 2
         mock_client.retrieve.assert_called_once_with(
             query_text="Tim hieu trang thai phap ly cua Quyet dinh 108",
             doc_number_ref="108/QD-DHCNTT",

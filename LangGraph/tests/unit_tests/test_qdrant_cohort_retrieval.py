@@ -11,6 +11,7 @@ Tests cover:
 
 from __future__ import annotations
 
+import os
 import pytest
 from unittest.mock import MagicMock, patch
 from typing import Any, Dict
@@ -22,7 +23,6 @@ from agent.agents.retrieve_cohort import (
     route_after_cohort,
 )
 from agent.states.query_state import QueryState
-import agent.agents.retrieve_cohort as retrieve_cohort_module
 
 
 # ============================================================================
@@ -101,6 +101,13 @@ class TestPointToChunk:
 class TestRouteRetrieval:
     """Tests for the conditional edge after agent1_understand_query."""
 
+    def setup_method(self):
+        """Ensure routing is enabled for all tests unless overridden."""
+        os.environ["USE_METADATA_ROUTING"] = "true"
+
+    def teardown_method(self):
+        os.environ.pop("USE_METADATA_ROUTING", None)
+
     def test_cohort_routes_to_cohort_node(self):
         state: QueryState = {"messages": [], "logs": [], "query_type": "COHORT"}
         assert route_retrieval(state) == "retrieve_cohort_data"
@@ -123,18 +130,14 @@ class TestRouteRetrieval:
 
     def test_routing_bypass_forces_retrieve_data_for_cohort(self):
         """USE_METADATA_ROUTING=false: COHORT queries fall through to GENERAL path."""
-        mock_settings = MagicMock()
-        mock_settings.use_metadata_routing = False
         state: QueryState = {"messages": [], "logs": [], "query_type": "COHORT"}
-        with patch.object(retrieve_cohort_module, "settings", mock_settings):
+        with patch.dict(os.environ, {"USE_METADATA_ROUTING": "false"}):
             assert route_retrieval(state) == "retrieve_data"
 
     def test_routing_bypass_forces_retrieve_data_for_amendment(self):
         """USE_METADATA_ROUTING=false: AMENDMENT queries fall through to GENERAL path."""
-        mock_settings = MagicMock()
-        mock_settings.use_metadata_routing = False
         state: QueryState = {"messages": [], "logs": [], "query_type": "AMENDMENT"}
-        with patch.object(retrieve_cohort_module, "settings", mock_settings):
+        with patch.dict(os.environ, {"USE_METADATA_ROUTING": "false"}):
             assert route_retrieval(state) == "retrieve_data"
 
 

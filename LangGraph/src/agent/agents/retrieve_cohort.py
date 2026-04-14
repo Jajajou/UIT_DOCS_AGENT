@@ -12,6 +12,7 @@ Handles the COHORT path of the dual-mode retrieval router:
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict
 
 from agent.states.query_state import QueryState
@@ -38,12 +39,13 @@ def retrieve_cohort_data(state: QueryState) -> Dict[str, Any]:
     chunk_top_k = state.get("chunk_top_k", settings.retrieval.default_chunk_top_k)
 
     if not query:
-        return {"error": "No query for cohort retrieval", "cohort_fallback": True}
+        return {"error": "No query for cohort retrieval", "cohort_fallback": True, "query_cohort_year": None}
 
     if cohort_year is None:
         # Should not happen if router is correct, but be defensive
         return {
             "cohort_fallback": True,
+            "query_cohort_year": None,
             "logs": ["COHORT node: no cohort_year in state, falling back to GENERAL"],
         }
 
@@ -64,6 +66,7 @@ def retrieve_cohort_data(state: QueryState) -> Dict[str, Any]:
         return {
             "error": error_msg,
             "cohort_fallback": True,
+            "query_cohort_year": None,
             "logs": [f"COHORT retrieval error: {error_msg} — falling back to GENERAL"],
         }
 
@@ -71,6 +74,7 @@ def retrieve_cohort_data(state: QueryState) -> Dict[str, Any]:
         print(f"[COHORT] 0 results for cohort {cohort_year} — triggering fallback to GENERAL")
         return {
             "cohort_fallback": True,
+            "query_cohort_year": None,
             "logs": [f"COHORT: 0 results for K{cohort_year}, fallback to GENERAL"],
         }
 
@@ -108,7 +112,7 @@ def route_retrieval(state: QueryState) -> str:
         AMENDMENT  → retrieve_amendment_data
         GENERAL    → retrieve_data (LightRAG)
     """
-    if not settings.use_metadata_routing:
+    if os.getenv("USE_METADATA_ROUTING", "true").lower() == "false":
         return "retrieve_data"
     query_type = state.get("query_type", "GENERAL")
     if query_type == "COHORT":

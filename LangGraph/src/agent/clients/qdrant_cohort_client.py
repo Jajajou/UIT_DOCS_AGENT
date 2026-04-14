@@ -12,7 +12,6 @@ Responsibilities:
 
 from __future__ import annotations
 
-import json
 import logging
 import requests
 from typing import Any
@@ -134,8 +133,7 @@ class QdrantCohortClient:
         try:
             resp = self._session.post(
                 url,
-                data=json.dumps(body),
-                headers={"Content-Type": "application/json"},
+                json=body,
                 timeout=self.timeout,
             )
             resp.raise_for_status()

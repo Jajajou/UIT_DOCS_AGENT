@@ -252,13 +252,15 @@ def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
         if "*" in cohorts or "*" in [str(c) for c in cohorts]:
             return True
             
-        # Specific year match
-        try:
-            item_years = [int(c) for c in cohorts if str(c).isdigit()]
-            if target_year in item_years:
-                return True
-        except (ValueError, TypeError):
-            pass
+        # Specific year match (handle int, float, and string forms)
+        item_years = []
+        for c in cohorts:
+            try:
+                item_years.append(int(float(str(c))))
+            except (ValueError, TypeError):
+                pass
+        if target_year in item_years:
+            return True
             
         return False
 

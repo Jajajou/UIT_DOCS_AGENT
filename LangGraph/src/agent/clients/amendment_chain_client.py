@@ -16,7 +16,6 @@ Amendment chain direction:
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 
@@ -67,6 +66,7 @@ class AmendmentChainClient:
         self.workspace = workspace
         self.timeout = timeout
         self._session = requests.Session()
+        load_dotenv(f"{PROJECT_ROOT}/.env.lightrag")
         # Reuse cohort client for embed + _point_to_chunk
         self._cohort_client = QdrantCohortClient(
             qdrant_base_url=qdrant_base_url,
@@ -80,7 +80,6 @@ class AmendmentChainClient:
     # ------------------------------------------------------------------
 
     def _get_pg_connection(self):
-        load_dotenv(f"{PROJECT_ROOT}/.env.lightrag")
         return psycopg2.connect(
             host="localhost",
             port=5433,
@@ -138,6 +137,7 @@ class AmendmentChainClient:
             ORDER BY depth DESC
         """
 
+        conn = None
         try:
             conn = self._get_pg_connection()
             with conn:
@@ -153,10 +153,11 @@ class AmendmentChainClient:
                 f"Amendment chain query failed for '{doc_number_ref}': {exc}"
             ) from exc
         finally:
-            try:
-                conn.close()
-            except Exception:
-                pass
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         if not rows:
             logger.warning("[Amendment] No chain found for '%s'", doc_number_ref)
@@ -210,8 +211,7 @@ class AmendmentChainClient:
         try:
             resp = self._session.post(
                 url,
-                data=json.dumps(body),
-                headers={"Content-Type": "application/json"},
+                json=body,
                 timeout=self.timeout,
             )
             resp.raise_for_status()
