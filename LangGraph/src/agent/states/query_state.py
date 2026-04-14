@@ -1,11 +1,11 @@
 """
-State Schema for 3-Agent RAG Pipeline with Reranker.
+State Schema for 2-Agent Temporal-Aware RAG Pipeline.
 
-This module defines the state schema for an advanced RAG pipeline that includes:
+This module defines the state schema for the RAG pipeline that includes:
 - Agent 1: Query Understanding with automatic parameter tuning
-- Reranker: Score and re-rank retrieved data
-- Agent 2: Confidence Assessment based on rerank scores
-- Agent 3: Response Generation with high-quality data
+- Retrieval + Temporal Enrichment: LightRAG fetch + PostgreSQL metadata join
+- Reranker: Temporal-aware scoring and re-ranking
+- Agent 3: Response Generation with expiration warnings
 """
 
 from __future__ import annotations
@@ -98,30 +98,6 @@ class Reference(BaseModel):
     )
 
 
-class ConfidenceAssessment(BaseModel):
-    """
-    Confidence assessment from Agent 2.
-    
-    This combines query confidence and rerank confidence to make a decision.
-    """
-    
-    overall_confidence: float = Field(
-        ge=0.0,
-        le=1.0,
-        description="Overall confidence score (combined from query and rerank)"
-    )
-    needs_followup: bool = Field(
-        description="Whether to ask a follow-up question to the user"
-    )
-    followup_question: Optional[str] = Field(
-        default=None,
-        description="Follow-up question if needs_followup=True"
-    )
-    confidence_reason: str = Field(
-        description="Detailed explanation for the confidence assessment and decision"
-    )
-
-
 class ResponseGeneration(BaseModel):
     """Generated response from Agent 3."""
     
@@ -139,17 +115,16 @@ class ResponseGeneration(BaseModel):
 
 class QueryState(TypedDict):
     """
-    Extended state schema for 3-agent RAG pipeline with reranker.
-    
-    Flow:
-    1. User input → Agent 1 (Query Understanding + Parameter Tuning)
-    2. If low confidence → Ask clarification → END (wait user)
-    3. If high confidence → Retrieve data from LightRAG (with tuned params)
-    4. Retrieved data → Reranker (Score and re-rank all items)
-    5. Reranked data → Agent 2 (Confidence Assessment)
-    6. If overall confidence < threshold → Ask follow-up → END (wait user)
-    7. If overall confidence >= threshold → Agent 3 (Generate Response)
-    8. Format final answer → END
+    State schema for 2-agent temporal-aware RAG pipeline.
+
+    Linear pipeline:
+    1. prepare_input → extract query from messages
+    2. agent1_understand_query → parse intention, tune retrieval params, extract cohort year
+    3. retrieve_data → fetch entities/relationships/chunks from LightRAG
+    4. enrich_with_temporal_metadata → join temporal metadata from PostgreSQL
+    5. rerank_data → temporal-aware scoring (semantic + recency + cohort + amendment)
+    6. agent3_generate_response → generate answer with expiration warnings
+    7. format_final_answer → attach confidence summary
     """
     
     # ============ Required: Messages for Chat UI ============
@@ -203,13 +178,6 @@ class QueryState(TypedDict):
     rerank_confidence: NotRequired[float]  
     rerank_metadata: NotRequired[Dict[str, Any]]  
     
-    # ============ Agent 2: Confidence Assessment ============
-    # Overall confidence combining query + rerank
-    overall_confidence: NotRequired[float]  
-    needs_followup: NotRequired[bool]  
-    followup_question: NotRequired[Optional[str]]  
-    confidence_reason: NotRequired[Optional[str]]  
-    
     # ============ Agent 3: Response Generation ============
     generated_response: NotRequired[Optional[str]]  
     response_type: NotRequired[Literal["full_answer", "partial_answer", "fallback"]]
@@ -245,6 +213,5 @@ __all__ = [
     "QueryState",
     "QueryUnderstanding",
     "Reference",
-    "ConfidenceAssessment",
     "ResponseGeneration",
 ]

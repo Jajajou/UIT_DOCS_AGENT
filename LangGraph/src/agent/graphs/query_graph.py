@@ -21,7 +21,6 @@ from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.clients.reranker import MultiSourceReranker
 from agent.agents.agent1_query_understanding import (
     agent1_understand_query,
-    decide_after_agent1,
 )
 from agent.agents.agent3_response_generation import agent3_generate_response
 from agent.utils import content_to_text, get_last_human_message
@@ -303,8 +302,6 @@ def format_final_answer(state: QueryState) -> Dict[str, Any]:
         "query_confidence": state.get("query_confidence", 0.0),
         "query_confidence_reason": state.get("query_confidence_reason", ""),
         "rerank_confidence": state.get("rerank_confidence", 0.0),
-        "overall_confidence": state.get("overall_confidence", 0.0),
-        "confidence_reason": state.get("confidence_reason", ""),
         "response_type": state.get("response_type", "unknown"),
         "tuning_reason": state.get("tuning_reason", ""),
         "retrieval_mode": state.get("retrieval_mode", ""),
@@ -328,7 +325,6 @@ def format_final_answer(state: QueryState) -> Dict[str, Any]:
     print(f"[FINAL] Response Type: {response_type}")
     print(f"[FINAL] Query Confidence: {confidence_summary['query_confidence']:.2f}")
     print(f"[FINAL] Rerank Confidence: {confidence_summary['rerank_confidence']:.2f}")
-    print(f"[FINAL] Overall Confidence: {confidence_summary['overall_confidence']:.2f}")
     print("=" * 80)
     
     return {

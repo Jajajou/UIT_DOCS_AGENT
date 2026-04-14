@@ -132,8 +132,6 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         extracted_topics = get_attr_safe(understanding,"extracted_topics")
         query_confidence = get_attr_safe(understanding,"confidence")
         query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
-        needs_clarification = get_attr_safe(understanding,"needs_clarification")
-        clarification_question = get_attr_safe(understanding,"clarification_question")
         query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
 
         # Retrieval parameters
@@ -148,16 +146,12 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         print(f"[AGENT 1] Topics: {extracted_topics}")
         print(f"[AGENT 1] Confidence: {query_confidence:.2f}")
         print(f"[AGENT 1] Reason: {query_confidence_reason}")
-        print(f"[AGENT 1] Needs Clarification: {needs_clarification}")
         print(f"[AGENT 1] Cohort Year: {query_cohort_year}")
 
         # Log parameter tuning
         print(f"[AGENT 1] Suggested Mode: {suggested_mode}")
         print(f"[AGENT 1] Suggested Top-K: {suggested_top_k}")
         print(f"[AGENT 1] Tuning Reason: {tuning_reason}")
-
-        if needs_clarification:
-            print(f"[AGENT 1] Clarification Question: {clarification_question}")
 
         # Return partial update
         return {
@@ -168,8 +162,6 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_confidence": query_confidence,
             "query_confidence_reason": query_confidence_reason,
             "query_cohort_year": query_cohort_year,
-            "needs_clarification": needs_clarification,
-            "clarification_question": clarification_question if clarification_question is not None else None,
             "retrieval_mode": suggested_mode,
             "top_k": suggested_top_k,
             "chunk_top_k": suggested_chunk_top_k,
@@ -188,8 +180,6 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "status_message": "Error in query understanding",
             "query": query,
             "query_confidence": 0.0,
-            "needs_clarification": True,
-            "clarification_question": "Xin lỗi, tôi gặp lỗi khi phân tích câu hỏi. Bạn có thể diễn đạt lại câu hỏi được không?",
             "retrieval_mode": settings.retrieval.default_mode,
             "top_k": settings.retrieval.default_top_k,
             "chunk_top_k": settings.retrieval.default_chunk_top_k,
@@ -218,5 +208,4 @@ def decide_after_agent1(state: QueryState) -> str:
 __all__ = [
     "agent1_understand_query",
     "decide_after_agent1",
-    "ask_clarification"
 ]

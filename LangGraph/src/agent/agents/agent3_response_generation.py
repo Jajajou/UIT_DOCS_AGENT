@@ -77,12 +77,12 @@ def _generate_expiration_warnings(
     expiring_soon_docs = []
     amended_docs = []
 
-    # Track unique documents by file_source
+    # Track unique documents by file_path
     seen_sources = set()
 
     for chunk, score in reranked_chunks:
         metadata = chunk.get("metadata", {})
-        file_source = chunk.get("file_source", "")
+        file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
 
         # Skip if already processed this source
         if file_source in seen_sources:
@@ -199,7 +199,7 @@ def _format_reranked_data(
         lines.append("**Text Chunks (theo độ liên quan):**")
         for i, (chunk, score) in enumerate(reranked_chunks[:top_n], 1):
             content = chunk.get("content", "")
-            file_source = chunk.get("file_source", "")
+            file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
             lines.append(f"{i}. (score: {score:.2f})")
             lines.append(f"   Content: {content[:300]}...")
             if file_source:
@@ -221,13 +221,13 @@ def _extract_references(
         if score < min_score:
             continue
         
-        file_source = chunk.get("file_source", "")
+        file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
         if not file_source or file_source in seen_sources:
             continue
-        
+
         seen_sources.add(file_source)
-        
-        # Extract title from file_source URL
+
+        # Extract title from file_path/file_source
         title = file_source.split("/")[-1] if "/" in file_source else file_source
         
         # Get excerpt
@@ -302,7 +302,6 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             SystemMessage(content=prompt_text),
             HumanMessage(content=f"{parsed_intention}\n\nGenerate JSON response.")
         ]
-        print(f"GOI LLM: {prompt_text}")
         raw_response = llm_json.invoke(input=msgs)
         content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
 
@@ -326,7 +325,6 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
 
         # Set final answer
         final_answer = generated_response
-        print(f"FINAL ANSWER BEFORE SUFFIX: {final_answer}")
 
         # Add expiration warnings if any
         if expiration_warnings:

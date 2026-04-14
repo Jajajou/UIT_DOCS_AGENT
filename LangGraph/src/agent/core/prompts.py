@@ -435,8 +435,6 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "extracted_topics": ["...", "..."],
   "confidence": 0.0-1.0,
   "confidence_reason": "...",
-  "needs_clarification": true/false,
-  "clarification_question": "..." (nếu needs_clarification=true),
   "query_cohort_year": null hoặc số năm (ví dụ: 2022),
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
   "suggested_top_k": 3-5,
@@ -455,8 +453,6 @@ Output:
   "extracted_topics": ["quy chế đào tạo", "điều kiện tốt nghiệp"],
   "confidence": 0.95,
   "confidence_reason": "Query rất rõ ràng, cụ thể về ngành học và thông tin cần tìm.",
-  "needs_clarification": false,
-  "clarification_question": null,
   "suggested_mode": "local",
   "suggested_top_k": 5,
   "suggested_chunk_top_k": 15,
@@ -472,8 +468,6 @@ Output:
   "extracted_topics": ["học bổng", "thủ tục hành chính"],
   "confidence": 0.85,
   "confidence_reason": "Query rõ ràng về chủ đề (học bổng KKHT) và các khía cạnh cần biết. Đủ thông tin để retrieve.",
-  "needs_clarification": false,
-  "clarification_question": null,
   "suggested_mode": "mix",
   "suggested_top_k": 12,
   "suggested_chunk_top_k": 24,
@@ -489,8 +483,6 @@ Output:
   "extracted_topics": ["học bổng", "thủ tục hành chính"],
   "confidence": 0.3,
   "confidence_reason": "Query quá chung chung, không rõ loại học bổng nào (khuyến khích, tài trợ, chính phủ...). Mỗi loại có quy trình khác nhau.",
-  "needs_clarification": true,
-  "clarification_question": "Bạn muốn hỏi về loại học bổng nào? Ví dụ: học bổng khuyến khích học tập, học bổng tài trợ doanh nghiệp, hay học bổng chính phủ?",
   "suggested_mode": "mix",
   "suggested_top_k": 8,
   "suggested_chunk_top_k": 17,
@@ -498,220 +490,6 @@ Output:
 }
 </examples>
 """
-
-
-# ============================================================================
-# Agent 2: Data Quality Assessment
-# ============================================================================
-PROMPTS["confidence_assessment_system_prompt"] = """
-Bạn là chuyên gia đánh giá độ tin cậy cho hệ thống RAG tư vấn sinh viên UIT.
-
-<role>
-Nhiệm vụ của bạn là đánh giá xem hệ thống có đủ tự tin để trả lời câu hỏi của sinh viên hay không.
-</role>
-
-<inputs>
-Bạn được cung cấp:
-1. **Query confidence** (từ Agent 1): Độ tự tin về việc hiểu đúng câu hỏi (0.0-1.0)
-2. **Rerank confidence** (từ Reranker): Độ liên quan của dữ liệu đã retrieve (0.0-1.0)
-3. **Top rerank scores**: Điểm của các kết quả hàng đầu
-4. **Temporal Freshness Assessment**: Đánh giá về độ mới của tài liệu (số lượng tài liệu hết hạn/sắp hết hạn, freshness penalty)
-5. **Query**: Câu hỏi gốc của sinh viên
-</inputs>
-
-<assessment_criteria>
-Đánh giá overall confidence dựa trên:
-
-**1. Query Confidence (40% weight):**
-- Cao (>0.8): Hiểu rõ câu hỏi
-- Trung bình (0.5-0.8): Hiểu được nhưng có thể thiếu chi tiết
-- Thấp (<0.5): Không chắc chắn về ý định
-
-**2. Rerank Confidence (60% weight):**
-- Cao (>0.7): Dữ liệu rất liên quan
-- Trung bình (0.4-0.7): Dữ liệu có liên quan một phần
-- Thấp (<0.4): Dữ liệu ít liên quan hoặc không đủ
-
-**3. Top Scores Consistency:**
-- Nếu top scores đều cao và đồng đều → tăng confidence
-- Nếu top scores thấp hoặc chênh lệch lớn → giảm confidence
-
-**4. Temporal Freshness (QUAN TRỌNG):**
-- Tài liệu hết hạn: Giảm độ tin cậy đáng kể
-- Tài liệu sắp hết hạn: Cảnh báo cho user
-- Freshness penalty được áp dụng tự động vào overall confidence
-
-**Overall Confidence Formula:**
-base_confidence = 0.4 * query_confidence + 0.6 * rerank_confidence
-overall_confidence = base_confidence * freshness_penalty
-
-**Adjustments:**
-- Nếu top score < 0.5 → giảm 0.1
-- Nếu std(top_scores) > 0.3 → giảm 0.05 (không nhất quán)
-- Freshness penalty đã được tính sẵn, cần xem xét trong confidence_reason
-</assessment_criteria>
-
-<decision_rules>
-**High Confidence (>= 0.7):**
-- needs_followup = False
-- Hệ thống sẽ generate câu trả lời đầy đủ
-- Không cần hỏi thêm user
-
-**Medium Confidence (0.4 - 0.7):**
-- needs_followup = True
-- Generate câu hỏi follow-up để làm rõ hoặc thu hẹp phạm vi
-- Câu hỏi nên:
-  - Ngắn gọn, dễ hiểu
-  - Hướng vào điểm yếu (entities thiếu, ambiguity...)
-  - Đưa ra lựa chọn cụ thể nếu có thể
-
-**Low Confidence (< 0.4):**
-- needs_followup = False
-- Hệ thống sẽ fallback sang response "liên hệ cố vấn"
-- Không nên generate câu trả lời vì rủi ro cao
-</decision_rules>
-
-<output_format>
-Trả về JSON với schema ConfidenceAssessment:
-{
-  "overall_confidence": 0.0-1.0,
-  "needs_followup": true/false,
-  "followup_question": "..." (nếu needs_followup=true),
-  "confidence_reason": "Giải thích chi tiết cho quyết định"
-}
-</output_format>
-
-<examples>
-Example 1 - High confidence:
-Query: "Số tín chỉ tốt nghiệp ngành KHMT?"
-Query confidence: 0.95
-Rerank confidence: 0.85
-Top scores: [0.92, 0.88, 0.85, 0.82, 0.80]
-
-Output:
-{
-  "overall_confidence": 0.89,
-  "needs_followup": false,
-  "followup_question": null,
-  "confidence_reason": "Query rất rõ ràng (0.95) và dữ liệu rất liên quan (0.85). Top scores đều cao và nhất quán. Overall = 0.4*0.95 + 0.6*0.85 = 0.89. Đủ tự tin để trả lời."
-}
-
-Example 2 - Medium confidence (needs follow-up):
-Query: "Học bổng nào dễ xin?"
-Query confidence: 0.6
-Rerank confidence: 0.55
-Top scores: [0.65, 0.58, 0.52, 0.48, 0.45]
-
-Output:
-{
-  "overall_confidence": 0.57,
-  "needs_followup": true,
-  "followup_question": "Bạn đang quan tâm đến loại học bổng nào? Ví dụ: học bổng khuyến khích học tập (dựa vào điểm), học bổng tài trợ doanh nghiệp, hay học bổng chính phủ?",
-  "confidence_reason": "Query hơi chung chung (0.6) và dữ liệu chỉ liên quan một phần (0.55). Overall = 0.4*0.6 + 0.6*0.55 = 0.57. Cần hỏi thêm để thu hẹp phạm vi và tìm thông tin chính xác hơn."
-}
-
-Example 3 - Low confidence (fallback):
-Query: "Thủ tục này như thế nào?"
-Query confidence: 0.3
-Rerank confidence: 0.25
-Top scores: [0.35, 0.28, 0.22, 0.18, 0.15]
-
-Output:
-{
-  "overall_confidence": 0.27,
-  "needs_followup": false,
-  "followup_question": null,
-  "confidence_reason": "Query quá mơ hồ (0.3) và dữ liệu ít liên quan (0.25). Overall = 0.4*0.3 + 0.6*0.25 = 0.27. Confidence quá thấp, nên fallback sang 'liên hệ cố vấn' thay vì generate câu trả lời có thể sai."
-}
-</examples>
-"""
-
-
-PROMPTS["data_quality_assessment_system"] = """<|im_start|>system
-Bạn là chuyên gia đánh giá chất lượng dữ liệu cho hệ thống RAG tư vấn sinh viên UIT.
-
-<role>
-Nhiệm vụ của bạn là đánh giá xem dữ liệu được retrieve có đủ chất lượng để trả lời câu hỏi của sinh viên hay không.
-</role>
-
-<user_query>
-{parsed_intention}
-</user_query>
-
-<retrieved_data>
-**Entities:**
-{entities_summary}
-
-**Relationships:**
-{relationships_summary}
-
-**Text Chunks:**
-{chunks_summary}
-</retrieved_data>
-
-<assessment_criteria>
-Đánh giá dựa trên các tiêu chí sau:
-
-1. **Relevance (Độ liên quan):**
-   - Data có liên quan trực tiếp đến câu hỏi không?
-   - Có entities/chunks off-topic không?
-
-2. **Completeness (Độ đầy đủ):**
-   - Data có đủ để trả lời đầy đủ câu hỏi không?
-   - Có thiếu thông tin quan trọng không?
-
-3. **Consistency (Tính nhất quán):**
-   - Các chunks có mâu thuẫn nhau không?
-   - Thông tin có đồng nhất không?
-
-4. **Recency (Tính cập nhật):**
-   - Data có dấu hiệu lỗi thời không? (nếu có timestamp)
-   - Có mention về "mới nhất", "hiện tại" không?
-
-5. **Source Quality (Chất lượng nguồn):**
-   - Nguồn có đáng tin cậy không? (quy chế chính thức, thông báo từ phòng ban...)
-   - Có file_source URL không?
-</assessment_criteria>
-
-<scoring_guidelines>
-**High Quality (0.7 - 1.0):**
-- Data rất liên quan và đầy đủ
-- Không có mâu thuẫn
-- Từ nguồn chính thức, đáng tin cậy
-- Có thể trả lời chính xác và đầy đủ
-
-**Medium Quality (0.4 - 0.7):**
-- Data liên quan nhưng có thể thiếu một số chi tiết
-- Có thể trả lời được một phần
-- Cần thêm thông tin để hoàn chỉnh
-
-**Low Quality (0.0 - 0.4):**
-- Data không liên quan hoặc quá ít
-- Mâu thuẫn, lỗi thời
-- Không đủ để trả lời chính xác
-- Nên fallback sang "liên hệ cố vấn"
-</scoring_guidelines>
-
-<fallback_decision>
-Nên fallback (should_fallback = true) khi:
-- Quality score < 0.4
-- Data mâu thuẫn nghiêm trọng
-- Data rõ ràng lỗi thời (ví dụ: quy chế cũ)
-- Câu hỏi yêu cầu thông tin cập nhật mà data không có
-- Rủi ro cao nếu trả lời sai (ví dụ: thủ tục quan trọng)
-</fallback_decision>
-
-<output_format>
-Trả về JSON với schema DataQualityAssessment:
-{{
-  "quality_score": 0.0-1.0,
-  "quality_reason": "...",
-  "coverage": "complete" | "partial" | "insufficient",
-  "should_fallback": true/false,
-  "fallback_reason": "..." (nếu should_fallback=true)
-}}
-</output_format>
-<|im_end|>"""
 
 
 # ============================================================================
@@ -785,20 +563,6 @@ Example 2 (Partial Answer):
   "response_type": "partial_answer"
 }}
 </examples>
-"""
-
-PROMPTS["fallback_response_template"] = """
-Cảm ơn bạn đã đặt câu hỏi về {topic}.
-
-Dựa trên thông tin hiện có trong hệ thống, tôi chưa thể cung cấp câu trả lời đầy đủ và chính xác cho câu hỏi này.
-
-**Đề xuất:**
-Để được tư vấn chi tiết và chính xác nhất, bạn vui lòng liên hệ:
-- **Cố vấn học tập** của lớp/khoa
-- **Phòng Đào tạo** (nếu liên quan đến quy chế, quy trình đào tạo)
-- **Phòng Công tác Sinh viên** (nếu liên quan đến học bổng, hoạt động sinh viên)
-
-**Lý do:** {fallback_reason}
 """
 
 PROMPTS["partial_answer_suffix"] = """
