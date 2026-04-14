@@ -270,38 +270,16 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
     
     # Get inputs
     parsed_intention = state.get("parsed_intention", state.get("query", ""))
-    overall_confidence = state.get("overall_confidence", 0.0)
-    confidence_reason = state.get("confidence_reason", "")
-    
+
     reranked_entities = state.get("reranked_entities", [])
     reranked_relationships = state.get("reranked_relationships", [])
     reranked_chunks = state.get("reranked_chunks", [])
-    
+
     print("=" * 80)
     print(f"[AGENT 3] Generating response")
-    print(f"[AGENT 3] Overall confidence: {overall_confidence:.2f}")
     print(f"[AGENT 3] Reranked items: {len(reranked_entities)} entities, {len(reranked_relationships)} relationships, {len(reranked_chunks)} chunks")
     print("=" * 80)
-    
-    # Check if should fallback
-    if overall_confidence < settings.query_thresholds.fallback_confidence_threshold:
-        print(f"[AGENT 3] Low confidence ({overall_confidence:.2f}), using fallback response")
-        
-        topic = state.get("extracted_topics", ["câu hỏi của bạn"])[0] if state.get("extracted_topics") else "câu hỏi của bạn"
-        fallback_text = PROMPTS["fallback_response_template"].format(
-            topic=topic,
-            fallback_reason=confidence_reason
-        )
-        
-        return {
-            "generated_response": fallback_text,
-            "response_type": "fallback",
-            "references": [],
-            "final_answer": fallback_text,
-            "messages": [AIMessage(content=fallback_text)],
-            "logs": ["Agent 3 used fallback response"]
-        }
-    
+
     try:
         # Format reranked data
         reranked_data_formatted = _format_reranked_data(
@@ -310,13 +288,11 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             reranked_chunks,
             top_n=10
         )
-        
+
         # Prepare prompt
         prompt_text = PROMPTS["response_generation_prompt"].format(
             parsed_intention=parsed_intention,
             reranked_data_formatted=reranked_data_formatted,
-            overall_confidence=overall_confidence,
-            confidence_reason=confidence_reason
         )
         
         # Call LLM directly, strip think tags, parse manually

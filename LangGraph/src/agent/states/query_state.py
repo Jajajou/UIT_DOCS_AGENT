@@ -49,14 +49,6 @@ class QueryUnderstanding(BaseModel):
     confidence_reason: str = Field(
         description="Lý do cụ thể cho confidence score (query rõ ràng/mơ hồ, đủ context hay không...)"
     )
-    needs_clarification: bool = Field(
-        description="Có cần hỏi lại user để làm rõ query không"
-    )
-    clarification_question: Optional[str] = Field(
-        default=None,
-        description="Câu hỏi để clarify nếu needs_clarification=True"
-    )
-    
     # Cohort year extracted from query (e.g. 2022 for "K2022", "khoa 2022")
     query_cohort_year: Optional[int] = Field(
         default=None,
@@ -179,10 +171,6 @@ class QueryState(TypedDict):
     query_confidence: NotRequired[float]
     query_confidence_reason: NotRequired[Optional[str]]
     query_cohort_year: NotRequired[Optional[int]]  # e.g. 2022 for "K2022" queries
-
-    # Agent 1 Decision
-    needs_clarification: NotRequired[bool]
-    clarification_question: NotRequired[Optional[str]]
 
     # Tuned parameters từ Agent 1
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]

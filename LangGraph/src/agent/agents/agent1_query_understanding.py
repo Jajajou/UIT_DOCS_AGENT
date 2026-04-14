@@ -205,46 +205,10 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
 def decide_after_agent1(state: QueryState) -> str:
     """
     Decide next step after Agent 1.
-    
-    Returns:
-        - "ask_clarification" if needs_clarification is True
-        - "agent3_generate_response" if confident > 0.9
-        - "retrieve_data" otherwise
+    Always retrieves — clarification gating removed.
+    Temporal reranking handles result quality downstream.
     """
-    if state.get("needs_clarification", False):
-        return "ask_clarification"
-    # if state.get("query_confidence") > 0.9: #type: ignore
-        # return "agent3_generate_response"
     return "retrieve_data"
-
-
-# ============================================================================
-# Clarification Node
-# ============================================================================
-
-def ask_clarification(state: QueryState) -> QueryState:
-    """
-    Ask clarification question to user.
-    
-    This node adds the clarification question to messages and ends the flow.
-    User will need to respond before continuing.
-    """
-    from langchain_core.messages import AIMessage
-    
-    question = state.get("clarification_question", "Bạn có thể cung cấp thêm thông tin được không?")
-    
-    print("=" * 80)
-    print(f"[CLARIFICATION] Asking user: {question}")
-    print("=" * 80)
-    
-    # Add AI message with clarification question
-    msgs = list(state.get("messages", []))
-    msgs.append(AIMessage(content=question))
-    state["messages"] = msgs
-    
-    state["status_message"] = "Waiting for user clarification"
-    
-    return state
 
 
 # ============================================================================
