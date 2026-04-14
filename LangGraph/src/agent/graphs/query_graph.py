@@ -23,6 +23,11 @@ from agent.agents.agent1_query_understanding import (
     agent1_understand_query,
 )
 from agent.agents.agent3_response_generation import agent3_generate_response
+from agent.agents.retrieve_cohort import (
+    retrieve_cohort_data,
+    route_retrieval,
+    route_after_cohort,
+)
 from agent.utils import content_to_text, get_last_human_message
 from agent.config import settings
 
@@ -168,14 +173,14 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     entities = state.get("retrieved_entities", [])
     relationships = state.get("retrieved_relationships", [])
 
-    all_file_paths = {
-        item.get("file_path", "")
-        for item in chunks + entities + relationships
-        if item.get("file_path")
-    }
+    all_file_paths = set()
+    for item in chunks + entities + relationships:
+        fp = item.get("file_path") or item.get("file_source")
+        if fp:
+            all_file_paths.add(fp)
 
     if not all_file_paths:
-        print("[ENRICH] No file_path found in retrieved items, skipping enrichment")
+        print("[ENRICH] No file_path or file_source found in retrieved items, skipping enrichment")
         return {}
 
     temporal_map = api_client.get_temporal_metadata_by_file_sources(list(all_file_paths))
@@ -187,8 +192,8 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     def enrich(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result = []
         for item in items:
-            fp = item.get("file_path", "")
-            if fp in temporal_map:
+            fp = item.get("file_path") or item.get("file_source")
+            if fp and fp in temporal_map:
                 enriched = {**item, "metadata": {**item.get("metadata", {}), **temporal_map[fp]}}
                 result.append(enriched)
             else:
@@ -199,7 +204,7 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     enriched_entities = enrich(entities)
     enriched_relationships = enrich(relationships)
 
-    matched = sum(1 for item in chunks + entities + relationships if item.get("file_path", "") in temporal_map)
+    matched = sum(1 for item in chunks + entities + relationships if (item.get("file_path") or item.get("file_source")) in temporal_map)
     total = len(chunks) + len(entities) + len(relationships)
     print(f"[ENRICH] Enriched {matched}/{total} items with temporal metadata")
 
@@ -207,6 +212,66 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
         "retrieved_chunks": enriched_chunks,
         "retrieved_entities": enriched_entities,
         "retrieved_relationships": enriched_relationships,
+    }
+
+
+def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
+    """
+    Hard-filter retrieved items based on cohort constraints.
+    
+    If Agent 1 detected a specific cohort year (e.g. 2022),
+    this node drops any documents that are explicitly NOT for that year.
+    It prioritizes items that ARE for that year or are Universal.
+    """
+    query_cohort_year = state.get("query_cohort_year")
+    if query_cohort_year is None:
+        return {} # No filtering if no cohort specified
+
+    chunks = state.get("retrieved_chunks", [])
+    entities = state.get("retrieved_entities", [])
+    relationships = state.get("retrieved_relationships", [])
+
+    try:
+        target_year = int(query_cohort_year)
+    except (ValueError, TypeError):
+        return {}
+
+    def is_match(item: Dict[str, Any]) -> bool:
+        meta = item.get("metadata", {})
+        cohorts = meta.get("cohort_years")
+        
+        # If no cohort info, we keep it (don't want to lose data due to extraction gaps)
+        if not cohorts:
+            return True
+            
+        # Universal match
+        if "*" in cohorts or "*" in [str(c) for c in cohorts]:
+            return True
+            
+        # Specific year match
+        try:
+            item_years = [int(c) for c in cohorts if str(c).isdigit()]
+            if target_year in item_years:
+                return True
+        except (ValueError, TypeError):
+            pass
+            
+        return False
+
+    filtered_chunks = [c for c in chunks if is_match(c)]
+    filtered_entities = [e for e in entities if is_match(e)]
+    filtered_relationships = [r for r in relationships if is_match(r)]
+
+    dropped = (len(chunks) + len(entities) + len(relationships)) - \
+              (len(filtered_chunks) + len(filtered_entities) + len(filtered_relationships))
+    
+    print(f"[FILTER] Dropped {dropped} items that don't match cohort {target_year}")
+    print(f"[FILTER] Remaining: {len(filtered_chunks)} chunks, {len(filtered_entities)} entities")
+
+    return {
+        "retrieved_chunks": filtered_chunks,
+        "retrieved_entities": filtered_entities,
+        "retrieved_relationships": filtered_relationships,
     }
 
 
@@ -343,20 +408,47 @@ builder = StateGraph(state_schema=QueryState)
 # Add nodes
 builder.add_node("prepare_input", prepare_input)
 builder.add_node("agent1_understand_query", agent1_understand_query)
+builder.add_node("retrieve_cohort_data", retrieve_cohort_data)
 builder.add_node("retrieve_data", retrieve_data)
 builder.add_node("enrich_with_temporal_metadata", enrich_with_temporal_metadata)
+builder.add_node("filter_by_metadata", filter_by_metadata)
 builder.add_node("rerank_data", rerank_data)
 builder.add_node("agent3_generate_response", agent3_generate_response)
 builder.add_node("format_final_answer", format_final_answer)
 
 # Set entry point
 builder.add_edge(START, "prepare_input")
-
-# Linear pipeline: parse -> retrieve -> enrich -> rerank -> answer
 builder.add_edge("prepare_input", "agent1_understand_query")
-builder.add_edge("agent1_understand_query", "retrieve_data")
+
+# Dual-mode routing after Agent 1:
+#   COHORT  → retrieve_cohort_data
+#   GENERAL → retrieve_data (LightRAG)
+builder.add_conditional_edges(
+    "agent1_understand_query",
+    route_retrieval,
+    {
+        "retrieve_cohort_data": "retrieve_cohort_data",
+        "retrieve_data": "retrieve_data",
+    },
+)
+
+# COHORT path: after cohort retrieval, either skip to rerank (has results)
+# or fall back to GENERAL retrieve_data (0 results)
+builder.add_conditional_edges(
+    "retrieve_cohort_data",
+    route_after_cohort,
+    {
+        "rerank_data": "rerank_data",
+        "retrieve_data": "retrieve_data",
+    },
+)
+
+# GENERAL path: retrieve → enrich → filter → rerank
 builder.add_edge("retrieve_data", "enrich_with_temporal_metadata")
-builder.add_edge("enrich_with_temporal_metadata", "rerank_data")
+builder.add_edge("enrich_with_temporal_metadata", "filter_by_metadata")
+builder.add_edge("filter_by_metadata", "rerank_data")
+
+# Common tail: rerank → answer → format → end
 builder.add_edge("rerank_data", "agent3_generate_response")
 builder.add_edge("agent3_generate_response", "format_final_answer")
 builder.add_edge("format_final_answer", END)
