@@ -100,10 +100,16 @@ def route_retrieval(state: QueryState) -> str:
     """
     Conditional edge: route after agent1_understand_query.
 
-    COHORT     → retrieve_cohort_data
-    AMENDMENT  → retrieve_amendment_data
-    GENERAL    → retrieve_data (LightRAG)
+    When USE_METADATA_ROUTING=false (ablation bypass):
+        All queries → retrieve_data (LightRAG, v0.2.0 behaviour)
+
+    When USE_METADATA_ROUTING=true (default):
+        COHORT     → retrieve_cohort_data
+        AMENDMENT  → retrieve_amendment_data
+        GENERAL    → retrieve_data (LightRAG)
     """
+    if not settings.use_metadata_routing:
+        return "retrieve_data"
     query_type = state.get("query_type", "GENERAL")
     if query_type == "COHORT":
         return "retrieve_cohort_data"

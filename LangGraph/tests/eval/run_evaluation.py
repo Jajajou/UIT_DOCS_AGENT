@@ -1,12 +1,16 @@
 """
 Temporal-Aware Retrieval Ablation Evaluation
 
-Runs 4-way ablation over frozen test pairs.
-Conditions:
-  Baseline-S    : USE_TEMPORAL_SCORING=false  USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
-  Baseline-T    : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
-  System        : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=false
-  System+Amend  : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=true
+Runs ablation over frozen test pairs.
+Conditions (v0.2.0 reranker ablation):
+  Baseline-S       : USE_TEMPORAL_SCORING=false  USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
+  Baseline-T       : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=false  USE_AMENDMENT_OVERRIDE=false
+  System           : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=false
+  System+Amend     : USE_TEMPORAL_SCORING=true   USE_COHORT_BOOST=true   USE_AMENDMENT_OVERRIDE=true
+
+Conditions (v0.3.0 metadata routing):
+  v0.3.0_No_Routing: v0.2.0 best config, routing disabled (control)
+  v0.3.0_Full      : tri-mode routing enabled (COHORT/AMENDMENT/GENERAL paths)
 
 Metrics:
   accuracy@1  — expected doc number appears in final answer
@@ -51,25 +55,43 @@ ABLATION_CONFIGS: dict[str, dict[str, str]] = {
         "USE_TEMPORAL_SCORING": "false",
         "USE_COHORT_BOOST": "false",
         "USE_AMENDMENT_OVERRIDE": "false",
+        "USE_METADATA_ROUTING": "false",
         "description": "Pure semantic reranking",
     },
     "Baseline-T": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "false",
         "USE_AMENDMENT_OVERRIDE": "false",
+        "USE_METADATA_ROUTING": "false",
         "description": "Temporal scoring, no cohort boost",
     },
     "System": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "true",
         "USE_AMENDMENT_OVERRIDE": "false",
+        "USE_METADATA_ROUTING": "false",
         "description": "Full system (temporal + cohort)",
     },
     "System+Amend": {
         "USE_TEMPORAL_SCORING": "true",
         "USE_COHORT_BOOST": "true",
         "USE_AMENDMENT_OVERRIDE": "true",
-        "description": "Full system + amendment override",
+        "USE_METADATA_ROUTING": "false",
+        "description": "Full system + amendment override (v0.2.0, no routing)",
+    },
+    "v0.3.0_No_Routing": {
+        "USE_TEMPORAL_SCORING": "true",
+        "USE_COHORT_BOOST": "true",
+        "USE_AMENDMENT_OVERRIDE": "true",
+        "USE_METADATA_ROUTING": "false",
+        "description": "v0.2.0 best — reranker-only, routing disabled",
+    },
+    "v0.3.0_Full": {
+        "USE_TEMPORAL_SCORING": "true",
+        "USE_COHORT_BOOST": "true",
+        "USE_AMENDMENT_OVERRIDE": "true",
+        "USE_METADATA_ROUTING": "true",
+        "description": "v0.3.0 full tri-mode metadata routing",
     },
 }
 
@@ -83,10 +105,12 @@ def set_env_for_config(config_name: str) -> None:
     os.environ["USE_TEMPORAL_SCORING"] = cfg["USE_TEMPORAL_SCORING"]
     os.environ["USE_COHORT_BOOST"] = cfg["USE_COHORT_BOOST"]
     os.environ["USE_AMENDMENT_OVERRIDE"] = cfg.get("USE_AMENDMENT_OVERRIDE", "false")
+    os.environ["USE_METADATA_ROUTING"] = cfg.get("USE_METADATA_ROUTING", "false")
     print(
         f"[CONFIG] temporal={os.environ['USE_TEMPORAL_SCORING']} "
         f"cohort={os.environ['USE_COHORT_BOOST']} "
-        f"amendment={os.environ['USE_AMENDMENT_OVERRIDE']}"
+        f"amendment={os.environ['USE_AMENDMENT_OVERRIDE']} "
+        f"routing={os.environ['USE_METADATA_ROUTING']}"
     )
 
 

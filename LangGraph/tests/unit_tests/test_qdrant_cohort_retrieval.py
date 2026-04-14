@@ -22,6 +22,7 @@ from agent.agents.retrieve_cohort import (
     route_after_cohort,
 )
 from agent.states.query_state import QueryState
+import agent.agents.retrieve_cohort as retrieve_cohort_module
 
 
 # ============================================================================
@@ -119,6 +120,22 @@ class TestRouteRetrieval:
     def test_none_query_type_defaults_to_retrieve_data(self):
         state: QueryState = {"messages": [], "logs": [], "query_type": None}
         assert route_retrieval(state) == "retrieve_data"
+
+    def test_routing_bypass_forces_retrieve_data_for_cohort(self):
+        """USE_METADATA_ROUTING=false: COHORT queries fall through to GENERAL path."""
+        mock_settings = MagicMock()
+        mock_settings.use_metadata_routing = False
+        state: QueryState = {"messages": [], "logs": [], "query_type": "COHORT"}
+        with patch.object(retrieve_cohort_module, "settings", mock_settings):
+            assert route_retrieval(state) == "retrieve_data"
+
+    def test_routing_bypass_forces_retrieve_data_for_amendment(self):
+        """USE_METADATA_ROUTING=false: AMENDMENT queries fall through to GENERAL path."""
+        mock_settings = MagicMock()
+        mock_settings.use_metadata_routing = False
+        state: QueryState = {"messages": [], "logs": [], "query_type": "AMENDMENT"}
+        with patch.object(retrieve_cohort_module, "settings", mock_settings):
+            assert route_retrieval(state) == "retrieve_data"
 
 
 # ============================================================================
