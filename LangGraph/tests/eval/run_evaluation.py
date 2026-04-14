@@ -44,7 +44,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 LANGGRAPH_URL = os.getenv("LANGGRAPH_URL", "http://localhost:2024")
 RETRIEVAL_ASSISTANT_ID = os.getenv("RETRIEVAL_ASSISTANT_ID", "5bbc8364-e383-5087-8a2f-b6d27677f7a1")
-REQUEST_TIMEOUT = 180
+REQUEST_TIMEOUT = 300
 
 ABLATION_CONFIGS: dict[str, dict[str, str]] = {
     "Baseline-S": {
@@ -116,14 +116,18 @@ def call_pipeline(query: str, cohort_year: int | None) -> dict[str, Any]:  # noq
 # Evaluation helpers
 # ---------------------------------------------------------------------------
 
-def extract_text(state: dict[str, Any]) -> str:
+def extract_text(state: dict[str, Any], include_raw: bool = False) -> str:
     """
-    Flatten retrieved content for evaluation.
-    Includes: final_answer, AI messages, AND reranked chunk content.
-    This allows evaluation even when Agent 3 routes to ask_followup.
+    Flatten content for evaluation.
+    
+    By default (include_raw=False), this ONLY includes the final_answer and AI messages.
+    This ensures that evaluation reflects what the user actually sees.
+    
+    If include_raw=True, it includes all retrieved and reranked data (for debugging).
     """
     parts: list[str] = []
 
+    # 1. User-facing content (The ground truth for response evaluation)
     fa = state.get("final_answer", "") or ""
     if fa:
         parts.append(fa)
@@ -139,28 +143,29 @@ def extract_text(state: dict[str, Any]) -> str:
             if content:
                 parts.append(content)
 
-    # Also include reranked chunk content and entity descriptions.
-    # This is the primary signal for retrieval evaluation.
-    for chunk_wrapper in state.get("reranked_chunks", []):
-        chunk = chunk_wrapper[0] if isinstance(chunk_wrapper, list) else chunk_wrapper
-        if isinstance(chunk, dict):
-            parts.append(chunk.get("content", ""))
+    # 2. Raw retrieval data (ONLY for debugging or if specifically requested)
+    if include_raw:
+        # Include reranked chunk content and entity descriptions.
+        for chunk_wrapper in state.get("reranked_chunks", []):
+            chunk = chunk_wrapper[0] if isinstance(chunk_wrapper, list) else chunk_wrapper
+            if isinstance(chunk, dict):
+                parts.append(chunk.get("content", ""))
 
-    for ent_wrapper in state.get("reranked_entities", []):
-        ent = ent_wrapper[0] if isinstance(ent_wrapper, list) else ent_wrapper
-        if isinstance(ent, dict):
-            parts.append(ent.get("description", ""))
-            parts.append(ent.get("entity_name", ""))
+        for ent_wrapper in state.get("reranked_entities", []):
+            ent = ent_wrapper[0] if isinstance(ent_wrapper, list) else ent_wrapper
+            if isinstance(ent, dict):
+                parts.append(ent.get("description", ""))
+                parts.append(ent.get("entity_name", ""))
 
-    for rel_wrapper in state.get("reranked_relationships", []):
-        rel = rel_wrapper[0] if isinstance(rel_wrapper, list) else rel_wrapper
-        if isinstance(rel, dict):
-            parts.append(rel.get("description", ""))
+        for rel_wrapper in state.get("reranked_relationships", []):
+            rel = rel_wrapper[0] if isinstance(rel_wrapper, list) else rel_wrapper
+            if isinstance(rel, dict):
+                parts.append(rel.get("description", ""))
 
-    # Also include raw retrieved data (before reranking) for coverage
-    for item in state.get("retrieved_chunks", []):
-        if isinstance(item, dict):
-            parts.append(item.get("content", ""))
+        # Also include raw retrieved data (before reranking) for coverage
+        for item in state.get("retrieved_chunks", []):
+            if isinstance(item, dict):
+                parts.append(item.get("content", ""))
 
     return " ".join(parts)
 

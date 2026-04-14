@@ -299,32 +299,36 @@ class Reranker:
         Compute cohort match score for an item.
 
         Returns:
-            1.0 if item's cohort_years contains query_cohort_year (match — boost)
+            1.0 if item's cohort_years contains query_cohort_year OR is universal ("*")
             0.5 (neutral) if no cohort in query, no metadata, empty cohort_years, or mismatch
-                          (mismatch is neutral, not a penalty — Agent 1 may hallucinate
-                           a cohort year for non-cohort queries; universal-scope docs
-                           should not be demoted)
         """
         if query_cohort_year is None:
             return 0.5  # neutral — no cohort specified in query
+        
         cohort_years = item.get("metadata", {}).get("cohort_years", None)
         if not cohort_years:
             return 0.5  # neutral — no cohort metadata or empty list
-        # Normalize types: Agent 1 may return cohort year as str or int;
-        # DB stores as int. Compare as int to avoid false mismatches.
+
+        # 1. Check for Universal marker ("*") - matches any query cohort
+        if "*" in cohort_years or "*" in [str(y) for y in cohort_years]:
+            return 1.0
+
+        # 2. Check for explicit year match
         try:
             normalized_query_year = int(query_cohort_year)
         except (ValueError, TypeError):
             return 0.5
-        normalized_cohort_years = set()
+
         for y in cohort_years:
             try:
-                normalized_cohort_years.add(int(y))
+                if int(y) == normalized_query_year:
+                    return 1.0
             except (ValueError, TypeError):
-                pass
+                continue
+
         # Return neutral (0.5) on mismatch so cohort boost only rewards matches,
-        # never penalizes. A mismatch may mean the doc is universal-scope, not wrong.
-        return 1.0 if normalized_query_year in normalized_cohort_years else 0.5
+        # never penalizes.
+        return 0.5
 
     def rerank_with_temporal_boost(
         self,

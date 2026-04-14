@@ -211,7 +211,7 @@ def _format_reranked_data(
 
 def _extract_references(
     reranked_chunks: List[Tuple[Dict[str, Any], float]],
-    min_score: float = 0.5
+    min_score: float = 0.4
 ) -> List[Dict[str, Any]]:
     """Extract references from reranked chunks."""
     references = []
