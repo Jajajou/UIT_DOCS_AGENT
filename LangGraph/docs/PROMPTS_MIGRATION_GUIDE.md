@@ -14,11 +14,7 @@ QUERY_UNDERSTANDING_SYSTEM_PROMPT = """
 Bạn là trợ lý phân tích câu hỏi...
 """
 
-# agent2_response_generation.py
-DATA_QUALITY_ASSESSMENT_PROMPT = """
-Bạn là chuyên gia đánh giá chất lượng dữ liệu...
-"""
-
+# agent3_response_generation.py
 RESPONSE_GENERATION_PROMPT = """
 Bạn là trợ lý tư vấn học tập...
 """
@@ -38,11 +34,7 @@ PROMPTS = {
     "query_understanding_system": """<|im_start|>system
     Bạn là trợ lý phân tích câu hỏi...
     <|im_end|>""",
-    
-    "data_quality_assessment_system": """<|im_start|>system
-    Bạn là chuyên gia đánh giá chất lượng dữ liệu...
-    <|im_end|>""",
-    
+
     "response_generation_system": """<|im_start|>system
     Bạn là trợ lý tư vấn học tập...
     <|im_end|>"""
@@ -106,33 +98,7 @@ completion = client.beta.chat.completions.parse(
 )
 ```
 
-### Agent 2: Data Quality Assessment
-
-```python
-from agent.prompts import get_prompt, format_prompt
-
-# Load and format prompt
-prompt_template = get_prompt("data_quality_assessment_system", LLM_MODEL)
-prompt = format_prompt(
-    prompt_template,
-    parsed_intention=parsed_intention,
-    entities_summary=entities_summary,
-    relationships_summary=relationships_summary,
-    chunks_summary=chunks_summary
-)
-
-# Use in LLM call
-completion = client.beta.chat.completions.parse(
-    model=LLM_MODEL,
-    messages=[
-        {"role": "user", "content": prompt}
-    ],
-    response_format=DataQualityAssessment,
-    temperature=ASSESSMENT_TEMPERATURE,
-)
-```
-
-### Agent 2: Response Generation
+### Agent 3: Response Generation
 
 ```python
 from agent.prompts import get_prompt, format_prompt
@@ -164,8 +130,9 @@ completion = client.beta.chat.completions.parse(
 | Key | Description | Variables |
 |-----|-------------|-----------|
 | `query_understanding_system` | Agent 1: Query analysis with confidence scoring | None (user query in separate message) |
-| `data_quality_assessment_system` | Agent 2: Data quality evaluation | `parsed_intention`, `entities_summary`, `relationships_summary`, `chunks_summary` |
-| `response_generation_system` | Agent 2: Response generation with hyperlinks | `parsed_intention`, `retrieved_data_formatted`, `quality_score`, `coverage`, `quality_reason` |
+| `response_generation_system` | Agent 3: Response generation with hyperlinks | `parsed_intention`, `retrieved_data_formatted` |
+
+> **Note (v0.2.0):** Agent 2 prompts (`data_quality_assessment_system`, `confidence_assessment_system_prompt`) were removed in v0.2.0 when Agent 2 was eliminated. The pipeline is now a 2-agent linear flow: Agent 1 (query understanding) followed by Agent 3 (response generation).
 
 ## Customization
 
@@ -226,8 +193,7 @@ Old prompt constants are kept as `*_OLD` for reference:
 # In agent1_query_understanding.py
 QUERY_UNDERSTANDING_SYSTEM_PROMPT_OLD = """..."""  # Old prompt for reference
 
-# In agent2_response_generation.py
-DATA_QUALITY_ASSESSMENT_PROMPT_OLD = """..."""  # Old prompt for reference
+# In agent3_response_generation.py
 RESPONSE_GENERATION_PROMPT_OLD = """..."""  # Old prompt for reference
 ```
 
@@ -243,7 +209,6 @@ from agent.prompts import get_prompt
 # Test all prompts
 prompts_to_test = [
     "query_understanding_system",
-    "data_quality_assessment_system",
     "response_generation_system"
 ]
 
@@ -272,7 +237,7 @@ print("Difference:", len(new_prompt) - len(old_prompt))
 - [x] Add Qwen chat template format (`<|im_start|>`, `<|im_end|>`)
 - [x] Add XML-style tags for structure
 - [x] Update `agent1_query_understanding.py` to use `get_prompt()`
-- [x] Update `agent2_response_generation.py` to use `get_prompt()` and `format_prompt()`
+- [x] Update `agent3_response_generation.py` to use `get_prompt()` and `format_prompt()`
 - [x] Keep old prompts as `*_OLD` for reference
 - [x] Test compilation
 - [ ] Test with real LLM calls

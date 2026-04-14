@@ -320,7 +320,7 @@ isites: Course → Course
 
 #### 3.3.1. Pipeline Architecture
 
-Hệ thống UITRaph được thiết kế là một **temporal-aware RAG workflow tuyến tính** (không phải agentic system). Sau quá trình phát triển và đánh giá, kiến trúc ban đầu có 3 agent với conditional routing đã được đơn giản hóa thành pipeline 6 node cố định. Lý do được trình bày chi tiết trong Mục 9.1.4.
+Hệ thống UITRaph được thiết kế là một **temporal-aware RAG workflow tuyến tính** (không phải agentic system). Sau quá trình phát triển và đánh giá, kiến trúc ban đầu có 3 agent với conditional routing đã được đơn giản hóa thành pipeline 6 node cố định. Lý do được trình bày chi tiết trong Mục 9.1.2.
 
 ```mermaid
 graph LR
@@ -377,7 +377,7 @@ class QueryState(TypedDict):
 **Agent 1** (Query Understanding):
 - Phân tích intent, extract entities/topics
 - Extract `query_cohort_year` -- trường này là **load-bearing**: nếu Agent 1 bị loại bỏ hoàn toàn, System config trở thành Baseline-T vì không có cohort year cho cohort reranking
-- Không còn clarification gating (xem Mục 9.1.4)
+- Không còn clarification gating (xem Mục 9.1.2)
 
 **Agent 3** (Response Generation):
 - Nhận reranked data, tạo câu trả lời trực tiếp bằng tiếng Việt
@@ -608,10 +608,9 @@ graph TB
         C3[(Qdrant<br/>Vector Store)]
     end
 
-    subgraph "Query Layer"
+    subgraph "Query Layer (v0.2.0: 2-agent pipeline)"
         D1[Query Graph<br/>LangGraph]
         D2[Agent 1:<br/>Understanding]
-        D3[Agent 2:<br/>Assessment]
         D4[Agent 3:<br/>Generation]
     end
 
@@ -635,8 +634,7 @@ graph TB
     D2 --> E1
     E1 --> E2
     E2 --> E3
-    E3 --> D3
-    D3 --> D4
+    E3 --> D4
     D4 --> Response[Final Answer]
 
     C1 -.-> E1
@@ -729,18 +727,15 @@ sequenceDiagram
     participant LR as LightRAG
     participant VR as ViRanker
     participant TS as Temporal Scoring
-    participant A2 as Agent 2
     participant A3 as Agent 3
+
+    Note over A1,A3: v0.2.0: Agent 2 removed (see Section 9.1.2)
 
     User->>A1: "Sinh viên khóa 2024 cần<br/>bao nhiêu tín chỉ để TN?"
 
     A1->>A1: Parse intention
     A1->>A1: Extract entities:<br/>["Khóa 2024", "Tín chỉ", "TN"]
     A1->>A1: Confidence: 0.95
-
-    alt Confidence < 0.5?
-        A1-->>User: Ask clarification
-    end
 
     A1->>LR: Dual retrieval<br/>(entities + communities)
     LR-->>A1: 60 results
@@ -754,14 +749,7 @@ sequenceDiagram
     TS->>TS: Penalize expired/amended
     TS-->>A1: Reranked by final_score
 
-    A1->>A2: Top 10 results
-    A2->>A2: Assess quality: 0.85
-
-    alt Quality < 0.4?
-        A2-->>User: Fallback response
-    end
-
-    A2->>A3: Generate response
+    A1->>A3: Top 10 results
     A3->>A3: Synthesize answer
     A3->>A3: Add hyperlinked refs
     A3->>A3: Check expiration warnings
@@ -1373,6 +1361,8 @@ def retrieve_and_rerank(state: QueryState) -> Dict:
         "retrieved_chunks": [r[0] for r in ranked_results if r[0]["type"] == "chunk"]
     }
 ```
+
+> **Note (v0.2.0):** This section describes the original 3-agent architecture. Agent 2 was removed in v0.2.0. See Section 9.1.2 for rationale.
 
 #### 5.2.3. Agent 2: Data Quality Assessment
 
@@ -2239,7 +2229,7 @@ uv run python -m pytest tests/integration_tests/test_indexing_performance.py -v
 
 **Metric chính**: acc@1 -- câu trả lời được tính là đúng nếu chunk liên quan xuất hiện trong top-1 retrieved result.
 
-**Lưu ý về thiết kế ablation**: Để đảm bảo tín hiệu reranking được đo lường độc lập, clarification gating đã bị loại khỏi pipeline trước khi chạy ablation (xem Mục 9.1.4). Tất cả 4 configs đều sử dụng cùng pipeline tuyến tính, chỉ khác nhau ở feature flags trong reranker.
+**Lưu ý về thiết kế ablation**: Để đảm bảo tín hiệu reranking được đo lường độc lập, clarification gating đã bị loại khỏi pipeline trước khi chạy ablation (xem Mục 9.1.2). Tất cả 4 configs đều sử dụng cùng pipeline tuyến tính, chỉ khác nhau ở feature flags trong reranker.
 
 #### 7.3.2. Kết quả ablation
 
@@ -2360,7 +2350,7 @@ Test: Query "Quy chế đào tạo K2020" với 2 documents:
 | 1 | 1.0 (valid) | 1.0 (no match) | **0.88** | 2nd |
 | 3 | 0.0 (expired) | 1.0 | **Filtered out** | - |
 
-**Agent 2 assessment**:
+**Agent 2 assessment** *(removed in v0.2.0; shown for historical context)*:
 ```json
 {
   "data_quality_score": 0.92,
@@ -2671,36 +2661,20 @@ Từ TODO.md và project planning:
 
 #### 9.2.1. Agent 2: Freshness Assessment
 
-**Status**: ⏳ In Progress (Priority 1)
+**Status**: Superseded (v0.2.0)
 
-**Feature**: Agent 2 đánh giá **freshness** của retrieved data và penalize documents gần hết hạn.
+This feature was superseded by temporal reranking (Amendment Override, Section 9.1.5) and removed in v0.2.0. The Amendment Override implements freshness-aware ranking without a separate agent.
 
-**Current behavior**: Agent 2 chỉ đánh giá data quality dựa trên coverage và relevance, không xem xét temporal freshness.
+**Original design** (archived for reference): Agent 2 would assess **freshness** of retrieved data and penalize documents near expiration. This functionality is now handled by the temporal scoring stage in the reranking pipeline, which applies validity-date penalties and cohort boosts directly -- eliminating the need for a separate LLM call.
 
-**Planned enhancement**:
 ```python
-def assess_data_quality(state):
-    # Existing logic...
-
-    # NEW: Temporal freshness penalty
-    temporal_penalty = 1.0
-    for item in retrieved_items:
-        metadata = item.get("metadata", {})
-
-        if metadata.get("valid_until"):
-            days_until_expiration = calculate_days_until(metadata["valid_until"])
-
-            if days_until_expiration < 0:
-                temporal_penalty *= 0.5  # Expired
-            elif days_until_expiration < 30:
-                temporal_penalty *= 0.8  # Expiring soon
-
-    adjusted_score = base_score * temporal_penalty
+# v0.2.0: Freshness is handled in rerank_data node via temporal_score
+# See: LangGraph/src/agent/clients/reranker.py (MultiSourceReranker)
+# expired docs get temporal_score = 0.0-0.5
+# expiring-soon docs get temporal_score * 0.8 penalty
 ```
 
-**Impact**: Giảm false positives (Agent 2 approve văn bản sắp hết hạn).
-
-**Time estimate**: 2-3 hours
+**Impact**: Achieved the same goal (penalize stale documents) with lower latency and no additional LLM call. See Section 9.1.2 for the broader rationale behind removing Agent 2.
 
 #### 9.2.2. Agent 3: Expiration Warnings
 
@@ -2908,7 +2882,7 @@ Bot: "148 triệu đồng cho 4 năm."  # Understand "K2024" from context
 Luận văn đã xây dựng **UITRaph** - một hệ thống Graph-Enhanced Multi-Agent RAG với **Temporal Document Management** toàn diện cho tài liệu hành chính trường đại học. Hệ thống kết hợp các công nghệ tiên tiến:
 
 - **LightRAG** cho knowledge graph representation với dual-level retrieval
-- **LangGraph** cho intelligent workflow orchestration với 3-agent architecture
+- **LangGraph** cho intelligent workflow orchestration với 2-agent temporal pipeline (v0.2.0)
 - **Vietnamese NLP** với regex patterns và cross-encoder reranking
 - **Temporal Management** giải quyết 3 vấn đề: amendment detection, document expiration, soft delete
 
@@ -2957,7 +2931,7 @@ Hệ thống còn một số hạn chế:
 - Cohort detection chỉ hoạt động với explicit mentions
 
 Hướng phát triển:
-- Short-term (1-3 tháng): Hoàn thành 4 pending features (Agent 2/3 enhancements, ping service, comprehensive tests)
+- Short-term (1-3 tháng): Hoàn thành pending features (Agent 3 expiration warnings, ping service, comprehensive tests); Agent 2 freshness assessment superseded by temporal reranking (v0.2.0)
 - Medium-term (3-6 tháng): User study, multi-modal support, conversational memory
 - Long-term (6-12 tháng): Active learning, multi-language, federated knowledge base
 

@@ -47,12 +47,13 @@ The `indexing_graph` (a LangGraph workflow) processes and indexes new documents.
 
 ### 2. Query & Response Pipeline (`LangGraph/src/agent/query_graph.py`)
 
-A sophisticated 3-agent RAG pipeline built with LangGraph handles query processing:
+A 2-agent linear pipeline built with LangGraph handles query processing through 7 nodes:
 
-*   **Agent 1: Query Understanding**: Analyzes the user's query, tunes retrieval parameters (e.g., `top_k`, `retrieval_mode`), and can ask clarifying questions.
-*   **Retrieval & Reranking**: Retrieves relevant data (entities, relationships, text chunks) from the `LightRAG` API. A `MultiSourceReranker` (Vietnamese cross-encoder ViRanker) scores and re-ranks this data for optimal relevance. **Temporal scoring** applies penalties to expired or amended documents (70% semantic + 30% temporal).
-*   **Agent 2: Confidence Assessment**: Evaluates reranked data for a confidence score. Low confidence may trigger follow-up questions. Applies freshness penalties for expired documents.
-*   **Agent 3: Response Generation**: Generates a context-aware answer (full, partial, or fallback) based on high-confidence, reranked data. Can include expiration warnings for documents nearing their validity period.
+`prepare_input` --> `agent1_understand_query` --> `retrieve_data` --> `enrich_with_temporal_metadata` --> `rerank_data` --> `agent3_generate_response` --> `format_final_answer`
+
+*   **Agent 1: Query Understanding** (`agent1_understand_query`): Analyzes the user's query, extracts entities/topics, and tunes retrieval parameters (e.g., `top_k`, `retrieval_mode`).
+*   **Retrieval & Reranking** (`retrieve_data` --> `enrich_with_temporal_metadata` --> `rerank_data`): Retrieves relevant data (entities, relationships, text chunks) from the `LightRAG` API, enriches results with temporal metadata from PostgreSQL, then uses `MultiSourceReranker` (Vietnamese cross-encoder ViRanker) to score and re-rank for optimal relevance. **Temporal scoring** applies penalties to expired or amended documents (70% semantic + 30% temporal).
+*   **Agent 3: Response Generation** (`agent3_generate_response`): Generates a context-aware answer (full, partial, or fallback) based on reranked data. Includes expiration warnings for documents nearing their validity period and hyperlinked references.
 
 ### 3. Core Services (`docker-compose.yml`)
 
