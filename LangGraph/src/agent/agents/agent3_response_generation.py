@@ -77,12 +77,12 @@ def _generate_expiration_warnings(
     expiring_soon_docs = []
     amended_docs = []
 
-    # Track unique documents by file_source
+    # Track unique documents by file_path
     seen_sources = set()
 
     for chunk, score in reranked_chunks:
         metadata = chunk.get("metadata", {})
-        file_source = chunk.get("file_source", "")
+        file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
 
         # Skip if already processed this source
         if file_source in seen_sources:
@@ -199,7 +199,7 @@ def _format_reranked_data(
         lines.append("**Text Chunks (theo độ liên quan):**")
         for i, (chunk, score) in enumerate(reranked_chunks[:top_n], 1):
             content = chunk.get("content", "")
-            file_source = chunk.get("file_source", "")
+            file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
             lines.append(f"{i}. (score: {score:.2f})")
             lines.append(f"   Content: {content[:300]}...")
             if file_source:
@@ -221,13 +221,13 @@ def _extract_references(
         if score < min_score:
             continue
         
-        file_source = chunk.get("file_source", "")
+        file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
         if not file_source or file_source in seen_sources:
             continue
-        
+
         seen_sources.add(file_source)
-        
-        # Extract title from file_source URL
+
+        # Extract title from file_path/file_source
         title = file_source.split("/")[-1] if "/" in file_source else file_source
         
         # Get excerpt
@@ -270,38 +270,16 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
     
     # Get inputs
     parsed_intention = state.get("parsed_intention", state.get("query", ""))
-    overall_confidence = state.get("overall_confidence", 0.0)
-    confidence_reason = state.get("confidence_reason", "")
-    
+
     reranked_entities = state.get("reranked_entities", [])
     reranked_relationships = state.get("reranked_relationships", [])
     reranked_chunks = state.get("reranked_chunks", [])
-    
+
     print("=" * 80)
     print(f"[AGENT 3] Generating response")
-    print(f"[AGENT 3] Overall confidence: {overall_confidence:.2f}")
     print(f"[AGENT 3] Reranked items: {len(reranked_entities)} entities, {len(reranked_relationships)} relationships, {len(reranked_chunks)} chunks")
     print("=" * 80)
-    
-    # Check if should fallback
-    if overall_confidence < settings.query_thresholds.fallback_confidence_threshold:
-        print(f"[AGENT 3] Low confidence ({overall_confidence:.2f}), using fallback response")
-        
-        topic = state.get("extracted_topics", ["câu hỏi của bạn"])[0] if state.get("extracted_topics") else "câu hỏi của bạn"
-        fallback_text = PROMPTS["fallback_response_template"].format(
-            topic=topic,
-            fallback_reason=confidence_reason
-        )
-        
-        return {
-            "generated_response": fallback_text,
-            "response_type": "fallback",
-            "references": [],
-            "final_answer": fallback_text,
-            "messages": [AIMessage(content=fallback_text)],
-            "logs": ["Agent 3 used fallback response"]
-        }
-    
+
     try:
         # Format reranked data
         reranked_data_formatted = _format_reranked_data(
@@ -310,13 +288,11 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             reranked_chunks,
             top_n=10
         )
-        
+
         # Prepare prompt
         prompt_text = PROMPTS["response_generation_prompt"].format(
             parsed_intention=parsed_intention,
             reranked_data_formatted=reranked_data_formatted,
-            overall_confidence=overall_confidence,
-            confidence_reason=confidence_reason
         )
         
         # Call LLM directly, strip think tags, parse manually
@@ -326,7 +302,6 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             SystemMessage(content=prompt_text),
             HumanMessage(content=f"{parsed_intention}\n\nGenerate JSON response.")
         ]
-        print(f"GOI LLM: {prompt_text}")
         raw_response = llm_json.invoke(input=msgs)
         content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
 
@@ -350,7 +325,6 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
 
         # Set final answer
         final_answer = generated_response
-        print(f"FINAL ANSWER BEFORE SUFFIX: {final_answer}")
 
         # Add expiration warnings if any
         if expiration_warnings:

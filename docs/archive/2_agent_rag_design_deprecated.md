@@ -1,3 +1,5 @@
+<!-- Archived at v0.2.0. Replaced by 2-agent pipeline. See CHANGELOG for rationale. -->
+
 # Thiết kế 3-Agent RAG Pipeline với Confidence Scoring
 
 **Last Updated:** 2026-01-04

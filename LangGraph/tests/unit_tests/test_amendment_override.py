@@ -12,8 +12,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 
-def _make_item(amended_by=None) -> dict:
-    return {"content": "doc text", "metadata": {"amended_by": amended_by or []}}
+def _make_item(amended_by=None, doc_id=None) -> dict:
+    meta: dict = {"amended_by": amended_by or []}
+    if doc_id is not None:
+        meta["doc_id"] = doc_id
+    return {"content": "doc text", "metadata": meta}
 
 
 def _make_reranker(use_amendment_override: bool = True):
@@ -50,9 +53,10 @@ class TestAmendmentOverride:
         return result
 
     def test_superseded_item_gets_override_score(self):
-        """Item with amended_by populated gets amendment_override_score applied."""
+        """Item with amended_by gets override only when the amending doc is in candidate set."""
+        # new_doc has doc_id="doc-new-id" — it must be in the candidate set for override to fire
         old_doc = _make_item(amended_by=["doc-new-id"])
-        new_doc = _make_item(amended_by=[])
+        new_doc = _make_item(amended_by=[], doc_id="doc-new-id")
 
         # Both get semantic=0.8, temporal=1.0 before override
         result = self._run_rerank([old_doc, new_doc], use_amendment_override=True)
@@ -63,9 +67,13 @@ class TestAmendmentOverride:
         old_idx = items_out.index(old_doc)
         new_idx = items_out.index(new_doc)
 
-        # old_doc: 0.7 * 0.8 + 0.3 * 0.3 = 0.56 + 0.09 = 0.65
-        # new_doc: 0.7 * 0.8 + 0.3 * 1.0 = 0.56 + 0.30 = 0.86
+        # old_doc: 0.7 * 0.8 + 0.3 * 0.3 = 0.56 + 0.09 = 0.65  (override fires)
+        # new_doc: 0.7 * 0.8 + 0.3 * 1.0 = 0.56 + 0.30 = 0.86  (no override)
         assert scores_out[new_idx] > scores_out[old_idx]
+        # Assert the override score is actually applied (not just ordering)
+        assert scores_out[old_idx] == pytest.approx(0.65, abs=1e-6), (
+            "old_doc with amending doc in candidate set should get override temporal_score=0.3"
+        )
 
     def test_override_disabled_does_not_penalise(self):
         """When use_amendment_override=False, amended_by has no effect on scores."""
@@ -98,3 +106,27 @@ class TestAmendmentOverride:
 
         # temporal stays 1.0, score = 0.7*0.8 + 0.3*1.0 = 0.86
         assert score == pytest.approx(0.86, abs=1e-6)
+
+    def test_override_does_not_fire_when_amending_doc_absent(self):
+        """Bug 2 fix: override must NOT fire if the amending doc is not in the candidate set.
+
+        Before Bug 2 fix: old_doc had amended_by=[doc-missing-id] and the override
+        fired unconditionally, demoting the doc even when doc-missing-id was never
+        retrieved. This caused legitimate docs to be incorrectly penalized.
+        """
+        # old_doc claims to be amended by "doc-missing-id", but that doc is NOT in the list
+        old_doc = _make_item(amended_by=["doc-missing-id"])
+        other_doc = _make_item(amended_by=[], doc_id="doc-other-id")
+
+        result = self._run_rerank([old_doc, other_doc], use_amendment_override=True)
+
+        items_out = [item for item, _ in result]
+        scores_out = [score for _, score in result]
+
+        old_idx = items_out.index(old_doc)
+
+        # old_doc should NOT be penalized — its amending doc is absent from candidate set
+        # Expected: temporal=1.0 (unmodified), score = 0.7*0.8 + 0.3*1.0 = 0.86
+        assert scores_out[old_idx] == pytest.approx(0.86, abs=1e-6), (
+            "Amendment override must not fire when amending doc is absent from candidate set"
+        )

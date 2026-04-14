@@ -30,10 +30,11 @@ graph TD
         G --> H[Agent 1: Query Understanding];
         H --> I[retrieve_data];
         I --> E;
-        E --> J[rerank_data];
-        J --> K[Agent 2: Confidence Assessment];
-        K --> L[Agent 3: Response Generation];
-        L --> M[Final Answer];
+        E --> I2[enrich_with_temporal_metadata];
+        I2 --> J[rerank_data];
+        J --> L[Agent 3: Response Generation];
+        L --> M[format_final_answer];
+        M --> N2[Final Answer];
 
         subgraph "Indexing"
             N[upload/scan command] --> O{Indexing Graph};
@@ -91,13 +92,15 @@ The workflow is as follows:
 
 ## 5. Query & Response Pipeline (`LangGraph/src/agent/graphs/query_graph.py`)
 
-The query processing is handled by a sophisticated 3-agent RAG pipeline built with LangGraph.
+The query processing is handled by a 2-agent temporal pipeline (v0.2.0) built with LangGraph.
 
 1.  **Agent 1: Query Understanding**: Analyzes the user's query, tunes retrieval parameters (e.g., `top_k`, `retrieval_mode`), and can ask clarifying questions if the query is ambiguous.
 2.  **Retrieval**: The system retrieves relevant data (entities, relationships, text chunks) from the `LightRAG` API using the (potentially tuned) query.
-3.  **Reranking**: A `MultiSourceReranker` then scores and re-ranks all retrieved data to prioritize the most relevant information.
-4.  **Agent 2: Confidence Assessment**: Evaluates the reranked data to determine a confidence score. If confidence is low, it can ask the user a follow-up question.
-5.  **Agent 3: Response Generation**: Based on the high-confidence, reranked data, this agent generates the final, context-aware answer for the user. It can produce a full answer, a partial answer, or a fallback response.
+3.  **Temporal Enrichment**: Retrieved documents are enriched with temporal metadata (validity dates, cohort scope, amendment links) from PostgreSQL.
+4.  **Reranking**: A `MultiSourceReranker` scores and re-ranks all retrieved data, combining semantic relevance with temporal freshness signals.
+5.  **Agent 3: Response Generation**: Agent 3 synthesizes retrieved data and generates a direct answer for the user, with hyperlinked references. It can produce a full answer, a partial answer, or a fallback response.
+
+> **Historical note:** Prior to v0.2.0, an intermediate Agent 2 (Confidence Assessment) sat between reranking and response generation. It was removed because its confidence gating added latency without measurably improving answer quality -- Agent 3 now handles quality judgment internally.
 
 ## 6. Dependencies
 

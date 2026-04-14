@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.2.0] - 2026-04-14
+
+### Changed
+- **2-agent pipeline**: removed Agent 2 (confidence assessment) entirely. Pipeline is now a
+  linear 7-node graph: `prepare_input` -> `agent1_understand_query` -> `retrieve_data` ->
+  `enrich_with_temporal_metadata` -> `rerank_data` -> `agent3_generate_response` ->
+  `format_final_answer`. Agent 3 always produces a direct answer.
+- **Clarification gating removed**: `decide_after_agent1` no longer routes to `ask_clarification`.
+  Both failure modes (Agent 1 confidence gate and Agent 2 confidence gate) have been eliminated.
+  All queries proceed directly to retrieval regardless of query confidence score.
+
+### Fixed
+- **`file_path` vs `file_source` mismatch** in agent3: `_generate_expiration_warnings`,
+  `_format_reranked_data`, and `_extract_references` all read `file_source` but enrichment
+  layer writes `file_path`. Fixed with fallback: `chunk.get("file_path", "") or chunk.get("file_source", "")`.
+  Previously caused silent dedup failures and broken reference URLs.
+- Removed debug prints from `agent3_generate_response` that leaked full prompt and retrieved
+  document content to stdout on every request.
+
+### Removed
+- `ConfidenceAssessment` Pydantic model (Agent 2 artifact) from `query_state.py`.
+- Orphan `QueryState` fields: `overall_confidence`, `needs_followup`, `followup_question`,
+  `confidence_reason` (all written only by the removed Agent 2 node).
+- Dead `needs_clarification` / `clarification_question` fields from Agent 1 extraction,
+  return dict, error fallback, `query_understanding_system` output schema, and all 3 examples.
+- Dead `confidence_assessment_system_prompt` and `data_quality_assessment_system` prompt blocks.
+- Dead `fallback_response_template` prompt (never called without Agent 2).
+- Dead `decide_after_agent1` import in `query_graph.py` (function exists but graph uses `add_edge` directly).
+- Dead `ask_clarification` export from `agent1_query_understanding.__all__` (function deleted in prior session).
+
+### Added
+- **Eval harness unit tests** (`tests/eval/test_eval_harness.py`): 42 tests covering
+  `_normalise`, `_found`, `accuracy_at_1`, `mrr`, and `ndcg_at_k` from `run_evaluation.py`.
+  Includes Vietnamese diacritics normalisation, flexible separator matching, rank-based metrics,
+  and edge cases (empty input, empty expected list, k-truncation).
+
 ## [0.1.1] - 2026-04-10
 
 ### Added

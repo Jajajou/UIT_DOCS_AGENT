@@ -801,7 +801,7 @@ class LightRAGAPIClient:
                     """
                     SELECT
                       tm.doc_id, tm.valid_until::text, tm.document_number,
-                      tm.document_type, lds.file_source
+                      tm.document_type, lds.file_path AS file_source
                     FROM temporal_metadata tm
                     LEFT JOIN lightrag_doc_status lds ON lds.id = tm.doc_id
                     WHERE tm.workspace = %s
@@ -1103,7 +1103,7 @@ class LightRAGAPIClient:
                 if include_archived:
                     cur.execute(
                         """
-                        SELECT id, file_source, metadata, created_at, updated_at
+                        SELECT id, file_path AS file_source, metadata, created_at, updated_at
                         FROM lightrag_doc_status
                         WHERE workspace = %s
                         ORDER BY created_at DESC
@@ -1114,7 +1114,7 @@ class LightRAGAPIClient:
                     # Exclude already archived documents
                     cur.execute(
                         """
-                        SELECT id, file_source, metadata, created_at, updated_at
+                        SELECT id, file_path AS file_source, metadata, created_at, updated_at
                         FROM lightrag_doc_status
                         WHERE workspace = %s
                         AND (metadata->>'is_archived' IS NULL OR metadata->>'is_archived' = 'false')
@@ -1173,7 +1173,7 @@ class LightRAGAPIClient:
                 cur.execute(
                     """
                     SELECT
-                      lds.file_source,
+                      lds.file_path AS file_source,
                       tm.doc_id,
                       tm.document_number,
                       tm.document_type,
@@ -1191,7 +1191,7 @@ class LightRAGAPIClient:
                     FROM lightrag_doc_status lds
                     INNER JOIN temporal_metadata tm ON tm.doc_id = lds.id
                     WHERE lds.workspace = %s
-                      AND lds.file_source = ANY(%s)
+                      AND lds.file_path = ANY(%s)
                     """,
                     (workspace, list(file_sources))
                 )

@@ -299,16 +299,32 @@ class Reranker:
         Compute cohort match score for an item.
 
         Returns:
-            1.0 if item's cohort_years contains query_cohort_year
-            0.0 if item has cohort_years and query_cohort_year is not in it
-            0.5 (neutral) if no cohort in query, no metadata, or empty cohort_years list
+            1.0 if item's cohort_years contains query_cohort_year (match — boost)
+            0.5 (neutral) if no cohort in query, no metadata, empty cohort_years, or mismatch
+                          (mismatch is neutral, not a penalty — Agent 1 may hallucinate
+                           a cohort year for non-cohort queries; universal-scope docs
+                           should not be demoted)
         """
         if query_cohort_year is None:
             return 0.5  # neutral — no cohort specified in query
         cohort_years = item.get("metadata", {}).get("cohort_years", None)
         if not cohort_years:
             return 0.5  # neutral — no cohort metadata or empty list
-        return 1.0 if query_cohort_year in cohort_years else 0.0
+        # Normalize types: Agent 1 may return cohort year as str or int;
+        # DB stores as int. Compare as int to avoid false mismatches.
+        try:
+            normalized_query_year = int(query_cohort_year)
+        except (ValueError, TypeError):
+            return 0.5
+        normalized_cohort_years = set()
+        for y in cohort_years:
+            try:
+                normalized_cohort_years.add(int(y))
+            except (ValueError, TypeError):
+                pass
+        # Return neutral (0.5) on mismatch so cohort boost only rewards matches,
+        # never penalizes. A mismatch may mean the doc is universal-scope, not wrong.
+        return 1.0 if normalized_query_year in normalized_cohort_years else 0.5
 
     def rerank_with_temporal_boost(
         self,
@@ -357,20 +373,31 @@ class Reranker:
             for item in items
         ]
 
-        # Amendment override: any item superseded by a newer document gets a
-        # fixed low temporal score, ensuring it ranks below the amending doc.
+        # Amendment override: only demote a doc if its amending document is
+        # actually present in the current candidate set. Firing unconditionally
+        # would demote correct docs when the amending doc was never retrieved.
         if getattr(settings, 'use_amendment_override', False):
             raw_override = settings.temporal.quality_penalties.get("amendment_override_score", 0.3)
             override_score = max(0.0, min(1.0, float(raw_override)))
+            # Collect all doc IDs present in the candidate list
+            candidate_doc_ids = set()
+            for item in items:
+                doc_id = (item.get("doc_id") or
+                          item.get("id") or
+                          item.get("metadata", {}).get("doc_id"))
+                if doc_id:
+                    candidate_doc_ids.add(str(doc_id))
             overridden = []
             new_temporal_scores = []
             for item, score in zip(items, temporal_scores):
                 amended_by = item.get("metadata", {}).get("amended_by")
                 if isinstance(amended_by, list) and len(amended_by) > 0:
-                    new_temporal_scores.append(override_score)
-                    overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
-                else:
-                    new_temporal_scores.append(score)
+                    amending_ids = [str(aid) for aid in amended_by]
+                    if any(aid in candidate_doc_ids for aid in amending_ids):
+                        new_temporal_scores.append(override_score)
+                        overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
+                        continue
+                new_temporal_scores.append(score)
             if overridden:
                 print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
             temporal_scores = new_temporal_scores

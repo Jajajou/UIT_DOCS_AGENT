@@ -2,7 +2,7 @@
 
 **Project:** UITRaph - Temporal-Aware RAG for UIT Documents
 **Period:** December 2024 - January 2025
-**Last Updated:** 2025-12-22
+**Last Updated:** 2026-04-14
 
 ---
 
@@ -306,6 +306,12 @@
 ---
 
 ## Changelog
+
+### 2026-04-14 (v0.2.0)
+- Removed dead Agent 2 code (~400 lines); freshness now handled by temporal reranking
+- Fixed file_path/file_source bug in Agent 3 and enrichment SQL queries
+- 60 tests passing across the test suite
+- Shipped as PR#9 (v0.2.0 release)
 
 ### 2025-12-29
 - ✅ Completed Agent 2 temporal freshness assessment integration
