@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.1] - 2026-04-15
+
+### Changed
+- Moved 4 new integration tests (`test_insert_text`, `test_pg_schema`, `test_temporal_workflow`, `test_track_id_metadata`) from `tests/` root into `tests/integration/` for clearer test organization.
+- Consolidated scattered docs: `QUICK_REFERENCE_PERFORMANCE.md`, `TESTING_CHECKLIST.md`, `lightrag-openapi.json` moved to `docs/reference/`; `DOCUMENTATION_INDEX.md` moved to `docs/`; `LangGraph/docs/` guides moved to `docs/langgraph/`.
+- Updated `.gitignore` to cover `mempalace.yaml`, `entities.json`, `GEMINI.md`, `.gemini/`, `.langgraph_api/`.
+
+### Removed
+- Deleted stale `LangGraph/requirements_v3.txt` (superseded by `pyproject.toml` + `uv.lock`).
+- Deleted 3 superseded ablation result files (`ablation_results_20260410.json`, `ablation_results_final.json`, `ablation_results_fixed.json`); canonical results kept in `ablation_results_thesis_final.json`.
+- Removed `LangGraph/agent.egg-info/` and `LangGraph/src/uit_docs_agent.egg-info/` build artifacts from git tracking.
+- Deleted duplicate `/.langgraph_api/` directory at project root (~101 MB).
+- Removed stale `LangGraph/src/testScripts/lightrag.log`.
+
+### Added
+- `GEMINI_TASKS.md`: shared Claude-Gemini task coordination queue at project root.
+- Final ablation evaluation results (`ablation_results_thesis_final.json`) with 19 temporal test pairs.
+- `routing_test` split option added to `run_evaluation.py` `--split` argument.
+
 ## [0.3.0] - 2026-04-14
 
 ### Added
