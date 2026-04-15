@@ -44,9 +44,9 @@ def test_insert_text():
     for key in possible_keys:
         value = result.get(key)
         if value:
-            print(f"✓ {key}: {value}")
+            print(f"[FOUND] {key}: {value}")
         else:
-            print(f"✗ {key}: Not found")
+            print(f"[MISSING] {key}: Not found")
 
 if __name__ == "__main__":
     test_insert_text()
