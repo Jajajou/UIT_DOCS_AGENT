@@ -308,7 +308,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Temporal ablation evaluation")
     parser.add_argument("--pairs", default="tests/eval/temporal_test_pairs.json")
     parser.add_argument("--type", default=None, help="Filter by type: cohort_specific | amendment_sensitive | general")
-    parser.add_argument("--split", default="test", choices=["test", "validation", "all"])
+    parser.add_argument("--split", default="test", choices=["test", "validation", "routing_test", "all"])
     parser.add_argument("--config", default=None, help="Single config name")
     parser.add_argument("--all-configs", action="store_true", help="Run all 3 ablation configs")
     parser.add_argument("--verbose", "-v", action="store_true")
