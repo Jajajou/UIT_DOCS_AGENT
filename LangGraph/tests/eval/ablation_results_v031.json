@@ -8,11 +8,12 @@
       "cohort_year": 2022,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên nhập học năm 2022 tại UIT được quy định như sau:\n\n### 1. Yêu cầu chuẩn đầu ra\n- Sinh viên phải đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của Đ"
     },
     {
       "id": 1,
@@ -22,11 +23,12 @@
       "cohort_year": 2016,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định đào tạo ngoại ngữ cho sinh viên kh"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT như sau:\n\n### 1. Đối tượng áp dụng\n- Áp dụng cho sinh viên đại học chính quy từ khóa tuyển sinh năm 2016 [Nguồn 2].\n\n### 2. Chương tr"
     },
     {
       "id": 2,
@@ -36,11 +38,12 @@
       "cohort_year": 2020,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên khóa 2020 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học "
+      "response_snippet": "Các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 bao gồm:\n\n### 1. Tiêu chuẩn chung\n- Đạt trình độ B1 theo khung CEFR hoặc tương đương [Nguồn 4].\n- Chứng chỉ đạt cấp độ 8 theo"
     },
     {
       "id": 3,
@@ -50,11 +53,12 @@
       "cohort_year": 2015,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về quy định sửa đổi liên quan đến đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015** tại UIT.\n\n**Lưu ý:** Thông tin về quy định sửa"
+      "response_snippet": "Quy định sửa đổi liên quan đến đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 được quy định tại **Quyết định số 108/QĐ-ĐHCNTT ngày 15/03/2019** và **Quyết định số 125/QĐ-ĐHCNTT-ĐTĐH ngày 18/09/2015"
     },
     {
       "id": 4,
@@ -64,11 +68,12 @@
       "cohort_year": 2019,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT được quy định trong Quyết định số 141/QĐ-DHCNTT ngày 16/3/2018. Nội dung chính như sau:\n\n### 1. Yêu cầu ngoại ngữ\n- Sinh viên phải đạ"
     },
     {
       "id": 5,
@@ -78,11 +83,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có thông tin về tiêu chuẩn chương trình đào tạo hiện hành cho ngành Vi mạch bán dẫn trình độ đại học trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về chương trình đào tạo, vui l"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Tiêu chuẩn chương trình đào tạo ngành Vi mạch bán dẫn trình độ đại học được quy định như sau:\n\n### 1. Văn bằng và yêu cầu chung\n- Sinh viên tốt nghiệp được cấp bằng **Cử nhân** theo quy định của Chuẩn"
     },
     {
       "id": 6,
@@ -92,11 +98,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Theo dữ liệu được truy xuất, hiện không có thông tin cụ thể về điều kiện pháp lý để trường đại học mở ngành mới theo quy định hiện hành.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạ"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Để mở ngành mới, trường đại học phải đáp ứng các điều kiện pháp lý sau theo quy định hiện hành:\n\n### 1. Điều kiện chung\n- Đảm bảo đủ cơ sở vật chất, trang thiết bị phục vụ giảng dạy, học tập, nghiên c"
     },
     {
       "id": 7,
@@ -106,11 +113,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ** áp dụng cho hệ đại học chính quy tại UIT. \n\n**Lưu ý:** Để xác nhận chi tiết về yêu cầu ngoại ngữ (ch"
+      "response_snippet": "Quy định đào tạo ngoại ngữ cho hệ đại học chính quy tại UIT được quy định cụ thể như sau:\n\n### 1. Cơ sở pháp lý\n- Ban hành theo **Quyết định số 547/QĐ-ĐHCNTT ngày 30/8/2019** của Hiệu trưởng Trường Đạ"
     },
     {
       "id": 8,
@@ -120,11 +128,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Theo kết quả truy xuất, **không có tài liệu liên quan đến quy định đào tạo từ xa áp dụng cho trình độ đại học tại UIT** hiện hành.\n\n**Lưu ý:** Để xác nhận thông tin chi tiết, vui lòng liên hệ Phòng Đà"
+      "response_snippet": "Quy định đào tạo từ xa trình độ đại học tại UIT hiện hành được áp dụng như sau:\n\n### 1. Cơ sở pháp lý\n- Được ban hành dựa trên **Thông tư 28/2023/TT-BGDĐT** của Bộ Giáo dục và Đào tạo [Nguồn 4].\n- Trư"
     },
     {
       "id": 9,
@@ -134,11 +143,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Theo dữ liệu được truy xuất, hiện chưa có thông tin cụ thể về cách ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo theo quy định mới nhất. Để cập nhật thông tin chính xác, vui lòng tham khả"
+      "response_snippet": "Theo quy định hiện hành, ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo được thực hiện như sau:\n\n### 1. Phương thức đào tạo qua mạng\n- Đào tạo qua mạng có thể là hình thức hoàn toàn trực t"
     },
     {
       "id": 10,
@@ -148,11 +158,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo theo học chế tín chỉ áp dụng cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng"
+      "response_snippet": "Quy định đào tạo theo học chế tín chỉ áp dụng cho hệ đại học chính quy tại UIT được quy định cụ thể trong **Quyết định số 790/QĐ-ĐHCNTT ngày 28/9/2022** của Hiệu trưởng. Dưới đây là các nội dung chính"
     },
     {
       "id": 11,
@@ -162,11 +173,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về chuẩn đầu ra tiếng Anh** áp dụng cho sinh viên hệ chính quy tại UIT. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố"
+      "response_snippet": "Yêu cầu chuẩn đầu ra tiếng Anh cho sinh viên hệ chính quy tại UIT được quy định như sau:\n\n### 1. Chuẩn đầu ra\n- Sinh viên phải đạt trình độ tiếng Anh theo khung CEFR tối thiểu là B1 hoặc tương đương ("
     },
     {
       "id": 12,
@@ -176,11 +188,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Theo dữ liệu được truy xuất, hiện không có thông tin cụ thể về quy định văn bằng, chứng chỉ được cấp bởi UIT. Để biết thêm chi tiết, vui lòng liên hệ trực tiếp với Phòng Đào tạo hoặc cố vấn học tập củ"
+      "response_snippet": "Trường Đại học Công nghệ Thông tin (UIT) có quy định cụ thể về văn bằng, chứng chỉ như sau:\n\n### 1. Cơ sở pháp lý\n- **Quyết định số 172/QĐ-ĐHCNTT** (ngày 08/03/2023) ban hành Quy chế văn bằng, chứng c"
     },
     {
       "id": 13,
@@ -190,11 +203,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin về số hiệu quyết định phê duyệt chương trình song ngành Thương mại Điện tử** tại ĐHQG-HCM. \n\n**Lưu ý:** Để xác nhận số hiệu quyết định này,"
+      "response_snippet": "Số hiệu quyết định phê duyệt chương trình song ngành Thương mại Điện tử tại ĐHQG-HCM là **1681/QĐ-ĐHQG**. Quyết định này được ban hành vào ngày 30 tháng 11 năm 2023 và phê duyệt Đề án đào tạo song ngà"
     },
     {
       "id": 14,
@@ -204,11 +218,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin cụ thể về quy trình đánh giá và cập nhật chương trình đào tạo tại UIT** trong dữ liệu hiện có.\n\n**Lưu ý:** Để biết thêm chi tiết, vui lòng liên h"
+      "response_snippet": "Quy trình đánh giá và cập nhật chương trình đào tạo tại UIT được quy định như sau:\n\n### 1. Các bước thực hiện\n1. **Dự thảo chương trình**: Đơn vị chuyên môn phụ trách đào tạo (ĐVCM) dự thảo chương trì"
     },
     {
       "id": 15,
@@ -218,11 +233,12 @@
       "cohort_year": 2023,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin cụ thể về yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023** tại UIT. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học "
+      "response_snippet": "Yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp tại UIT được quy định như sau:\n\n### 1. Tiếng Anh\n- Đạt TOEIC 350 (2 kỹ năng) hoặc tương đương để hoàn thành môn Anh văn 1.\n- Đạt TO"
     },
     {
       "id": 16,
@@ -232,11 +248,12 @@
       "cohort_year": 2021,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin cụ thể về quy định số tín chỉ ngoại ngữ bắt buộc** cho sinh viên khóa 2021 tại UIT. \n\n**Lưu ý:** Thông tin về yêu cầu tín chỉ ngoại ngữ cho sinh "
+      "response_snippet": "Quy định về số tín chỉ ngoại ngữ cho sinh viên khóa 2021 tại UIT chưa được nêu cụ thể trong tài liệu truy xuất. Tuy nhiên, có thể tham khảo các quy định liên quan như sau:\n\n### 1. Yêu cầu ngoại ngữ\n- "
     },
     {
       "id": 17,
@@ -246,11 +263,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": true,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, không tìm thấy thông tin liên quan đến Quyết định 141/QĐ-ĐHCNTT và văn bản thay thế liên quan đến đào tạo ngoại ngữ. \n\n**Lưu ý:** Thông tin về trạng thái pháp lý của "
+      "response_snippet": "### Trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT và văn bản thay thế\n\n- **Quyết định 141/QĐ-ĐHCNTT** (ngày 16/3/2018) ban hành Quy định đào tạo ngoại ngữ đối với hệ đại học chính quy. Tuy nhiên, vă"
     },
     {
       "id": 18,
@@ -260,11 +278,87 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 1.0,
+      "hit_rate": 1.0,
       "mrr": 1.0,
       "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Quyết định số 507/QĐ-ĐHCNTT ngày 27 tháng 5 năm 2024 liên quan đến chương trình đào tạo từ xa trình độ đại học tại UIT như sau:\n\n### 1. Nội dung chính\n- Ban hành Quy chế đào tạo cho sinh viên hình thứ"
+    },
+    {
+      "id": 19,
+      "type": "routing_test",
+      "config": "Baseline-S",
+      "query": "Thông tư 22/2017/TT-BGDDT đã được sửa đổi bổ sung bởi văn bả",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Văn bản pháp lý đã sửa đổi, bổ sung Thông tư 22/2017/TT-BGDDT là **Thông tư số 02/2022/TT-BGDĐT**. Thông tư này thay thế hoàn toàn Thông tư 22/2017/TT-BGDDT và được công bố trên Công báo. [Nguồn 4, 7]"
+    },
+    {
+      "id": 20,
+      "type": "routing_test",
+      "config": "Baseline-S",
+      "query": "Quy định về chuẩn tối thiểu cho chương trình đào tạo tại Thô",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Thông tư số 07/2015/TT-BGDĐT **không còn hiệu lực** do đã bị thay thế bởi Thông tư số 2021/TT-BGDĐT. Cụ thể:\n\n### 1. Nguyên nhân chấm dứt hiệu lực\n- Thông tư số 2021/TT-BGDĐT quy định quy trình xây dự"
+    },
+    {
+      "id": 21,
+      "type": "routing_test",
+      "config": "Baseline-S",
+      "query": "Việc ứng dụng công nghệ thông tin trong đào tạo từ xa theo T",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Theo Thông tư 12/2016/TT-BGDDT, hiện nay quy định về ứng dụng công nghệ thông tin trong đào tạo từ xa đã được thay thế bởi Thông tư số 30/2023/TT-BGDĐT. Dưới đây là cách triển khai theo quy định hiện "
+    },
+    {
+      "id": 22,
+      "type": "routing_test",
+      "config": "Baseline-S",
+      "query": "Quyết định 807/QĐ-ĐHCNTT về chương trình đào tạo chất lượng ",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "### Trạng thái pháp lý và việc thay thế của Quyết định 807/QĐ-ĐHCNTT\n- Quyết định số 807/QĐ-ĐHCNTT ngày 15/12/2021 **được thay thế** bởi *Quy định tổ chức dạy – học ngoài giờ hành chính* [Nguồn 1].\n- "
+    },
+    {
+      "id": 23,
+      "type": "routing_test",
+      "config": "Baseline-S",
+      "query": "Quy định đào tạo cho sinh viên khóa 2022 tại ĐHQG-HCM theo Q",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến Quyết định 507/QĐ-ĐHCNTT trong dữ liệu được truy xuất. Để biết chi tiết về chương trình đào tạo từ xa trình độ đại học tại UIT, vui lòng liên hệ Phòng Đào tạo ho"
+      "response_snippet": "Dựa trên tài liệu truy xuất được, quy định đào tạo áp dụng cho sinh viên khóa 2022 theo Quyết định 262/QĐ-ĐHQG như sau:\n\n### 1. Điều chỉnh quy chế đào tạo\n- ĐHQG-HCM đã thống nhất dự thảo điều chỉnh q"
     }
   ],
   "Baseline-T": [
@@ -276,11 +370,12 @@
       "cohort_year": 2022,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT được quy định như sau:\n\n### 1. Yêu cầu đầu ra\n- Đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM. [Nguồn 1]\n- Tiếng An"
     },
     {
       "id": 1,
@@ -290,11 +385,12 @@
       "cohort_year": 2016,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Tài liệu liên quan đến quy định đào tạo ngoại ngữ của UI"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT được quy định trong Quyết định số 128/QĐ-ĐHCNTT-ĐTĐH ngày 30/8/2016. Nội dung chính như sau:\n\n### 1. Đối tượng áp dụng\n- Áp dụng cho "
     },
     {
       "id": 2,
@@ -304,11 +400,12 @@
       "cohort_year": 2020,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố "
+      "response_snippet": "Các chứng chỉ ngoại ngữ tiếng Anh được UIT công nhận cho sinh viên nhập học năm 2020 bao gồm:\n\n### 1. Chứng chỉ tiếng Anh\n- **TOEIC 400** (2 kỹ năng) [Nguồn 3]\n- **IELTS 4.5** [Nguồn 4]\n- **TOEFL iBT "
     },
     {
       "id": 3,
@@ -318,11 +415,12 @@
       "cohort_year": 2015,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên dữ liệu truy xuất được, **không tìm thấy thông tin liên quan đến quy định sửa đổi về đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015**. \n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ P"
+      "response_snippet": "Quy định sửa đổi liên quan đến đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 được quy định như sau:\n\n### 1. Điều kiện\n- Sinh viên khóa 2015 đến 2017 phải hoàn thành các môn Anh văn trong chương tr"
     },
     {
       "id": 4,
@@ -332,11 +430,12 @@
       "cohort_year": 2019,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định đào tạo ngoại ngữ cho sinh viên kh"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa K2019 tại UIT được quy định như sau:\n\n### 1. Yêu cầu chuẩn đầu ra\n- Sinh viên phải đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM"
     },
     {
       "id": 5,
@@ -346,11 +445,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin về tiêu chuẩn chương trình đào tạo hiện hành cho ngành Vi mạch bán dẫn trình độ đại học trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về chương trình đào tạo,"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Tiêu chuẩn chương trình đào tạo ngành Vi mạch bán dẫn trình độ đại học được quy định như sau:\n\n### 1. Văn bằng tốt nghiệp\n- Người tốt nghiệp được cấp bằng **Cử nhân** theo quyết định số 1314/QD-BGDĐT "
     },
     {
       "id": 6,
@@ -360,11 +460,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Theo dữ liệu được truy xuất, hiện không có thông tin cụ thể về điều kiện pháp lý để trường đại học mở ngành mới theo quy định hiện hành.\n\n**Lưu ý:** Thông tin về điều kiện pháp lý mở ngành mới chưa có"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Để mở ngành mới, trường đại học phải đáp ứng các điều kiện pháp lý sau theo quy định hiện hành:\n\n### 1. Điều kiện chung\n- Đảm bảo đủ cơ sở vật chất, trang thiết bị đáp ứng yêu cầu giảng dạy, học tập, "
     },
     {
       "id": 7,
@@ -374,11 +475,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho hệ đại học chính quy tại UIT.\n\n**Lưu ý:** Thông tin về yêu cầu đào tạo ngoại ngữ chưa có tro"
+      "response_snippet": "Quy định về đào tạo ngoại ngữ cho hệ đại học chính quy tại UIT được quy định trong các quyết định sau:\n\n### 1. Yêu cầu đầu ra\n- Sinh viên phải đạt chuẩn ngoại ngữ theo khung năng lực 6 bậc, cụ thể là "
     },
     {
       "id": 8,
@@ -388,11 +490,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Hiện tại, không có thông tin về quy định đào tạo từ xa áp dụng cho trình độ đại học tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về quy định đào tạo từ xa, vui lòng liên hệ P"
+      "response_snippet": "Quy định đào tạo từ xa trình độ đại học tại UIT hiện hành được quy định trong **Quy chế đào tạo từ xa trình độ đại học** do Trường Đại học Công nghệ Thông tin (UIT) ban hành, áp dụng theo Thông tư 28/"
     },
     {
       "id": 9,
@@ -402,11 +505,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Theo kết quả truy xuất, hiện không có tài liệu liên quan đến ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo theo quy định mới nhất hiện hành.\n\n**Lưu ý:** Để cập nhật thông tin chính xác, v"
+      "response_snippet": "Theo quy định hiện hành, ứng dụng công nghệ thông tin trong tổ chức, quản lý đào tạo được thực hiện như sau:\n\n### 1. Điều kiện và trách nhiệm\n- **Đào tạo trực tuyến** phải đảm bảo chất lượng theo yêu "
     },
     {
       "id": 10,
@@ -416,11 +520,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin về quy định đào tạo theo học chế tín chỉ áp dụng cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạ"
+      "response_snippet": "Quy định về học chế tín chỉ trong quy chế đào tạo hệ đại học chính quy tại UIT được quy định cụ thể trong **Quyết định số 790/QĐ-ĐHCNTT ngày 28/9/2022**. Dưới đây là các nội dung chính:\n\n### 1. Các lo"
     },
     {
       "id": 11,
@@ -430,11 +535,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về chuẩn đầu ra tiếng Anh** áp dụng cho sinh viên hệ chính quy tại UIT. \n\n**Lưu ý:** Để xác nhận chi tiết về yêu cầu tiếng Anh (như "
+      "response_snippet": "Chuẩn đầu ra tiếng Anh cho sinh viên hệ chính quy tại UIT được quy định như sau:\n\n### 1. Yêu cầu chung\n- Sinh viên phải đạt các chứng chỉ tiếng Anh quốc tế hoặc nội bộ để đủ điều kiện tốt nghiệp. [Ngu"
     },
     {
       "id": 12,
@@ -444,11 +550,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, hiện không có thông tin cụ thể về quy định liên quan đến văn bằng, chứng chỉ được cấp bởi Trường Đại học Công nghệ Thông tin UIT. \n\n**Lưu ý:** Để xác nhận chi tiết về"
+      "response_snippet": "Quy định liên quan đến văn bằng, chứng chỉ của Trường Đại học Công nghệ Thông tin (UIT) được quy định như sau:\n\n### 1. Cơ sở pháp lý\n- **Quyết định số 172/QĐ-ĐHCNTT** của Hiệu trưởng UIT về việc ban h"
     },
     {
       "id": 13,
@@ -458,11 +565,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến quyết định phê duyệt chương trình đào tạo song ngành Thương mại Điện tử tại ĐHQG-HCM trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về quyết định"
+      "response_snippet": "Số hiệu quyết định phê duyệt chương trình song ngành Thương mại Điện tử tại ĐHQG-HCM là **1681/QĐ-ĐHQG**. Quyết định này được ban hành vào ngày 30 tháng 11 năm 2023 và phê duyệt Đề án đào tạo song ngà"
     },
     {
       "id": 14,
@@ -472,11 +580,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin cụ thể về quy trình đánh giá và cập nhật chương trình đào tạo tại UIT**. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học tập"
+      "response_snippet": "Quy trình đánh giá và cập nhật chương trình đào tạo tại UIT được quy định cụ thể như sau:\n\n### 1. Điều kiện và trách nhiệm\n- Chương trình đào tạo phải thường xuyên được rà soát, đánh giá, cập nhật để "
     },
     {
       "id": 15,
@@ -486,11 +595,12 @@
       "cohort_year": 2023,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023**. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học tậ"
+      "response_snippet": "Yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp tại UIT được quy định như sau:\n\n### 1. Tiêu chuẩn chứng chỉ\n- **Tiếng Anh**: Đạt TOEIC 350 (1 kỹ năng) hoặc TOEIC 400 (2 kỹ năng) t"
     },
     {
       "id": 16,
@@ -500,11 +610,12 @@
       "cohort_year": 2021,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin cụ thể về quy định số tín chỉ ngoại ngữ bắt buộc** cho sinh viên khóa 2021 tại UIT. \n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào"
+      "response_snippet": "Dựa trên tài liệu truy xuất, quy định về số tín chỉ ngoại ngữ bắt buộc tại UIT như sau:\n\n### Yêu cầu chung\n- Sinh viên cần đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM, bao gồm kỹ n"
     },
     {
       "id": 17,
@@ -514,11 +625,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": true,
-      "response_snippet": "### Trạng thái pháp lý và văn bản thay thế\n- Không tìm thấy thông tin về trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT cũng như văn bản thay thế (nếu có) liên quan đến đào tạo ngoại ngữ trong dữ liệ"
+      "response_snippet": "### 1. Trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT\n- Quyết định số 141/QĐ-ĐHCNTT ngày 16/3/2018 đã bị thay thế bởi **Quyết định số 547/QĐ-ĐHCNTT** ngày 30/8/2019. [Nguồn 5, 10]\n- Quyết định 141/QĐ"
     },
     {
       "id": 18,
@@ -528,11 +640,87 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 1.0,
+      "hit_rate": 1.0,
       "mrr": 1.0,
       "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Quyết định số 507/QĐ-ĐHCNTT ngày 27 tháng 5 năm 2024 liên quan đến chương trình đào tạo từ xa trình độ đại học tại UIT được ban hành theo quy định của Nghị quyết số 02/NQ-HĐTĐHCNTT và căn cứ vào Quyết"
+    },
+    {
+      "id": 19,
+      "type": "routing_test",
+      "config": "Baseline-T",
+      "query": "Thông tư 22/2017/TT-BGDDT đã được sửa đổi bổ sung bởi văn bả",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Văn bản pháp lý đã sửa đổi, bổ sung Thông tư 22/2017/TT-BGDDT là **Thông tư số 02/2022/TT-BGDĐT**.\n\n### 1. Thông tin chi tiết\n- Thông tư số 02/2022/TT-BGDĐT được ban hành ngày 18 tháng 01 năm 2022, th"
+    },
+    {
+      "id": 20,
+      "type": "routing_test",
+      "config": "Baseline-T",
+      "query": "Quy định về chuẩn tối thiểu cho chương trình đào tạo tại Thô",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Trạng thái pháp lý của Thông tư 07/2015/TT-BGDDT như sau:\n\n### 1. Hiệu lực\n- **Không còn hiệu lực** do đã bị thay thế bởi Thông tư số 2021/TT-BGDĐT. [Nguồn 1]\n\n### 2. Thông tư thay thế\n- Thông tư số 2"
+    },
+    {
+      "id": 21,
+      "type": "routing_test",
+      "config": "Baseline-T",
+      "query": "Việc ứng dụng công nghệ thông tin trong đào tạo từ xa theo T",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Theo quy định hiện hành, Thông tư 12/2016/TT-BGDDT đã bị thay thế bởi Thông tư 28/2023/TT-BGDĐT. Việc ứng dụng công nghệ thông tin trong đào tạo từ xa được thực hiện như sau:\n\n### 1. Yêu cầu chung\n- Đ"
+    },
+    {
+      "id": 22,
+      "type": "routing_test",
+      "config": "Baseline-T",
+      "query": "Quyết định 807/QĐ-ĐHCNTT về chương trình đào tạo chất lượng ",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Quyết định số 807/QĐ-ĐHCNTT ngày 15/12/2021 liên quan đến chương trình đào tạo chất lượng cao **đã bị thay thế** bởi văn bản sau:\n\n### 1. Văn bản thay thế\n- **Quy định tổ chức dạy – học ngoài giờ hành"
+    },
+    {
+      "id": 23,
+      "type": "routing_test",
+      "config": "Baseline-T",
+      "query": "Quy định đào tạo cho sinh viên khóa 2022 tại ĐHQG-HCM theo Q",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 0.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến Quyết định 507/QĐ-ĐHCNTT trong dữ liệu được truy xuất. Để biết chi tiết về chương trình đào tạo từ xa trình độ đại học tại UIT, vui lòng liên hệ Phòng Đào tạo ho"
+      "response_snippet": "Dựa trên tài liệu truy xuất được, quy định đào tạo áp dụng cho sinh viên khóa 2022 theo Quyết định 262/QĐ-ĐHQG **chưa được đề cập cụ thể** trong các nội dung có liên quan. Các quyết định liên quan đến"
     }
   ],
   "System": [
@@ -544,11 +732,12 @@
       "cohort_year": 2022,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên nhập học năm 2022 tại UIT được quy định như sau:\n\n### 1. Điều kiện đầu ra\n- Sinh viên phải đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-"
     },
     {
       "id": 1,
@@ -558,11 +747,12 @@
       "cohort_year": 2016,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định đào tạo ngoại ngữ cho sinh viên kh"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT như sau:\n\n### 1. Đối tượng áp dụng\n- Áp dụng cho sinh viên đại học chính quy từ khóa tuyển sinh năm 2016. [Nguồn 2]\n\n### 2. Yêu cầu n"
     },
     {
       "id": 2,
@@ -572,11 +762,12 @@
       "cohort_year": 2020,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào"
+      "response_snippet": "Các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 bao gồm:\n\n### 1. Tiếng Anh\n- **TOEIC 400** (2 kỹ năng): Đạt môn học Anh văn 2 hoặc có chứng chỉ tương đương. [Nguồn 3]\n- **IE"
     },
     {
       "id": 3,
@@ -586,11 +777,12 @@
       "cohort_year": 2015,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định sửa đổi liên quan đến đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định sửa đổi đào tạo ngoại ngữ cho sin"
+      "response_snippet": "Quy định sửa đổi liên quan đến đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 được quy định như sau:\n\n### 1. Điều kiện và yêu cầu\n- Sinh viên khóa 2015 đến 2017 phải hoàn thành các môn Anh văn tron"
     },
     {
       "id": 4,
@@ -600,11 +792,12 @@
       "cohort_year": 2019,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định đào tạo ngoại ngữ cho sinh viên kh"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT được quy định trong Quyết định số 141/QĐ-DHCNTT ngày 16/3/2018. Nội dung chính như sau:\n\n### 1. Yêu cầu chuẩn đầu ra\n- Sinh viên phải"
     },
     {
       "id": 5,
@@ -614,11 +807,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có thông tin về tiêu chuẩn chương trình đào tạo hiện hành cho ngành Vi mạch bán dẫn trình độ đại học trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về chương trình đào tạo ngành Vi mạch bán"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Tiêu chuẩn chương trình đào tạo ngành Vi mạch bán dẫn trình độ đại học được quy định trong **Quyết định 1314/QĐ-BGDĐT** ngày 13/5/2025 như sau:\n\n### 1. Văn bằng tốt nghiệp\n- Người tốt nghiệp trình độ "
     },
     {
       "id": 6,
@@ -628,11 +822,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Theo dữ liệu được truy xuất, không có thông tin cụ thể về điều kiện pháp lý để trường đại học mở ngành mới theo quy định hiện hành.\n\n**Lưu ý:** Thông tin về điều kiện pháp lý, quy trình xin phép, và c"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Để mở ngành mới, trường đại học phải đáp ứng các điều kiện pháp lý sau theo quy định hiện hành:\n\n### 1. Điều kiện chung\n- **Đội ngũ giảng viên**: Có ít nhất 01 giáo sư hoặc phó giáo sư có kinh nghiệm "
     },
     {
       "id": 7,
@@ -642,11 +837,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định đào tạo ngoại ngữ cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học tập của"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho hệ đại học chính quy tại UIT được quy định trong các quyết định sau:\n\n### 1. Chuẩn đầu ra và chứng chỉ\n- Sinh viên phải đạt chuẩn ngoại ngữ B1 theo khung CEFR ho"
     },
     {
       "id": 8,
@@ -656,11 +852,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Theo kết quả truy xuất, **không có tài liệu liên quan đến quy định đào tạo từ xa áp dụng cho trình độ đại học tại UIT** hiện nay. Để cập nhật thông tin chính xác, vui lòng liên hệ Phòng Đào tạo hoặc t"
+      "response_snippet": "Quy định đào tạo từ xa trình độ đại học tại UIT hiện hành được quy định trong **Quyết định số 507/QĐ-ĐHCNTT ngày 27/5/2024** và **Quy chế đào tạo từ xa trình độ đại học của Trường Đại học Công nghệ Th"
     },
     {
       "id": 9,
@@ -670,11 +867,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có dữ liệu liên quan đến cách ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo theo quy định hiện hành mới nhất được truy xuất. \n\n**Lưu ý:** Thông tin về ứng dụng công nghệ thông tin t"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "### 1. Quy định hiện hành mới nhất\n- Quy định về ứng dụng công nghệ thông tin trong đào tạo trực tuyến được ban hành theo Quyết định số 1537/QĐ-ĐHQG ngày 29/10/2024, thay thế Thông tư 12/2016/TT-BGDĐT"
     },
     {
       "id": 10,
@@ -684,11 +882,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin về quy định đào tạo theo học chế tín chỉ áp dụng cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạ"
+      "response_snippet": "Quy định học chế tín chỉ trong quy chế đào tạo hệ đại học chính quy tại UIT được quy định cụ thể như sau:\n\n### 1. Loại học phần\n- **Học phần bắt buộc**: Sinh viên phải tích lũy theo ngành/chuyên ngành"
     },
     {
       "id": 11,
@@ -698,11 +897,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về chuẩn đầu ra tiếng Anh** áp dụng cho sinh viên hệ chính quy tại UIT. \n\n**Lưu ý:** Để xác nhận chi tiết về yêu cầu ngoại ngữ đầu r"
+      "response_snippet": "Chuẩn đầu ra tiếng Anh cho sinh viên hệ chính quy tại UIT được quy định như sau:\n\n### 1. Quy định chung\n- **Quyết định số 147/QĐ-ĐHCNTT-ĐTĐH ngày 31/7/2013** ban hành chuẩn đầu ra tiếng Anh, yêu cầu s"
     },
     {
       "id": 12,
@@ -712,11 +912,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định liên quan đến văn bằng, chứng chỉ được cấp bởi Trường Đại học Công nghệ Thông tin UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Ph"
+      "response_snippet": "### 1. Điều kiện và quy trình cấp văn bằng, chứng chỉ\n- **Điều kiện tốt nghiệp**: Sinh viên phải đạt điểm trung bình tích lũy (ĐTBCTL) từ 5.0 trở lên và hoàn thành các học phần bắt buộc. [Nguồn 2]\n- *"
     },
     {
       "id": 13,
@@ -726,11 +927,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên dữ liệu truy xuất, không tìm thấy thông tin về số hiệu quyết định phê duyệt chương trình song ngành Thương mại Điện tử tại ĐHQG-HCM.\n\n**Lưu ý:** Thông tin về số hiệu quyết định phê duyệt chươ"
+      "response_snippet": "Số hiệu quyết định phê duyệt chương trình song ngành Thương mại Điện tử tại ĐHQG-HCM là **1681/QĐ-ĐHQG**. Quyết định này được ban hành vào ngày 30 tháng 11 năm 2023 và phê duyệt Đề án đào tạo song ngà"
     },
     {
       "id": 14,
@@ -740,11 +942,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin cụ thể về quy trình đánh giá và cập nhật chương trình đào tạo tại UIT**. Để biết thêm chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học tậ"
+      "response_snippet": "Quy trình đánh giá và cập nhật chương trình đào tạo tại UIT được thực hiện theo quy định như sau:\n\n### 1. Điều kiện và yêu cầu\n- Chương trình đào tạo phải được rà soát, đánh giá, cập nhật thường xuyên"
     },
     {
       "id": 15,
@@ -754,11 +957,12 @@
       "cohort_year": 2023,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023**. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học tậ"
+      "response_snippet": "Yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp tại UIT như sau:\n\n### 1. Tiếng Anh\n- Đạt môn học Anh văn 2 hoặc có chứng chỉ tương đương TOEIC 400 (2 kỹ năng) theo Bảng 3 [Nguồn 1"
     },
     {
       "id": 16,
@@ -768,11 +972,12 @@
       "cohort_year": 2021,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về quy định số tín chỉ ngoại ngữ áp dụng cho sinh viên khóa 2021 tại UIT**. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định về tín chỉ ngoại ngữ áp dụng cho sinh viên khóa 2021 tại UIT như sau:\n\n### 1. Điều kiện đạt yêu cầu\n- Đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM (ví dụ: TOEIC 350/400/450"
     },
     {
       "id": 17,
@@ -782,11 +987,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": true,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, không tìm thấy thông tin cụ thể về trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT cũng như văn bản kế nhiệm liên quan đến đào tạo ngoại ngữ. \n\n**Lưu ý:** Để xác nhận"
+      "response_snippet": "### Trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT và văn bản kế nhiệm:\n\n### 1. Quyết định 141/QĐ-ĐHCNTT\n- Là văn bản quy phạm pháp luật ban hành quy định đào tạo ngoại ngữ đối với hệ đại học chính q"
     },
     {
       "id": 18,
@@ -796,11 +1002,87 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 1.0,
+      "hit_rate": 1.0,
       "mrr": 1.0,
       "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Quyết định số 507/QĐ-ĐHCNTT ngày 27 tháng 5 năm 2024 liên quan đến chương trình đào tạo từ xa trình độ đại học tại UIT được ban hành theo quy định của Trường Đại học Công nghệ Thông tin. Nội dung chín"
+    },
+    {
+      "id": 19,
+      "type": "routing_test",
+      "config": "System",
+      "query": "Thông tư 22/2017/TT-BGDDT đã được sửa đổi bổ sung bởi văn bả",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Văn bản quy phạm pháp luật đã sửa đổi, bổ sung Thông tư 22/2017/TT-BGDDT bao gồm:\n\n### 1. Thông tư thay thế trực tiếp\n- **Thông tư số 02/2022/TT-BGDĐT** (ngày 18 tháng 10 năm 2022) thay thế toàn bộ nộ"
+    },
+    {
+      "id": 20,
+      "type": "routing_test",
+      "config": "System",
+      "query": "Quy định về chuẩn tối thiểu cho chương trình đào tạo tại Thô",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Thông tư số 07/2015/TT-BGDĐT **không còn hiệu lực** do đã bị thay thế bởi Thông tư số 2021/TT-BGDĐT. Cụ thể:\n\n### 1. Nguyên nhân chấm dứt hiệu lực\n- Thông tư 2021/TT-BGDĐT quy định quy trình xây dựng "
+    },
+    {
+      "id": 21,
+      "type": "routing_test",
+      "config": "System",
+      "query": "Việc ứng dụng công nghệ thông tin trong đào tạo từ xa theo T",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Theo Thông tư 12/2016/TT-BGDDT, hiện nay quy định về ứng dụng công nghệ thông tin trong đào tạo từ xa đã được thay thế bởi Thông tư số 30/2023/TT-BGDĐT. Dưới đây là các quy định hiện hành:\n\n### 1. Phạ"
+    },
+    {
+      "id": 22,
+      "type": "routing_test",
+      "config": "System",
+      "query": "Quyết định 807/QĐ-ĐHCNTT về chương trình đào tạo chất lượng ",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "### 1. Trạng thái pháp lý của Quyết định 807/QĐ-ĐHCNTT\n- Quyết định số 807/QĐ-ĐHCNTT ngày 15/12/2021 **đã bị thay thế** bởi *Quy định tổ chức dạy – học ngoài giờ hành chính*.\n\n### 2. Văn bản thay thế\n"
+    },
+    {
+      "id": 23,
+      "type": "routing_test",
+      "config": "System",
+      "query": "Quy định đào tạo cho sinh viên khóa 2022 tại ĐHQG-HCM theo Q",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 0.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin liên quan đến Quyết định 507/QĐ-ĐHCNTT** và chương trình đào tạo từ xa trình độ đại học tại UIT. \n\n**Lưu ý:** Thông tin về quy định của Quy"
+      "response_snippet": "Dựa trên tài liệu truy xuất được, quy định đào tạo áp dụng cho sinh viên khóa 2022 theo Quyết định 262/QĐ-ĐHQG như sau:\n\n### 1. Cơ sở pháp lý\n- Quyết định số 262/QĐ-ĐHQG ngày 20/4/2017 được trích dẫn "
     }
   ],
   "System+Amend": [
@@ -812,11 +1094,12 @@
       "cohort_year": 2022,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT như sau:\n\n### 1. Yêu cầu chung\n- Sinh viên phải đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM, bao gồm kỹ năng nghe"
     },
     {
       "id": 1,
@@ -826,11 +1109,12 @@
       "cohort_year": 2016,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT được quy định như sau:\n\n### 1. Đối tượng áp dụng\n- Áp dụng cho sinh viên đại học chính quy từ khóa tuyển sinh năm 2016. [Nguồn 2]\n\n##"
     },
     {
       "id": 2,
@@ -840,11 +1124,12 @@
       "cohort_year": 2020,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin cụ thể về các chứng chỉ ngoại ngữ được công nhận cho sinh viên khóa 2020 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về yêu cầu chứng chỉ ngoại ngữ cho si"
+      "response_snippet": "Các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 bao gồm:\n\n### 1. Tiếng Anh\n- **TOEIC**: Đạt 400 điểm (2 kỹ năng) hoặc 350 điểm (2 kỹ năng) tùy điều kiện [Nguồn 3].\n- **IELTS"
     },
     {
       "id": 3,
@@ -854,11 +1139,12 @@
       "cohort_year": 2015,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin liên quan đến quy định sửa đổi về đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo ho"
+      "response_snippet": "Quy định sửa đổi liên quan đến đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 được quy định như sau:\n\n### 1. Điều kiện\n- Sinh viên khóa 2015 đến 2017 phải hoàn thành các môn Anh văn trong chương tr"
     },
     {
       "id": 4,
@@ -868,11 +1154,12 @@
       "cohort_year": 2019,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT được quy định trong **Quyết định số 141/QĐ-DH_CNTT ngày 16/3/2018** của Hiệu trưởng Trường Đại học Công nghệ Thông tin. Cụ thể:\n\n### "
     },
     {
       "id": 5,
@@ -882,11 +1169,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có thông tin về tiêu chuẩn chương trình đào tạo hiện hành cho ngành Vi mạch bán dẫn trình độ đại học trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về chương trình đào tạo, vui l"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Tiêu chuẩn chương trình đào tạo ngành Vi mạch bán dẫn trình độ đại học được quy định trong **Quyết định số 1314/QD-BGDĐT** ngày 13/5/2025 [Nguồn 1]. Cụ thể:\n\n### 1. Văn bằng tốt nghiệp\n- Người tốt ngh"
     },
     {
       "id": 6,
@@ -896,11 +1184,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có thông tin về các điều kiện pháp lý để trường đại học mở ngành mới theo quy định hiện hành trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc C"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Điều kiện pháp lý để trường đại học mở ngành mới theo quy định hiện hành như sau:\n\n### 1. Điều kiện pháp lý\n- **Ngành đào tạo phải thuộc danh mục ngành đào tạo do Bộ GD&ĐT ban hành** hoặc là ngành mới"
     },
     {
       "id": 7,
@@ -910,11 +1199,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ** áp dụng cho hệ đại học chính quy tại UIT. \n\n**Lưu ý:** Để xác nhận chi tiết về yêu cầu đào tạo ngoại"
+      "response_snippet": "Quy định về đào tạo ngoại ngữ áp dụng cho hệ đại học chính quy tại UIT được quy định như sau:\n\n### 1. Chương trình giảng dạy\n- Chương trình đào tạo hệ đại học chính quy bao gồm chương trình giảng dạy "
     },
     {
       "id": 8,
@@ -924,11 +1214,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Theo kết quả truy xuất, hiện không có thông tin cụ thể về quy định đào tạo từ xa áp dụng cho sinh viên trình độ đại học tại UIT trong dữ liệu được cung cấp.\n\n**Lưu ý:** Để biết thêm chi tiết, vui lòng"
+      "response_snippet": "Quy định đào tạo từ xa trình độ đại học tại UIT hiện hành được quy định trong **Quyết định số 507/QĐ-ĐHCNTT ngày 27 tháng 5 năm 2024** và **Quy chế đào tạo từ xa trình độ đại học của Trường Đại học Cô"
     },
     {
       "id": 9,
@@ -938,11 +1229,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Theo quy định hiện hành, việc ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo tại UIT chưa có thông tin cụ thể được truy xuất. Để cập nhật quy định mới nhất, vui lòng tham khảo hướng dẫn từ"
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Cách ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo theo quy định mới nhất hiện hành như sau:\n\n### 1. Ứng dụng công nghệ trong đào tạo trực tuyến\n- Sử dụng mạng Internet, phần mềm học liệu"
     },
     {
       "id": 10,
@@ -952,11 +1244,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định đào tạo theo học chế tín chỉ áp dụng cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc"
+      "response_snippet": "Quy định đào tạo theo học chế tín chỉ tại UIT áp dụng cho hệ đại học chính quy được quy định trong **Quyết định số 790/QĐ-ĐHCNTT ngày 28/9/2022** của Hiệu trưởng. Cụ thể:\n\n### 1. Tổng số tín chỉ\n- Sin"
     },
     {
       "id": 11,
@@ -966,11 +1259,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về chuẩn đầu ra tiếng Anh áp dụng cho sinh viên hệ chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin này chưa có trong tài liệu được truy xuất. Để xác nhận chi t"
+      "response_snippet": "Chuẩn đầu ra tiếng Anh áp dụng cho sinh viên hệ chính quy tại UIT được quy định cụ thể như sau:\n\n### 1. Yêu cầu chung\n- Sinh viên phải đạt được các kỹ năng tiếng Anh tổng quát: nghe, nói, đọc, viết; đ"
     },
     {
       "id": 12,
@@ -980,11 +1274,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin liên quan đến quy định văn bằng và chứng chỉ được cấp bởi UIT trong dữ liệu truy xuất. \n\n**Lưu ý:** Để biết chi tiết về quy định văn bằng và chứng chỉ, vui lòng liên hệ Phòng Đào tạ"
+      "response_snippet": "Trường Đại học Công nghệ Thông tin (UIT) có quy định cụ thể về văn bằng, chứng chỉ như sau:\n\n### 1. Nguyên tắc quản lý\n- Văn bằng, chứng chỉ do ĐHQG-HCM phát hành thuộc hệ thống giáo dục quốc dân, đượ"
     },
     {
       "id": 13,
@@ -994,11 +1289,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin liên quan đến quyết định phê duyệt chương trình song ngành Thương mại Điện tử** tại ĐHQG-HCM. \n\n**Lưu ý:** Để xác nhận chi tiết về quyết định này"
+      "response_snippet": "Văn bản quy phạm pháp luật phê duyệt chương trình song ngành Thương mại Điện tử tại ĐHQG-HCM là **Quyết định số 1681/QĐ-ĐHQG** ngày 30 tháng 11 năm 2023 của Đại học Quốc gia TP.HCM. Nội dung quyết địn"
     },
     {
       "id": 14,
@@ -1008,11 +1304,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, không tìm thấy thông tin cụ thể về quy trình đánh giá và cập nhật chương trình đào tạo tại UIT.\n\n**Lưu ý:** Thông tin về quy trình đánh giá và cập nhật chương trình đ"
+      "response_snippet": "Quy trình đánh giá và cập nhật chương trình đào tạo tại UIT được quy định như sau:\n\n### 1. Các bước thực hiện\n1. **Bước 1**: Đơn vị chuyên môn (ĐVCM) dự thảo chương trình đào tạo (CTĐT) với nội dung c"
     },
     {
       "id": 15,
@@ -1022,11 +1319,12 @@
       "cohort_year": 2023,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, không tìm thấy thông tin cụ thể về yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp. \n\n**Lưu ý:** Thông tin về yêu cầu chuẩn đầu ra ngoại ngữ cho "
+      "response_snippet": "Yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp được quy định như sau:\n\n### 1. Điều kiện\n- **Tiếng Anh**: Đạt TOEIC 350 (2 kỹ năng) hoặc TOEIC 400 (2 kỹ năng) theo Bảng 3 [Nguồn 1"
     },
     {
       "id": 16,
@@ -1036,11 +1334,12 @@
       "cohort_year": 2021,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không có thông tin cụ thể về quy định tín chỉ ngoại ngữ áp dụng cho sinh viên khóa 2021 tại UIT**. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn "
+      "response_snippet": "Quy định về tín chỉ ngoại ngữ áp dụng cho sinh viên khóa 2021 tại UIT như sau:\n\n### 1. Điều kiện đạt yêu cầu\n- Đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM. [Nguồn 1]\n- Đạt chứng ch"
     },
     {
       "id": 17,
@@ -1050,11 +1349,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": true,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến Quyết định 141/QĐ-ĐHCNTT và văn bản thay thế (nếu có) về đào tạo ngoại ngữ trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận trạng thái pháp lý và văn bản th"
+      "response_snippet": "### Trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT và văn bản thay thế\n\n- **Quyết định 141/QĐ-ĐHCNTT** (ngày 16/3/2018) ban hành Quy định đào tạo ngoại ngữ đối với hệ đại học chính quy, là văn bản qu"
     },
     {
       "id": 18,
@@ -1064,11 +1364,87 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 1.0,
+      "hit_rate": 1.0,
       "mrr": 1.0,
       "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Quyết định số 507/QĐ-ĐHCNTT liên quan đến chương trình đào tạo từ xa trình độ đại học tại UIT được ban hành theo quy định của Thủ tướng Chính phủ (Quyết định số 134/2006/QĐ-TTg) và thay thế Quyết định"
+    },
+    {
+      "id": 19,
+      "type": "routing_test",
+      "config": "System+Amend",
+      "query": "Thông tư 22/2017/TT-BGDDT đã được sửa đổi bổ sung bởi văn bả",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Văn bản quy phạm pháp luật đã sửa đổi, bổ sung Thông tư 22/2017/TT-BGDDT là:\n\n### 1. Thông tư số 02/2022/TT-BGDĐT\n- Được ban hành ngày 18 tháng 10 năm 2022, thay thế Thông tư 22/2017/TT-BGDDT. [Nguồn "
+    },
+    {
+      "id": 20,
+      "type": "routing_test",
+      "config": "System+Amend",
+      "query": "Quy định về chuẩn tối thiểu cho chương trình đào tạo tại Thô",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Trạng thái pháp lý của Thông tư 07/2015/TT-BGDDT như sau:\n\n### 1. Hiệu lực pháp lý\n- **Không còn hiệu lực** do đã bị thay thế bởi Thông tư số 2021/TT-BGDĐT. [Nguồn 1]\n\n### 2. Thông tư thay thế\n- Thông"
+    },
+    {
+      "id": 21,
+      "type": "routing_test",
+      "config": "System+Amend",
+      "query": "Việc ứng dụng công nghệ thông tin trong đào tạo từ xa theo T",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Theo Thông tư 12/2016/TT-BGDDT, hiện nay đã bị thay thế bởi Thông tư số 30/2023/TT-BGDĐT quy định về ứng dụng công nghệ thông tin trong đào tạo trực tuyến đối với giáo dục đại học. Cách thức triển kha"
+    },
+    {
+      "id": 22,
+      "type": "routing_test",
+      "config": "System+Amend",
+      "query": "Quyết định 807/QĐ-ĐHCNTT về chương trình đào tạo chất lượng ",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Quyết định số 807/QĐ-ĐHCNTT ngày 15/12/2021 **đã bị thay thế** bởi *Quy định tổ chức dạy – học ngoài giờ hành chính* (theo dữ liệu truy xuất). Văn bản này không còn có hiệu lực pháp lý do bị thay thế "
+    },
+    {
+      "id": 23,
+      "type": "routing_test",
+      "config": "System+Amend",
+      "query": "Quy định đào tạo cho sinh viên khóa 2022 tại ĐHQG-HCM theo Q",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 0.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến Quyết định 507/QĐ-ĐHCNTT và chương trình đào tạo từ xa trình độ đại học tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về quy định này, v"
+      "response_snippet": "Dựa trên tài liệu truy xuất được, Quyết định 262/QĐ-ĐHQG ngày 20/4/2017 được trích dẫn trong quy định tạm thời về đào tạo liên thông từ trình độ đại học lên thạc sĩ [Nguồn 1]. Tuy nhiên, không tìm thấ"
     }
   ],
   "v0.3.0_No_Routing": [
@@ -1080,11 +1456,12 @@
       "cohort_year": 2022,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến quy định đào tạo ngoại ngữ áp dụng cho sinh viên nhập học năm 2022 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên nhập học năm 2022 tại UIT được quy định như sau:\n\n### 1. Yêu cầu ngoại ngữ đầu ra\n- Sinh viên phải đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định c"
     },
     {
       "id": 1,
@@ -1094,11 +1471,12 @@
       "cohort_year": 2016,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về yêu cầu ngoại ngữ, học phần bắt buộc, hoặc "
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT được quy định như sau:\n\n### 1. Đối tượng áp dụng\n- Áp dụng cho sinh viên đại học chính quy từ khóa tuyển sinh năm 2016. [Nguồn 2]\n\n##"
     },
     {
       "id": 2,
@@ -1108,11 +1486,12 @@
       "cohort_year": 2020,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 trong dữ liệu truy xuất được. \n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố"
+      "response_snippet": "Các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 bao gồm:\n\n### 1. Tiếng Anh\n- **TOEIC 400** (2 kỹ năng) [Nguồn 3]\n- **IELTS 4.5** [Nguồn 4]\n- **TOEFL iBT 45** [Nguồn 4]\n- **C"
     },
     {
       "id": 3,
@@ -1122,11 +1501,12 @@
       "cohort_year": 2015,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin liên quan đến quy định sửa đổi về đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo ho"
+      "response_snippet": "Quy định sửa đổi liên quan đến đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 được quy định như sau:\n\n### 1. Điều kiện và yêu cầu\n- Sinh viên khóa tuyển từ năm 2015 đến năm 2017 phải hoàn thành các"
     },
     {
       "id": 4,
@@ -1136,11 +1516,12 @@
       "cohort_year": 2019,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định đào tạo ngoại ngữ cho sinh viên kh"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT được quy định như sau:\n\n### 1. Yêu cầu chuẩn đầu ra\n- Sinh viên cần đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM. "
     },
     {
       "id": 5,
@@ -1150,11 +1531,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có thông tin về tiêu chuẩn chương trình đào tạo hiện hành cho ngành Vi mạch bán dẫn trình độ đại học trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về chương trình đào tạo, vui l"
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Tiêu chuẩn chương trình đào tạo ngành Vi mạch bán dẫn trình độ đại học được quy định trong **Quyết định số 1314/QĐ-BGDĐT** (ngày 13/5/2025) và cập nhật bởi **Quyết định số 2101/QĐ-BGDĐT** (ngày 22/7/2"
     },
     {
       "id": 6,
@@ -1164,11 +1546,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Theo dữ liệu được truy xuất, hiện không có thông tin cụ thể về điều kiện pháp lý để trường đại học mở ngành mới theo quy định hiện hành. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấ"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Để mở ngành mới, trường đại học phải đáp ứng các điều kiện pháp lý sau theo quy định hiện hành:\n\n### 1. Điều kiện pháp lý\n- **Đáp ứng quy định của Bộ GD&ĐT**: Cơ sở đào tạo phải tuân thủ các quy định "
     },
     {
       "id": 7,
@@ -1178,11 +1561,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về yêu cầu đào tạo ngoại ngữ, vui "
+      "response_snippet": "Quy định đào tạo ngoại ngữ cho hệ đại học chính quy tại UIT được quy định cụ thể như sau:\n\n### 1. Yêu cầu chung\n- Sinh viên phải đạt chuẩn đầu ra tiếng Anh thông qua chứng chỉ VNU-EPT, VPET hoặc chứng"
     },
     {
       "id": 8,
@@ -1192,11 +1576,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định đào tạo từ xa áp dụng cho trình độ đại học tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về quy định đào tạo từ xa, vui lòng liên hệ Phòng Đào t"
+      "response_snippet": "Quy định đào tạo từ xa trình độ đại học tại UIT hiện hành được quy định như sau:\n\n### 1. Định nghĩa và phạm vi áp dụng\n- Đào tạo từ xa là hình thức đào tạo có 50% tổng khối lượng chương trình trở lên "
     },
     {
       "id": 9,
@@ -1206,11 +1591,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Theo kết quả truy xuất, hiện không có tài liệu liên quan đến cách ứng dụng công nghệ thông tin trong tổ chức và quản lý đào tạo theo quy định hiện hành.\n\n**Lưu ý:** Thông tin về ứng dụng công nghệ thô"
+      "response_snippet": "Theo quy định hiện hành, ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo được thực hiện như sau:\n\n### 1. Hệ thống quản lý đào tạo\n- Sử dụng hệ thống phần mềm quản lý đào tạo để quản lý thi "
     },
     {
       "id": 10,
@@ -1220,11 +1606,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định chi tiết học chế tín chỉ áp dụng cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để biết thông tin chính xác, vui lòng liên hệ Phòng Đào tạo h"
+      "response_snippet": "Quy định đào tạo theo học chế tín chỉ cho hệ đại học chính quy tại UIT được ban hành theo **Quyết định số 790/QĐ-ĐHCNTT ngày 28/9/2022** của Hiệu trưởng. Nội dung chính như sau:\n\n### 1. Điều kiện và q"
     },
     {
       "id": 11,
@@ -1234,11 +1621,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về chuẩn đầu ra tiếng Anh** áp dụng cho sinh viên hệ chính quy tại UIT. \n\n**Lưu ý:** Để xác nhận chi tiết về yêu cầu ngoại ngữ đầu r"
+      "response_snippet": "Chuẩn đầu ra tiếng Anh cho sinh viên hệ chính quy tại UIT được quy định cụ thể như sau:\n\n### 1. Yêu cầu chung\n- Sinh viên phải đạt các chứng chỉ tiếng Anh quốc tế hoặc nội bộ theo quy định để đủ điều "
     },
     {
       "id": 12,
@@ -1248,11 +1636,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "**Lưu ý:** Thông tin về quy định liên quan đến văn bằng và chứng chỉ do Trường Đại học Công nghệ Thông tin UIT cấp chưa có trong tài liệu được truy xuất. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đ"
+      "response_snippet": "Quy định liên quan đến văn bằng, chứng chỉ tại UIT được quy định trong **Quyết định số 172/QĐ-ĐHCNTT** và **Quyết định số 284/QĐ-ĐHCNTT** như sau:\n\n### 1. Điều kiện cấp văn bằng, chứng chỉ\n- Trường Đạ"
     },
     {
       "id": 13,
@@ -1262,11 +1651,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin về quyết định phê duyệt chương trình đào tạo song ngành Thương mại Điện tử tại ĐHQG-HCM trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quyết định phê duyệt chương trìn"
+      "response_snippet": "Số hiệu quyết định phê duyệt chương trình song ngành Thương mại Điện tử tại ĐHQG-HCM là **1681/QĐ-ĐHQG**.\n\n### 1. Thông tin chi tiết\n- Quyết định này được ban hành vào ngày 30 tháng 11 năm 2023, phê d"
     },
     {
       "id": 14,
@@ -1276,11 +1666,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về quy trình đánh giá và cập nhật chương trình đào tạo tại UIT**. Để được hỗ trợ chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấ"
+      "response_snippet": "Quy trình đánh giá và cập nhật chương trình đào tạo tại UIT được thực hiện như sau:\n\n### 1. Điều kiện và yêu cầu\n- Chương trình đào tạo phải được rà soát, đánh giá, cập nhật thường xuyên để cải tiến c"
     },
     {
       "id": 15,
@@ -1290,11 +1681,12 @@
       "cohort_year": 2023,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về yêu cầu chuẩn đầu ra ngoại ngữ áp dụng cho sinh viên khóa 2023 để tốt nghiệp trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc c"
+      "response_snippet": "Yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp được quy định như sau:\n\n### 1. Tiếng Anh\n- Đạt **TOEIC 350** (2 kỹ năng) hoặc **TOEIC 400** (2 kỹ năng) theo Bảng 3 [Nguồn 1].\n- Ho"
     },
     {
       "id": 16,
@@ -1304,11 +1696,12 @@
       "cohort_year": 2021,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin cụ thể về quy định số tín chỉ ngoại ngữ áp dụng cho sinh viên khóa 2021 tại UIT**. Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặ"
+      "response_snippet": "Quy định về tín chỉ ngoại ngữ áp dụng cho sinh viên khóa 2021 tại UIT như sau:\n\n### 1. Điều kiện đạt yêu cầu\n- Đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM (6 bậc dùng cho Việt Nam "
     },
     {
       "id": 17,
@@ -1318,11 +1711,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": true,
-      "response_snippet": "Không tìm thấy thông tin về trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT hoặc văn bản thay thế liên quan đến đào tạo ngoại ngữ trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận thông tin chính "
+      "response_snippet": "### 1. Trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT\n- Quyết định số 141/QĐ-ĐHCNTT ngày 16/3/2018 đã bị thay thế bởi các văn bản sau:\n  - **Quyết định số 547/QĐ-ĐHCNTT** ngày 30/8/2019: Văn bản mới "
     },
     {
       "id": 18,
@@ -1332,11 +1726,87 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 1.0,
+      "hit_rate": 1.0,
       "mrr": 1.0,
       "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến Quyết định 507/QĐ-ĐHCNTT và chương trình đào tạo từ xa trình độ đại học tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về quy định này, v"
+      "response_snippet": "Quyết định số 507/QĐ-ĐHCNTT liên quan đến chương trình đào tạo từ xa trình độ đại học tại UIT được ban hành theo quy định của Thủ tướng Chính phủ (Quyết định số 134/2006/QĐ-TTg) và các văn bản pháp lý"
+    },
+    {
+      "id": 19,
+      "type": "routing_test",
+      "config": "v0.3.0_No_Routing",
+      "query": "Thông tư 22/2017/TT-BGDDT đã được sửa đổi bổ sung bởi văn bả",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Văn bản quy phạm pháp luật đã sửa đổi, bổ sung Thông tư 22/2017/TT-BGDDT là **Thông tư số 02/2022/TT-BGDĐT**. Đây là văn bản thay thế hoàn toàn Thông tư 22/2017/TT-BGDDT, đồng thời cũng thay thế Thông"
+    },
+    {
+      "id": 20,
+      "type": "routing_test",
+      "config": "v0.3.0_No_Routing",
+      "query": "Quy định về chuẩn tối thiểu cho chương trình đào tạo tại Thô",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Thông tư số 07/2015/TT-BGDDT **đã bị thay thế** bởi Thông tư số 2021/TT-BGDDT của Bộ Giáo dục và Đào tạo.\n\n### 1. Thông tin thay thế\n- Thông tư số 2021/TT-BGDDT quy định quy trình xây dựng chuẩn chươn"
+    },
+    {
+      "id": 21,
+      "type": "routing_test",
+      "config": "v0.3.0_No_Routing",
+      "query": "Việc ứng dụng công nghệ thông tin trong đào tạo từ xa theo T",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Theo Thông tư 12/2016/TT-BGDDT hiện nay đã bị thay thế bởi Thông tư 28/2023/TT-BGDĐT, cách thực hiện ứng dụng công nghệ thông tin trong đào tạo từ xa được quy định như sau:\n\n### 1. Điều kiện và quy đị"
+    },
+    {
+      "id": 22,
+      "type": "routing_test",
+      "config": "v0.3.0_No_Routing",
+      "query": "Quyết định 807/QĐ-ĐHCNTT về chương trình đào tạo chất lượng ",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "### Trạng thái pháp lý của Quyết định 807/QĐ-ĐHCNTT\n- Quyết định số 807/QĐ-ĐHCNTT ngày 15/12/2021 **đã bị thay thế** bởi *Quy định tổ chức dạy – học ngoài giờ hành chính*.\n- Văn bản thay thế này được "
+    },
+    {
+      "id": 23,
+      "type": "routing_test",
+      "config": "v0.3.0_No_Routing",
+      "query": "Quy định đào tạo cho sinh viên khóa 2022 tại ĐHQG-HCM theo Q",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": false,
+      "response_snippet": "Dựa trên tài liệu truy xuất được, quy định đào tạo áp dụng cho sinh viên khóa 2022 theo Quyết định 262/QĐ-ĐHQG như sau:\n\n### 1. Điều chỉnh quy chế đào tạo\n- ĐHQG-HCM đã thống nhất dự thảo điều chỉnh q"
     }
   ],
   "v0.3.0_Full": [
@@ -1348,11 +1818,12 @@
       "cohort_year": 2022,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "### Quy định đào tạo ngoại ngữ cho sinh viên khóa 2022 tại UIT\n\nKhông tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT trong dữ liệu được truy xuất.\n\n**L"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2022 tại UIT như sau:\n\n### 1. Điều kiện đầu ra\n- Đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy định của ĐHQG-HCM. [Nguồn 1]\n- Yêu cầu chứng chỉ: \n"
     },
     {
       "id": 1,
@@ -1362,11 +1833,12 @@
       "cohort_year": 2016,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định đào tạo ngoại ngữ cho sinh viên kh"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2016 tại UIT như sau:\n\n### 1. Đối tượng áp dụng\n- Áp dụng cho sinh viên đại học chính quy từ khóa tuyển sinh năm 2016 [Nguồn 2].\n\n### 2. Chương tr"
     },
     {
       "id": 2,
@@ -1376,11 +1848,12 @@
       "cohort_year": 2020,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin cụ thể về các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo h"
+      "response_snippet": "Các chứng chỉ ngoại ngữ được UIT công nhận cho sinh viên nhập học năm 2020 bao gồm:\n\n### 1. Tiếng Anh\n- TOEIC 350 (2 kỹ năng) hoặc TOEIC 400 (2 kỹ năng) [Nguồn 3]\n- IELTS 4.5 [Nguồn 4]\n- TOEFL iBT 45 "
     },
     {
       "id": 3,
@@ -1390,11 +1863,12 @@
       "cohort_year": 2015,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có thông tin liên quan đến quy định sửa đổi về đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo ho"
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Dựa trên tài liệu truy xuất, quy định sửa đổi về đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2015 như sau:\n\n### 1. Điều kiện và yêu cầu\n- Sinh viên phải đạt điểm môn ngoại ngữ tương ứng với tiến độ c"
     },
     {
       "id": 4,
@@ -1404,11 +1878,12 @@
       "cohort_year": 2019,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Thông tin về quy định đào tạo ngoại ngữ cho các khóa học"
+      "response_snippet": "Quy định đào tạo ngoại ngữ áp dụng cho sinh viên khóa 2019 tại UIT được quy định trong **Quyết định số 141/QĐ-DHCNTT ngày 16/3/2018**. Nội dung chính như sau:\n\n### 1. Yêu cầu ngoại ngữ\n- Sinh viên phả"
     },
     {
       "id": 5,
@@ -1418,11 +1893,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin về tiêu chuẩn chương trình đào tạo hiện hành cho ngành Vi mạch bán dẫn trình độ đại học trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về chương trình đào tạo,"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Tiêu chuẩn chương trình đào tạo ngành Vi mạch bán dẫn trình độ đại học được quy định như sau:\n\n### 1. Văn bằng tốt nghiệp\n- Sinh viên tốt nghiệp được cấp bằng **Cử nhân** theo quyết định số 1314/QĐ-BG"
     },
     {
       "id": 6,
@@ -1432,11 +1908,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
-      "confound_present": false,
-      "response_snippet": "Không có thông tin cụ thể về điều kiện pháp lý để trường đại học mở ngành mới được truy xuất từ dữ liệu hiện có.\n\n**Lưu ý:** Để xác nhận các điều kiện pháp lý hiện hành, vui lòng liên hệ Phòng Đào tạo"
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Để mở ngành mới, trường đại học phải đáp ứng các điều kiện pháp lý sau theo quy định hiện hành:\n\n### 1. Điều kiện chung\n- **Đội ngũ giảng viên**: Có đủ số lượng, trình độ và kinh nghiệm, bao gồm ít nh"
     },
     {
       "id": 7,
@@ -1446,11 +1923,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, hiện không có thông tin cụ thể về quy định đào tạo ngoại ngữ áp dụng cho hệ đại học chính quy tại UIT.\n\n**Lưu ý:** Thông tin về yêu cầu đào tạo ngoại ngữ chưa có tron"
+      "response_snippet": "Quy định cụ thể về yêu cầu đào tạo ngoại ngữ áp dụng cho hệ đại học chính quy tại UIT như sau:\n\n### 1. Yêu cầu chứng chỉ\n- Sinh viên phải đạt chuẩn đầu ra tiếng Anh thông qua chứng chỉ VNU-EPT, VPET h"
     },
     {
       "id": 8,
@@ -1460,11 +1938,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Hiện tại, không có thông tin về quy định đào tạo từ xa áp dụng cho trình độ đại học tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết về quy định đào tạo từ xa, vui lòng liên hệ P"
+      "response_snippet": "Quy định đào tạo từ xa trình độ đại học tại UIT hiện hành được áp dụng như sau:\n\n### 1. Cơ sở pháp lý\n- Được ban hành dựa trên Thông tư 28/2023/TT-BGDĐT của Bộ Giáo dục và Đào tạo về quy chế đào tạo t"
     },
     {
       "id": 9,
@@ -1474,11 +1953,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
+      "hit_rate": 0.0,
       "mrr": 0.0,
       "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, hiện chưa có thông tin cụ thể về cách ứng dụng công nghệ thông tin trong tổ chức và quản lý đào tạo theo quy định mới nhất. \n\n**Lưu ý:** Thông tin về ứng dụng công ng"
+      "response_snippet": "Theo kết quả truy xuất, hiện không có tài liệu liên quan đến cách ứng dụng công nghệ thông tin trong tổ chức quản lý đào tạo theo quy định hiện hành mới nhất. Để cập nhật thông tin chính xác, vui lòng"
     },
     {
       "id": 10,
@@ -1488,11 +1968,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định đào tạo theo học chế tín chỉ áp dụng cho hệ đại học chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc"
+      "response_snippet": "Quy định về học chế tín chỉ trong quy chế đào tạo hệ đại học chính quy tại UIT được quy định cụ thể trong **Quyết định số 790/QĐ-ĐHCNTT ngày 28/9/2022** của Hiệu trưởng. Nội dung chính bao gồm:\n\n### 1"
     },
     {
       "id": 11,
@@ -1502,11 +1983,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin về chuẩn đầu ra tiếng Anh áp dụng cho sinh viên hệ chính quy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn"
+      "response_snippet": "Chuẩn đầu ra tiếng Anh cho sinh viên hệ chính quy tại UIT được quy định cụ thể như sau:\n\n### 1. Yêu cầu chung\n- Sinh viên phải đạt được các kỹ năng tiếng Anh tổng quát: nghe, nói, đọc, viết; đồng thời"
     },
     {
       "id": 12,
@@ -1516,11 +1998,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không có thông tin về quy định liên quan đến văn bằng, chứng chỉ được cấp bởi Trường Đại học Công nghệ Thông tin UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Ph"
+      "response_snippet": "Quy định liên quan đến văn bằng, chứng chỉ tại UIT được quy định như sau:\n\n### 1. Cơ sở pháp lý\n- **Quy chế văn bằng, chứng chỉ của UIT**: Được ban hành theo Quyết định số 172/QĐ-ĐHCNTT, quy định về s"
     },
     {
       "id": 13,
@@ -1530,11 +2013,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, **không tìm thấy thông tin về số hiệu quyết định phê duyệt chương trình song ngành Thương mại Điện tử** tại ĐHQG-HCM.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên "
+      "response_snippet": "Quyết định phê duyệt chương trình song ngành Thương mại Điện tử tại ĐHQG-HCM được thực hiện như sau:\n\n### 1. Quyết định chính thức\n- **Số quyết định**: 1681/QĐ-ĐHQG, ngày 30/11/2023 [Nguồn 1].\n- **Nội"
     },
     {
       "id": 14,
@@ -1544,11 +2028,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, hiện không có thông tin cụ thể về quy trình đánh giá và cập nhật chương trình đào tạo tại UIT. Để được hỗ trợ chi tiết, vui lòng liên hệ Phòng Đào tạo hoặc cố vấn học"
+      "response_snippet": "Quy trình đánh giá và cập nhật chương trình đào tạo tại UIT được quy định như sau:\n\n### 1. Điều kiện\n- Chương trình đào tạo phải thường xuyên được rà soát, đánh giá, cập nhật để cải tiến chất lượng đà"
     },
     {
       "id": 15,
@@ -1558,11 +2043,12 @@
       "cohort_year": 2023,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, không tìm thấy thông tin cụ thể về yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp. Tuy nhiên, sinh viên cần đạt chuẩn đầu ra ngoại ngữ theo quy "
+      "response_snippet": "Yêu cầu chuẩn đầu ra ngoại ngữ cho sinh viên khóa 2023 để tốt nghiệp tại UIT được quy định như sau:\n\n### 1. Tiêu chuẩn tiếng Anh\n- **Đạt TOEIC 350** (2 kỹ năng) để đạt môn Anh văn 1 hoặc tương đương ["
     },
     {
       "id": 16,
@@ -1572,11 +2058,12 @@
       "cohort_year": 2021,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": false,
-      "response_snippet": "Không tìm thấy thông tin cụ thể về quy định số tín chỉ ngoại ngữ mà sinh viên khóa 2021 phải tích lũy tại UIT trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận chi tiết, vui lòng liên hệ Phòng Đào"
+      "response_snippet": "Dựa trên tài liệu truy xuất, quy định về số tín chỉ ngoại ngữ bắt buộc cho sinh viên khóa 2021 tại UIT như sau:\n\n### 1. Yêu cầu ngoại ngữ\n- Sinh viên cần đạt chuẩn ngoại ngữ tiếng Anh đầu ra theo quy "
     },
     {
       "id": 17,
@@ -1586,11 +2073,12 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 0.0,
-      "mrr": 0.0,
-      "ndcg@3": 0.0,
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
       "confound_present": true,
-      "response_snippet": "Không tìm thấy thông tin liên quan đến Quyết định 141/QĐ-ĐHCNTT và văn bản kế nhiệm (nếu có) về đào tạo ngoại ngữ trong dữ liệu được truy xuất.\n\n**Lưu ý:** Để xác nhận trạng thái pháp lý và văn bản kế"
+      "response_snippet": "### Trạng thái pháp lý của Quyết định 141/QĐ-ĐHCNTT và văn bản thay thế\n\n#### 1. Quyết định 141/QĐ-ĐHCNTT\n- Được ban hành ngày 16/3/2018, quy định đào tạo ngoại ngữ đối với hệ đại học chính quy. [Nguồ"
     },
     {
       "id": 18,
@@ -1600,11 +2088,87 @@
       "cohort_year": null,
       "pipeline_ok": true,
       "error": "",
-      "acc@1": 1.0,
+      "hit_rate": 1.0,
       "mrr": 1.0,
       "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Quyết định số 507/QĐ-ĐHCNTT liên quan đến chương trình đào tạo từ xa trình độ đại học tại UIT quy định như sau:\n\n### 1. Mục đích\n- Ban hành quy chế đào tạo cho sinh viên hình thức đào tạo từ xa trình "
+    },
+    {
+      "id": 19,
+      "type": "routing_test",
+      "config": "v0.3.0_Full",
+      "query": "Thông tư 22/2017/TT-BGDDT đã được sửa đổi bổ sung bởi văn bả",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Văn bản quy phạm pháp luật đã sửa đổi, bổ sung Thông tư 22/2017/TT-BGDDT là **Thông tư số 02/2022/TT-BGDĐT**. Thông tư này thay thế hoàn toàn Thông tư 22/2017/TT-BGDDT về việc quy định tiêu chí xác đị"
+    },
+    {
+      "id": 20,
+      "type": "routing_test",
+      "config": "v0.3.0_Full",
+      "query": "Quy định về chuẩn tối thiểu cho chương trình đào tạo tại Thô",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "ndcg@3": 0.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "### Trạng thái pháp lý của Thông tư 07/2015/TT-BGDDT\n- **Không còn hiệu lực**: Thông tư này đã bị thay thế bởi Thông tư số 2021/TT-BGDĐT của Bộ Giáo dục và Đào tạo. [Nguồn 1, 2]\n- **Không bị sửa đổi/b"
+    },
+    {
+      "id": 21,
+      "type": "routing_test",
+      "config": "v0.3.0_Full",
+      "query": "Việc ứng dụng công nghệ thông tin trong đào tạo từ xa theo T",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "Theo Thông tư 12/2016/TT-BGDDT, hiện nay quy định về ứng dụng công nghệ thông tin trong đào tạo từ xa đã được thay thế bởi Thông tư số 30/2023/TT-BGDĐT. Dưới đây là cách triển khai theo quy định hiện "
+    },
+    {
+      "id": 22,
+      "type": "routing_test",
+      "config": "v0.3.0_Full",
+      "query": "Quyết định 807/QĐ-ĐHCNTT về chương trình đào tạo chất lượng ",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 1.0,
+      "confound_present": true,
+      "response_snippet": "### Trạng thái pháp lý của Quyết định 807/QĐ-ĐHCNTT\n- Quyết định số 807/QĐ-ĐHCNTT ngày 15/12/2021 **đã bị thay thế** bởi *Quy định tổ chức dạy – học ngoài giờ hành chính*.\n- Văn bản thay thế này có hi"
+    },
+    {
+      "id": 23,
+      "type": "routing_test",
+      "config": "v0.3.0_Full",
+      "query": "Quy định đào tạo cho sinh viên khóa 2022 tại ĐHQG-HCM theo Q",
+      "cohort_year": null,
+      "pipeline_ok": true,
+      "error": "",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "ndcg@3": 1.0,
+      "routing_accuracy": 0.0,
       "confound_present": false,
-      "response_snippet": "Dựa trên tài liệu truy xuất được, không tìm thấy thông tin cụ thể về Quyết định 507/QĐ-ĐHCNTT liên quan đến chương trình đào tạo từ xa trình độ đại học tại UIT.\n\n**Lưu ý:** Thông tin về quy định của Q"
+      "response_snippet": "Dựa trên tài liệu truy xuất được, quy định đào tạo áp dụng cho sinh viên khóa 2022 theo Quyết định 262/QĐ-ĐHQG như sau:\n\n### 1. Cơ sở pháp lý\n- Quyết định số 262/QĐ-ĐHQG ngày 20/4/2017 được trích dẫn "
     }
   ]
 }
