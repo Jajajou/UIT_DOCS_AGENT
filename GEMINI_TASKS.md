@@ -285,7 +285,7 @@ Commit: `test: draft 5 new temporal test pair shells (ids 19-23) for review`
 
 ## TASK-008 — 2026-04-20 — mineru-ocr-evaluation
 
-**Status:** - [ ] Pending
+**Status:** - [x] Done
 **Branch:** `feat/mineru-ocr-evaluation`
 **Class:** mechanical  **Model:** gemini
 **Priority:** high
@@ -542,7 +542,7 @@ git commit -m "test: add MinerU2.5-Pro OCR evaluation script and comparison repo
 
 ## TASK-007 — 2026-04-20 — backfill-file-path-urls
 
-**Status:** - [ ] Pending
+**Status:** - [x] Done
 **Branch:** `develop`
 **Class:** mechanical  **Model:** gemini
 **Priority:** medium
@@ -606,6 +606,422 @@ COLLECTION = 'lightrag_vdb_chunks'
 - [ ] At least 80% of bare-filename docs get URL updated
 - [ ] Spot-check: `SELECT file_path FROM lightrag_doc_status WHERE id='<known_doc_id>'` shows URL
 - [ ] Qdrant spot-check: payload `file_path` for a chunk of that doc shows URL
+
+---
+
+## TASK-009 — 2026-04-20 — swap-deepseek-for-mineru
+
+**Status:** - [ ] Pending
+**Branch:** `feat/mineru-ocr-evaluation`
+**Class:** mechanical  **Model:** gemini
+**Priority:** high
+**Gate:** None — run immediately
+
+### Context
+
+TASK-008 confirmed MinerU2.5-Pro-2604-1.2B beats DeepSeek-OCR-2 on tables (0 vs 339 garbage
+hits). We now do a full swap: write `mineru_ocr_client.py`, add Vietnamese text normalization
+via `underthesea`, remove `deepseek_ocr_client.py`, and update every touch-point that
+references DeepSeek OCR. The new client must expose the same `parse_and_get_markdown()`
+interface so the indexing graph change is minimal.
+
+### Steps
+
+**Phase 0 — Branch and install underthesea:**
+
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT
+git checkout feat/mineru-ocr-evaluation
+source .venv/bin/activate
+uv pip install underthesea
+python -c "from underthesea import text_normalize; print(text_normalize('Xin chào'))"
+```
+
+Must print `Xin chào` without error.
+
+---
+
+**Phase 1 — Write `mineru_ocr_client.py`:**
+
+Create file: `LangGraph/src/agent/clients/mineru_ocr_client.py`
+
+```python
+# mineru_ocr_client.py
+import os
+import io
+import fitz
+from pathlib import Path
+from typing import Optional, Tuple, Dict, Any
+from PIL import Image
+
+from agent.config import settings
+
+DEFAULT_TIMEOUT = 600  # 10 minutes for a full PDF
+
+class MinerUOCRClientError(RuntimeError):
+    pass
+
+class MinerUOCRClient:
+    """PDF parser using MinerU2.5-Pro with Vietnamese text normalization."""
+
+    def __init__(self, timeout: int = DEFAULT_TIMEOUT) -> None:
+        self.timeout = timeout
+        self._model = None
+        self._processor = None
+        self._client = None
+
+    def _ensure_loaded(self) -> None:
+        if self._client is not None:
+            return
+        print("[MinerU OCR] Loading model: opendatalab/MinerU2.5-Pro-2604-1.2B")
+        from mlx_vlm import load as mlx_load
+        from mineru_vl_utils import MinerUClient
+        model, processor = mlx_load("opendatalab/MinerU2.5-Pro-2604-1.2B")
+        self._model = model
+        self._processor = processor
+        self._client = MinerUClient(
+            backend="mlx-engine",
+            model=model,
+            processor=processor,
+            image_analysis=False,
+        )
+        print("[MinerU OCR] Model loaded successfully")
+
+    @staticmethod
+    def _normalize_vietnamese(text: str) -> str:
+        """Normalize Vietnamese Unicode diacritics to reduce OCR tone-mark errors."""
+        try:
+            from underthesea import text_normalize
+            return text_normalize(text)
+        except Exception:
+            return text
+
+    def parse_pdf(
+        self,
+        file_path: str,
+        output_dir: Optional[str] = None,
+        return_md: bool = True,
+    ) -> Dict[str, Any]:
+        """Parse a PDF file page-by-page using MinerU2.5-Pro."""
+        if not os.path.exists(file_path):
+            raise MinerUOCRClientError(f"File not found: {file_path}")
+        if not file_path.lower().endswith(".pdf"):
+            raise MinerUOCRClientError(f"Only PDF files are supported: {file_path}")
+
+        self._ensure_loaded()
+
+        from mineru_vl_utils.post_process import json2md
+
+        print(f"[MinerU OCR] Processing PDF: {file_path}")
+        doc = fitz.open(file_path)
+        pages_md = []
+
+        for i, page in enumerate(doc):
+            print(f"[MinerU OCR] Processing page {i + 1}/{len(doc)}")
+            pix = page.get_pixmap(matrix=fitz.Matrix(144 / 72, 144 / 72), alpha=False)
+            img = Image.open(io.BytesIO(pix.tobytes("png")))
+            content_list = self._client.two_step_extract(img)
+            page_md = json2md(content_list)
+            pages_md.append(page_md)
+
+        doc.close()
+
+        raw_markdown = "\n\n".join(pages_md) if pages_md else ""
+        markdown = self._normalize_vietnamese(raw_markdown)
+
+        result: Dict[str, Any] = {
+            "status": "success",
+            "pages_processed": len(pages_md),
+            "total_pages": len(pages_md),
+            "text": markdown,
+        }
+
+        if return_md:
+            result["markdown"] = markdown
+
+        if output_dir and markdown:
+            os.makedirs(output_dir, exist_ok=True)
+            base_name = Path(file_path).stem
+            md_path = os.path.join(output_dir, f"{base_name}.md")
+            with open(md_path, "w", encoding="utf-8") as f:
+                f.write(markdown)
+            result["markdown_path"] = md_path
+            print(f"[MinerU OCR] Saved markdown to: {md_path}")
+
+        print(f"[MinerU OCR] Completed: {len(pages_md)} pages, {len(markdown):,} chars")
+        return result
+
+    def get_markdown_from_output(self, output_dir: str) -> Optional[str]:
+        """Return cached markdown from output_dir if it exists."""
+        output_path = Path(output_dir)
+        if not output_path.exists():
+            return None
+        md_files = [f for f in output_path.rglob("*.md") if f.is_file()]
+        if not md_files:
+            return None
+        md_file = max(md_files, key=lambda f: f.stat().st_mtime)
+        try:
+            return md_file.read_text(encoding="utf-8")
+        except Exception as e:
+            raise MinerUOCRClientError(f"Failed to read cached markdown: {e}")
+
+    def parse_and_get_markdown(
+        self,
+        file_path: str,
+        output_dir: Optional[str] = None,
+        **kwargs,
+    ) -> Tuple[str, str]:
+        """Parse PDF and return (markdown, output_dir). Checks cache first."""
+        file_stem = Path(file_path).stem
+        if output_dir is None:
+            output_dir = str(settings.mineru_ocr_dir / file_stem)
+        else:
+            output_dir = str(Path(output_dir) / file_stem)
+
+        if settings.mineru_ocr.skip_repeat:
+            cached = self.get_markdown_from_output(output_dir)
+            if cached:
+                print(f"[MinerU OCR] Cache hit — skipping OCR for: {file_stem}")
+                return cached, output_dir
+
+        result = self.parse_pdf(file_path, output_dir=output_dir, return_md=True, **kwargs)
+
+        if not result.get("markdown"):
+            raise MinerUOCRClientError(f"No text extracted from PDF: {file_path}")
+
+        return result["markdown"], output_dir
+```
+
+---
+
+**Phase 2 — Update `config.yaml`:**
+
+File: `LangGraph/src/agent/config.yaml`
+
+Replace the entire `deepseek_ocr:` block (lines 1-19) with:
+
+```yaml
+# MinerU OCR Configuration
+mineru_ocr:
+  model_name: "opendatalab/MinerU2.5-Pro-2604-1.2B"
+  skip_repeat: True
+```
+
+---
+
+**Phase 3 — Update `config.py`:**
+
+File: `LangGraph/src/agent/config.py`
+
+Make these changes:
+
+1. Change `DEEPSEEK_OCR_DIR = DATA_DIR / "DeepSeek-OCR"` → `MINERU_OCR_DIR = DATA_DIR / "MinerU-OCR"`
+
+2. Replace `class DeepSeekOCRConfig(BaseModel):` with:
+```python
+class MinerUOCRConfig(BaseModel):
+    model_name: str
+    skip_repeat: bool = True
+```
+
+3. In the `Config` class:
+   - Change `deepseek_ocr_dir: Path = DEEPSEEK_OCR_DIR` → `mineru_ocr_dir: Path = MINERU_OCR_DIR`
+   - Change `deepseek_ocr: DeepSeekOCRConfig` → `mineru_ocr: MinerUOCRConfig`
+
+4. In the `settings = Config(...)` instantiation:
+   - Change `deepseek_ocr=_yaml_config.get("deepseek_ocr", {})` → `mineru_ocr=_yaml_config.get("mineru_ocr", {})`
+
+5. Update the import export at the bottom:
+   - Change `from agent.config import DEEPSEEK_OCR_DIR` usages — just rename the constant.
+
+---
+
+**Phase 4 — Update `indexing_state.py`:**
+
+File: `LangGraph/src/agent/states/indexing_state.py`
+
+Replace the `# DeepSeek_OCR fields` block (lines 46-50):
+```python
+    # DeepSeek_OCR fields
+    parsed_content: NotRequired[Optional[str]]
+    deepseek_ocr_output_dir: NotRequired[Optional[str]]
+    deepseek_ocr_success: NotRequired[bool]
+    deepseek_ocr_error: NotRequired[Optional[str]]
+```
+With:
+```python
+    # OCR fields
+    parsed_content: NotRequired[Optional[str]]
+    ocr_output_dir: NotRequired[Optional[str]]
+    ocr_success: NotRequired[bool]
+    ocr_error: NotRequired[Optional[str]]
+```
+
+---
+
+**Phase 5 — Update `indexing_graph.py`:**
+
+File: `LangGraph/src/agent/graphs/indexing_graph.py`
+
+Make these changes:
+
+1. Line 19-20: Replace imports:
+```python
+from agent.config import MINERU_OCR_DIR
+from agent.clients.mineru_ocr_client import MinerUOCRClient, MinerUOCRClientError
+```
+
+2. Line 32: Replace client instantiation:
+```python
+mineru_client = MinerUOCRClient()
+```
+
+3. Replace the entire `parse_with_DeepSeek_OCR` function with:
+```python
+def parse_with_ocr(state: IndexingState) -> Dict[str, Any]:
+    """Pre-processes and parses a PDF file with MinerU OCR."""
+    file_path = state.get("current_file_path")
+    if not file_path:
+        return {"ocr_error": "No file path for OCR"}
+
+    try:
+        print(f"[OCR] Processing: {os.path.basename(file_path)}")
+        file_stem = Path(file_path).stem
+        output_path = str(MINERU_OCR_DIR / file_stem)
+
+        md_content, output_path = mineru_client.parse_and_get_markdown(
+            file_path,
+            output_dir=output_path,
+        )
+
+        print(f"[OCR] Success - {len(md_content):,} chars")
+
+        return {
+            "parsed_content": md_content,
+            "ocr_output_dir": output_path,
+            "ocr_success": True,
+            "file_path": file_path,
+        }
+    except Exception as e:
+        print(f"[OCR] Failed: {str(e)}")
+        return {
+            "parsed_content": "",
+            "ocr_success": False,
+            "ocr_error": str(e),
+        }
+```
+
+4. Find every reference to `deepseek_ocr_success`, `deepseek_ocr_output_dir`, `deepseek_ocr_error`, `deepseek_ocr_count`, `parse_with_DeepSeek_OCR` and rename:
+   - `deepseek_ocr_success` → `ocr_success`
+   - `deepseek_ocr_output_dir` → `ocr_output_dir`
+   - `deepseek_ocr_error` → `ocr_error`
+   - `parse_with_DeepSeek_OCR` → `parse_with_ocr` (node name string AND function)
+   - `deepseek_ocr_count` → `ocr_count`
+   - `"PDFs parsed with DeepSeek OCR:"` → `"PDFs parsed with MinerU OCR:"`
+   - `"DeepSeek_OCR:"` → `"MinerU:"`
+   - `"Direct - DeepSeek_OCR failed"` → `"Direct - OCR failed"`
+
+5. In the state reset block (around line 688-690), rename the fields:
+   - `"deepseek_ocr_success": False` → `"ocr_success": False`
+   - `"deepseek_ocr_error": None` → `"ocr_error": None`
+
+6. Update the `route_after_pdf_check` return value:
+   - `return "parse_with_DeepSeek_OCR"` → `return "parse_with_ocr"`
+
+7. Update `builder.add_node(...)`:
+   - `builder.add_node("parse_with_DeepSeek_OCR", parse_with_DeepSeek_OCR)` → `builder.add_node("parse_with_ocr", parse_with_ocr)`
+
+8. Update `builder.add_edge(...)`:
+   - `builder.add_edge("parse_with_DeepSeek_OCR", "extract_temporal_metadata")` → `builder.add_edge("parse_with_ocr", "extract_temporal_metadata")`
+
+9. Update the conditional edges dict:
+   - `"parse_with_DeepSeek_OCR": "parse_with_DeepSeek_OCR"` → `"parse_with_ocr": "parse_with_ocr"`
+
+---
+
+**Phase 6 — Update `prompts.py`:**
+
+File: `LangGraph/src/agent/core/prompts.py`
+
+Replace both occurrences of:
+```
+"extraction_method": "deepseek_ocr",
+```
+With:
+```
+"extraction_method": "mineru_ocr",
+```
+
+---
+
+**Phase 7 — Delete DeepSeek client:**
+
+```bash
+rm LangGraph/src/agent/clients/deepseek_ocr_client.py
+```
+
+---
+
+**Phase 8 — Run tests:**
+
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT/LangGraph
+source ../.venv/bin/activate
+make test
+```
+
+All tests must pass. If any test imports `deepseek_ocr_client` or references `deepseek_ocr_*` state fields, update the test to use the new names.
+
+---
+
+**Phase 9 — Smoke test on the broken PDF:**
+
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT
+source .venv/bin/activate
+python3 - << 'EOF'
+import sys
+sys.path.insert(0, "LangGraph/src")
+from agent.clients.mineru_ocr_client import MinerUOCRClient
+
+client = MinerUOCRClient()
+md, out_dir = client.parse_and_get_markdown(
+    "firecrawl/data/daa/quydinh_huongdan/quyche-bogddt/pdf/tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao.pdf",
+    output_dir="data/MinerU-OCR"
+)
+print(f"Chars: {len(md)}, output: {out_dir}")
+import re
+garbage = re.compile(r'(THUC CHINH|PHUTI CHINHIM|STT.*STT.*STT)', re.I)
+print(f"Garbage hits: {len(garbage.findall(md))}")  # must be 0
+EOF
+```
+
+---
+
+**Phase 10 — Commit:**
+
+```bash
+git add LangGraph/src/agent/clients/mineru_ocr_client.py \
+        LangGraph/src/agent/graphs/indexing_graph.py \
+        LangGraph/src/agent/states/indexing_state.py \
+        LangGraph/src/agent/config.py \
+        LangGraph/src/agent/config.yaml \
+        LangGraph/src/agent/core/prompts.py
+git rm LangGraph/src/agent/clients/deepseek_ocr_client.py
+git commit -m "feat: replace DeepSeek-OCR-2 with MinerU2.5-Pro + Vietnamese text normalization"
+```
+
+### Acceptance Criteria
+
+- [ ] `mineru_ocr_client.py` exists, `deepseek_ocr_client.py` deleted
+- [ ] `underthesea` installed; `_normalize_vietnamese()` called on OCR output
+- [ ] `config.yaml` has `mineru_ocr:` block, no `deepseek_ocr:` block
+- [ ] `config.py` has `MinerUOCRConfig`, `MINERU_OCR_DIR`, `mineru_ocr` field
+- [ ] `indexing_state.py` has `ocr_success`, `ocr_output_dir`, `ocr_error` fields
+- [ ] `indexing_graph.py` node is `parse_with_ocr`, no `DeepSeek` references remain
+- [ ] `make test` passes with 0 failures
+- [ ] Smoke test: garbage hits = 0 on `tt16_bgddt` PDF
+- [ ] Commit on `feat/mineru-ocr-evaluation`
 
 ---
 
