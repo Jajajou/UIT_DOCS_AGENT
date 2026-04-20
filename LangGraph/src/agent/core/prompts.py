@@ -244,7 +244,7 @@ Output:
   "document_type": "tuition",
   "document_number": "20/TB-KHTC",
   "amends_documents": ["05/TB-KHTC"],
-  "extraction_method": "deepseek_ocr",
+  "extraction_method": "mineru_ocr",
   "confidence": 0.95,
   "reasoning": "Văn bản số 20/TB-KHTC sửa đổi văn bản 05/TB-KHTC. Học phí áp dụng cho TẤT CẢ sinh viên còn theo học (không đề cập khóa cụ thể). Thời gian: năm học 2024-2025."
 }}
@@ -262,7 +262,7 @@ Output:
   "document_type": "guide",
   "document_number": null,
   "amends_documents": [],
-  "extraction_method": "deepseek_ocr",
+  "extraction_method": "mineru_ocr",
   "confidence": 0.4,
   "reasoning": "Không tìm thấy số hiệu văn bản hay thời gian cụ thể. Chỉ xác định được document_type=guide và áp dụng universal (cho tất cả SV). Confidence thấp do thiếu core fields."
 }}
