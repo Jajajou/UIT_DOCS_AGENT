@@ -283,6 +283,332 @@ Commit: `test: draft 5 new temporal test pair shells (ids 19-23) for review`
 
 ---
 
+## TASK-008 — 2026-04-20 — mineru-ocr-evaluation
+
+**Status:** - [ ] Pending
+**Branch:** `feat/mineru-ocr-evaluation`
+**Class:** mechanical  **Model:** gemini
+**Priority:** high
+**Gate:** None — run immediately
+
+### Context
+
+DeepSeek-OCR-2 (current OCR engine) was confirmed hallucinating on dense regulatory tables.
+Example: `tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao.md` — pages 11-13
+produce garbage loops (`PHUTI CHINHIM, THUC CHINH...`) and empty `<table>` repetitions.
+
+We want to test **MinerU2.5-Pro-2604-1.2B** as a drop-in replacement. It uses a two-step
+extraction approach (layout detection + per-region recognition) that avoids the table
+hallucination failure mode.
+
+This task: install MinerU on the Mac, run it on the broken file, save output, write a
+side-by-side comparison report. Do NOT touch the indexing pipeline — this is evaluation only.
+
+### Steps
+
+**Phase 0 — Switch to correct branch:**
+
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT
+git checkout feat/mineru-ocr-evaluation
+```
+
+**Phase 1 — Install MinerU with MLX backend:**
+
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT
+source .venv/bin/activate
+uv pip install "mineru[vlm]"
+uv pip install "mineru-vl-utils[mlx]"
+```
+
+Verify:
+```bash
+python -c "import mineru; print(mineru.__version__)"
+python -c "from mineru_vl_utils import MinerUClient; print('ok')"
+```
+
+**Phase 2 — Run MinerU on the broken PDF:**
+
+Source PDF:
+`firecrawl/data/daa/quydinh_huongdan/quyche-bogddt/pdf/tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao.pdf`
+
+Output dir: `data/MinerU-test/tt16_bgddt/`
+
+Write and run `LangGraph/scripts/eval/test_mineru_ocr.py`:
+
+```python
+"""Quick evaluation of MinerU2.5-Pro on a known-broken DeepSeek-OCR file."""
+import asyncio
+from pathlib import Path
+
+INPUT_PDF = Path("/Users/jajajou1778/UIT_DOCS_AGENT/firecrawl/data/daa/quydinh_huongdan/quyche-bogddt/pdf/tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao.pdf")
+OUTPUT_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/data/MinerU-test/tt16_bgddt")
+
+async def main():
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Try the high-level pipeline API first (handles PDF rendering internally)
+    try:
+        from mineru.cli import api_client as _api_client
+        import httpx
+
+        form_data = _api_client.build_parse_request_form_data(
+            lang_list=["vi"],
+            backend="vlm-mlx-engine",
+            parse_method="auto",
+            formula_enable=False,
+            table_enable=True,
+            server_url=None,
+            start_page_id=0,
+            end_page_id=None,
+            return_md=True,
+            return_images=False,
+            response_format_zip=True,
+            return_middle_json=False,
+            return_model_output=False,
+            return_content_list=False,
+            return_original_file=False,
+        )
+
+        upload_assets = [_api_client.UploadAsset(path=INPUT_PDF, upload_name=INPUT_PDF.name)]
+
+        async with httpx.AsyncClient(timeout=_api_client.build_http_timeout()) as http_client:
+            local_server = _api_client.LocalAPIServer()
+            base_url = local_server.start()
+            await _api_client.wait_for_local_api_ready(http_client, local_server)
+
+            submit = await _api_client.submit_parse_task(
+                base_url=base_url,
+                upload_assets=upload_assets,
+                form_data=form_data,
+            )
+            await _api_client.wait_for_task_result(http_client, submit, INPUT_PDF.stem)
+            result_zip = await _api_client.download_result_zip(http_client, submit, INPUT_PDF.stem)
+            _api_client.safe_extract_zip(result_zip, OUTPUT_DIR)
+            local_server.stop()
+
+        print(f"Done. Output in {OUTPUT_DIR}")
+        for f in sorted(OUTPUT_DIR.rglob("*.md")):
+            print(f"  {f}")
+
+    except Exception as e:
+        print(f"Pipeline API failed: {e}")
+        print("Falling back to page-by-page MLX approach...")
+        _fallback_page_by_page()
+
+def _fallback_page_by_page():
+    """Fallback: render pages with fitz, run MinerUClient per page."""
+    import fitz
+    from PIL import Image
+    import io
+    from mlx_vlm import load as mlx_load
+    from mineru_vl_utils import MinerUClient
+    from mineru_vl_utils.post_process import json2md
+
+    model, processor = mlx_load("opendatalab/MinerU2.5-Pro-2604-1.2B")
+    client = MinerUClient(backend="mlx-engine", model=model, processor=processor, image_analysis=False)
+
+    doc = fitz.open(str(INPUT_PDF))
+    pages_md = []
+    for i, page in enumerate(doc):
+        print(f"Processing page {i+1}/{len(doc)}...")
+        pix = page.get_pixmap(dpi=150)
+        img = Image.open(io.BytesIO(pix.tobytes("png")))
+        content_list = client.two_step_extract(img)
+        md = json2md(content_list)
+        pages_md.append(f"\n\n<!-- Page {i+1} -->\n\n{md}")
+
+    output_md = OUTPUT_DIR / f"{INPUT_PDF.stem}_mineru.md"
+    output_md.write_text("\n".join(pages_md), encoding="utf-8")
+    print(f"Saved: {output_md}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Run it:
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT
+source .venv/bin/activate
+python LangGraph/scripts/eval/test_mineru_ocr.py
+```
+
+NOTE: First run downloads model weights (~3 GB). This will take time. Be patient.
+
+**Phase 3 — Compare outputs:**
+
+Find the MinerU output markdown in `data/MinerU-test/tt16_bgddt/`.
+
+Run comparison:
+```bash
+python3 - << 'EOF'
+from pathlib import Path
+import re
+
+deepseek = Path("data/DeepSeek-OCR/tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao/tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao.md")
+mineru_files = list(Path("data/MinerU-test/tt16_bgddt").rglob("*.md"))
+
+if not mineru_files:
+    print("No MinerU output found")
+    exit(1)
+
+mineru = mineru_files[0]
+
+ds_content = deepseek.read_text()
+mu_content = mineru.read_text()
+
+# Check for garbage patterns
+garbage_pattern = re.compile(r'(THUC CHINH|PHUTI CHINHIM|STT.*STT.*STT.*STT)', re.IGNORECASE)
+ds_garbage = len(garbage_pattern.findall(ds_content))
+mu_garbage = len(garbage_pattern.findall(mu_content))
+
+print(f"=== COMPARISON ===")
+print(f"DeepSeek-OCR-2:")
+print(f"  File: {deepseek}")
+print(f"  Chars: {len(ds_content)}")
+print(f"  Non-empty lines: {len([l for l in ds_content.splitlines() if l.strip()])}")
+print(f"  Garbage hits: {ds_garbage}")
+print(f"")
+print(f"MinerU2.5-Pro:")
+print(f"  File: {mineru}")
+print(f"  Chars: {len(mu_content)}")
+print(f"  Non-empty lines: {len([l for l in mu_content.splitlines() if l.strip()])}")
+print(f"  Garbage hits: {mu_garbage}")
+print(f"")
+print(f"Table presence (DeepSeek): {'<table>' in ds_content or '|' in ds_content}")
+print(f"Table presence (MinerU): {'<table>' in mu_content or '|' in mu_content}")
+print(f"")
+# Print last 20 non-empty lines of each
+print("--- DeepSeek last 10 non-empty lines ---")
+for l in [l for l in ds_content.splitlines() if l.strip()][-10:]:
+    print(f"  {repr(l[:100])}")
+print("--- MinerU last 10 non-empty lines ---")
+for l in [l for l in mu_content.splitlines() if l.strip()][-10:]:
+    print(f"  {repr(l[:100])}")
+EOF
+```
+
+Save the full comparison output to `data/MinerU-test/comparison_report.txt`.
+
+**Phase 4 — Write comparison to file and commit:**
+
+```bash
+# Save comparison
+python3 -c "
+from pathlib import Path
+import re, subprocess
+
+deepseek = Path('data/DeepSeek-OCR/tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao/tt16_bgddt_20-11-2024_sua_doi_bo_sung_tt02_ve_mo_nganh_dao_tao.md')
+mineru_files = list(Path('data/MinerU-test/tt16_bgddt').rglob('*.md'))
+report = Path('data/MinerU-test/comparison_report.txt')
+
+ds = deepseek.read_text()
+mu = mineru_files[0].read_text() if mineru_files else ''
+garbage = re.compile(r'(THUC CHINH|PHUTI CHINHIM|STT.*STT.*STT)', re.I)
+
+lines = [
+    'MinerU2.5-Pro vs DeepSeek-OCR-2 — tt16_bgddt (13-page table-heavy PDF)',
+    '=' * 60,
+    f'DeepSeek chars: {len(ds)}, garbage hits: {len(garbage.findall(ds))}',
+    f'MinerU   chars: {len(mu)}, garbage hits: {len(garbage.findall(mu))}',
+    '',
+    'DeepSeek last 10 non-empty lines:',
+]
+for l in [l for l in ds.splitlines() if l.strip()][-10:]:
+    lines.append(f'  {l[:120]}')
+lines += ['', 'MinerU last 10 non-empty lines:']
+for l in [l for l in mu.splitlines() if l.strip()][-10:]:
+    lines.append(f'  {l[:120]}')
+
+report.write_text('\n'.join(lines))
+print('Report written:', report)
+"
+
+# Commit the test script and report
+git add LangGraph/scripts/eval/test_mineru_ocr.py data/MinerU-test/comparison_report.txt
+git commit -m "test: add MinerU2.5-Pro OCR evaluation script and comparison report"
+```
+
+### Acceptance Criteria
+
+- [ ] `mineru` and `mineru_vl_utils` import without error
+- [ ] MinerU output file exists in `data/MinerU-test/tt16_bgddt/`
+- [ ] `comparison_report.txt` exists with garbage hit counts for both models
+- [ ] MinerU garbage hits < DeepSeek garbage hits (should be 0 vs 3+)
+- [ ] Commit lands on `feat/mineru-ocr-evaluation` branch
+
+---
+
+## TASK-007 — 2026-04-20 — backfill-file-path-urls
+
+**Status:** - [ ] Pending
+**Branch:** `develop`
+**Class:** mechanical  **Model:** gemini
+**Priority:** medium
+**Gate:** Run ONLY after full indexing completes (101+ processed docs in `lightrag_doc_status`)
+
+### Context
+
+After indexing, many docs in `lightrag_doc_status` have `file_path` set to a bare filename
+(e.g. `540-qd-dhcntt_5-9-2018_scan-6d8b546f.pdf`) instead of the actual UIT website URL
+(e.g. `https://daa.uit.edu.vn/sites/daa/files/202309/540-qd-dhcntt.pdf`). The URL is needed
+so Agent 3 can include a clickable source link in its answers.
+
+The firecrawl markdown files under `firecrawl/data/daa/**/*.md` contain embedded links to
+the PDF files (e.g. `[Download](https://daa.uit.edu.vn/sites/daa/files/YYYYMM/filename.pdf)`).
+These can be mined to map local filename → source URL.
+
+### Task
+
+Write and run a Python script `LangGraph/scripts/operations/backfill_file_path_urls.py` that:
+
+1. Queries all docs in `lightrag_doc_status` where `workspace='uit_docs_agent'`
+   and `file_path NOT LIKE 'http%'` (bare filenames)
+
+2. Scans all `*.md` files under `firecrawl/data/daa/` for markdown links that contain
+   the bare filename (case-insensitive, strip the hash suffix before matching, e.g.
+   `540-qd-dhcntt_5-9-2018_scan-6d8b546f.pdf` → match `540-qd-dhcntt`):
+   ```python
+   import re
+   # Find all markdown links: [text](url)
+   links = re.findall(r'\[.*?\]\((https?://[^\)]+\.pdf)\)', markdown_content)
+   ```
+
+3. For each doc where a URL match is found:
+   - UPDATE `lightrag_doc_status SET file_path = '<url>' WHERE id = '<doc_id>'`
+   - UPDATE Qdrant payload for all chunks with `full_doc_id = '<doc_id>'`:
+     ```bash
+     POST http://localhost:6336/collections/lightrag_vdb_chunks/points/payload
+     {"payload": {"file_path": "<url>"}, "filter": {"must": [{"key": "full_doc_id", "match": {"value": "<doc_id>"}}]}}
+     ```
+
+4. Print a summary: matched N / total M docs, list unmatched filenames
+
+### DB connection
+
+```python
+import psycopg2
+conn = psycopg2.connect(host='localhost', port=5433, user='uitrag', password='admin123', dbname='lightrag')
+```
+
+### Qdrant connection
+
+```python
+import httpx
+QDRANT = 'http://localhost:6336'
+COLLECTION = 'lightrag_vdb_chunks'
+```
+
+### Acceptance criteria
+
+- [ ] Script runs without errors: `cd LangGraph && python scripts/operations/backfill_file_path_urls.py`
+- [ ] At least 80% of bare-filename docs get URL updated
+- [ ] Spot-check: `SELECT file_path FROM lightrag_doc_status WHERE id='<known_doc_id>'` shows URL
+- [ ] Qdrant spot-check: payload `file_path` for a chunk of that doc shows URL
+
+---
+
 ## Archive
 
 ### TASK-001 — 2026-04-15 — codebase-cleanup
