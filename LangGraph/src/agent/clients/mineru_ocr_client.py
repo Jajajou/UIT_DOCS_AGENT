@@ -67,13 +67,11 @@ class MinerUOCRClient:
             )
         resp.raise_for_status()
         result = resp.json()
-        # Response is a list — one entry per uploaded file
-        if isinstance(result, list) and result:
-            markdown = result[0].get("markdown", "")
-        elif isinstance(result, dict):
-            markdown = result.get("markdown", "")
-        else:
-            raise MinerUOCRClientError(f"Unexpected API response format: {type(result)}")
+        # Response: {"results": {"<filename_stem>": {"md_content": "..."}}, ...}
+        results = result.get("results", {})
+        if not results:
+            raise MinerUOCRClientError(f"Empty results from MinerU API: {result.get('error')}")
+        markdown = next(iter(results.values())).get("md_content", "")
         return [markdown]
 
     def _parse_pdf_local(self, file_path: str) -> list[str]:
