@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.2] - 2026-04-21
+
+### Changed
+- Replaced `DeepSeek-OCR-2` with `MinerU2.5-Pro-2604-1.2B` for PDF OCR. DeepSeek-OCR-2 produced hallucination loops on dense Vietnamese tables (339 garbage hits); MinerU2.5-Pro yields 0 garbage hits.
+- OCR node renamed from `parse_with_DeepSeek_OCR` to `parse_with_ocr` in `indexing_graph.py`.
+- Indexing state fields renamed: `deepseek_ocr_text` → `ocr_text`, `deepseek_ocr_output_dir` → `ocr_output_dir`.
+- `config.yaml` and `config.py`: `deepseek_ocr` block replaced with `mineru_ocr` (adds `api_url` for remote service).
+- Cache directory changed from `data/DeepSeek-OCR/` to `data/MinerU-OCR/`.
+
+### Added
+- `LangGraph/src/agent/clients/mineru_ocr_client.py`: new OCR client supporting two modes:
+  - Remote: single-file `POST /file_parse` upload to the official MinerU Docker API (RTX 3060 via Tailscale at `http://100.102.11.75:8000`, ~6 s/PDF).
+  - Local: MLX `two_step_extract` fallback when `api_url` is `null` (~38 s/page).
+- 18 unit tests for `MinerUOCRClient` covering remote path, error cases, cache hit/miss, and Vietnamese normalization.
+
+### Removed
+- `LangGraph/src/agent/clients/deepseek_ocr_client.py`: deleted, fully replaced by `mineru_ocr_client.py`.
+
 ## [0.3.1] - 2026-04-15
 
 ### Changed
