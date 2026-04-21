@@ -16,8 +16,8 @@ from urllib.parse import unquote
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END, START
 
-from agent.config import DEEPSEEK_OCR_DIR
-from agent.clients.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClientError
+from agent.config import MINERU_OCR_DIR
+from agent.clients.mineru_ocr_client import MinerUOCRClient, MinerUOCRClientError
 from agent.states.indexing_state import IndexingState
 from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
@@ -29,7 +29,7 @@ load_dotenv()
 
 
 api_client = LightRAGAPIClient()
-dsocr_client = DeepSeekOCRClient()
+mineru_client = MinerUOCRClient()
 
 # ---------------------- Helper Functions ----------------------
 
@@ -365,53 +365,37 @@ def check_if_pdf(state: IndexingState) -> Dict[str, Any]:
     }
 
 
-def parse_with_DeepSeek_OCR(state: IndexingState) -> Dict[str, Any]:
-    """Pre-processes and parses a PDF file with DeepSeek OCR."""
+def parse_with_ocr(state: IndexingState) -> Dict[str, Any]:
+    """Pre-processes and parses a PDF file with MinerU OCR."""
     file_path = state.get("current_file_path")
     if not file_path:
-        return {"error": "No file path for DeepSeek_OCR"}
+        return {"ocr_error": "No file path for OCR"}
 
-    temp_file_path = None
     try:
-        print(f"[DeepSeek_OCR] Pre-processing and parsing: {os.path.basename(file_path)}")
-
-        temp_file_path = preprocess_image_for_ocr(file_path)
-
-        # Parse the processed image with DeepSeek OCR
+        print(f"[OCR] Processing: {os.path.basename(file_path)}")
         file_stem = Path(file_path).stem
-        output_dir = str((DEEPSEEK_OCR_DIR / file_stem).resolve())
+        output_path = str(MINERU_OCR_DIR / file_stem)
 
-        md_content, output_path = dsocr_client.parse_and_get_markdown(
-            temp_file_path,
-            output_dir=output_dir,
+        md_content, output_path = mineru_client.parse_and_get_markdown(
+            file_path,
+            output_dir=output_path,
         )
 
-        print(f"[DeepSeek_OCR] ✓ Success - {len(md_content):,} chars")
-
-        # Set file_path and file_source for temporal extraction
-        file_source = get_url(file_path)
+        print(f"[OCR] Success - {len(md_content):,} chars")
 
         return {
             "parsed_content": md_content,
-            "deepseek_ocr_output_dir": output_path,
-            "deepseek_ocr_success": True,
+            "ocr_output_dir": output_path,
+            "ocr_success": True,
             "file_path": file_path,
-            "file_source": file_source,
-            "error": ""
         }
-
     except Exception as e:
-        print(f"[DeepSeek_OCR] ✗ Failed: {str(e)}")
+        print(f"[OCR] Failed: {str(e)}")
         return {
             "parsed_content": "",
-            "deepseek_ocr_success": False,
-            "deepseek_ocr_error": str(e)
+            "ocr_success": False,
+            "ocr_error": str(e),
         }
-    finally:
-        # Clean up the temporary file ONLY if it's different from the original
-        # (preprocess_image_for_ocr returns original path if preprocessing fails)
-        if temp_file_path and temp_file_path != file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
 
 
 async def extract_temporal_metadata_rag(state: IndexingState) -> Dict[str, Any]:
@@ -568,8 +552,8 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                     "track_id": track_id,
                     "doc_id": None,  # Will be retrieved when saving metadata
                     "status": "success",
-                    "parse_with_DeepSeek_OCR": state.get("deepseek_ocr_success", False),
-                    "output_dir": state.get("deepseek_ocr_output_dir"),
+                    "parse_with_ocr": state.get("ocr_success", False),
+                    "output_dir": state.get("ocr_output_dir"),
                     "markdown_length": len(parsed_content),
                     "response": result
                 }
@@ -588,13 +572,13 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                     "track_id": track_id,
                     "doc_id": doc_id,
                     "status": "success",
-                    "parse_with_DeepSeek_OCR": False,
+                    "parse_with_ocr": False,
                     "response": result
                 }
 
-                deepseek_ocr_error = state.get("deepseek_ocr_error")
-                if deepseek_ocr_error:
-                    upload_result["fallback_reason"] = deepseek_ocr_error
+                ocr_error = state.get("ocr_error")
+                if ocr_error:
+                    upload_result["fallback_reason"] = ocr_error
 
                 print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
 
@@ -686,8 +670,8 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
             # Reset per-file state
             "current_file_path": None,
             "parsed_content": None,
-            "deepseek_ocr_success": False,
-            "deepseek_ocr_error": None,
+            "ocr_success": False,
+            "ocr_error": None,
             "document_metadata": {},
             "temporal_extraction_complete": False
         }
@@ -704,7 +688,7 @@ def finalize_upload(state: IndexingState) -> Dict[str, Any]:
     
     success_count = sum(1 for r in upload_results if r["status"] == "success")
     failed_count = len(upload_results) - success_count
-    deepseek_ocr_count = sum(1 for r in upload_results if r.get("parse_with_DeepSeek_OCR"))
+    ocr_count = sum(1 for r in upload_results if r.get("parse_with_ocr"))
     
     response_lines = []
     file_list = state.get("file_list", [])
@@ -726,8 +710,8 @@ def finalize_upload(state: IndexingState) -> Dict[str, Any]:
     
     response_lines.append("")
     
-    if deepseek_ocr_count > 0:
-        response_lines.append(f"**PDFs parsed with DeepSeek OCR:** {deepseek_ocr_count}")
+    if ocr_count > 0:
+        response_lines.append(f"**PDFs parsed with MinerU OCR:** {ocr_count}")
         response_lines.append("")
     
     if success_count > 0:
@@ -735,11 +719,11 @@ def finalize_upload(state: IndexingState) -> Dict[str, Any]:
         for result in upload_results:
             if result["status"] == "success":
                 extra = ""
-                if result.get("parse_with_DeepSeek_OCR"):
+                if result.get("parse_with_ocr"):
                     md_len = result.get("markdown_length", 0)
-                    extra = f" (DeepSeek_OCR: {md_len:,} chars)"
+                    extra = f" (MinerU: {md_len:,} chars)"
                 elif result.get("fallback_reason"):
-                    extra = " (Direct - DeepSeek_OCR failed)"
+                    extra = " (Direct - OCR failed)"
                 
                 response_lines.append(f"  • `{result['file_name']}`{extra}")
                 response_lines.append(f"    Track ID: `{result['track_id']}`")
@@ -807,10 +791,10 @@ def route_after_file_list(state: IndexingState) -> Literal["check_if_pdf", "erro
         return "error_handler"
     return "check_if_pdf"
 
-def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_DeepSeek_OCR", "extract_temporal_metadata"]:
+def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_ocr", "extract_temporal_metadata"]:
     """Route based on whether file is PDF."""
     if state.get("is_pdf"):
-        return "parse_with_DeepSeek_OCR"
+        return "parse_with_ocr"
     # Non-PDF files go directly to temporal extraction
     return "extract_temporal_metadata"
 
@@ -845,7 +829,7 @@ builder = StateGraph(state_schema=IndexingState)
 builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
-builder.add_node("parse_with_DeepSeek_OCR", parse_with_DeepSeek_OCR)
+builder.add_node("parse_with_ocr", parse_with_ocr)
 builder.add_node("extract_temporal_metadata", extract_temporal_metadata_rag)
 builder.add_node("upload_to_lightrag", upload_to_lightrag)
 builder.add_node("finalize_upload", finalize_upload)
@@ -878,13 +862,13 @@ builder.add_conditional_edges(
     "check_if_pdf",
     route_after_pdf_check,
     {
-        "parse_with_DeepSeek_OCR": "parse_with_DeepSeek_OCR",
+        "parse_with_ocr": "parse_with_ocr",
         "extract_temporal_metadata": "extract_temporal_metadata"
     }
 )
 
 # After parsing PDF, extract temporal metadata
-builder.add_edge("parse_with_DeepSeek_OCR", "extract_temporal_metadata")
+builder.add_edge("parse_with_ocr", "extract_temporal_metadata")
 
 # After temporal extraction, upload to LightRAG
 builder.add_edge("extract_temporal_metadata", "upload_to_lightrag")

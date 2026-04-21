@@ -12,7 +12,7 @@ load_dotenv()
 # --- Project Paths ---
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).parents[2])).resolve()
 DATA_DIR = PROJECT_ROOT / "data"
-DEEPSEEK_OCR_DIR = DATA_DIR / "DeepSeek-OCR"
+MINERU_OCR_DIR = DATA_DIR / "MinerU-OCR"
 
 # --- Load YAML Configuration ---
 _config_yaml_path = Path(__file__).parent / "config.yaml"
@@ -20,12 +20,12 @@ with open(_config_yaml_path, 'r', encoding='utf-8') as f:
     _yaml_config = yaml.safe_load(f)
 
 # --- Pydantic Config Models ---
-class DeepSeekOCRConfig(BaseModel):
+class MinerUOCRConfig(BaseModel):
     model_name: str
-    model_configs: Dict[str, Any]
-    task_prompts: Dict[str, Any]
-    page_image_size: int = 1024
-    skip_repeat: bool
+    skip_repeat: bool = True
+    # Remote OCR service URL (e.g. https://xxx.ngrok-free.app). When set,
+    # mineru_ocr_client sends pages over HTTP instead of running MLX locally.
+    api_url: Optional[str] = None
 
 class QueryThresholdsConfig(BaseModel):
     query_confidence_threshold: float
@@ -61,10 +61,10 @@ class Config(BaseModel):
     """Main configuration class for the application."""
     project_root: Path = PROJECT_ROOT
     data_dir: Path = DATA_DIR
-    deepseek_ocr_dir: Path = DEEPSEEK_OCR_DIR
+    mineru_ocr_dir: Path = MINERU_OCR_DIR
 
     # Loaded from config.yaml
-    deepseek_ocr: DeepSeekOCRConfig
+    mineru_ocr: MinerUOCRConfig
     query_thresholds: QueryThresholdsConfig
     retrieval: RetrievalConfig
     reranker: RerankerConfig
@@ -107,7 +107,7 @@ class Config(BaseModel):
 
 # Initialize settings
 settings = Config(
-    deepseek_ocr=_yaml_config.get("deepseek_ocr", {}),
+    mineru_ocr=_yaml_config.get("mineru_ocr", {}),
     query_thresholds=_yaml_config.get("query_thresholds", {}),
     retrieval=_yaml_config.get("retrieval", {}),
     reranker=_yaml_config.get("reranker", {}),
