@@ -4,10 +4,9 @@
 mineru_ocr:
   model_name: "opendatalab/MinerU2.5-Pro-2604-1.2B"
   skip_repeat: True
-  # Remote OCR service URL — set this to the 3060's ngrok URL to skip local MLX.
-  # Example: api_url: "https://xxxx.ngrok-free.app"
-  # Leave as null to run OCR locally on Mac (MLX).
-  api_url: null
+  # Remote OCR service URL (official MinerU Docker on 3060, reachable via Tailscale).
+  # Set to null to run OCR locally on Mac (MLX).
+  api_url: "http://100.102.11.75:8000"
 
 # Query Confidence Thresholds
 query_thresholds:

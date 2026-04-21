@@ -1,7 +1,6 @@
 # mineru_ocr_client.py
 import os
 import io
-import base64
 import fitz
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
@@ -47,26 +46,35 @@ class MinerUOCRClient:
         except Exception:
             return text
 
-    @staticmethod
-    def _page_to_b64(page: fitz.Page) -> str:
-        pix = page.get_pixmap(matrix=fitz.Matrix(144 / 72, 144 / 72), alpha=False)
-        return base64.b64encode(pix.tobytes("png")).decode()
-
     def _parse_pdf_remote(self, file_path: str, api_url: str) -> list[str]:
-        """Send pages to remote OCR service. Returns list of per-page markdown."""
+        """Upload PDF to official MinerU API (/file_parse). Returns [full_doc_markdown]."""
         import httpx
-        doc = fitz.open(file_path)
-        pages_md = []
-        endpoint = api_url.rstrip("/") + "/v1/ocr"
-        with httpx.Client(timeout=120) as http:
-            for i, page in enumerate(doc):
-                print(f"[MinerU OCR] Remote page {i + 1}/{len(doc)}")
-                image_b64 = self._page_to_b64(page)
-                resp = http.post(endpoint, json={"image_b64": image_b64, "lang": "vi"})
-                resp.raise_for_status()
-                pages_md.append(resp.json()["markdown"])
-        doc.close()
-        return pages_md
+        endpoint = api_url.rstrip("/") + "/file_parse"
+        print(f"[MinerU OCR] Uploading to {endpoint}")
+        with open(file_path, "rb") as f:
+            resp = httpx.post(
+                endpoint,
+                files={"files": (Path(file_path).name, f, "application/pdf")},
+                data={
+                    "backend": "hybrid-auto-engine",
+                    "lang_list": "latin",   # Vietnamese is in the Latin OCR group
+                    "parse_method": "auto",
+                    "return_md": "true",
+                    "table_enable": "true",
+                    "formula_enable": "false",
+                },
+                timeout=600,
+            )
+        resp.raise_for_status()
+        result = resp.json()
+        # Response is a list — one entry per uploaded file
+        if isinstance(result, list) and result:
+            markdown = result[0].get("markdown", "")
+        elif isinstance(result, dict):
+            markdown = result.get("markdown", "")
+        else:
+            raise MinerUOCRClientError(f"Unexpected API response format: {type(result)}")
+        return [markdown]
 
     def _parse_pdf_local(self, file_path: str) -> list[str]:
         """Run MinerU two_step_extract locally via MLX."""
