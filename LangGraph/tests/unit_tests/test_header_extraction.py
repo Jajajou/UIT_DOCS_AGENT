@@ -152,6 +152,18 @@ class TestRegexAmends:
         result = _regex_amends(text)
         assert any("07" in r for r in result), f"Got: {result}"
 
+    def test_ocr_garbled_sua_doi(self):
+        # MinerU may output 'sua doi' instead of 'sửa đổi' for scanned docs
+        text = "sua doi khoan 3 dieu 5 Quyet dinh so 141/QD-DHCNTT ngay 10/1/2023"
+        result = _regex_amends(text)
+        assert any("141" in r for r in result), f"Got (OCR-garbled): {result}"
+
+    def test_ocr_garbled_thay_the(self):
+        # 'thay the' without diacritics, common in low-quality scans
+        text = "thay the Thong bao so 05/TB-KHTC ngay 01/01/2024"
+        result = _regex_amends(text)
+        assert any("05" in r for r in result), f"Got (OCR-garbled): {result}"
+
 
 # ---------------------------------------------------------------------------
 # _has_implicit_amendment
