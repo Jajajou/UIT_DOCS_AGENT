@@ -72,6 +72,12 @@ class QueryUnderstanding(BaseModel):
         description="Document number extracted from query for AMENDMENT path. None if not applicable."
     )
 
+    # NEW: Historical query detection
+    query_is_historical: Optional[bool] = Field(
+        default=False,
+        description="True if query asks about a past period (historical, pandemic era)."
+    )
+
     # NEW: Parameter tuning outputs
     suggested_mode: Literal["naive", "local", "global", "hybrid", "mix"] = Field(
         default=settings.retrieval.default_mode,
@@ -165,6 +171,7 @@ class QueryState(TypedDict):
     query_cohort_year: NotRequired[Optional[int]]  # e.g. 2022 for "K2022" queries
     query_type: NotRequired[Optional[Literal["COHORT", "AMENDMENT", "GENERAL"]]]
     query_document_ref: NotRequired[Optional[str]]  # e.g. '108/QD-DHCNTT' for AMENDMENT path
+    query_is_historical: NotRequired[Optional[bool]]  # True if historical query detected
     cohort_fallback: NotRequired[bool]  # True if COHORT path returned 0 results
     amendment_fallback: NotRequired[bool]  # True if AMENDMENT path returned 0 results
 

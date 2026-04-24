@@ -338,7 +338,8 @@ class Reranker:
         top_k: Optional[int] = None,
         temporal_weight: Optional[float] = None,
         current_date: Optional[str] = None,
-        query_cohort_year: Optional[int] = None
+        query_cohort_year: Optional[int] = None,
+        query_is_historical: Optional[bool] = None
     ) -> List[Tuple[Dict[str, Any], float]]:
         """
         Rerank items with temporal boosting.
@@ -353,6 +354,8 @@ class Reranker:
             temporal_weight: Weight for temporal score (0.0-1.0).
                            If None, uses config.temporal.recency_weight
             current_date: ISO date for temporal comparison. Defaults to today.
+            query_cohort_year: Optional cohort year
+            query_is_historical: Optional flag for historical queries
 
         Returns:
             List of (item, combined_score) tuples, sorted by score (highest first)
@@ -380,7 +383,7 @@ class Reranker:
         # Amendment override: only demote a doc if its amending document is
         # actually present in the current candidate set. Firing unconditionally
         # would demote correct docs when the amending doc was never retrieved.
-        if getattr(settings, 'use_amendment_override', False):
+        if getattr(settings, 'use_amendment_override', False) and not query_is_historical:
             raw_override = settings.temporal.quality_penalties.get("amendment_override_score", 0.3)
             override_score = max(0.0, min(1.0, float(raw_override)))
             # Collect all doc IDs present in the candidate list
@@ -472,7 +475,8 @@ class MultiSourceReranker:
         top_k_relationships: Optional[int] = None,
         top_k_chunks: Optional[int] = None,
         use_temporal_boost: bool = True,
-        query_cohort_year: Optional[int] = None
+        query_cohort_year: Optional[int] = None,
+        query_is_historical: Optional[bool] = None
     ) -> Dict[str, Any]:
         """
         Rerank all sources and calculate overall confidence.
@@ -486,6 +490,8 @@ class MultiSourceReranker:
             top_k_relationships: Keep top K relationships
             top_k_chunks: Keep top K chunks
             use_temporal_boost: If True, apply temporal boosting (default: True)
+            query_cohort_year: Optional cohort year
+            query_is_historical: Optional flag for historical queries
 
         Returns:
             Dict containing:
@@ -502,6 +508,8 @@ class MultiSourceReranker:
         print(f"[RERANKER] Reranking all sources for query: {query[:100]}...")
         if use_temporal_boost:
             print(f"[RERANKER] 📅 Temporal boosting: ENABLED")
+            if query_is_historical:
+                print(f"[RERANKER] ⏳ Historical query mode: ON (suppressing amendment override)")
         print("=" * 80)
 
         # Choose reranking method based on temporal boost setting
@@ -509,7 +517,8 @@ class MultiSourceReranker:
             def rerank_func(q, items, text_field, top_k):
                 return self.reranker.rerank_with_temporal_boost(
                     q, items, text_field=text_field, top_k=top_k,
-                    query_cohort_year=query_cohort_year
+                    query_cohort_year=query_cohort_year,
+                    query_is_historical=query_is_historical
                 )
         else:
             rerank_func = self.reranker.rerank_items  # type: ignore

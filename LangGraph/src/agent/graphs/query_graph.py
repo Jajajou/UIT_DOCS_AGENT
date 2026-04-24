@@ -318,6 +318,7 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
     
     try:
         # Rerank all sources
+        query_is_historical = state.get("query_is_historical", False)
         result = reranker.rerank_all(
             query=query,
             entities=entities,
@@ -327,7 +328,8 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             top_k_relationships=None,
             top_k_chunks=None,
             use_temporal_boost=settings.use_temporal_scoring,
-            query_cohort_year=state.get("query_cohort_year")
+            query_cohort_year=state.get("query_cohort_year"),
+            query_is_historical=query_is_historical
         )
         
         return {
