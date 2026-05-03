@@ -1,0 +1,88 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-03T02:28:43.859Z",
+  "phase": null,
+  "phase_name": null,
+  "phase_dir": null,
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "context": "research",
+  "work_type": "Phase 2 architecture investigation + file_path fix",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Migrate backfill_cohort_years.py from metadata RAG to TemporalExtractionAgent",
+      "status": "done",
+      "files": ["LangGraph/scripts/backfill_cohort_years.py"]
+    },
+    {
+      "id": 2,
+      "name": "Test backfill script",
+      "status": "done",
+      "result": "6/10 success (60%), 4 docs failed with no file_path"
+    },
+    {
+      "id": 3,
+      "name": "Investigate missing file_path issue",
+      "status": "done",
+      "finding": "68% docs (349/509) have no file_path in lightrag_doc_status"
+    },
+    {
+      "id": 4,
+      "name": "Root cause analysis",
+      "status": "done",
+      "finding": "get_url() fails due to firecrawl filename truncation + hash suffix"
+    },
+    {
+      "id": 5,
+      "name": "Attempt fix: strip hash suffix in get_url()",
+      "status": "in_progress",
+      "progress": "Added hash stripping but still fails due to truncation mismatch"
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 6,
+      "name": "Fix get_url() with fuzzy/prefix matching for truncated filenames",
+      "status": "not_started"
+    },
+    {
+      "id": 7,
+      "name": "Re-index 349 docs to populate file_path",
+      "status": "not_started"
+    },
+    {
+      "id": 8,
+      "name": "Run full backfill with confidence_threshold=0.5",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Firecrawl truncates long PDF filenames and adds 8-char hash suffix, breaking exact filename match in get_url()",
+      "type": "technical",
+      "workaround": "Need prefix-based fuzzy matching in find_urls_by_filename()"
+    }
+  ],
+  "human_actions_pending": [],
+  "decisions": [
+    {
+      "decision": "Use TemporalExtractionAgent instead of metadata RAG subgraph for backfill",
+      "rationale": "Metadata RAG was fundamental wrong approach - direct LLM extraction is correct",
+      "phase": "backfill"
+    },
+    {
+      "decision": "Accept 60% backfill success rate temporarily",
+      "rationale": "349 docs are orphaned (no file_path), need get_url() fix first",
+      "phase": "investigation"
+    }
+  ],
+  "uncommitted_files": [
+    "LangGraph/src/agent/utils.py",
+    "rebuild_pdf_lookup.py"
+  ],
+  "next_action": "Fix find_urls_by_filename() to do prefix match on stems (handle truncated names)",
+  "context_notes": "Deep investigation into why 68% docs missing file_path. Found firecrawl truncates filenames. Started fixing get_url() but truncation breaks exact match. Need fuzzy/prefix matching."
+}
