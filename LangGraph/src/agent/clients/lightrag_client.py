@@ -1189,7 +1189,7 @@ class LightRAGAPIClient:
                       tm.extraction_confidence,
                       tm.extraction_timestamp::text AS indexed_at
                     FROM lightrag_doc_status lds
-                    INNER JOIN temporal_metadata tm ON tm.doc_id = lds.id
+                    LEFT JOIN temporal_metadata tm ON tm.doc_id = lds.id
                     WHERE lds.workspace = %s
                       AND lds.file_path = ANY(%s)
                     """,

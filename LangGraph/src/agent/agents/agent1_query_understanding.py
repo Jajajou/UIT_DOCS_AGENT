@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 import re
 import json as json_module
+import unicodedata
 from typing import Any, List, Dict
 from openai import OpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
@@ -47,6 +48,32 @@ llm = init_chat_model(
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
+def _remove_accents(text: str) -> str:
+    """Strip Vietnamese diacritics, return ASCII-only lowercase string."""
+    return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii').lower()
+
+
+_HISTORICAL_PATTERNS_ASCII = [
+    "trong thoi gian",
+    "trong dich",
+    "thoi dich",
+    "khi do",
+    "luc do",
+    "truoc day",
+    "hoi do",
+    "ngay truoc",
+    "nam do",
+    "giai doan dich",
+    "thoi ky dich",
+]
+
+
+def _is_historical_query(query: str) -> bool:
+    """Return True if query asks about a past period (historical, pandemic era)."""
+    q_ascii = _remove_accents(query)
+    return any(pat in q_ascii for pat in _HISTORICAL_PATTERNS_ASCII)
+
 
 def _content_to_text(content: Any) -> str:
     """Extract text from message content."""
@@ -96,10 +123,18 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
     if not query:
         query = _last_human_text(state.get("messages", []))
     
+    # Detect historical query (post-LLM, regex-based — no LLM prompt change)
+    query_is_historical = False
+    if query:
+        query_is_historical = _is_historical_query(query)
+        if query_is_historical:
+            print(f"[AGENT 1] Historical query detected: {query[:60]}")
+
     if not query:
         return {
             "error": "No query provided",
-            "status_message": "Error: No query"
+            "status_message": "Error: No query",
+            "query_is_historical": False
         }
     
     print("=" * 80)
@@ -168,6 +203,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_cohort_year": query_cohort_year,
             "query_type": query_type,
             "query_document_ref": query_document_ref,
+            "query_is_historical": query_is_historical,
             "retrieval_mode": suggested_mode,
             "top_k": suggested_top_k,
             "chunk_top_k": suggested_chunk_top_k,
@@ -186,6 +222,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "status_message": "Error in query understanding",
             "query": query,
             "query_confidence": 0.0,
+            "query_is_historical": query_is_historical,
             "retrieval_mode": settings.retrieval.default_mode,
             "top_k": settings.retrieval.default_top_k,
             "chunk_top_k": settings.retrieval.default_chunk_top_k,

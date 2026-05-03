@@ -400,65 +400,127 @@ def parse_with_ocr(state: IndexingState) -> Dict[str, Any]:
 
 async def extract_temporal_metadata_rag(state: IndexingState) -> Dict[str, Any]:
     """
-    Extract temporal metadata using the Metadata RAG subgraph.
+    Two-stage temporal metadata extraction.
 
-    This is an async wrapper that invokes the async metadata RAG subgraph.
-    Maps between IndexingState and MetadataRAGState.
+    Stage 1 — Header extraction (fast, deterministic):
+        Sends first 2000 chars directly to LLM + regex.
+        Extracts: document_number, amends_documents, implicit_amendment_flag.
+        These fields are ALWAYS in the document header/preamble.
+
+    Stage 2 — RAG subgraph (for scattered fields):
+        Runs ChromaDB bi-encoder + cross-encoder reranking.
+        Extracts: cohort_years, valid_dates (legitimately scattered in curriculum docs).
+
+    Merge: Header results take precedence for document_number / amends_documents.
+    RAG results fill in cohort_years / dates.
     """
     from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
+    from agent.agents.header_extraction import extract_from_header
 
     try:
-        # Get document text from either parsed_content (PDF) or file
+        # --- Resolve document text ---
         doc_text = state.get("parsed_content", "")
         if not doc_text:
-            # For non-PDF files, try reading from file
             file_path = state.get("current_file_path")
             if file_path:
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         doc_text = f.read()
                 except Exception as e:
-                    print(f"[Metadata RAG] WARNING: Could not read file {file_path}: {e}")
+                    print(f"[Metadata] WARNING: Could not read file {file_path}: {e}")
 
         file_source = state.get("file_source") or state.get("current_file_path", "unknown")
         doc_id = state.get("doc_id", "")
 
         if not doc_text:
-            print(f"[Metadata RAG] WARNING: No document text for {file_source}, falling back to regex")
-            # Use old extraction as fallback
+            print(f"[Metadata] WARNING: No document text for {file_source}, falling back to regex")
             return await extract_temporal_metadata_node(state)
 
-        # Prepare subgraph input
+        # ------------------------------------------------------------------ #
+        # Stage 1: Header extraction
+        # ------------------------------------------------------------------ #
+        print(f"[Header] Extracting doc_number + amends from header: {file_source}")
+        header_result = extract_from_header(doc_text, file_source)
+        print(
+            f"[Header] doc_num={header_result.get('document_number')!r} "
+            f"amends={header_result.get('amends_documents')} "
+            f"amendment_confidence={header_result.get('amendment_confidence')} "
+            f"implicit={header_result.get('implicit_amendment_flag')} "
+            f"via {header_result.get('extraction_method_header')}"
+        )
+
+        # ------------------------------------------------------------------ #
+        # Stage 2: RAG subgraph for cohort_years + dates
+        # ------------------------------------------------------------------ #
+        print(f"[Metadata RAG] Processing cohort/dates: {file_source}")
         subgraph_input = {
             "doc_text": doc_text,
             "file_source": file_source,
             "doc_id": doc_id,
             "success": False
         }
+        rag_result = await metadata_rag_subgraph.ainvoke(subgraph_input)
 
-        print(f"[Metadata RAG] Processing: {file_source}")
+        rag_success = rag_result.get("success", False)
+        rag_metadata = rag_result.get("final_metadata", {})
+        rag_confidence = rag_result.get("extraction_confidence", 0.0)
 
-        # Invoke async subgraph
-        result = await metadata_rag_subgraph.ainvoke(subgraph_input)
+        if not rag_success:
+            error = rag_result.get("error", "Unknown error")
+            print(f"[Metadata RAG] Failed: {error}, falling back to regex for dates/cohorts")
+            # Still use header results even if RAG fails
+            fallback = await extract_temporal_metadata_node(state)
+            fallback_meta = fallback.get("document_metadata", {})
+            merged = _merge_metadata(header_result, fallback_meta)
+            return {"document_metadata": merged, "temporal_extraction_complete": True}
 
-        success = result.get("success", False)
-        final_metadata = result.get("final_metadata", {})
-        confidence = result.get("extraction_confidence", 0.0)
+        # ------------------------------------------------------------------ #
+        # Merge: header wins for doc_number + amends; RAG for dates + cohorts
+        # ------------------------------------------------------------------ #
+        final_metadata = _merge_metadata(header_result, rag_metadata)
+        final_metadata["extraction_confidence"] = rag_confidence
 
-        if success:
-            print(f"[Metadata RAG] Confidence: {confidence:.2f} | Metadata: {final_metadata}")
-            return {
-                "document_metadata": final_metadata,
-                "temporal_extraction_complete": True
-            }
-        else:
-            error = result.get("error", "Unknown error")
-            print(f"[Metadata RAG] Failed: {error}, falling back to regex")
-            return await extract_temporal_metadata_node(state)
+        print(
+            f"[Metadata] Final confidence: {rag_confidence:.2f} | "
+            f"doc_num={final_metadata.get('document_number')!r} | "
+            f"amends={final_metadata.get('amends_documents')} | "
+            f"cohorts={final_metadata.get('cohort_years')}"
+        )
+
+        return {"document_metadata": final_metadata, "temporal_extraction_complete": True}
 
     except Exception as e:
-        print(f"[Metadata RAG] Exception: {str(e)}, falling back to regex")
+        print(f"[Metadata] Exception: {str(e)}, falling back to regex")
         return await extract_temporal_metadata_node(state)
+
+
+def _merge_metadata(header: dict, rag: dict) -> dict:
+    """
+    Merge header extraction results with RAG results.
+
+    Priority:
+    - document_number:    header > RAG (header reads the "So:" line directly)
+    - amends_documents:   header (RAG no longer extracts this)
+    - cohort_years:       RAG (header doesn't touch this)
+    - valid_from/until:   RAG (header doesn't touch this)
+    - everything else:    RAG
+    """
+    merged = dict(rag)  # start with RAG as base
+
+    # Header fields take precedence
+    if header.get("document_number"):
+        merged["document_number"] = header["document_number"]
+
+    merged["amends_documents"] = header.get("amends_documents", [])
+    merged["amendment_confidence"] = header.get("amendment_confidence", "none")
+    merged["implicit_amendment_flag"] = header.get("implicit_amendment_flag", False)
+
+    # Track which method was used for header fields
+    header_method = header.get("extraction_method_header", "header_regex_only")
+    rag_method = rag.get("extraction_method", "rag")
+    merged["extraction_method"] = f"{header_method}+{rag_method}"
+
+    return merged
 
 
 def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
