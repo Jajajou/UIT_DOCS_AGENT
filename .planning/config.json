@@ -1,0 +1,18 @@
+{
+  "project_name": "uit-student-chatbot",
+  "project_type": "research",
+  "preferred_language": "vietnamese",
+  "qa_threshold": 0.8,
+  "temporal_confidence": 0.92,
+  "cohort_routing": true,
+  "amendment_detection": true,
+  "document_lifecycle": "soft_delete",
+  "retention_period": 1825,
+  "testing_strategy": "tdd_with_coverage",
+  "performance_threshold": "3s_response",
+  "monitoring": {
+    "temporal_warnings": true,
+    "document_confidence": true,
+    "cohort_accuracy": true
+  }
+}

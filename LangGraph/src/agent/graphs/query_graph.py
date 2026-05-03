@@ -10,6 +10,7 @@ This graph implements a temporal-aware RAG pipeline with:
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Dict, List
 from langgraph.graph import StateGraph, START,END
 from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
@@ -221,59 +222,71 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
 
 def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
     """
-    Hard-filter retrieved items based on cohort constraints.
+    Hard-filter retrieved items based on cohort constraints and article-level relevance.
     
-    If Agent 1 detected a specific cohort year (e.g. 2022),
-    this node drops any documents that are explicitly NOT for that year.
-    It prioritizes items that ARE for that year or are Universal.
+    1. Cohort Filtering: Drops documents explicitly NOT for the detected cohort year.
+    2. Article Prioritization: If query mentions a specific article (e.g. Điều 5),
+       prioritizes items from documents that explicitly amend that article.
     """
+    query = state.get("query", "")
     query_cohort_year = state.get("query_cohort_year")
-    if query_cohort_year is None:
-        return {} # No filtering if no cohort specified
-
+    
     chunks = state.get("retrieved_chunks", [])
     entities = state.get("retrieved_entities", [])
     relationships = state.get("retrieved_relationships", [])
 
-    try:
-        target_year = int(query_cohort_year)
-    except (ValueError, TypeError):
-        return {}
+    # Extract specific articles from query for prioritization
+    # Using local regex for efficiency
+    query_articles = []
+    article_matches = re.findall(r"điều\s+(\d+\.?\d*)", query, re.IGNORECASE)
+    if article_matches:
+        query_articles = [f"Điều {m}" for m in article_matches]
 
     def is_match(item: Dict[str, Any]) -> bool:
         meta = item.get("metadata", {})
-        cohorts = meta.get("cohort_years")
         
-        # If no cohort info, we keep it (don't want to lose data due to extraction gaps)
-        if not cohorts:
-            return True
-            
-        # Universal match
-        if "*" in cohorts or "*" in [str(c) for c in cohorts]:
-            return True
-            
-        # Specific year match (handle int, float, and string forms)
-        item_years = []
-        for c in cohorts:
+        # --- 1. Cohort Filtering ---
+        if query_cohort_year is not None:
             try:
-                item_years.append(int(float(str(c))))
+                target_year = int(query_cohort_year)
+                cohorts = meta.get("cohort_years")
+                
+                if cohorts and "*" not in cohorts and "*" not in [str(c) for c in cohorts]:
+                    item_years = []
+                    for c in cohorts:
+                        try:
+                            item_years.append(int(float(str(c))))
+                        except (ValueError, TypeError):
+                            pass
+                    if item_years and target_year not in item_years:
+                        return False # Explicit cohort mismatch
             except (ValueError, TypeError):
                 pass
-        if target_year in item_years:
-            return True
             
-        return False
+        return True
 
     filtered_chunks = [c for c in chunks if is_match(c)]
     filtered_entities = [e for e in entities if is_match(e)]
     filtered_relationships = [r for r in relationships if is_match(r)]
 
+    # --- 2. Article Prioritization (Boost items matching mentioned articles) ---
+    if query_articles:
+        print(f"[FILTER] Query mentions articles: {query_articles}. Prioritizing amended versions.")
+        for item in filtered_chunks:
+            meta = item.get("metadata", {})
+            amended = meta.get("amended_articles", [])
+            # If this chunk's doc amends one of the query's articles, give it a metadata boost
+            # that the reranker can see (or just log it for now)
+            if any(art in amended for art in query_articles):
+                item["metadata"]["article_priority_boost"] = True
+                print(f"[FILTER] ✓ Boosted chunk from {meta.get('document_number')} (amends {query_articles})")
+
     dropped = (len(chunks) + len(entities) + len(relationships)) - \
               (len(filtered_chunks) + len(filtered_entities) + len(filtered_relationships))
     
-    print(f"[FILTER] Dropped {dropped} items that don't match cohort {target_year}")
-    print(f"[FILTER] Remaining: {len(filtered_chunks)} chunks, {len(filtered_entities)} entities")
-
+    if query_cohort_year:
+        print(f"[FILTER] Dropped {dropped} items that don't match cohort {query_cohort_year}")
+    
     return {
         "retrieved_chunks": filtered_chunks,
         "retrieved_entities": filtered_entities,

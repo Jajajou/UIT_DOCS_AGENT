@@ -16,6 +16,7 @@ Uses multi-strategy approach:
 
 import re
 import hashlib
+import dateparser
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Union
 from pydantic import BaseModel, Field
@@ -52,13 +53,21 @@ class TemporalMetadata(BaseModel):
         None,
         description="Official document number (e.g., '123/QĐ-ĐHCNTT')"
     )
+    is_vbhn: bool = Field(
+        False,
+        description="True if this is a 'Văn bản hợp nhất' (Consolidated Document)"
+    )
+    amended_articles: List[str] = Field(
+        default_factory=list,
+        description="List of specific articles/clauses amended (e.g., ['Điều 5', 'Điều 12.1'])"
+    )
     amends_documents: List[str] = Field(
         default_factory=list,
         description="List of document numbers that this document amends or supplements"
     )
     extraction_method: str = Field(
         "unknown",
-        description="How dates were extracted: regex, llm, filename, manual"
+        description="How dates were extracted: regex, dateparser, llm, filename, manual"
     )
     confidence: float = Field(
         0.0,
@@ -79,6 +88,8 @@ class TemporalExtractionAgent:
     - Academic year contexts
     - Student cohort applicability (6-year maximum study duration)
     - Document references (document number, amendments)
+    - VBHN (Văn bản hợp nhất) status
+    - Article-level overrides
     """
 
     def __init__(self, llm_model, config):
@@ -136,24 +147,43 @@ class TemporalExtractionAgent:
                 r"version\s+(\d+\.?\d*)",
             ],
             "document_number": [
-                r"số\s*[:\.]?\s*(\d+/[A-ZĐƯ0-9\-]+)", # Số: 123/QĐ-ĐHCNTT
-                r"số hiệu\s*[:\.]?\s*(\d+/[A-ZĐƯ0-9\-]+)",
-                r"^(\d+/[A-ZĐƯ0-9\-]+)$", # Line starts with Doc Number
+                # Specific UIT patterns (high priority)
+                r"ban hành kèm theo quyết định số\s*[:\.]?\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"theo quyết định số\s*[:\.]?\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                # Standard patterns
+                r"số\s*[:\.]?\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)", # Số: 123/QĐ-ĐHCNTT
+                r"số hiệu\s*[:\.]?\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"^(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)$", # Line starts with Doc Number
             ],
             "amends": [
-                r"sửa đổi.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)",
-                r"bổ sung.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)",
-                r"thay thế.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)",
-                r"điều chỉnh.*văn bản số\s*(\d+/[A-ZĐƯ0-9\-]+)",
-                r"căn cứ.*quyết định số\s*(\d+/[A-ZĐƯ0-9\-]+)", # Broad, careful with false positives
+                r"sửa đổi.*?quyết định số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"bổ sung.*?quyết định số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"thay thế.*?quyết định số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"điều chỉnh.*?văn bản số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"căn cứ.*?quyết định số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)", # Broad, careful with false positives
+            ],
+            "vbhn": [
+                r"văn bản hợp nhất",
+                r"hợp nhất các quy định",
+                r"vbh\s*[n\.]",
+            ],
+            "amended_articles": [
+                r"(điều\s+\d+\.?\d*)",
+                r"(khoản\s+\d+\.?\d*)",
             ]
         }
 
-    def extract_with_regex(self, content: str) -> TemporalMetadata:
-        """
-        Extract dates using regex patterns.
+    def _normalize_text(self, text: str) -> str:
+        """Normalize Vietnamese text using underthesea."""
+        try:
+            from underthesea import text_normalize
+            return text_normalize(text)
+        except ImportError:
+            return text
 
-        Fast and accurate for well-formatted Vietnamese documents.
+    def extract_with_local_tools(self, content: str) -> TemporalMetadata:
+        """
+        Extract dates using local tools (regex + dateparser).
 
         Args:
             content: Document text content
@@ -161,28 +191,58 @@ class TemporalExtractionAgent:
         Returns:
             TemporalMetadata with extracted information
         """
-        metadata = TemporalMetadata(extraction_method="regex") #type: ignore
+        # Normalize text first
+        content = self._normalize_text(content)
+        
+        metadata = TemporalMetadata(extraction_method="local_tools") #type: ignore
         reasoning_parts = []
 
-        # Extract valid_from date
-        for pattern in self.regex_patterns["valid_from"]:
-            match = re.search(pattern, content, re.IGNORECASE)
-            if match:
-                day, month, year = match.groups()
-                metadata.valid_from = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-                metadata.confidence = 0.9
-                reasoning_parts.append(f"Found 'valid_from' date: {metadata.valid_from}")
+        # Check for VBHN
+        for pattern in self.regex_patterns["vbhn"]:
+            if re.search(pattern, content, re.IGNORECASE):
+                metadata.is_vbhn = True
+                reasoning_parts.append("Detected 'Văn bản hợp nhất' status")
                 break
 
-        # Extract valid_until date
-        for pattern in self.regex_patterns["valid_until"]:
-            match = re.search(pattern, content, re.IGNORECASE)
+        # Extract dates with dateparser (higher priority than simple regex)
+        # We look for date patterns near "có hiệu lực" or similar keywords
+        date_keywords = ["có hiệu lực", "áp dụng", "bắt đầu", "ngày ban hành", "hết hiệu lực"]
+        for kw in date_keywords:
+            # Look for a date string in the 50 characters following the keyword
+            match = re.search(f"{kw}.*?ngày\s+(\d{1,2}\s+(?:tháng|/)\s+\d{1,2}\s+(?:năm|/)\s+\d{4})", content, re.IGNORECASE | re.DOTALL)
             if match:
-                day, month, year = match.groups()
-                metadata.valid_until = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-                metadata.confidence = max(metadata.confidence, 0.9)
-                reasoning_parts.append(f"Found 'valid_until' date: {metadata.valid_until}")
-                break
+                date_str = match.group(1)
+                dt = dateparser.parse(date_str, languages=['vi'])
+                if dt:
+                    iso_date = dt.strftime("%Y-%m-%d")
+                    if "hết" in kw:
+                        metadata.valid_until = iso_date
+                        reasoning_parts.append(f"Parsed 'valid_until' with dateparser: {iso_date}")
+                    else:
+                        metadata.valid_from = iso_date
+                        reasoning_parts.append(f"Parsed 'valid_from' with dateparser: {iso_date}")
+                    metadata.confidence = max(metadata.confidence, 0.95)
+
+        # Fallback to regex patterns if dateparser didn't catch everything
+        if not metadata.valid_from:
+            for pattern in self.regex_patterns["valid_from"]:
+                match = re.search(pattern, content, re.IGNORECASE)
+                if match:
+                    day, month, year = match.groups()
+                    metadata.valid_from = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                    metadata.confidence = max(metadata.confidence, 0.9)
+                    reasoning_parts.append(f"Found 'valid_from' date via regex: {metadata.valid_from}")
+                    break
+
+        if not metadata.valid_until:
+            for pattern in self.regex_patterns["valid_until"]:
+                match = re.search(pattern, content, re.IGNORECASE)
+                if match:
+                    day, month, year = match.groups()
+                    metadata.valid_until = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                    metadata.confidence = max(metadata.confidence, 0.9)
+                    reasoning_parts.append(f"Found 'valid_until' date via regex: {metadata.valid_until}")
+                    break
 
         # Extract academic year
         for pattern in self.regex_patterns["academic_year"]:
@@ -208,40 +268,102 @@ class TemporalExtractionAgent:
         for pattern in self.regex_patterns["cohort"]:
             matches = re.findall(pattern, content, re.IGNORECASE)
             if matches:
-                cohort_set.update(int(y) for y in matches)
+                # regex findall might return tuples if there are multiple groups, 
+                # but our patterns have one group
+                for m in matches:
+                    try:
+                        cohort_set.add(int(m))
+                    except (ValueError, TypeError):
+                        continue
 
         if cohort_set:
-            # UIT requirement: Students have max 6 years to study
-            # If a regulation mentions cohort 2024, it applies to students enrolled 2024-2029
             base_cohorts = sorted(cohort_set)
             expanded_cohorts = []
             for cohort in base_cohorts:
-                # Regulation applies for 6 years from cohort start
                 expanded_cohorts.extend(range(cohort, cohort + 6))
 
             metadata.cohort_years = sorted(set(expanded_cohorts))
-            reasoning_parts.append(f"Found cohorts: {base_cohorts}, expanded for 6-year duration: {metadata.cohort_years[:3]}...")
+            reasoning_parts.append(f"Found cohorts: {base_cohorts}, expanded for 6-year duration")
 
         # Extract document number
+        doc_nums = []
         for pattern in self.regex_patterns["document_number"]:
-            match = re.search(pattern, content, re.IGNORECASE)
-            if match:
-                metadata.document_number = match.group(1)
-                reasoning_parts.append(f"Found document number: {metadata.document_number}")
-                break
+            matches = re.finditer(pattern, content, re.IGNORECASE)
+            for match in matches:
+                # Normalize slashes
+                num = re.sub(r'\s*/\s*', '/', match.group(1))
+                doc_nums.append(num)
+
+        if doc_nums:
+            # Filter and prioritize
+            # 1. UIT specific numbers (contain ĐHCNTT or UIT)
+            uit_nums = [n for n in doc_nums if any(k in n.upper() for k in ["ĐHCNTT", "UIT"])]
+            
+            # 2. Avoid higher level citations if possible
+            exclude_keywords = ["QĐ-TTG", "NĐ-CP", "TT-BGDĐT", "BGDĐT"]
+            preferred_nums = [n for n in uit_nums if not any(k in n.upper() for k in exclude_keywords)]
+            
+            if preferred_nums:
+                metadata.document_number = preferred_nums[0]
+            elif uit_nums:
+                metadata.document_number = uit_nums[0]
+            else:
+                # Filter out generic ones from standard list
+                filtered_generic = [n for n in doc_nums if not any(k in n.upper() for k in exclude_keywords)]
+                if filtered_generic:
+                    metadata.document_number = filtered_generic[0]
+                else:
+                    metadata.document_number = doc_nums[0]
+
+            reasoning_parts.append(f"Found document number: {metadata.document_number}")
 
         # Extract amended documents
         amends_set = set()
         for pattern in self.regex_patterns["amends"]:
             matches = re.findall(pattern, content, re.IGNORECASE)
             if matches:
-                amends_set.update(matches)
+                # Normalize slashes in all found document numbers
+                amends_set.update(re.sub(r'\s*/\s*', '/', m) for m in matches)
+        
+        # VBHN-specific consolidation extraction
+        if metadata.is_vbhn:
+            # Look for "Căn cứ..." or "Theo..." patterns which often list original docs in VBHN
+            consolidation_patterns = [
+                r"căn cứ\s+quyết định\s+số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"hợp nhất\s+quyết định\s+số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+                r"quy định\s+tại\s+quyết định\s+số\s*(\d+\s*/\s*[A-ZĐƯĂÂÊÔƠ0-9\-]+)",
+            ]
+            for pattern in consolidation_patterns:
+                matches = re.findall(pattern, content, re.IGNORECASE)
+                if matches:
+                    amends_set.update(re.sub(r'\s*/\s*', '/', m) for m in matches)
+            
+            reasoning_parts.append(f"VBHN detected: extracted {len(amends_set)} consolidated references")
         
         if amends_set:
             metadata.amends_documents = sorted(list(amends_set))
-            reasoning_parts.append(f"Found amended documents: {metadata.amends_documents}")
+            reasoning_parts.append(f"Found amended/consolidated documents: {metadata.amends_documents}")
 
-        metadata.reasoning = " | ".join(reasoning_parts) if reasoning_parts else "No temporal patterns found"
+        # Extract specific amended articles
+        article_set = set()
+        # Look for articles near amendment keywords (within 100 chars)
+        amend_keywords = ["sửa đổi", "bổ sung", "thay thế", "điều chỉnh"]
+        for kw in amend_keywords:
+            # Find the keyword
+            for match in re.finditer(kw, content, re.IGNORECASE):
+                start = match.start()
+                # Look in the next 200 characters for "Điều X" or "Khoản Y"
+                window = content[start:start+200]
+                for pattern in self.regex_patterns["amended_articles"]:
+                    matches = re.findall(pattern, window, re.IGNORECASE)
+                    if matches:
+                        article_set.update(matches)
+        
+        if article_set:
+            metadata.amended_articles = sorted(list(article_set))
+            reasoning_parts.append(f"Found specific amended articles: {metadata.amended_articles}")
+
+        metadata.reasoning = " | ".join(reasoning_parts) if reasoning_parts else "No temporal patterns found locally"
 
         return metadata
 
@@ -395,7 +517,7 @@ class TemporalExtractionAgent:
         Main extraction method - tries multiple strategies in order.
 
         Strategy priority:
-        1. Regex (fast, high precision for Vietnamese patterns)
+        1. Local tools (Regex + Dateparser)
         2. LLM (slower, better understanding for complex cases)
         3. Filename (fallback, low confidence)
 
@@ -407,24 +529,24 @@ class TemporalExtractionAgent:
         Returns:
             Metadata dictionary ready to attach to document
         """
-        # Strategy 1: Regex (fast, high precision)
-        regex_result = self.extract_with_regex(content)
+        # Strategy 1: Local tools (fast, high precision)
+        local_result = self.extract_with_local_tools(content)
 
-        # If regex found dates with high confidence, use it
-        if regex_result.valid_from and regex_result.confidence >= 0.8:
-            result = regex_result
-            print(f"[Temporal Extraction] Using regex result (confidence: {result.confidence})")
+        # If local tools found dates with high confidence, use it
+        if local_result.valid_from and local_result.confidence >= 0.8:
+            result = local_result
+            print(f"[Temporal Extraction] Using local tools result (confidence: {result.confidence})")
         else:
             # Strategy 2: LLM (slower, better understanding)
             llm_result = await self.extract_with_llm(content, filename)
 
             # Merge results (use whichever is more confident)
-            if llm_result.confidence > regex_result.confidence:
+            if llm_result.confidence > local_result.confidence:
                 result = llm_result
                 print(f"[Temporal Extraction] Using LLM result (confidence: {result.confidence})")
             else:
-                result = regex_result
-                print(f"[Temporal Extraction] Using regex result (confidence: {result.confidence})")
+                result = local_result
+                print(f"[Temporal Extraction] Using local tools result (confidence: {result.confidence})")
 
         # Strategy 3: Filename fallback (Merge missing fields)
         filename_result = self.extract_from_filename(filename)
@@ -469,6 +591,8 @@ class TemporalExtractionAgent:
             # Document classification
             "document_type": result.document_type,
             "document_number": result.document_number,
+            "is_vbhn": result.is_vbhn,
+            "amended_articles": result.amended_articles,
 
             # Document relationships
             "amends_documents": result.amends_documents,

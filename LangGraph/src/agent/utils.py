@@ -117,6 +117,8 @@ def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
         pdf_dir = pdf_path.parent
 
         target_name = pdf_path.name.lower()
+        # Strip firecrawl hash suffix (e.g., -65b48241.pdf → .pdf)
+        target_name = re.sub(r'-[a-f0-9]{8}\.pdf$', '.pdf', target_name)
 
         # Build candidate .md sources: same-folder .md first, then markdown/**.md
         candidate_iters = []
@@ -140,8 +142,33 @@ def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
                 if result:
                     return result
 
-    # Fallback: pre-built lookup from firecrawl metadata.jsonl
-    return _lookup_url_by_stem(pdf_path.name)
+    # Fallback 1: pre-built lookup from firecrawl metadata.jsonl
+    url = _lookup_url_by_stem(pdf_path.name)
+    if url:
+        return url
+
+    # Fallback 2: construct URL from file path pattern
+    # Pattern: /firecrawl/data/daa/.../pdf/file.pdf → https://daa.uit.edu.vn/sites/daa/files/.../file.pdf
+    path_str = str(pdf_path)
+    if "/firecrawl/data/daa/" in path_str and path_str.endswith(".pdf"):
+        # Extract path after /firecrawl/data/daa/
+        parts = path_str.split("/firecrawl/data/daa/", 1)
+        if len(parts) == 2:
+            relative_path = parts[1]
+            # Remove /pdf/ or /html/ directory from path
+            relative_path = relative_path.replace("/pdf/", "/").replace("/html/", "/")
+            # Construct URL
+            filename = pdf_path.name
+            # Try to find date prefix in path (e.g., 202502, 202311)
+            date_match = re.search(r'/(\d{6})/', relative_path)
+            if date_match:
+                date_prefix = date_match.group(1)
+                return f"https://daa.uit.edu.vn/sites/daa/files/{date_prefix}/{filename}"
+            else:
+                # No date prefix, use generic path
+                return f"https://daa.uit.edu.vn/sites/daa/files/{filename}"
+
+    return None
 
 def strip_think_tags(content: str) -> str:
     """Strip Qwen3 chain-of-thought <think>...</think> tokens before JSON parsing."""

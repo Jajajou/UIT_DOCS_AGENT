@@ -24,7 +24,9 @@ load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env", override=True)
 
 from agent.clients.lightrag_client import LightRAGAPIClient
-from agent.graphs.metadata_rag_subgraph import test_metadata_rag_subgraph
+from agent.agents.agent_temporal_extraction import TemporalExtractionAgent
+from agent.config import settings
+from langchain.chat_models import init_chat_model
 
 
 def get_pg_connection():
@@ -38,16 +40,19 @@ def get_pg_connection():
 
 
 def get_target_docs(limit=None):
-    """Get docs with empty cohort_years."""
+    """Get docs with empty cohort_years and valid file_path."""
     conn = get_pg_connection()
     try:
         with conn.cursor() as cur:
             query = """
-                SELECT tm.doc_id, lds.file_path, lds.content_summary
+                SELECT tm.doc_id, lds.file_path
                 FROM temporal_metadata tm
                 LEFT JOIN lightrag_doc_status lds ON tm.track_id = lds.track_id
                 WHERE tm.workspace = 'uit_docs_agent'
                   AND (tm.cohort_years IS NULL OR tm.cohort_years::text IN ('[]', 'null', ''))
+                  AND lds.file_path IS NOT NULL
+                  AND lds.file_path NOT IN ('', 'no-file-path', 'unknown_source')
+                  AND lds.file_path LIKE '%.pdf'
                 ORDER BY tm.doc_id
             """
             if limit:
@@ -59,24 +64,73 @@ def get_target_docs(limit=None):
         conn.close()
 
 
-async def backfill_cohort(doc_id: str, file_path: str, content: str, dry_run: bool = False):
+def load_ocr_content(file_path: str) -> str:
+    """Load OCR content from MinerU-OCR directory."""
+    ocr_dir = Path(__file__).parent.parent.parent / "data" / "MinerU-OCR"
+
+    # Extract filename from file_path
+    if file_path.startswith("http"):
+        # URL - extract filename from last segment
+        filename = file_path.rstrip("/").split("/")[-1]
+    else:
+        filename = Path(file_path).name
+
+    # Remove .pdf extension
+    base_name = filename.replace(".pdf", "")
+
+    # MinerU creates nested structure: base_name/base_name/base_name.md
+    md_file = ocr_dir / base_name / base_name / f"{base_name}.md"
+    if md_file.exists():
+        return md_file.read_text(encoding="utf-8")
+
+    # Try without hash suffix
+    import re
+    clean_name = re.sub(r"-[a-f0-9]{8}$", "", base_name)
+    md_file = ocr_dir / clean_name / clean_name / f"{clean_name}.md"
+    if md_file.exists():
+        return md_file.read_text(encoding="utf-8")
+
+    return None
+
+
+async def backfill_cohort(doc_id: str, file_path: str, dry_run: bool = False):
     """Extract cohort_years and update DB."""
-    print(f"\n[{doc_id}] Extracting cohort metadata...")
+    print(f"\n[{doc_id}] Loading OCR content for {file_path}...")
 
-    # Use metadata RAG subgraph
-    result = await test_metadata_rag_subgraph(
-        doc_text=content,
-        file_source=file_path,
-        doc_id=doc_id
-    )
-
-    if not result or "metadata" not in result:
-        print(f"[{doc_id}] ✗ Extraction failed")
+    # Load from MinerU-OCR
+    content = load_ocr_content(file_path)
+    if not content:
+        print(f"[{doc_id}] ✗ No OCR content found")
         return False
 
-    metadata = result["metadata"]
+    print(f"[{doc_id}] Extracting cohort metadata...")
+
+    # Initialize LLM and TemporalExtractionAgent
+    llm = init_chat_model(
+        model_provider="openai",
+        api_key=settings.openai_api_key,
+        base_url=settings.openai_base_url,
+        model=settings.indexing_llm_model,
+        streaming=False,
+        temperature=0.1,
+        model_kwargs={"tool_choice": "none"}
+    )
+
+    agent = TemporalExtractionAgent(llm, settings)
+
+    # Extract metadata using TemporalExtractionAgent
+    try:
+        metadata = await agent.extract(
+            content=content,
+            filename=Path(file_path).name,
+            file_source=file_path
+        )
+    except Exception as e:
+        print(f"[{doc_id}] ✗ Extraction failed: {e}")
+        return False
+
     cohort_years = metadata.get("cohort_years", [])
-    confidence = result.get("confidence", 0.0)
+    confidence = metadata.get("temporal_confidence", 0.0)
 
     print(f"[{doc_id}] Extracted cohort_years: {cohort_years} (confidence: {confidence:.2f})")
 
@@ -121,14 +175,9 @@ async def main():
     success = 0
     failed = 0
 
-    for doc_id, file_path, content in docs:
-        if not content:
-            print(f"[{doc_id}] ✗ No content available")
-            failed += 1
-            continue
-
+    for doc_id, file_path in docs:
         try:
-            ok = await backfill_cohort(doc_id, file_path, content, dry_run=args.dry_run)
+            ok = await backfill_cohort(doc_id, file_path, dry_run=args.dry_run)
             if ok:
                 success += 1
             else:

@@ -409,31 +409,45 @@ class Reranker:
                 print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
             temporal_scores = new_temporal_scores
 
-        # Combine scores: 3-weight formula when cohort active, 2-weight otherwise
+        # Combined scoring logic: 3-weight formula (55/20/25)
+        # Use cohort formula if cohort present, otherwise 70/30 formula
         use_cohort = getattr(settings, 'use_cohort_boost', True)
+        temporal_config = getattr(settings, 'temporal', None)
+        
+        # Default weights
+        s_w = 0.7
+        t_w = 0.3
+        c_w = 0.0
+        
         if use_cohort and query_cohort_year is not None:
-            temporal_config = getattr(settings, 'temporal', None)
             s_w = getattr(temporal_config, 'semantic_weight_cohort', 0.55)
             t_w = getattr(temporal_config, 'temporal_weight_cohort', 0.20)
             c_w = getattr(temporal_config, 'cohort_weight', 0.25)
             cohort_scores = [self._compute_cohort_score(item, query_cohort_year) for item in items]
-            combined_scores = [
-                s_w * s + t_w * t + c_w * c
-                for s, t, c in zip(semantic_scores, temporal_scores, cohort_scores)
-            ]
         else:
-            # Original 2-weight formula
-            if temporal_weight is None:
-                temporal_config = getattr(settings, 'temporal', None)
-                if temporal_config:
-                    temporal_weight = getattr(temporal_config, 'recency_weight', 0.3)
-                else:
-                    temporal_weight = 0.3
-            semantic_weight = 1.0 - temporal_weight
-            combined_scores = [
-                semantic_weight * sem + temporal_weight * temp
-                for sem, temp in zip(semantic_scores, temporal_scores)
-            ]
+            if temporal_weight is not None:
+                t_w = temporal_weight
+            else:
+                t_w = getattr(temporal_config, 'recency_weight', 0.3)
+            s_w = 1.0 - t_w
+            cohort_scores = [0.0] * len(items)
+
+        # Calculate final combined scores
+        combined_scores = []
+        for i, (s, t, c) in enumerate(zip(semantic_scores, temporal_scores, cohort_scores)):
+            score = s_w * s + t_w * t + c_w * c
+            
+            # VBHN Boost (+0.1) - prioritize consolidated documents
+            if items[i].get("metadata", {}).get("is_vbhn", False):
+                score += 0.1
+                
+            # Article Priority Boost (+0.15) - matches specific articles mentioned in query
+            if items[i].get("metadata", {}).get("article_priority_boost", False):
+                score += 0.15
+            
+            # Clamp to 1.0
+            score = min(1.0, score)
+            combined_scores.append(score)
 
         # Zip items with combined scores
         items_with_scores = list(zip(items, combined_scores))
