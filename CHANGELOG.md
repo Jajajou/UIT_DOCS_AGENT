@@ -1,5 +1,79 @@
 # Changelog
 
+## [0.3.2] - 2026-04-21
+
+### Changed
+- Replaced `DeepSeek-OCR-2` with `MinerU2.5-Pro-2604-1.2B` for PDF OCR. DeepSeek-OCR-2 produced hallucination loops on dense Vietnamese tables (339 garbage hits); MinerU2.5-Pro yields 0 garbage hits.
+- OCR node renamed from `parse_with_DeepSeek_OCR` to `parse_with_ocr` in `indexing_graph.py`.
+- Indexing state fields renamed: `deepseek_ocr_text` → `ocr_text`, `deepseek_ocr_output_dir` → `ocr_output_dir`.
+- `config.yaml` and `config.py`: `deepseek_ocr` block replaced with `mineru_ocr` (adds `api_url` for remote service).
+- Cache directory changed from `data/DeepSeek-OCR/` to `data/MinerU-OCR/`.
+
+### Added
+- `LangGraph/src/agent/clients/mineru_ocr_client.py`: new OCR client supporting two modes:
+  - Remote: single-file `POST /file_parse` upload to the official MinerU Docker API (RTX 3060 via Tailscale at `http://100.102.11.75:8000`, ~6 s/PDF).
+  - Local: MLX `two_step_extract` fallback when `api_url` is `null` (~38 s/page).
+- 18 unit tests for `MinerUOCRClient` covering remote path, error cases, cache hit/miss, and Vietnamese normalization.
+
+### Removed
+- `LangGraph/src/agent/clients/deepseek_ocr_client.py`: deleted, fully replaced by `mineru_ocr_client.py`.
+
+## [0.3.1] - 2026-04-15
+
+### Changed
+- Moved 4 new integration tests (`test_insert_text`, `test_pg_schema`, `test_temporal_workflow`, `test_track_id_metadata`) from `tests/` root into `tests/integration/` for clearer test organization.
+- Consolidated scattered docs: `QUICK_REFERENCE_PERFORMANCE.md`, `TESTING_CHECKLIST.md`, `lightrag-openapi.json` moved to `docs/reference/`; `DOCUMENTATION_INDEX.md` moved to `docs/`; `LangGraph/docs/` guides moved to `docs/langgraph/`.
+- Updated `.gitignore` to cover `mempalace.yaml`, `entities.json`, `GEMINI.md`, `.gemini/`, `.langgraph_api/`.
+
+### Removed
+- Deleted stale `LangGraph/requirements_v3.txt` (superseded by `pyproject.toml` + `uv.lock`).
+- Deleted 3 superseded ablation result files (`ablation_results_20260410.json`, `ablation_results_final.json`, `ablation_results_fixed.json`); canonical results kept in `ablation_results_thesis_final.json`.
+- Removed `LangGraph/agent.egg-info/` and `LangGraph/src/uit_docs_agent.egg-info/` build artifacts from git tracking.
+- Deleted duplicate `/.langgraph_api/` directory at project root (~101 MB).
+- Removed stale `LangGraph/src/testScripts/lightrag.log`.
+
+### Added
+- `GEMINI_TASKS.md`: shared Claude-Gemini task coordination queue at project root.
+- Final ablation evaluation results (`ablation_results_thesis_final.json`) with 19 temporal test pairs.
+- `routing_test` split option added to `run_evaluation.py` `--split` argument.
+
+## [0.3.0] - 2026-04-14
+
+### Added
+- **Tri-mode metadata retrieval routing** (`feat/metadata-filtered-retrieval`):
+  - `COHORT` queries bypass LightRAG entirely, hitting Qdrant directly with a
+    `cohort_years HAS [year OR "*"]` + `must_not is_archived` pre-filter vector search.
+    Falls back to GENERAL path if 0 results.
+  - `AMENDMENT` queries traverse a PostgreSQL recursive CTE (`lightrag_doc_status`)
+    to find the amendment chain leaf, then fetch those chunks from Qdrant.
+    Falls back to GENERAL path if no `query_document_ref` or 0 results.
+  - `GENERAL` queries continue through the existing LightRAG → enrich → filter → rerank path.
+- **`QdrantCohortClient`** (`clients/qdrant_cohort_client.py`): embeds queries using
+  the same endpoint as LightRAG (`settings.embedding_base_url`) for vector parity,
+  performs filtered Qdrant search, converts `ScoredPoint` to standard chunk shape.
+- **`AmendmentChainClient`** (`clients/amendment_chain_client.py`): PostgreSQL recursive
+  CTE resolves amendment chains (max depth 10), fetches leaf-doc chunks from Qdrant
+  via `full_doc_id` filter + vector search.
+- **`retrieve_cohort_data` node** (`agents/retrieve_cohort.py`): COHORT retrieval path.
+- **`retrieve_amendment_data` node** (`agents/retrieve_amendment.py`): AMENDMENT retrieval path.
+- **`USE_METADATA_ROUTING` flag**: env var / `settings.use_metadata_routing` toggle.
+  When `false`, `route_retrieval` bypasses tri-mode logic and all queries use GENERAL
+  path (enables clean v0.2.0 vs v0.3.0 ablation comparison).
+- **New ablation configs** in `run_evaluation.py`:
+  - `v0.3.0_No_Routing`: reranker-only best config, routing disabled (ablation control)
+  - `v0.3.0_Full`: tri-mode routing fully enabled
+- **QueryState fields**: `cohort_fallback`, `amendment_fallback`, `query_document_ref`.
+- **Unit tests**: 49 tests covering `QdrantCohortClient._point_to_chunk`, `route_retrieval`
+  (including bypass), `route_after_cohort`, `retrieve_cohort_data`, `AmendmentChainClient`
+  chain traversal (mocked psycopg2), `route_after_amendment`, `retrieve_amendment_data`.
+
+### Changed
+- `route_retrieval` now checks `settings.use_metadata_routing` first; when disabled it
+  routes everything to `retrieve_data` regardless of `query_type`.
+- `set_env_for_config` in eval harness now also sets `USE_METADATA_ROUTING`.
+- Existing ablation configs (`Baseline-S`, `Baseline-T`, `System`, `System+Amend`) all
+  carry explicit `USE_METADATA_ROUTING=false` to preserve v0.2.0 evaluation semantics.
+
 ## [0.2.0] - 2026-04-14
 
 ### Changed

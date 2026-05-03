@@ -16,8 +16,8 @@ from urllib.parse import unquote
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END, START
 
-from agent.config import DEEPSEEK_OCR_DIR
-from agent.clients.deepseek_ocr_client import DeepSeekOCRClient, DeepSeekOCRClientError
+from agent.config import MINERU_OCR_DIR
+from agent.clients.mineru_ocr_client import MinerUOCRClient, MinerUOCRClientError
 from agent.states.indexing_state import IndexingState
 from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
@@ -29,7 +29,7 @@ load_dotenv()
 
 
 api_client = LightRAGAPIClient()
-dsocr_client = DeepSeekOCRClient()
+mineru_client = MinerUOCRClient()
 
 # ---------------------- Helper Functions ----------------------
 
@@ -365,116 +365,162 @@ def check_if_pdf(state: IndexingState) -> Dict[str, Any]:
     }
 
 
-def parse_with_DeepSeek_OCR(state: IndexingState) -> Dict[str, Any]:
-    """Pre-processes and parses a PDF file with DeepSeek OCR."""
+def parse_with_ocr(state: IndexingState) -> Dict[str, Any]:
+    """Pre-processes and parses a PDF file with MinerU OCR."""
     file_path = state.get("current_file_path")
     if not file_path:
-        return {"error": "No file path for DeepSeek_OCR"}
+        return {"ocr_error": "No file path for OCR"}
 
-    temp_file_path = None
     try:
-        print(f"[DeepSeek_OCR] Pre-processing and parsing: {os.path.basename(file_path)}")
-
-        temp_file_path = preprocess_image_for_ocr(file_path)
-
-        # Parse the processed image with DeepSeek OCR
+        print(f"[OCR] Processing: {os.path.basename(file_path)}")
         file_stem = Path(file_path).stem
-        output_dir = str((DEEPSEEK_OCR_DIR / file_stem).resolve())
+        output_path = str(MINERU_OCR_DIR / file_stem)
 
-        md_content, output_path = dsocr_client.parse_and_get_markdown(
-            temp_file_path,
-            output_dir=output_dir,
+        md_content, output_path = mineru_client.parse_and_get_markdown(
+            file_path,
+            output_dir=output_path,
         )
 
-        print(f"[DeepSeek_OCR] ✓ Success - {len(md_content):,} chars")
-
-        # Set file_path and file_source for temporal extraction
-        file_source = get_url(file_path)
+        print(f"[OCR] Success - {len(md_content):,} chars")
 
         return {
             "parsed_content": md_content,
-            "deepseek_ocr_output_dir": output_path,
-            "deepseek_ocr_success": True,
+            "ocr_output_dir": output_path,
+            "ocr_success": True,
             "file_path": file_path,
-            "file_source": file_source,
-            "error": ""
         }
-
     except Exception as e:
-        print(f"[DeepSeek_OCR] ✗ Failed: {str(e)}")
+        print(f"[OCR] Failed: {str(e)}")
         return {
             "parsed_content": "",
-            "deepseek_ocr_success": False,
-            "deepseek_ocr_error": str(e)
+            "ocr_success": False,
+            "ocr_error": str(e),
         }
-    finally:
-        # Clean up the temporary file ONLY if it's different from the original
-        # (preprocess_image_for_ocr returns original path if preprocessing fails)
-        if temp_file_path and temp_file_path != file_path and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
 
 
 async def extract_temporal_metadata_rag(state: IndexingState) -> Dict[str, Any]:
     """
-    Extract temporal metadata using the Metadata RAG subgraph.
+    Two-stage temporal metadata extraction.
 
-    This is an async wrapper that invokes the async metadata RAG subgraph.
-    Maps between IndexingState and MetadataRAGState.
+    Stage 1 — Header extraction (fast, deterministic):
+        Sends first 2000 chars directly to LLM + regex.
+        Extracts: document_number, amends_documents, implicit_amendment_flag.
+        These fields are ALWAYS in the document header/preamble.
+
+    Stage 2 — RAG subgraph (for scattered fields):
+        Runs ChromaDB bi-encoder + cross-encoder reranking.
+        Extracts: cohort_years, valid_dates (legitimately scattered in curriculum docs).
+
+    Merge: Header results take precedence for document_number / amends_documents.
+    RAG results fill in cohort_years / dates.
     """
     from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
+    from agent.agents.header_extraction import extract_from_header
 
     try:
-        # Get document text from either parsed_content (PDF) or file
+        # --- Resolve document text ---
         doc_text = state.get("parsed_content", "")
         if not doc_text:
-            # For non-PDF files, try reading from file
             file_path = state.get("current_file_path")
             if file_path:
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         doc_text = f.read()
                 except Exception as e:
-                    print(f"[Metadata RAG] WARNING: Could not read file {file_path}: {e}")
+                    print(f"[Metadata] WARNING: Could not read file {file_path}: {e}")
 
         file_source = state.get("file_source") or state.get("current_file_path", "unknown")
         doc_id = state.get("doc_id", "")
 
         if not doc_text:
-            print(f"[Metadata RAG] WARNING: No document text for {file_source}, falling back to regex")
-            # Use old extraction as fallback
+            print(f"[Metadata] WARNING: No document text for {file_source}, falling back to regex")
             return await extract_temporal_metadata_node(state)
 
-        # Prepare subgraph input
+        # ------------------------------------------------------------------ #
+        # Stage 1: Header extraction
+        # ------------------------------------------------------------------ #
+        print(f"[Header] Extracting doc_number + amends from header: {file_source}")
+        header_result = extract_from_header(doc_text, file_source)
+        print(
+            f"[Header] doc_num={header_result.get('document_number')!r} "
+            f"amends={header_result.get('amends_documents')} "
+            f"amendment_confidence={header_result.get('amendment_confidence')} "
+            f"implicit={header_result.get('implicit_amendment_flag')} "
+            f"via {header_result.get('extraction_method_header')}"
+        )
+
+        # ------------------------------------------------------------------ #
+        # Stage 2: RAG subgraph for cohort_years + dates
+        # ------------------------------------------------------------------ #
+        print(f"[Metadata RAG] Processing cohort/dates: {file_source}")
         subgraph_input = {
             "doc_text": doc_text,
             "file_source": file_source,
             "doc_id": doc_id,
             "success": False
         }
+        rag_result = await metadata_rag_subgraph.ainvoke(subgraph_input)
 
-        print(f"[Metadata RAG] Processing: {file_source}")
+        rag_success = rag_result.get("success", False)
+        rag_metadata = rag_result.get("final_metadata", {})
+        rag_confidence = rag_result.get("extraction_confidence", 0.0)
 
-        # Invoke async subgraph
-        result = await metadata_rag_subgraph.ainvoke(subgraph_input)
+        if not rag_success:
+            error = rag_result.get("error", "Unknown error")
+            print(f"[Metadata RAG] Failed: {error}, falling back to regex for dates/cohorts")
+            # Still use header results even if RAG fails
+            fallback = await extract_temporal_metadata_node(state)
+            fallback_meta = fallback.get("document_metadata", {})
+            merged = _merge_metadata(header_result, fallback_meta)
+            return {"document_metadata": merged, "temporal_extraction_complete": True}
 
-        success = result.get("success", False)
-        final_metadata = result.get("final_metadata", {})
-        confidence = result.get("extraction_confidence", 0.0)
+        # ------------------------------------------------------------------ #
+        # Merge: header wins for doc_number + amends; RAG for dates + cohorts
+        # ------------------------------------------------------------------ #
+        final_metadata = _merge_metadata(header_result, rag_metadata)
+        final_metadata["extraction_confidence"] = rag_confidence
 
-        if success:
-            print(f"[Metadata RAG] Confidence: {confidence:.2f} | Metadata: {final_metadata}")
-            return {
-                "document_metadata": final_metadata,
-                "temporal_extraction_complete": True
-            }
-        else:
-            error = result.get("error", "Unknown error")
-            print(f"[Metadata RAG] Failed: {error}, falling back to regex")
-            return await extract_temporal_metadata_node(state)
+        print(
+            f"[Metadata] Final confidence: {rag_confidence:.2f} | "
+            f"doc_num={final_metadata.get('document_number')!r} | "
+            f"amends={final_metadata.get('amends_documents')} | "
+            f"cohorts={final_metadata.get('cohort_years')}"
+        )
+
+        return {"document_metadata": final_metadata, "temporal_extraction_complete": True}
 
     except Exception as e:
-        print(f"[Metadata RAG] Exception: {str(e)}, falling back to regex")
+        print(f"[Metadata] Exception: {str(e)}, falling back to regex")
         return await extract_temporal_metadata_node(state)
+
+
+def _merge_metadata(header: dict, rag: dict) -> dict:
+    """
+    Merge header extraction results with RAG results.
+
+    Priority:
+    - document_number:    header > RAG (header reads the "So:" line directly)
+    - amends_documents:   header (RAG no longer extracts this)
+    - cohort_years:       RAG (header doesn't touch this)
+    - valid_from/until:   RAG (header doesn't touch this)
+    - everything else:    RAG
+    """
+    merged = dict(rag)  # start with RAG as base
+
+    # Header fields take precedence
+    if header.get("document_number"):
+        merged["document_number"] = header["document_number"]
+
+    merged["amends_documents"] = header.get("amends_documents", [])
+    merged["amendment_confidence"] = header.get("amendment_confidence", "none")
+    merged["implicit_amendment_flag"] = header.get("implicit_amendment_flag", False)
+
+    # Track which method was used for header fields
+    header_method = header.get("extraction_method_header", "header_regex_only")
+    rag_method = rag.get("extraction_method", "rag")
+    merged["extraction_method"] = f"{header_method}+{rag_method}"
+
+    return merged
 
 
 def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
@@ -568,8 +614,8 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                     "track_id": track_id,
                     "doc_id": None,  # Will be retrieved when saving metadata
                     "status": "success",
-                    "parse_with_DeepSeek_OCR": state.get("deepseek_ocr_success", False),
-                    "output_dir": state.get("deepseek_ocr_output_dir"),
+                    "parse_with_ocr": state.get("ocr_success", False),
+                    "output_dir": state.get("ocr_output_dir"),
                     "markdown_length": len(parsed_content),
                     "response": result
                 }
@@ -588,13 +634,13 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                     "track_id": track_id,
                     "doc_id": doc_id,
                     "status": "success",
-                    "parse_with_DeepSeek_OCR": False,
+                    "parse_with_ocr": False,
                     "response": result
                 }
 
-                deepseek_ocr_error = state.get("deepseek_ocr_error")
-                if deepseek_ocr_error:
-                    upload_result["fallback_reason"] = deepseek_ocr_error
+                ocr_error = state.get("ocr_error")
+                if ocr_error:
+                    upload_result["fallback_reason"] = ocr_error
 
                 print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
 
@@ -686,8 +732,8 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
             # Reset per-file state
             "current_file_path": None,
             "parsed_content": None,
-            "deepseek_ocr_success": False,
-            "deepseek_ocr_error": None,
+            "ocr_success": False,
+            "ocr_error": None,
             "document_metadata": {},
             "temporal_extraction_complete": False
         }
@@ -704,7 +750,7 @@ def finalize_upload(state: IndexingState) -> Dict[str, Any]:
     
     success_count = sum(1 for r in upload_results if r["status"] == "success")
     failed_count = len(upload_results) - success_count
-    deepseek_ocr_count = sum(1 for r in upload_results if r.get("parse_with_DeepSeek_OCR"))
+    ocr_count = sum(1 for r in upload_results if r.get("parse_with_ocr"))
     
     response_lines = []
     file_list = state.get("file_list", [])
@@ -726,8 +772,8 @@ def finalize_upload(state: IndexingState) -> Dict[str, Any]:
     
     response_lines.append("")
     
-    if deepseek_ocr_count > 0:
-        response_lines.append(f"**PDFs parsed with DeepSeek OCR:** {deepseek_ocr_count}")
+    if ocr_count > 0:
+        response_lines.append(f"**PDFs parsed with MinerU OCR:** {ocr_count}")
         response_lines.append("")
     
     if success_count > 0:
@@ -735,11 +781,11 @@ def finalize_upload(state: IndexingState) -> Dict[str, Any]:
         for result in upload_results:
             if result["status"] == "success":
                 extra = ""
-                if result.get("parse_with_DeepSeek_OCR"):
+                if result.get("parse_with_ocr"):
                     md_len = result.get("markdown_length", 0)
-                    extra = f" (DeepSeek_OCR: {md_len:,} chars)"
+                    extra = f" (MinerU: {md_len:,} chars)"
                 elif result.get("fallback_reason"):
-                    extra = " (Direct - DeepSeek_OCR failed)"
+                    extra = " (Direct - OCR failed)"
                 
                 response_lines.append(f"  • `{result['file_name']}`{extra}")
                 response_lines.append(f"    Track ID: `{result['track_id']}`")
@@ -807,10 +853,10 @@ def route_after_file_list(state: IndexingState) -> Literal["check_if_pdf", "erro
         return "error_handler"
     return "check_if_pdf"
 
-def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_DeepSeek_OCR", "extract_temporal_metadata"]:
+def route_after_pdf_check(state: IndexingState) -> Literal["parse_with_ocr", "extract_temporal_metadata"]:
     """Route based on whether file is PDF."""
     if state.get("is_pdf"):
-        return "parse_with_DeepSeek_OCR"
+        return "parse_with_ocr"
     # Non-PDF files go directly to temporal extraction
     return "extract_temporal_metadata"
 
@@ -845,7 +891,7 @@ builder = StateGraph(state_schema=IndexingState)
 builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
-builder.add_node("parse_with_DeepSeek_OCR", parse_with_DeepSeek_OCR)
+builder.add_node("parse_with_ocr", parse_with_ocr)
 builder.add_node("extract_temporal_metadata", extract_temporal_metadata_rag)
 builder.add_node("upload_to_lightrag", upload_to_lightrag)
 builder.add_node("finalize_upload", finalize_upload)
@@ -878,13 +924,13 @@ builder.add_conditional_edges(
     "check_if_pdf",
     route_after_pdf_check,
     {
-        "parse_with_DeepSeek_OCR": "parse_with_DeepSeek_OCR",
+        "parse_with_ocr": "parse_with_ocr",
         "extract_temporal_metadata": "extract_temporal_metadata"
     }
 )
 
 # After parsing PDF, extract temporal metadata
-builder.add_edge("parse_with_DeepSeek_OCR", "extract_temporal_metadata")
+builder.add_edge("parse_with_ocr", "extract_temporal_metadata")
 
 # After temporal extraction, upload to LightRAG
 builder.add_edge("extract_temporal_metadata", "upload_to_lightrag")

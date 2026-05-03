@@ -1,10 +1,12 @@
 {
-  "description": "15 frozen test pairs for 3-way ablation evaluation. Grounded in actual indexed documents. Frozen 2026-04-10 BEFORE any weight calibration.",
-  "version": "2.0",
+  "description": "Frozen test pairs for ablation evaluation. v2.0: 15 pairs for v0.2.0 reranker ablation (frozen 2026-04-10). v3.0 adds 4 routing-specific pairs (id=15-18) to demonstrate COHORT/AMENDMENT path correctness.",
+  "version": "3.0",
   "frozen_date": "2026-04-10",
+  "routing_pairs_added": "2026-04-15",
   "split": {
     "validation": [0, 1, 2, 3, 4],
-    "test": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    "test": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+    "routing_test": [15, 16, 17, 18]
   },
   "types": {
     "cohort_specific": "Query includes a cohort year (K20xx). Correct doc must cover that cohort. Tests cohort-aware reranking.",
@@ -226,6 +228,72 @@
       "expected_keywords": ["danh gia", "cap nhat", "chuong trinh", "185"],
       "ablation_sensitive": false,
       "note": "Test pair 10 — curriculum review and update process (control)"
+    },
+    {
+      "id": 15,
+      "type": "cohort_specific",
+      "query": "sinh viên K2023 tại UIT phải đạt chuẩn ngoại ngữ gì để tốt nghiệp?",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": ["doc-70ee4e32645ddc776cc9f8c46ed06839"],
+      "expected_doc_numbers": ["141/QD-DHCNTT"],
+      "confounding_doc_ids": ["doc-ec0ecdde90113ff61eaa1027b5c47c90"],
+      "confounding_doc_numbers": ["108/QD-DHCNTT"],
+      "confound_reason": "141/QD-DHCNTT covers cohorts 2017-2026; K2023 in range. 108/QD-DHCNTT only covers 2015-2017 — should not appear.",
+      "expected_keywords": ["ngoai ngu", "141", "2023"],
+      "ablation_sensitive": true,
+      "routing_test": true,
+      "routing_path": "COHORT",
+      "note": "Routing test 1 — K2023 explicit year, COHORT path should filter Qdrant by cohort_years=[2023], return 141 over 108"
+    },
+    {
+      "id": 16,
+      "type": "cohort_specific",
+      "query": "quy định về tín chỉ ngoại ngữ cho sinh viên khóa 2021 học tại UIT?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": ["doc-70ee4e32645ddc776cc9f8c46ed06839"],
+      "expected_doc_numbers": ["141/QD-DHCNTT"],
+      "confounding_doc_ids": ["doc-7b6a5ff2ac70a663f3446904ac0be430"],
+      "confounding_doc_numbers": ["128/QD-DHCNTT-DTDH"],
+      "confound_reason": "141/QD-DHCNTT covers cohorts 2017-2026; khóa 2021 in range. 128/QD-DHCNTT-DTDH is K2016-specific — wrong cohort.",
+      "expected_keywords": ["ngoai ngu", "141", "2021"],
+      "ablation_sensitive": true,
+      "routing_test": true,
+      "routing_path": "COHORT",
+      "note": "Routing test 2 — khóa 2021 explicit year, COHORT path should filter Qdrant by cohort_years=[2021], return 141 over 128"
+    },
+    {
+      "id": 17,
+      "type": "amendment_sensitive",
+      "query": "Quyết định số 141/QĐ-ĐHCNTT về đào tạo ngoại ngữ còn hiệu lực hay đã bị sửa đổi bổ sung bởi văn bản nào?",
+      "query_cohort_year": null,
+      "query_document_ref": "141/QD-DHCNTT",
+      "expected_doc_ids": ["doc-ec0ecdde90113ff61eaa1027b5c47c90"],
+      "expected_doc_numbers": ["108/QD-DHCNTT"],
+      "confounding_doc_ids": ["doc-70ee4e32645ddc776cc9f8c46ed06839"],
+      "confounding_doc_numbers": ["141/QD-DHCNTT"],
+      "confound_reason": "108/QD-DHCNTT amends 141/QD-DHCNTT; query asks about amendment status of 141, answer should cite 108 (the amender/leaf).",
+      "expected_keywords": ["108", "sua doi", "141"],
+      "ablation_sensitive": true,
+      "routing_test": true,
+      "routing_path": "AMENDMENT",
+      "note": "Routing test 3 — explicit doc number 141/QD-DHCNTT in query, AMENDMENT path should traverse PostgreSQL chain and return chunks from 108 (leaf)"
+    },
+    {
+      "id": 18,
+      "type": "amendment_sensitive",
+      "query": "Quyết định 507/QĐ-ĐHCNTT quy định gì về chương trình đào tạo từ xa trình độ đại học tại UIT?",
+      "query_cohort_year": null,
+      "query_document_ref": "507/QD-DHCNTT",
+      "expected_doc_ids": ["doc-68fe5ca21232e110a2ea6c72f624e28d"],
+      "expected_doc_numbers": ["507/QD-DHCNTT"],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": ["1206/QD-DHCNTT"],
+      "confound_reason": "507/QD-DHCNTT amends 1206/QD-DHCNTT; 1206 not indexed. Query explicitly names 507 — AMENDMENT path should fetch 507 chunks directly (507 is itself the chain leaf).",
+      "expected_keywords": ["507", "tu xa", "dao tao"],
+      "ablation_sensitive": true,
+      "routing_test": true,
+      "routing_path": "AMENDMENT",
+      "note": "Routing test 4 — explicit doc number 507/QD-DHCNTT, doc is chain leaf, AMENDMENT path should return 507 chunks"
     }
   ]
 }

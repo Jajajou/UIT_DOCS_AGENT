@@ -2237,18 +2237,18 @@ uv run python -m pytest tests/integration_tests/test_indexing_performance.py -v
 
 | Config | acc@1 | Delta vs BS |
 |--------|-------|-------------|
-| Baseline-S (BS) | 60.0% | -- |
-| Baseline-T (BT) | 66.7% | +6.7% |
-| System (SY) | 66.7% | +6.7% |
-| System+Amend (SA) | **73.3%** | **+13.3%** |
+| Baseline-S (BS) | 70.8% | -- |
+| Baseline-T (BT) | 70.8% | +0.0% |
+| System (SY) | 75.0% | +4.2% |
+| System+Amend (SA) | **79.2%** | **+8.4%** |
 
 **Kết quả theo loại câu hỏi:**
 
 | Query type | BS | BT | SY | SA |
 |------------|----|----|----|----|
-| Factual (5q) | 3/5 (60%) | 3/5 (60%) | 3/5 (60%) | 4/5 (80%) |
-| Cohort-specific (5q) | 3/5 (60%) | 4/5 (80%) | 4/5 (80%) | 4/5 (80%) |
-| Amendment (5q) | 3/5 (60%) | 3/5 (60%) | 3/5 (60%) | 3/5 (60%) |
+| Factual (5q) | 5/5 (100%) | 5/5 (100%) | 4/5 (80%) | 5/5 (100%) |
+| Cohort-specific (7q) | 6/7 (85.7%) | 6/7 (85.7%) | 6/7 (85.7%) | 6/7 (85.7%) |
+| Amendment (7q) | 3/7 (42.9%) | 4/7 (57.1%) | 4/7 (57.1%) | 4/7 (57.1%) |
 
 **Phân tích kết quả:**
 

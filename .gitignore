@@ -223,6 +223,7 @@ __marimo__/
 # Data directories
 data/**/*
 .gemini-clipboard/
+.gemini/
 
 # Project specific
 
@@ -286,6 +287,12 @@ test_*.ipynb
 # Claude Code local config
 .claude/
 .agent/
+
+mempalace.yaml
+entities.json
+GEMINI.md
+.gemini/
+.langgraph_api/
 
 # Session and planning docs (local only)
 SESSION_HANDOFF.md

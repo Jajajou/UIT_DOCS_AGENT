@@ -244,7 +244,7 @@ Output:
   "document_type": "tuition",
   "document_number": "20/TB-KHTC",
   "amends_documents": ["05/TB-KHTC"],
-  "extraction_method": "deepseek_ocr",
+  "extraction_method": "mineru_ocr",
   "confidence": 0.95,
   "reasoning": "Văn bản số 20/TB-KHTC sửa đổi văn bản 05/TB-KHTC. Học phí áp dụng cho TẤT CẢ sinh viên còn theo học (không đề cập khóa cụ thể). Thời gian: năm học 2024-2025."
 }}
@@ -262,7 +262,7 @@ Output:
   "document_type": "guide",
   "document_number": null,
   "amends_documents": [],
-  "extraction_method": "deepseek_ocr",
+  "extraction_method": "mineru_ocr",
   "confidence": 0.4,
   "reasoning": "Không tìm thấy số hiệu văn bản hay thời gian cụ thể. Chỉ xác định được document_type=guide và áp dụng universal (cho tất cả SV). Confidence thấp do thiếu core fields."
 }}
@@ -403,22 +403,19 @@ Tự động chọn tham số retrieval dựa trên query type:
 
 **2. Chunk Top K (số lượng document chunks):**
 
-- **10–20**: Query đơn giản, factual, chỉ cần 1 câu trả lời
+- **15–30**: Query đơn giản, factual, không có ràng buộc khóa sinh viên (cohort) cụ thể.
   - Ví dụ: "Email phòng đào tạo?"
   
-- **30–50**: Query trung bình, cần vài nguồn để cross-check
+- **40–60**: Query trung bình hoặc query có nhắc đến khóa sinh viên (K2022, khóa 2024...). Cần recall cao để lọc metadata sau đó.
   - Ví dụ: "Thủ tục chuyển ngành như thế nào?"
   
-- **60–80**: Query phức tạp, cần nhiều nguồn
-  - Ví dụ: "Điều kiện, thủ tục, deadline học bổng KKHT?"
-  
-- **90-130**: Query rất phức tạp, exploratory
-  - Ví dụ: "So sánh các loại học bổng tại UIT?"
+- **70–100**: Query phức tạp hoặc query về quy định áp dụng cho khóa sinh viên cụ thể. 
+  - Ví dụ: "Quy định ngoại ngữ cho sinh viên K2022?"
 
 **Quy tắc chung:**
-- Query càng phức tạp → top_k và chunk_top_k càng cao
-- Query càng cụ thể → top_k và chunk_top_k càng thấp
-- Nếu không chắc → dùng mặc định (mode="mix", top_k=8, chunk_top_k=5)
+- Query càng phức tạp hoặc có nhắc đến "khóa", "năm học", "K20xx" → top_k và chunk_top_k càng cao (để đảm bảo tìm đúng văn bản của khóa đó).
+- Query càng cụ thể, không phụ thuộc thời gian → top_k và chunk_top_k càng thấp.
+- Nếu không chắc → dùng mặc định (mode="mix", top_k=8, chunk_top_k=40)
 </parameter_tuning>
 
 <cohort_extraction>
@@ -426,6 +423,32 @@ Nếu câu hỏi đề cập khóa sinh viên cụ thể (K2022, k2022, khóa 20
 trích xuất năm nhập học vào query_cohort_year (ví dụ: 2022 cho "K2022" hoặc "khóa 2022").
 Nếu không đề cập khóa cụ thể, để query_cohort_year = null.
 </cohort_extraction>
+
+<query_type_classification>
+Phân loại query vào một trong ba loại để định tuyến retrieval:
+
+**"COHORT"** — Query hỏi về quy định áp dụng cho một khóa sinh viên cụ thể:
+- Có đề cập K20xx, khóa 20xx, năm nhập học, hoặc query_cohort_year != null
+- Ví dụ: "Quy định ngoại ngữ cho sinh viên K2022?"
+- Ví dụ: "Sinh viên khóa 2024 cần tích lũy bao nhiêu tín chỉ?"
+- Retrieval path: lọc Qdrant theo cohort_years metadata
+
+**"AMENDMENT"** — Query hỏi về phiên bản mới nhất, sửa đổi, hoặc một văn bản cụ thể:
+- Có số hiệu văn bản (108/QĐ-ĐHCNTT, quyết định 108, QĐ 141...)
+- Có từ khóa: mới nhất, hiện hành, sửa đổi, thay thế, bổ sung, còn hiệu lực, đã bị thay thế
+- Hỏi văn bản nào đang thay thế văn bản nào
+- Ví dụ: "Quyết định 108 có bị sửa đổi chưa?"
+- Ví dụ: "Văn bản nào đang thay thế QĐ 141?"
+- Ví dụ: "Quy chế đào tạo mới nhất hiện nay là gì?"
+- Retrieval path: truy vết chuỗi sửa đổi trong PostgreSQL
+- Nếu có số hiệu văn bản, trích xuất vào query_document_ref (ví dụ: "108/QĐ-ĐHCNTT")
+
+**"GENERAL"** — Tất cả các query còn lại:
+- Query thông thường không thuộc COHORT hay AMENDMENT
+- Retrieval path: LightRAG standard retrieval
+
+Lưu ý: Nếu query vừa có khóa sinh viên vừa hỏi về sửa đổi, ưu tiên "AMENDMENT".
+</query_type_classification>
 
 <output_format>
 Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
@@ -436,9 +459,11 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "confidence": 0.0-1.0,
   "confidence_reason": "...",
   "query_cohort_year": null hoặc số năm (ví dụ: 2022),
+  "query_type": "COHORT" | "AMENDMENT" | "GENERAL",
+  "query_document_ref": null hoặc số hiệu văn bản (ví dụ: "108/QĐ-ĐHCNTT"),
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
   "suggested_top_k": 3-5,
-  "suggested_chunk_top_k:" 10-20,
+  "suggested_chunk_top_k": 10-20,
   "tuning_reason": "Giải thích tại sao chọn mode, top_k và chunk_top_k này"
 }
 </output_format>
@@ -453,28 +478,70 @@ Output:
   "extracted_topics": ["quy chế đào tạo", "điều kiện tốt nghiệp"],
   "confidence": 0.95,
   "confidence_reason": "Query rất rõ ràng, cụ thể về ngành học và thông tin cần tìm.",
+  "query_cohort_year": null,
+  "query_type": "GENERAL",
+  "query_document_ref": null,
   "suggested_mode": "local",
   "suggested_top_k": 5,
   "suggested_chunk_top_k": 15,
   "tuning_reason": "Query factual đơn giản, chỉ cần tìm thông tin cụ thể về quy chế. Mode 'local' phù hợp để tìm chính xác, top_k=5 và chunk_top_k=15 đủ để có câu trả lời."
 }
 
-Example 2 - Complex multi-aspect query:
-User: "Tôi muốn biết về học bổng KKHT: điều kiện, thủ tục, deadline và số tiền?"
+Example 2 - Cohort-specific query:
+User: "Quy định ngoại ngữ đầu ra cho sinh viên K2022 là gì?"
 Output:
 {
-  "parsed_intention": "Hỏi đầy đủ về học bổng khuyến khích học tập: điều kiện nhận, quy trình đăng ký, thời hạn nộp hồ sơ và mức tiền",
-  "extracted_entities": ["học bổng khuyến khích học tập", "điều kiện", "thủ tục", "deadline", "số tiền"],
-  "extracted_topics": ["học bổng", "thủ tục hành chính"],
-  "confidence": 0.85,
-  "confidence_reason": "Query rõ ràng về chủ đề (học bổng KKHT) và các khía cạnh cần biết. Đủ thông tin để retrieve.",
-  "suggested_mode": "mix",
-  "suggested_top_k": 12,
-  "suggested_chunk_top_k": 24,
-  "tuning_reason": "Query phức tạp với nhiều khía cạnh (điều kiện, thủ tục, deadline, số tiền). Mode 'mix' để tìm toàn diện, top_k=12 và chunk_top_k=24 để có đủ thông tin từ nhiều nguồn."
+  "parsed_intention": "Hỏi về yêu cầu chuẩn đầu ra ngoại ngữ áp dụng cho sinh viên nhập học năm 2022",
+  "extracted_entities": ["ngoại ngữ đầu ra", "K2022"],
+  "extracted_topics": ["quy chế đào tạo", "chuẩn đầu ra"],
+  "confidence": 0.92,
+  "confidence_reason": "Query rõ ràng, xác định cụ thể khóa sinh viên và loại thông tin cần tìm.",
+  "query_cohort_year": 2022,
+  "query_type": "COHORT",
+  "query_document_ref": null,
+  "suggested_mode": "hybrid",
+  "suggested_top_k": 10,
+  "suggested_chunk_top_k": 60,
+  "tuning_reason": "Query về khóa cụ thể (K2022), cần chunk_top_k cao để đảm bảo recall tốt khi lọc metadata theo cohort."
 }
 
-Example 3 - Ambiguous query:
+Example 3 - Amendment query with document ref:
+User: "Quyết định 108 có bị sửa đổi chưa? Văn bản nào thay thế nó?"
+Output:
+{
+  "parsed_intention": "Hỏi về trạng thái pháp lý của Quyết định 108 và văn bản kế nhiệm nếu có",
+  "extracted_entities": ["Quyết định 108", "văn bản sửa đổi"],
+  "extracted_topics": ["văn bản quy phạm", "sửa đổi bổ sung"],
+  "confidence": 0.90,
+  "confidence_reason": "Query rõ ràng về số hiệu văn bản và ý định tìm văn bản thay thế.",
+  "query_cohort_year": null,
+  "query_type": "AMENDMENT",
+  "query_document_ref": "108/QĐ-ĐHCNTT",
+  "suggested_mode": "local",
+  "suggested_top_k": 8,
+  "suggested_chunk_top_k": 30,
+  "tuning_reason": "Query về văn bản cụ thể, mode 'local' phù hợp. Amendment path sẽ dùng PostgreSQL để truy vết chuỗi sửa đổi."
+}
+
+Example 4 - Amendment query without document ref:
+User: "Quy chế đào tạo mới nhất hiện nay là gì?"
+Output:
+{
+  "parsed_intention": "Hỏi về văn bản quy chế đào tạo đang có hiệu lực mới nhất",
+  "extracted_entities": ["quy chế đào tạo"],
+  "extracted_topics": ["quy chế đào tạo", "văn bản hiện hành"],
+  "confidence": 0.85,
+  "confidence_reason": "Query rõ ràng về loại văn bản, từ khóa 'mới nhất' chỉ rõ ý định tìm phiên bản hiện hành.",
+  "query_cohort_year": null,
+  "query_type": "AMENDMENT",
+  "query_document_ref": null,
+  "suggested_mode": "local",
+  "suggested_top_k": 8,
+  "suggested_chunk_top_k": 30,
+  "tuning_reason": "Query tìm văn bản hiện hành, amendment path sẽ tìm văn bản gốc nhất trong chuỗi sửa đổi."
+}
+
+Example 5 - Ambiguous query:
 User: "Làm sao để xin học bổng?"
 Output:
 {
@@ -483,6 +550,9 @@ Output:
   "extracted_topics": ["học bổng", "thủ tục hành chính"],
   "confidence": 0.3,
   "confidence_reason": "Query quá chung chung, không rõ loại học bổng nào (khuyến khích, tài trợ, chính phủ...). Mỗi loại có quy trình khác nhau.",
+  "query_cohort_year": null,
+  "query_type": "GENERAL",
+  "query_document_ref": null,
   "suggested_mode": "mix",
   "suggested_top_k": 8,
   "suggested_chunk_top_k": 17,

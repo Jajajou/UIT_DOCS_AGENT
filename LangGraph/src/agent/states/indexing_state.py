@@ -43,11 +43,11 @@ class IndexingState(TypedDict):
     # PDF detection
     is_pdf: NotRequired[bool]
 
-    # DeepSeek_OCR fields
+    # OCR fields
     parsed_content: NotRequired[Optional[str]]
-    deepseek_ocr_output_dir: NotRequired[Optional[str]]
-    deepseek_ocr_success: NotRequired[bool]
-    deepseek_ocr_error: NotRequired[Optional[str]]
+    ocr_output_dir: NotRequired[Optional[str]]
+    ocr_success: NotRequired[bool]
+    ocr_error: NotRequired[Optional[str]]
 
     # ============ Temporal Metadata Extraction ============
     # Extracted temporal metadata (valid_from, valid_until, cohorts, etc.)

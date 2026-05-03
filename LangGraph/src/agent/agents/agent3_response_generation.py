@@ -199,8 +199,13 @@ def _format_reranked_data(
         lines.append("**Text Chunks (theo độ liên quan):**")
         for i, (chunk, score) in enumerate(reranked_chunks[:top_n], 1):
             content = chunk.get("content", "")
+            meta = chunk.get("metadata", {})
             file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
+            doc_num = meta.get("document_number")
+            
             lines.append(f"{i}. (score: {score:.2f})")
+            if doc_num:
+                lines.append(f"   Document: {doc_num}")
             lines.append(f"   Content: {content[:300]}...")
             if file_source:
                 lines.append(f"   Source: {file_source}")
@@ -211,7 +216,7 @@ def _format_reranked_data(
 
 def _extract_references(
     reranked_chunks: List[Tuple[Dict[str, Any], float]],
-    min_score: float = 0.5
+    min_score: float = 0.4
 ) -> List[Dict[str, Any]]:
     """Extract references from reranked chunks."""
     references = []
@@ -226,9 +231,15 @@ def _extract_references(
             continue
 
         seen_sources.add(file_source)
+        
+        meta = chunk.get("metadata", {})
+        doc_num = meta.get("document_number")
 
-        # Extract title from file_path/file_source
-        title = file_source.split("/")[-1] if "/" in file_source else file_source
+        # Use document number as title if available, otherwise filename
+        if doc_num:
+            title = doc_num
+        else:
+            title = file_source.split("/")[-1] if "/" in file_source else file_source
         
         # Get excerpt
         content = chunk.get("content", "")
@@ -245,6 +256,53 @@ def _extract_references(
     references.sort(key=lambda x: x["relevance"], reverse=True)
     
     return references
+
+
+def _generate_confidence_transparency(state: QueryState) -> str:
+    """
+    Generate a transparency note for responses with low confidence or temporal ambiguity.
+    """
+    confidence = state.get("rerank_confidence", 1.0)
+    reranked_chunks = state.get("reranked_chunks", [])
+    
+    warnings = []
+    
+    # 1. Low overall confidence warning
+    if confidence < 0.8:
+        warnings.append(f"Thông tin này được tổng hợp với độ tin cậy thấp ({confidence:.1%}).")
+        
+    # 2. Temporal ambiguity check (multiple conflicting amendments or old docs)
+    unique_docs = set()
+    amendment_counts = 0
+    oldest_valid_from = None
+    
+    for chunk, _ in reranked_chunks[:5]:
+        meta = chunk.get("metadata", {})
+        doc_id = meta.get("doc_id") or meta.get("document_number")
+        if doc_id and doc_id not in unique_docs:
+            unique_docs.add(doc_id)
+            if meta.get("amended_by"):
+                amendment_counts += 1
+            valid_from = meta.get("valid_from")
+            if valid_from:
+                try:
+                    dt = datetime.fromisoformat(valid_from)
+                    if oldest_valid_from is None or dt < oldest_valid_from:
+                        oldest_valid_from = dt
+                except:
+                    pass
+
+    if amendment_counts > 1:
+        warnings.append("Lưu ý: Có nhiều văn bản sửa đổi liên quan đến nội dung này, hệ thống đã ưu tiên các phiên bản mới nhất.")
+        
+    if oldest_valid_from and (datetime.now() - oldest_valid_from).days > 1095: # 3 years
+        warnings.append("Lưu ý: Một số quy định tham chiếu đã ban hành hơn 3 năm, bạn nên kiểm tra lại tính cập nhật.")
+
+    if warnings:
+        header = "\n**[Tính minh bạch]**"
+        return f"{header}\n- " + "\n- ".join(warnings)
+    
+    return ""
 
 
 # ============================================================================
@@ -323,12 +381,23 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
         # Generate expiration warnings
         expiration_warnings = _generate_expiration_warnings(reranked_chunks)
 
+        # Generate transparency notes
+        transparency_notes = _generate_confidence_transparency(state)
+
         # Set final answer
         final_answer = generated_response
 
         # Add expiration warnings if any
         if expiration_warnings:
             final_answer += "\n\n---\n" + expiration_warnings
+            
+        # Add transparency notes if any
+        if transparency_notes:
+            if not expiration_warnings:
+                final_answer += "\n\n---\n"
+            else:
+                final_answer += "\n"
+            final_answer += transparency_notes
 
         # Add partial answer suffix if needed
         if response_type == "partial_answer":
