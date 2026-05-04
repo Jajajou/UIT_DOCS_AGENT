@@ -258,26 +258,10 @@ QWEN.md
 # Test scripts (temporary testing files, root-level only)
 test_metadata_rag.py
 test_*.py
-!web/apps/admin-dashboard/backend/tests/test_*.py
 *_test.py
 
 # /web local docs, test outputs, and runtime artifacts
 docs/CODEBASE_KNOWLEDGE.md
-web/CODEBASE_*.md
-web/WEB_STATUS_PLAN.md
-web/nhanxet.txt
-web/docs/admin-dashboard/DEPLOYMENT_RUNBOOK.md
-web/docs/admin-dashboard/RELEASE_SMOKE_CHECKLIST.md
-web/apps/admin-dashboard/frontend/coverage/
-web/apps/admin-dashboard/frontend/test-results/
-web/apps/admin-dashboard/frontend/visual.spec.ts-snapshots/
-web/apps/admin-dashboard/frontend/.env.local
-web/apps/admin-dashboard/backend/.local_site/
-web/apps/admin-dashboard/backend/tmp_test_db/
-web/apps/admin-dashboard/backend/tmp_virtualenv/
-web/apps/admin-dashboard/backend/data/
-web/apps/admin-dashboard/backend/tmp-backend-live.out.log
-web/apps/admin-dashboard/backend/tmp-backend-live.err.log
 inspect_*.py
 inspect_*.ipynb
 test_*.ipynb

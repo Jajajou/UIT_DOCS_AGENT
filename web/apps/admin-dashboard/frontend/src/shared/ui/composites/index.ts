@@ -1,7 +1,0 @@
-export * from '@/shared/ui/composites/DataTable'
-export * from '@/shared/ui/composites/FilterBar'
-export * from '@/shared/ui/composites/MetadataPanel'
-export * from '@/shared/ui/composites/PageHeader'
-export * from '@/shared/ui/composites/Sidebar'
-export * from '@/shared/ui/composites/Topbar'
-export * from '@/shared/ui/composites/DocumentCard'

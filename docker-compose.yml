@@ -35,7 +35,6 @@ services:
       POSTGRES_DB: lightrag
     volumes:
       - ./data/pg_data:/var/lib/postgresql/data
-      - ./docker/init-admin-dashboard-db.sql:/docker-entrypoint-initdb.d/20-admin-dashboard.sql:ro
     networks:
       - uit_network
 
