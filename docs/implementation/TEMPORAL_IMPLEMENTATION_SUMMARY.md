@@ -1,7 +1,7 @@
 # Temporal Document Management - Implementation Summary
 
 **Status**: Phase 1.5 COMPLETE (Metadata RAG Subgraph), Phase 2 PENDING
-**Last Updated**: 2026-01-04
+**Last Updated**: 2026-04-14
 **Ready for Testing**: ✅ YES (Subgraph), PENDING (Agent Integration)
 **Estimated Completion**: 75%
 
@@ -278,24 +278,13 @@ doc_id: NotRequired[Optional[str]]  # For metadata updates
 
 ---
 
-## 🔧 What's Remaining (4 Tasks)
+## What's Remaining (2 Tasks)
 
-### 1. **Update Agent 2 with Freshness Assessment** (NEXT)
-**Needed**: Add freshness checks to [agent2_confidence_assessment.py](LangGraph/src/agent/agents/agent2_confidence_assessment.py)
+### 1. ~~Update Agent 2 with Freshness Assessment~~ DONE
+Agent 2 removed in v0.2.0; freshness handled by temporal reranking.
 
-**What to add**:
-- Count expired items in retrieved data
-- Calculate freshness_ratio
-- Penalize confidence if significant expired content
-- Set `should_fallback` if freshness < threshold
-
-### 2. **Update Agent 3 with Expiration Warnings** (NEXT)
-**Needed**: Add warnings in [agent3_response_generation.py](LangGraph/src/agent/agents/agent3_response_generation.py)
-
-**What to add**:
-- Check for expired_items_count in state
-- Append warning in Vietnamese if expired content used
-- Example: "⚠️ **Lưu ý**: Một số thông tin tham khảo (3 nguồn) có thể đã hết hiệu lực."
+### 2. ~~Update Agent 3 with Expiration Warnings~~ DONE
+Completed in v0.2.0.
 
 ### 3. **Create Automated Monitoring Service**
 **Needed**: Implement [ping_service.py](ping_service.py)
@@ -432,13 +421,13 @@ doc_id: NotRequired[Optional[str]]  # For metadata updates
 
 ---
 
-## 🚀 Next Steps (For Tomorrow)
+## Next Steps
 
-1. **Complete Agent 2**: Add freshness assessment logic
-2. **Complete Agent 3**: Add expiration warnings
+1. ~~**Complete Agent 2**~~: DONE (removed in v0.2.0; freshness handled by temporal reranking)
+2. ~~**Complete Agent 3**~~: DONE (expiration warnings completed in v0.2.0)
 3. **Build ping_service.py**: Automated monitoring
 4. **Write tests**: Validate all temporal features
-5. **Tune thresholds**: Based on your testing feedback
+5. **Tune thresholds**: Based on testing feedback
 
 ---
 

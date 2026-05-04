@@ -299,32 +299,36 @@ class Reranker:
         Compute cohort match score for an item.
 
         Returns:
-            1.0 if item's cohort_years contains query_cohort_year (match — boost)
+            1.0 if item's cohort_years contains query_cohort_year OR is universal ("*")
             0.5 (neutral) if no cohort in query, no metadata, empty cohort_years, or mismatch
-                          (mismatch is neutral, not a penalty — Agent 1 may hallucinate
-                           a cohort year for non-cohort queries; universal-scope docs
-                           should not be demoted)
         """
         if query_cohort_year is None:
             return 0.5  # neutral — no cohort specified in query
+        
         cohort_years = item.get("metadata", {}).get("cohort_years", None)
         if not cohort_years:
             return 0.5  # neutral — no cohort metadata or empty list
-        # Normalize types: Agent 1 may return cohort year as str or int;
-        # DB stores as int. Compare as int to avoid false mismatches.
+
+        # 1. Check for Universal marker ("*") - matches any query cohort
+        if "*" in cohort_years or "*" in [str(y) for y in cohort_years]:
+            return 1.0
+
+        # 2. Check for explicit year match
         try:
             normalized_query_year = int(query_cohort_year)
         except (ValueError, TypeError):
             return 0.5
-        normalized_cohort_years = set()
+
         for y in cohort_years:
             try:
-                normalized_cohort_years.add(int(y))
+                if int(y) == normalized_query_year:
+                    return 1.0
             except (ValueError, TypeError):
-                pass
+                continue
+
         # Return neutral (0.5) on mismatch so cohort boost only rewards matches,
-        # never penalizes. A mismatch may mean the doc is universal-scope, not wrong.
-        return 1.0 if normalized_query_year in normalized_cohort_years else 0.5
+        # never penalizes.
+        return 0.5
 
     def rerank_with_temporal_boost(
         self,
@@ -334,7 +338,8 @@ class Reranker:
         top_k: Optional[int] = None,
         temporal_weight: Optional[float] = None,
         current_date: Optional[str] = None,
-        query_cohort_year: Optional[int] = None
+        query_cohort_year: Optional[int] = None,
+        query_is_historical: Optional[bool] = None
     ) -> List[Tuple[Dict[str, Any], float]]:
         """
         Rerank items with temporal boosting.
@@ -349,6 +354,8 @@ class Reranker:
             temporal_weight: Weight for temporal score (0.0-1.0).
                            If None, uses config.temporal.recency_weight
             current_date: ISO date for temporal comparison. Defaults to today.
+            query_cohort_year: Optional cohort year
+            query_is_historical: Optional flag for historical queries
 
         Returns:
             List of (item, combined_score) tuples, sorted by score (highest first)
@@ -376,7 +383,7 @@ class Reranker:
         # Amendment override: only demote a doc if its amending document is
         # actually present in the current candidate set. Firing unconditionally
         # would demote correct docs when the amending doc was never retrieved.
-        if getattr(settings, 'use_amendment_override', False):
+        if getattr(settings, 'use_amendment_override', False) and not query_is_historical:
             raw_override = settings.temporal.quality_penalties.get("amendment_override_score", 0.3)
             override_score = max(0.0, min(1.0, float(raw_override)))
             # Collect all doc IDs present in the candidate list
@@ -402,31 +409,45 @@ class Reranker:
                 print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
             temporal_scores = new_temporal_scores
 
-        # Combine scores: 3-weight formula when cohort active, 2-weight otherwise
+        # Combined scoring logic: 3-weight formula (55/20/25)
+        # Use cohort formula if cohort present, otherwise 70/30 formula
         use_cohort = getattr(settings, 'use_cohort_boost', True)
+        temporal_config = getattr(settings, 'temporal', None)
+        
+        # Default weights
+        s_w = 0.7
+        t_w = 0.3
+        c_w = 0.0
+        
         if use_cohort and query_cohort_year is not None:
-            temporal_config = getattr(settings, 'temporal', None)
             s_w = getattr(temporal_config, 'semantic_weight_cohort', 0.55)
             t_w = getattr(temporal_config, 'temporal_weight_cohort', 0.20)
             c_w = getattr(temporal_config, 'cohort_weight', 0.25)
             cohort_scores = [self._compute_cohort_score(item, query_cohort_year) for item in items]
-            combined_scores = [
-                s_w * s + t_w * t + c_w * c
-                for s, t, c in zip(semantic_scores, temporal_scores, cohort_scores)
-            ]
         else:
-            # Original 2-weight formula
-            if temporal_weight is None:
-                temporal_config = getattr(settings, 'temporal', None)
-                if temporal_config:
-                    temporal_weight = getattr(temporal_config, 'recency_weight', 0.3)
-                else:
-                    temporal_weight = 0.3
-            semantic_weight = 1.0 - temporal_weight
-            combined_scores = [
-                semantic_weight * sem + temporal_weight * temp
-                for sem, temp in zip(semantic_scores, temporal_scores)
-            ]
+            if temporal_weight is not None:
+                t_w = temporal_weight
+            else:
+                t_w = getattr(temporal_config, 'recency_weight', 0.3)
+            s_w = 1.0 - t_w
+            cohort_scores = [0.0] * len(items)
+
+        # Calculate final combined scores
+        combined_scores = []
+        for i, (s, t, c) in enumerate(zip(semantic_scores, temporal_scores, cohort_scores)):
+            score = s_w * s + t_w * t + c_w * c
+            
+            # VBHN Boost (+0.1) - prioritize consolidated documents
+            if items[i].get("metadata", {}).get("is_vbhn", False):
+                score += 0.1
+                
+            # Article Priority Boost (+0.15) - matches specific articles mentioned in query
+            if items[i].get("metadata", {}).get("article_priority_boost", False):
+                score += 0.15
+            
+            # Clamp to 1.0
+            score = min(1.0, score)
+            combined_scores.append(score)
 
         # Zip items with combined scores
         items_with_scores = list(zip(items, combined_scores))
@@ -468,7 +489,8 @@ class MultiSourceReranker:
         top_k_relationships: Optional[int] = None,
         top_k_chunks: Optional[int] = None,
         use_temporal_boost: bool = True,
-        query_cohort_year: Optional[int] = None
+        query_cohort_year: Optional[int] = None,
+        query_is_historical: Optional[bool] = None
     ) -> Dict[str, Any]:
         """
         Rerank all sources and calculate overall confidence.
@@ -482,6 +504,8 @@ class MultiSourceReranker:
             top_k_relationships: Keep top K relationships
             top_k_chunks: Keep top K chunks
             use_temporal_boost: If True, apply temporal boosting (default: True)
+            query_cohort_year: Optional cohort year
+            query_is_historical: Optional flag for historical queries
 
         Returns:
             Dict containing:
@@ -498,6 +522,8 @@ class MultiSourceReranker:
         print(f"[RERANKER] Reranking all sources for query: {query[:100]}...")
         if use_temporal_boost:
             print(f"[RERANKER] 📅 Temporal boosting: ENABLED")
+            if query_is_historical:
+                print(f"[RERANKER] ⏳ Historical query mode: ON (suppressing amendment override)")
         print("=" * 80)
 
         # Choose reranking method based on temporal boost setting
@@ -505,7 +531,8 @@ class MultiSourceReranker:
             def rerank_func(q, items, text_field, top_k):
                 return self.reranker.rerank_with_temporal_boost(
                     q, items, text_field=text_field, top_k=top_k,
-                    query_cohort_year=query_cohort_year
+                    query_cohort_year=query_cohort_year,
+                    query_is_historical=query_is_historical
                 )
         else:
             rerank_func = self.reranker.rerank_items  # type: ignore

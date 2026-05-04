@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from agent.config import PROJECT_ROOT
-DEFAULT_TIMEOUT = 60  # seconds
+DEFAULT_TIMEOUT = 300  # seconds
 
 
 class LightRAGAPIError(RuntimeError):
@@ -33,15 +33,24 @@ class LightRAGAPIClient:
         self.timeout = timeout
         self._session = session or requests.Session()
 
+        # Auto-login if no access token but credentials available
+        if not self.access_token:
+            username = os.getenv("LIGHTRAG_USERNAME", "uit")
+            password = os.getenv("LIGHTRAG_PASSWORD", "admin123")
+            try:
+                self.login(username, password)
+            except Exception as e:
+                print(f"[LightRAG] Auto-login failed: {e}")
+
     # ------------------------------ auth & headers ------------------------------
     def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers: dict[str, str] = {
             "Accept": "application/json",
         }
-        # API key header per OpenAPI: name "X-API-Key", in "header"
+        # LightRAG supports both X-API-Key and Authorization Bearer
         if self.api_key:
             headers["X-API-Key"] = self.api_key
-        if self.access_token:
+        elif self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"
         if extra:
             headers.update(extra)
@@ -1189,7 +1198,7 @@ class LightRAGAPIClient:
                       tm.extraction_confidence,
                       tm.extraction_timestamp::text AS indexed_at
                     FROM lightrag_doc_status lds
-                    INNER JOIN temporal_metadata tm ON tm.doc_id = lds.id
+                    LEFT JOIN temporal_metadata tm ON tm.doc_id = lds.id
                     WHERE lds.workspace = %s
                       AND lds.file_path = ANY(%s)
                     """,
@@ -1206,6 +1215,16 @@ class LightRAGAPIClient:
                     amends_documents, amended_by_documents, is_archived,
                     archived_at, archive_reason, extraction_confidence, indexed_at
                 ) = row
+                
+                # Ensure jsonb columns are parsed correctly if they come back as strings
+                def ensure_list(val):
+                    if isinstance(val, str):
+                        try:
+                            return json.loads(val)
+                        except:
+                            return []
+                    return val or []
+
                 if file_source:
                     result[file_source] = {
                         "doc_id": doc_id,
@@ -1213,10 +1232,10 @@ class LightRAGAPIClient:
                         "document_type": document_type,
                         "valid_from": valid_from,
                         "valid_until": valid_until,
-                        "cohort_years": cohort_years or [],
+                        "cohort_years": ensure_list(cohort_years),
                         "cohort_scope": cohort_scope,
-                        "amends_documents": amends_documents or [],
-                        "amended_by": amended_by_documents or [],
+                        "amends_documents": ensure_list(amends_documents),
+                        "amended_by": ensure_list(amended_by_documents),
                         "is_archived": bool(is_archived),
                         "archived_at": archived_at,
                         "archive_reason": archive_reason,

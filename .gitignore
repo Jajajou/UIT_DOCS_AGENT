@@ -60,6 +60,7 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+tmp/
 
 # Flask stuff:
 instance/
@@ -217,10 +218,12 @@ __marimo__/
 .langgraph_api/
 .env.lightrag
 .env.deepseekocr
+.env.local
 
 # Data directories
 data/**/*
 .gemini-clipboard/
+.gemini/
 
 # Project specific
 
@@ -256,6 +259,9 @@ QWEN.md
 test_metadata_rag.py
 test_*.py
 *_test.py
+
+# /web local docs, test outputs, and runtime artifacts
+docs/CODEBASE_KNOWLEDGE.md
 inspect_*.py
 inspect_*.ipynb
 test_*.ipynb
@@ -264,6 +270,13 @@ test_*.ipynb
 
 # Claude Code local config
 .claude/
+.agent/
+
+mempalace.yaml
+entities.json
+GEMINI.md
+.gemini/
+.langgraph_api/
 
 # Session and planning docs (local only)
 SESSION_HANDOFF.md
@@ -281,3 +294,4 @@ BAO_CAO_TIEN_DO_22_12_2024.md
 # Binary files
 *.pdf
 "UIT Assistant Chatbot.docx.md"
+.gitnexus

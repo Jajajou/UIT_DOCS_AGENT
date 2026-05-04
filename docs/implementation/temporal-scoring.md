@@ -2,7 +2,7 @@
 
 **Phase:** 1 & 2
 **Status:** ✅ Implemented (needs integration testing)
-**Last Updated:** 2025-12-17
+**Last Updated:** 2026-04-14
 
 ---
 
@@ -295,15 +295,11 @@ def rerank_with_temporal_boost(
        ├─ Each chunk inherits document metadata
        └─ Chunks from expired docs get low temporal scores
 
-4. Agent 2: Confidence Assessment ⚠️ TODO
-   └─> Should apply temporal penalties to data_quality_score
-       ├─ If top result is expired → multiply quality by 0.5
-       └─ If top result is expiring soon → multiply quality by 0.8
+4. Agent 2: COMPLETE (v0.2.0)
+   └─> Agent 2 removed; freshness handled by temporal reranking
 
-5. Agent 3: Response Generation ⚠️ TODO
-   └─> Should show temporal warnings in response
-       ├─ "⚠️ This document expires on 2025-01-31"
-       └─ "❌ This document expired on 2024-12-01"
+5. Agent 3: Response Generation COMPLETE (v0.2.0)
+   └─> Expiration warnings integrated into response generation
 ```
 
 ### Current Integration Status
@@ -312,8 +308,8 @@ def rerank_with_temporal_boost(
 |-------------------|--------|------|------|
 | **Reranker class** | ✅ Complete | [reranker.py](../../LangGraph/src/agent/clients/reranker.py) | 199-370 |
 | **Query graph reranking** | ✅ Complete | [query_graph.py](../../LangGraph/src/agent/graphs/query_graph.py) | TBD |
-| **Agent 2 penalties** | ❌ TODO | [agent2_confidence_assessment.py](../../LangGraph/src/agent/agents/agent2_confidence_assessment.py) | TBD |
-| **Agent 3 warnings** | ❌ TODO | [agent3_response_generation.py](../../LangGraph/src/agent/agents/agent3_response_generation.py) | TBD |
+| **Agent 2 penalties** | ✅ COMPLETE | Agent 2 removed in v0.2.0; freshness handled by temporal reranking | N/A |
+| **Agent 3 warnings** | ✅ COMPLETE | [agent3_response_generation.py](../../LangGraph/src/agent/agents/agent3_response_generation.py) | v0.2.0 |
 | **Ping service archiving** | ❌ TODO | N/A (new service) | N/A |
 
 ---
@@ -483,16 +479,12 @@ User Query: "Quy định về điểm danh là gì?"
    └─> Sort by combined_score (QĐ 108 now ranks #1)
    ↓
 
-4. Agent 2 → Assess data quality
-   ⚠️ TODO: Apply temporal penalties
-   ├─ If top result expired → quality × 0.5
-   └─ If expiring soon → quality × 0.8
+4. Agent 2 COMPLETE (v0.2.0)
+   └─> Agent 2 removed; freshness handled by temporal reranking
    ↓
 
-5. Agent 3 → Generate response
-   ⚠️ TODO: Show temporal warnings
-   ├─ "Based on Quyết định 108/QĐ-ĐHCNTT (valid until 2028-12-31)..."
-   └─ "⚠️ Note: This document expires in 25 days."
+5. Agent 3 → Generate response COMPLETE (v0.2.0)
+   └─> Expiration warnings integrated into response generation
 ```
 
 ---
@@ -615,37 +607,11 @@ See [TESTING_CHECKLIST.md](../../TESTING_CHECKLIST.md) for comprehensive test sc
 
 ### Pending Integration (TODO)
 
-1. **Agent 2 Temporal Penalties** ([TODO.md](../../TODO.md))
-   ```python
-   def assess_data_quality(state: QueryState) -> QueryState:
-       # Existing quality calculation
-       quality_score = calculate_base_quality(...)
+1. ~~**Agent 2 Temporal Penalties**~~ COMPLETE
+   Agent 2 removed in v0.2.0. Freshness penalties are now handled by temporal reranking in the retrieval pipeline.
 
-       # ⚠️ TODO: Apply temporal penalties
-       top_item = state["retrieved_entities"][0]
-       if is_expired(top_item):
-           quality_score *= settings.temporal.quality_penalties.expired_penalty
-       elif is_expiring_soon(top_item):
-           quality_score *= settings.temporal.quality_penalties.expiring_soon_penalty
-
-       return {"data_quality_score": quality_score}
-   ```
-
-2. **Agent 3 Expiration Warnings** ([TODO.md](../../TODO.md))
-   ```python
-   def generate_response(state: QueryState) -> QueryState:
-       response = base_response
-
-       # ⚠️ TODO: Add temporal warnings
-       for ref in state["references"]:
-           if is_expired(ref):
-               response += f"\n\n❌ **Warning:** {ref['title']} expired on {ref['valid_until']}"
-           elif is_expiring_soon(ref):
-               days_left = days_until_expiry(ref)
-               response += f"\n\n⚠️ **Notice:** {ref['title']} expires in {days_left} days"
-
-       return {"generated_response": response}
-   ```
+2. ~~**Agent 3 Expiration Warnings**~~ COMPLETE
+   Expiration warnings integrated into Agent 3 response generation in v0.2.0.
 
 3. **Ping Service Automated Archiving** ([TODO.md](../../TODO.md))
    ```python

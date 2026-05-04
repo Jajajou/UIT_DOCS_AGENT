@@ -231,29 +231,12 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
 
         updates: Dict[str, Any] = {}
 
-        # --- 1. Document Number ---
-        q_doc = "So hieu van ban, so quyet dinh, so thong bao"
-        docs_num = _rag_retrieve_and_rerank(col_name, q_doc)
-        updates["document_number_chunks"] = docs_num
+        # NOTE: document_number and amends_documents are extracted by
+        # header_extraction.py (positional, first 2000 chars) BEFORE this
+        # subgraph is invoked. RAG is kept only for cohort_years and valid_dates
+        # which are legitimately scattered throughout curriculum documents.
 
-        # LLM Extract
-        context_num = "\n---\n".join(docs_num)
-        prompt_num = METADATA_PROMPTS['document_number'].format(
-            filename=filename,
-            context=context_num
-        )
-        res_num = llm.invoke(prompt_num)
-        # Extract content from response
-        content = res_num.content if hasattr(res_num, 'content') else str(res_num)
-        # Ensure content is a string before calling strip
-        if not isinstance(content, str):
-            content = str(content)
-        content = strip_think_tags(content)
-        raw_num = content.strip().replace("NULL", "").strip()
-        # Validate: real document numbers are short (e.g. "108/QĐ-ĐHCNTT"), max 80 chars
-        updates["document_number"] = raw_num if raw_num and len(raw_num) <= 80 else None
-        
-        # --- 2. Valid Dates (Temporal Aware) ---
+        # --- 1. Valid Dates (Temporal Aware) ---
         q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
         docs_date = _rag_retrieve_and_rerank(col_name, q_date)
         updates["valid_from_chunks"] = docs_date
@@ -321,52 +304,10 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             updates["cohort_years"] = []
             updates["cohort_scope"] = "unspecified"
         
-        # --- 4. Amends ---
-        q_amends = "Văn bản này sửa đổi, bổ sung, thay thế văn bản nào?"
-        docs_amends = _rag_retrieve_and_rerank(col_name, q_amends)
-        updates["amends_documents_chunks"] = docs_amends
+        # NOTE: amends_documents extracted by header_extraction.py (not RAG).
+        # Do NOT overwrite it here — the indexing_graph merges header results
+        # into the final metadata after this subgraph returns.
 
-        # LLM Extract for amendments
-        if docs_amends:
-            context_amends = "\n---\n".join(docs_amends)
-            prompt_amends = f"""
-Bạn là chuyên gia pháp lý. Xác định văn bản nào được sửa đổi/bổ sung bởi văn bản này.
-
-Nội dung:
-{context_amends}
-
-Tìm số hiệu các văn bản được sửa đổi (VD: "108/QĐ-ĐHCNTT", "141/TB-KHTC").
-- Nếu tìm thấy: trả về list JSON: {{"amends_documents": ["108/QĐ-ĐHCNTT", "141/TB-KHTC"]}}
-- Nếu không tìm thấy: {{"amends_documents": []}}
-"""
-            try:
-                res_amends = llm.invoke(prompt_amends)
-                content_amends = res_amends.content if hasattr(res_amends, 'content') else str(res_amends)
-
-                # Ensure content is string
-                if not isinstance(content_amends, str):
-                    content_amends = str(content_amends)
-
-                # Try to parse JSON from response — use raw_decode to stop at first valid object
-                try:
-                    decoder = json.JSONDecoder()
-                    start = content_amends.find('{')
-                    if start >= 0:
-                        amends_data, _ = decoder.raw_decode(content_amends, start)
-                        updates["amends_documents"] = amends_data.get("amends_documents", [])
-                    else:
-                        raise ValueError("No JSON object found")
-                except (ValueError, json.JSONDecodeError):
-                    # Fallback: regex search for document numbers
-                    doc_numbers = re.findall(r'\d+/[A-ZĐ\-]+', context_amends)
-                    updates["amends_documents"] = list(set(doc_numbers))[:5]
-            except Exception as e:
-                logger.warning(f"Error extracting amends: {e}")
-                print(f"Error extracting amends: {e}")
-                updates["amends_documents"] = []
-        else:
-            updates["amends_documents"] = []
-            
         # --- Fallback: Extract from Filename if RAG failed or is imprecise ---
         # Checks if document_number or valid_from is missing/imprecise
         extracted_date = updates.get("valid_from")
@@ -478,7 +419,8 @@ def calculate_confidence_node(state: MetadataRAGState) -> Dict[str, Any]:
         scores.append(llm_confidence)
 
         # 3. Chunk relevance (check if we got any chunks for each query)
-        chunk_fields = ["document_number_chunks", "valid_from_chunks", "cohort_years_chunks", "amends_documents_chunks"]
+        # amends_documents_chunks removed — amends now extracted by header_extraction.py
+        chunk_fields = ["valid_from_chunks", "cohort_years_chunks"]
         chunks_found = 0
         for field in chunk_fields:
             chunks = state.get(field, [])

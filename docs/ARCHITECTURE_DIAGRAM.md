@@ -1,8 +1,8 @@
 # UIT_DOCS_AGENT - Complete System Architecture
 
-**Version:** 2.0 (with Metadata RAG Subgraph)
-**Last Updated:** 2026-01-04
-**Phase:** 1.5 COMPLETE (Metadata RAG), Phase 2 PENDING (Agent Integration)
+**Version:** 2.1 (v0.2.0 - 2-Agent Pipeline)
+**Last Updated:** 2026-04-14
+**Phase:** v0.2.0 SHIPPED (Agent 2 removed, 2-agent linear pipeline)
 
 ---
 
@@ -204,18 +204,31 @@
 
 ---
 
-## 4. Query Processing Layer - 3-Agent RAG Pipeline
+## 4. Query Processing Layer - 2-Agent Pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                   QUERY PROCESSING LAYER - 3-AGENT PIPELINE                  │
+│                   QUERY PROCESSING LAYER - 2-AGENT PIPELINE                  │
+│                                                                              │
+│  Linear 7-node graph (v0.2.0):                                              │
+│  prepare_input -> agent1_understand_query -> retrieve_data ->               │
+│  enrich_with_temporal_metadata -> rerank_data ->                            │
+│  agent3_generate_response -> format_final_answer                            │
+│                                                                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  User Query (Vietnamese)                                                     │
 │         │                                                                    │
 │         v                                                                    │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ AGENT 1: Query Understanding & Parameter Tuning                      │   │
+│  │ NODE 1: prepare_input                                                │   │
+│  │  - Extract query from messages                                        │   │
+│  │  - Initialize pipeline state                                          │   │
+│  └───────────────────────────┬───────────────────────────────────────── │   │
+│                              │                                            │   │
+│                              v                                            │   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ NODE 2: AGENT 1 - Query Understanding & Parameter Tuning             │   │
 │  │                                                                       │   │
 │  │ Input: User query (Vietnamese)                                        │   │
 │  │                                                                       │   │
@@ -224,92 +237,87 @@
 │  │ - Extract key entities and topics                                     │   │
 │  │ - Calculate query confidence (0-1)                                    │   │
 │  │ - Tune retrieval parameters:                                          │   │
-│  │   • retrieval_mode: naive/local/global/hybrid/mix                    │   │
-│  │   • top_k: number of results                                          │   │
-│  │   • chunk_top_k: number of text chunks                               │   │
+│  │   - retrieval_mode: naive/local/global/hybrid/mix                    │   │
+│  │   - top_k: number of results                                          │   │
+│  │   - chunk_top_k: number of text chunks                               │   │
 │  │                                                                       │   │
 │  │ Output:                                                               │   │
-│  │ - parsed_intention: "Thủ tục đăng ký học bổng khuyến khích"         │   │
-│  │ - extracted_entities: ["Học bổng", "Khuyến khích", "Đăng ký"]       │   │
+│  │ - parsed_intention: "Thu tuc dang ky hoc bong khuyen khich"          │   │
+│  │ - extracted_entities: ["Hoc bong", "Khuyen khich", "Dang ky"]        │   │
 │  │ - query_confidence: 0.85                                              │   │
-│  │ - needs_clarification: false                                          │   │
+│  │                                                                       │   │
+│  │ Note: All queries proceed to retrieval (no clarification branch).    │   │
 │  └───────────────────────────┬───────────────────────────────────────── │   │
-│                              │                                            │   │
-│         ┌────────────────────┴────────────────────┐                      │   │
-│         │ If confidence < 0.5:                     │                      │   │
-│         │ Ask clarification question → Loop back   │                      │   │
-│         └──────────────────────────────────────────┘                      │   │
 │                              │                                            │   │
 │                              v                                            │   │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ Retrieval + Reranking + Temporal Scoring                             │   │
+│  │ NODE 3: retrieve_data - LightRAG Retrieval                           │   │
 │  │                                                                       │   │
-│  │ Step 1: LightRAG Dual Retrieval                                      │   │
 │  │  - Call LightRAG /query/data endpoint                                │   │
 │  │  - Returns: entities, relationships, text chunks                     │   │
-│  │  - Fetch temporal metadata from PostgreSQL                           │   │
+│  └───────────────────────────┬───────────────────────────────────────── │   │
+│                              │                                            │   │
+│                              v                                            │   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ NODE 4: enrich_with_temporal_metadata                                │   │
 │  │                                                                       │   │
-│  │ Step 2: ViRanker Reranking                                           │   │
+│  │  - Fetch temporal metadata from PostgreSQL for retrieved documents   │   │
+│  │  - Attach valid_from, valid_until, cohort_years, amends_documents   │   │
+│  └───────────────────────────┬───────────────────────────────────────── │   │
+│                              │                                            │   │
+│                              v                                            │   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ NODE 5: TEMPORAL RERANKING                                           │   │
+│  │  Semantic + Recency + Cohort + Amendment Scoring                     │   │
+│  │                                                                       │   │
+│  │ Step 1: ViRanker Reranking                                           │   │
 │  │  - Model: namdp-ptit/ViRanker (Vietnamese cross-encoder)             │   │
 │  │  - Rerank all retrieved items                                         │   │
 │  │  - Semantic relevance scores (0-1)                                    │   │
 │  │                                                                       │   │
-│  │ Step 3: Temporal Scoring                                             │   │
+│  │ Step 2: Temporal Scoring                                             │   │
 │  │  - Combine semantic + temporal scores:                                │   │
 │  │    final_score = 0.7 * semantic_score + 0.3 * temporal_score        │   │
 │  │                                                                       │   │
 │  │  - Temporal penalties:                                                │   │
-│  │    • Expired documents: 0.5x penalty                                  │   │
-│  │    • Expiring soon (30 days): 0.8x penalty                           │   │
-│  │    • Amended documents: 0.3x penalty                                  │   │
-│  │    • Archived documents: 0.0 score (hidden)                          │   │
+│  │    - Expired documents: 0.5x penalty                                  │   │
+│  │    - Expiring soon (30 days): 0.8x penalty                           │   │
+│  │    - Amended documents: 0.3x penalty                                  │   │
+│  │    - Archived documents: 0.0 score (hidden)                          │   │
 │  │                                                                       │   │
 │  │  - Sort by final_score (descending)                                   │   │
 │  └───────────────────────────┬───────────────────────────────────────── │   │
 │                              │                                            │   │
 │                              v                                            │   │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ AGENT 2: Confidence Assessment & Freshness Check                     │   │
+│  │ NODE 6: AGENT 3 - Response Generation                                │   │
 │  │                                                                       │   │
-│  │ Input: Reranked data with temporal metadata                          │   │
-│  │                                                                       │   │
-│  │ Processing:                                                           │   │
-│  │ - Evaluate data quality (relevance, completeness, consistency)       │   │
-│  │ - Calculate data_quality_score (0-1)                                 │   │
-│  │ - Apply freshness penalties for expired docs                         │   │
-│  │ - Determine coverage: complete | partial | insufficient              │   │
-│  │ - Decide: should_fallback (true if quality < 0.4)                    │   │
-│  │                                                                       │   │
-│  │ Output:                                                               │   │
-│  │ - data_quality_score: 0.85                                            │   │
-│  │ - data_coverage: "complete"                                           │   │
-│  │ - should_fallback: false                                              │   │
-│  │ - freshness_warnings: ["Document expires in 25 days"]               │   │
-│  └───────────────────────────┬───────────────────────────────────────── │   │
-│                              │                                            │   │
-│                              v                                            │   │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ AGENT 3: Response Generation                                         │   │
-│  │                                                                       │   │
-│  │ Input: Reranked data + quality assessment + freshness warnings       │   │
+│  │ Input: Reranked data with temporal metadata and reranking scores     │   │
 │  │                                                                       │   │
 │  │ Processing:                                                           │   │
-│  │ - Generate answer based on quality level:                            │   │
-│  │   • Quality >= 0.7: Full, detailed answer                            │   │
-│  │   • Quality 0.4-0.7: Partial answer with caveats                     │   │
-│  │   • Quality < 0.4: Fallback "Please contact advisor"                │   │
+│  │ - Decide response type based on retrieved data (no separate          │   │
+│  │   confidence assessment -- Agent 3 decides directly):                │   │
+│  │   - Sufficient high-scoring data: Full, detailed answer              │   │
+│  │   - Partial data available: Partial answer with caveats              │   │
+│  │   - Insufficient data: Fallback "Please contact advisor"             │   │
 │  │                                                                       │   │
 │  │ - Add expiration warnings:                                            │   │
 │  │   "WARNING: This document expires on 2024-12-31"                    │   │
 │  │                                                                       │   │
 │  │ - Format references with hyperlinks:                                  │   │
-│  │   [Quyết định 108/QĐ-ĐHCNTT](https://uit.edu.vn/docs/108)          │   │
+│  │   [Quyet dinh 108/QD-DHCNTT](https://uit.edu.vn/docs/108)           │   │
 │  │                                                                       │   │
 │  │ Output:                                                               │   │
 │  │ - generated_response: Vietnamese answer text                         │   │
 │  │ - response_type: full_answer | partial_answer | fallback            │   │
 │  │ - references: [{title, url, relevance}, ...]                        │   │
-│  │ - final_answer: Formatted markdown with warnings                     │   │
+│  └───────────────────────────┬───────────────────────────────────────── │   │
+│                              │                                            │   │
+│                              v                                            │   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ NODE 7: format_final_answer                                          │   │
+│  │  - Format markdown with warnings and references                      │   │
+│  │  - Produce final_answer field                                         │   │
 │  └───────────────────────────┬───────────────────────────────────────── │   │
 │                              │                                            │   │
 │                              v                                            │   │
@@ -354,7 +362,7 @@
 | **Metadata Extraction Confidence** | 0.92 | +83% | Metadata RAG vs regex (0.5-0.6) |
 | **Metadata Save Time** | <1s | 60x faster | Track_id approach vs polling (15-30s) |
 | **Temporal Scoring Accuracy** | 70% semantic + 30% temporal | N/A | Balanced relevance + freshness |
-| **Query Confidence** | 93% | N/A | 3-agent pipeline accuracy |
+| **Query Confidence** | 93% | N/A | Pre-v0.2.0 3-agent pipeline metric |
 | **Concurrent Embeddings (M1)** | 8 | -87.5% | Reduced from 64 to prevent GPU timeout |
 | **GPU Timeout Errors** | 0 | -100% | Resolved with M1 optimizations |
 
@@ -397,18 +405,18 @@ PDF → DeepSeek-OCR → Metadata RAG Subgraph → LightRAG Upload → PostgreSQ
                           (0.92 confidence)
 ```
 
-### Query Pipeline
+### Query Pipeline (v0.2.0 - 2-Agent, 7 Nodes)
 ```
-User Query → Agent 1 → LightRAG Retrieval → ViRanker Reranking → Temporal Scoring →
-             Agent 2 (Confidence) → Agent 3 (Response) → Final Answer with Warnings
+User Query → prepare_input → Agent 1 (Understanding) → retrieve_data →
+             enrich_with_temporal_metadata → rerank_data (ViRanker + Temporal) →
+             Agent 3 (Response) → format_final_answer → Final Answer with Warnings
 ```
 
 ---
 
-**Architecture Version:** 2.0
-**Phase Status:** Phase 1.5 COMPLETE (Metadata RAG Subgraph), Phase 2 PENDING (Agent Integration)
+**Architecture Version:** 2.1 (v0.2.0)
+**Phase Status:** v0.2.0 SHIPPED (2-agent linear pipeline, Agent 2 removed)
 **Next Milestones:**
-- Agent 2: Freshness assessment logic
 - Agent 3: Expiration warnings in responses
 - Ping service: Automated document archiving
 - Comprehensive testing suite
