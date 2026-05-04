@@ -33,15 +33,24 @@ class LightRAGAPIClient:
         self.timeout = timeout
         self._session = session or requests.Session()
 
+        # Auto-login if no access token but credentials available
+        if not self.access_token:
+            username = os.getenv("LIGHTRAG_USERNAME", "uit")
+            password = os.getenv("LIGHTRAG_PASSWORD", "admin123")
+            try:
+                self.login(username, password)
+            except Exception as e:
+                print(f"[LightRAG] Auto-login failed: {e}")
+
     # ------------------------------ auth & headers ------------------------------
     def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers: dict[str, str] = {
             "Accept": "application/json",
         }
-        # API key header per OpenAPI: name "X-API-Key", in "header"
+        # LightRAG supports both X-API-Key and Authorization Bearer
         if self.api_key:
             headers["X-API-Key"] = self.api_key
-        if self.access_token:
+        elif self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"
         if extra:
             headers.update(extra)
