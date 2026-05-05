@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0.0] - 2026-05-05
+
+### Added
+- Added `LangGraph/tests/test_deployed_api.py` as a health check script for the deployed LangGraph API.
+- Configured CORS origins in `LangGraph/.env.example` to prepare for cross-origin requests from the separated frontend.
+
+### Changed
+- Prepared `web/` directory for extraction into a separate repository via `git subtree split`. The `web-frontend-only` branch was successfully created and the frontend code was cleanly removed from the AI repository.
+- Replaced wildcard backend proxy logic in `web/` with direct LangGraph SSE connections using `@langchain/react`.
+
+### Removed
+- Entire `web/` directory removed from the AI backend repository (`UIT_DOCS_AGENT`) to reduce cognitive overhead and allow independent deployment.
+- Removed `docker/init-admin-dashboard-db.sql`.
+- Removed `web/` entries from `.gitignore` and `docker-compose.yml`.
+
 ## [0.3.2] - 2026-04-21
 
 ### Changed

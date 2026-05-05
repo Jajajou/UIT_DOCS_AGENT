@@ -1,0 +1,34 @@
+{
+  "108/QD-DHCNTT": {
+    "doc_id": "doc-ec0ecdde90113ff61eaa1027b5c47c90",
+    "amends_documents": [],
+    "amended_by": [],
+    "cohort_years": [2015, 2016, 2017],
+    "valid_from": "2015-01-01",
+    "valid_until": null
+  },
+  "125/QD-DHCNTT-DTDH": {
+    "doc_id": "doc-70ee4e32645ddc776cc9f8c46ed06839",
+    "amends_documents": [],
+    "amended_by": [],
+    "cohort_years": [2018, 2019, 2020],
+    "valid_from": "2018-01-01",
+    "valid_until": null
+  },
+  "141/QD-DHCNTT": {
+    "doc_id": "doc-abc123",
+    "amends_documents": ["108/QD-DHCNTT"],
+    "amended_by": ["156/QD-DHCNTT"],
+    "cohort_years": [2015, 2016, 2017],
+    "valid_from": "2015-01-01",
+    "valid_until": "2020-01-01"
+  },
+  "156/QD-DHCNTT": {
+    "doc_id": "doc-def456",
+    "amends_documents": ["141/QD-DHCNTT"],
+    "amended_by": [],
+    "cohort_years": [2018, 2019, 2020, 2021],
+    "valid_from": "2020-01-01",
+    "valid_until": null
+  }
+}
