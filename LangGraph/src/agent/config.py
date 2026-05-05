@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import yaml
+from contextvars import ContextVar
 from dotenv import load_dotenv
 
 from pydantic import BaseModel, Field
@@ -8,6 +9,10 @@ from typing import Any, Dict, List, Literal, Optional
 
 # Load environment variables from .env file
 load_dotenv()
+
+# --- Context-local configuration for thread-safety ---
+# This allows overriding settings per-request without global mutation
+_config_overrides: ContextVar[Dict[str, Any]] = ContextVar("config_overrides", default={})
 
 # --- Project Paths ---
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).parents[2])).resolve()
@@ -89,18 +94,35 @@ class Config(BaseModel):
     reranker_base_url: Optional[str] = Field(
         default_factory=lambda: os.getenv("RERANKER_BASE_URL")
     )
-    use_cohort_boost: bool = Field(
-        default_factory=lambda: os.getenv("USE_COHORT_BOOST", "true").lower() != "false"
-    )
-    use_temporal_scoring: bool = Field(
-        default_factory=lambda: os.getenv("USE_TEMPORAL_SCORING", "true").lower() != "false"
-    )
-    use_amendment_override: bool = Field(
-        default_factory=lambda: os.getenv("USE_AMENDMENT_OVERRIDE", "false").lower() == "true"
-    )
-    use_metadata_routing: bool = Field(
-        default_factory=lambda: os.getenv("USE_METADATA_ROUTING", "true").lower() != "false"
-    )
+    
+    # Flags with ContextVar override support
+    @property
+    def use_cohort_boost(self) -> bool:
+        overrides = _config_overrides.get()
+        if "use_cohort_boost" in overrides:
+            return overrides["use_cohort_boost"]
+        return os.getenv("USE_COHORT_BOOST", "true").lower() != "false"
+
+    @property
+    def use_temporal_scoring(self) -> bool:
+        overrides = _config_overrides.get()
+        if "use_temporal_scoring" in overrides:
+            return overrides["use_temporal_scoring"]
+        return os.getenv("USE_TEMPORAL_SCORING", "true").lower() != "false"
+
+    @property
+    def use_amendment_override(self) -> bool:
+        overrides = _config_overrides.get()
+        if "use_amendment_override" in overrides:
+            return overrides["use_amendment_override"]
+        return os.getenv("USE_AMENDMENT_OVERRIDE", "false").lower() == "true"
+
+    @property
+    def use_metadata_routing(self) -> bool:
+        overrides = _config_overrides.get()
+        if "use_metadata_routing" in overrides:
+            return overrides["use_metadata_routing"]
+        return os.getenv("USE_METADATA_ROUTING", "true").lower() != "false"
 
     class Config:
         arbitrary_types_allowed = True
@@ -113,6 +135,14 @@ settings = Config(
     reranker=_yaml_config.get("reranker", {}),
     temporal=_yaml_config.get("temporal", {})
 )
+
+def set_config_overrides(overrides: Dict[str, Any]) -> Any:
+    """Set per-request config overrides. Returns a token for reset."""
+    return _config_overrides.set(overrides)
+
+def reset_config_overrides(token: Any) -> None:
+    """Reset config overrides using a token."""
+    _config_overrides.reset(token)
 
 def get_attr_safe(obj: Any, attr: str, default: Any = None) -> Any:
     """

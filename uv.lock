@@ -3468,7 +3468,7 @@ wheels = [
 [[package]]
 name = "mlx-vlm"
 version = "0.4.4"
-source = { git = "https://github.com/Blaizzy/mlx-vlm.git#3472132fe6ee7beeae2c2fc35923eaed2e734b3d" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "datasets" },
     { name = "fastapi" },
@@ -3482,6 +3482,10 @@ dependencies = [
     { name = "tqdm" },
     { name = "transformers" },
     { name = "uvicorn" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/94/ec/108aec30efb159940ea29d133d5d8ec14840edbec914869b46eaafac5552/mlx_vlm-0.4.4.tar.gz", hash = "sha256:3197e277c1be9ed1712ea04624df029e486f7747ad93e40e7bd1c9c771f8b179", size = 836370, upload-time = "2026-04-04T15:19:01.087Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/81/235518176c3c8230e5274e91346ecf940591f653e73b0daeb505fb37eea9/mlx_vlm-0.4.4-py3-none-any.whl", hash = "sha256:3ff86ea738ab1914dc1b07e4fa5d4cc34bec5909e540692cfad0af808af13c11", size = 1014936, upload-time = "2026-04-04T15:18:59.328Z" },
 ]
 
 [[package]]
@@ -6552,7 +6556,7 @@ requires-dist = [
     { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.4.21" },
     { name = "lightrag-hku", extras = ["api"], editable = "LightRAG" },
     { name = "matplotlib", specifier = ">=3.10.7" },
-    { name = "mlx-vlm", extras = ["torch"], git = "https://github.com/Blaizzy/mlx-vlm.git" },
+    { name = "mlx-vlm", extras = ["torch"] },
     { name = "nltk", specifier = ">=3.9.2" },
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "ollama", specifier = ">=0.6.1" },
@@ -6565,7 +6569,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "sentence-transformers", specifier = ">=5.4.0" },
     { name = "torch", specifier = ">=2.11.0" },
-    { name = "transformers", specifier = ">=5.5.4" },
+    { name = "transformers" },
     { name = "underthesea", specifier = ">=9.4.0" },
     { name = "unidecode", specifier = ">=1.4.0" },
     { name = "uvicorn", specifier = ">=0.44.0" },

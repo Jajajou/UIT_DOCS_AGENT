@@ -36,7 +36,7 @@ dependencies = [
     "scikit-learn>=1.8.0",
     "sentence-transformers>=5.4.0",
     "torch>=2.11.0",
-    "transformers>=5.5.4",
+    "transformers",
     "underthesea>=9.4.0",
     "unidecode>=1.4.0",
     "uvicorn>=0.44.0",
@@ -49,7 +49,6 @@ members = [
 
 [tool.uv.sources]
 lightrag-hku = { workspace = true }
-mlx-vlm = { git = "https://github.com/Blaizzy/mlx-vlm.git" }
 
 [tool.pyright]
 venvPath = "."

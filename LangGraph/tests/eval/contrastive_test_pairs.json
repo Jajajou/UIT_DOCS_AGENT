@@ -1,0 +1,102 @@
+{
+  "description": "10 contrastive (counterfactual) pairs to prove temporal sensitivity.",
+  "version": "1.0",
+  "pairs": [
+    {
+      "id": 101,
+      "type": "contrastive_pivot",
+      "pair_id": "101a",
+      "query": "K2015 xét tốt nghiệp thì chuẩn ngoại ngữ thế nào?",
+      "query_cohort_year": 2015,
+      "expected_doc_numbers": ["108/QD-DHCNTT"],
+      "note": "K2015-K2017 belongs to the 108/2019 amendment lane."
+    },
+    {
+      "id": 102,
+      "type": "contrastive_pivot",
+      "pair_id": "101b",
+      "query": "K2022 xét tốt nghiệp thì chuẩn ngoại ngữ thế nào?",
+      "query_cohort_year": 2022,
+      "expected_doc_numbers": ["828/QD-DHCNTT"],
+      "note": "Contrastive: Same intent, different cohort year results in different document."
+    },
+    {
+      "id": 103,
+      "type": "contrastive_pivot",
+      "pair_id": "102a",
+      "query": "Quy chế đào tạo tín chỉ hệ chính quy áp dụng cuối năm 2022 là gì?",
+      "query_cohort_year": null,
+      "as_of": "2022-12-31",
+      "expected_doc_numbers": ["790/QD-DHCNTT"],
+      "note": "Pre-amendment anchor."
+    },
+    {
+      "id": 104,
+      "type": "contrastive_pivot",
+      "pair_id": "102b",
+      "query": "Quy chế đào tạo tín chỉ hệ chính quy hiện tại là gì?",
+      "query_cohort_year": null,
+      "as_of": "2026-05-05",
+      "expected_doc_numbers": ["1393/QD-DHCNTT"],
+      "note": "Post-amendment anchor (supersedes 790)."
+    },
+    {
+      "id": 105,
+      "type": "contrastive_pivot",
+      "pair_id": "103a",
+      "query": "K2018 học chuẩn ngoại ngữ nào?",
+      "query_cohort_year": 2018,
+      "expected_doc_numbers": ["141/QD-DHCNTT"],
+      "note": "K2018 specific lane."
+    },
+    {
+      "id": 106,
+      "type": "contrastive_pivot",
+      "pair_id": "103b",
+      "query": "K2019 học chuẩn ngoại ngữ nào?",
+      "query_cohort_year": 2019,
+      "expected_doc_numbers": ["547/QD-DHCNTT"],
+      "note": "K2019 specific lane (next to K2018)."
+    },
+    {
+      "id": 107,
+      "type": "contrastive_pivot",
+      "pair_id": "104a",
+      "query": "Trong thời gian dịch 2021, có được dùng VPET xét tốt nghiệp không?",
+      "query_cohort_year": 2021,
+      "as_of": "2021-08-01",
+      "expected_doc_numbers": ["101/TB-DHCNTT"],
+      "note": "Active pandemic exception notice."
+    },
+    {
+      "id": 108,
+      "type": "contrastive_pivot",
+      "pair_id": "104b",
+      "query": "Bây giờ VPET còn được dùng xét tốt nghiệp không?",
+      "query_cohort_year": 2021,
+      "as_of": "2026-05-05",
+      "expected_doc_numbers": ["119/TB-DHCNTT"],
+      "note": "Policy reversal notice (cancels 101)."
+    },
+    {
+      "id": 109,
+      "type": "contrastive_pivot",
+      "pair_id": "105a",
+      "query": "Trước đợt sửa đổi 2023, quy trình coi thi thế nào?",
+      "query_cohort_year": null,
+      "as_of": "2022-01-01",
+      "expected_doc_numbers": ["672/QD-DHCNTT"],
+      "note": "Legacy process."
+    },
+    {
+      "id": 110,
+      "type": "contrastive_pivot",
+      "pair_id": "105b",
+      "query": "Quy trình coi thi hiện nay thế nào?",
+      "query_cohort_year": null,
+      "as_of": "2026-05-05",
+      "expected_doc_numbers": ["936/QD-DHCNTT"],
+      "note": "Current process (supersedes 672)."
+    }
+  ]
+}
