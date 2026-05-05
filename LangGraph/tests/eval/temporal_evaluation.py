@@ -27,6 +27,7 @@ import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     import psycopg2
@@ -46,35 +47,53 @@ from agent.config import settings
 class TemporalEvaluationRunner:
     """Main runner for TDCE framework with 6 specialized temporal metrics."""
 
-    def __init__(self, config_name: str, verbose: bool = False):
+    def __init__(self, config_name: str, verbose: bool = False, mock_mode: bool = False):
         self.config_name = config_name
         self.verbose = verbose
+        self.mock_mode = mock_mode
         self.db_conn = None
         self.amendment_chains = self._load_amendment_chains()
 
     def __del__(self):
         if self.db_conn:
-            self.db_conn.close()
+            try:
+                self.db_conn.close()
+            except Exception:
+                pass
 
     def _get_db_connection(self) -> Any:
         """Get PostgreSQL connection for amendment metadata."""
+        if self.mock_mode:
+            return None
+
         if not psycopg2:
             raise ImportError("psycopg2 not available")
 
         if not self.db_conn:
-            self.db_conn = psycopg2.connect(
-                host=os.getenv('POSTGRES_HOST', 'localhost'),
-                port=os.getenv('POSTGRES_PORT', '5432'),
-                database=os.getenv('POSTGRES_DB', 'lightrag'),
-                user=os.getenv('POSTGRES_USER', 'lightrag'),
-                password=os.getenv('POSTGRES_PASSWORD', 'lightrag123')
-            )
+            try:
+                self.db_conn = psycopg2.connect(
+                    host=os.getenv('POSTGRES_HOST', 'localhost'),
+                    port=os.getenv('POSTGRES_PORT', '5432'),
+                    database=os.getenv('POSTGRES_DB', 'lightrag'),
+                    user=os.getenv('POSTGRES_USER', 'lightrag'),
+                    password=os.getenv('POSTGRES_PASSWORD', 'lightrag123'),
+                    connect_timeout=5
+                )
+            except Exception as e:
+                print(f"[WARN] Database connection failed: {e}. Using static chains.")
+                return None
         return self.db_conn
 
     def _load_amendment_chains(self) -> Dict[str, Dict[str, Any]]:
         """Load document amendment relationships from database."""
+        if self.mock_mode:
+            return self._load_static_chains()
+
         try:
             conn = self._get_db_connection()
+            if not conn:
+                return self._load_static_chains()
+                
             cur = conn.cursor()
 
             # Build amendment chains
@@ -100,8 +119,8 @@ class TemporalEvaluationRunner:
             cur.close()
             return chains
 
-        except Exception:
-            # Fallback to empty chains if DB unavailable
+        except Exception as e:
+            print(f"[WARN] Failed to load chains from DB: {e}. Using static chains.")
             return self._load_static_chains()
 
     def _load_static_chains(self) -> Dict[str, Dict[str, Any]]:
@@ -223,37 +242,28 @@ class TemporalEvaluationRunner:
         Cohort Coverage Rate - Targeting right cohort boundaries.
 
         Measures the system's accuracy in selecting documents for specific
-        cohort years vs universal rules.
+        cohort years vs universal rules. Evaluates the documents actually mentioned
+        in the response against the query's cohort year.
         """
         if not query_cohort_year:
             return accuracy_at_1(response, expected_doc_numbers)
 
-        expected_cohort_matches = 0
-        total_cohort_matches = 0
+        mentioned_matching_cohort = 0
+        total_mentioned = 0
 
-        for doc_num in expected_doc_numbers:
-            if doc_num in self.amendment_chains:
-                doc_info = self.amendment_chains[doc_num]
+        for doc_num, info in self.amendment_chains.items():
+            if self._normalise_mentions(response, doc_num):
+                total_mentioned += 1
+                cohorts = info.get('cohort_years', [])
+                # Match if no specific cohorts (universal) or cohort explicitly listed
+                if not cohorts or query_cohort_year in cohorts:
+                    mentioned_matching_cohort += 1
 
-                # Check cohort boundaries
-                cohort_years = doc_info.get('cohort_years', [])
-
-                if cohort_years:
-                    # Specific cohort document
-                    if query_cohort_year in cohort_years:
-                        expected_cohort_matches += 1
-                    total_cohort_matches += 1
-                else:
-                    # Universal rule applies to all cohorts
-                    total_cohort_matches += 1
-
-        if total_cohort_matches == 0:
+        if total_mentioned == 0:
+            # Fallback to whether they got the exact expected document
             return accuracy_at_1(response, expected_doc_numbers)
 
-        cohort_precision = expected_cohort_matches / total_cohort_matches
-
-        # Bonus for correct cohort-specific documents
-        return min(cohort_precision + 0.2, 1.0)
+        return mentioned_matching_cohort / total_mentioned
 
     def amendment_recall_at_k(self, response: str, expected_doc_numbers: List[str],
                              k: int = 3) -> float:
@@ -321,8 +331,8 @@ class TemporalEvaluationRunner:
         all_versions = set()
         for doc_num in expected_doc_numbers:
             if doc_num in self.amendment_chains:
-                chain = self._get_amendment_chain(doc_num)
-                all_versions.update(chain)
+                family = self._get_full_amendment_family(doc_num)
+                all_versions.update(family)
 
         # Count displacement (wrong version mentions)
         mentioned_wrong = 0
@@ -345,8 +355,8 @@ class TemporalEvaluationRunner:
 
     def _normalise_mentions(self, response: str, doc_num: str) -> bool:
         """Check if document number is mentioned in response."""
-        pattern = re.escape(doc_num).replace(r'/', r'[/\\/_\\-]*')
-        return bool(re.search(pattern, response.lower()))
+        from run_evaluation import _found
+        return _found(response, doc_num)
 
     def _get_amendment_chain(self, doc_num: str) -> List[str]:
         """Get complete amendment chain including this document and all upwards."""
@@ -363,6 +373,29 @@ class TemporalEvaluationRunner:
 
         _add_upstream(doc_num)
         return chain
+
+    def _get_full_amendment_family(self, doc_num: str) -> List[str]:
+        """Get all documents in the same amendment chain (both past and future)."""
+        family = [doc_num]
+        
+        def _explore(doc: str):
+            if doc not in self.amendment_chains:
+                return
+            
+            # Future versions
+            for amended_by in self.amendment_chains[doc]['amended_by'] or []:
+                if amended_by not in family:
+                    family.append(amended_by)
+                    _explore(amended_by)
+            
+            # Past versions
+            for amends in self.amendment_chains[doc]['amends_documents'] or []:
+                if amends not in family:
+                    family.append(amends)
+                    _explore(amends)
+                    
+        _explore(doc_num)
+        return family
 
     def _is_uit_specific(self, doc_num: str) -> bool:
         """Check if document is UIT-specific vs higher authority."""
@@ -432,35 +465,61 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Temporal Document Chain Evaluation (TDCE)")
-    parser.add_argument("--pairs", default="tests/eval/temporal_test_pairs_100.json")
+    parser.add_argument("--pairs", default=None)
     parser.add_argument("--config", default="System")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--output", default=None)
+    parser.add_argument("--mock", action="store_true", help="Run in mock mode (no LLM calls)")
+    parser.add_argument("--workers", type=int, default=3, help="Number of concurrent workers")
 
     args = parser.parse_args()
 
+    # Determine pairs path
+    pairs_path = args.pairs
+    if not pairs_path:
+        # Default relative to script
+        pairs_path = Path(__file__).parent / "temporal_test_pairs_100.json"
+    
     # Load test pairs
-    with open(args.pairs) as f:
+    with open(pairs_path) as f:
         data = json.load(f)
 
     pairs = data["pairs"]
 
     # Initialize runner
-    runner = TemporalEvaluationRunner(args.config, args.verbose)
+    runner = TemporalEvaluationRunner(args.config, args.verbose, mock_mode=args.mock)
 
     # Import existing evaluation config
-    from run_evaluation import set_env_for_config
-    set_env_for_config(args.config)
+    from run_evaluation import set_env_for_config, ABLATION_CONFIGS
+    
+    if args.config in ABLATION_CONFIGS:
+        set_env_for_config(args.config)
+        config_overrides = {
+            "use_temporal_scoring": os.environ.get("USE_TEMPORAL_SCORING", "true").lower() == "true",
+            "use_cohort_boost": os.environ.get("USE_COHORT_BOOST", "true").lower() == "true",
+            "use_amendment_override": os.environ.get("USE_AMENDMENT_OVERRIDE", "false").lower() == "true",
+            "use_metadata_routing": os.environ.get("USE_METADATA_ROUTING", "true").lower() == "true"
+        }
+    else:
+        print(f"[WARN] Unknown config {args.config}. Using defaults.")
+        config_overrides = None
 
-    print(f"=== TDCE Framework - {args.config} ===")
-    print(f"Pairs: {len(pairs)}")
+    print(f"=== TDCE Framework - {args.config} {'[MOCK]' if args.mock else ''} ===")
+    print(f"Pairs: {len(pairs)}, Workers: {args.workers}")
 
     all_results = []
 
-    for pair in pairs:
+    def process_pair(pair):
         try:
-            # Simulate pipeline call (existing infrastructure)
-            state = call_pipeline(pair["query"], pair.get("query_cohort_year"))
+            if args.mock:
+                # Return dummy state for metric logic testing
+                state = {
+                    "final_answer": f"According to document {pair.get('expected_doc_numbers', ['unknown'])[0]}...",
+                    "messages": [{"type": "ai", "content": f"Resolved via {pair.get('type')}"}]
+                }
+            else:
+                # Simulate pipeline call (existing infrastructure with retries)
+                state = call_pipeline(pair["query"], pair.get("query_cohort_year"), config_overrides=config_overrides)
 
             # Compute standard metrics
             response = extract_text(state)
@@ -476,40 +535,57 @@ def main():
                 "accuracy@1": acc1,
                 **tdce_metrics
             }
-
-            all_results.append(result)
-
-            if args.verbose:
-                print(f"  {pair['id']:2d}: acc={acc1:.2f} AP@3={tdce_metrics['ap@3']:.2f} "
-                      f"Cascade={tdce_metrics['cascade_hit_rate']:.2f} "
-                      f"Authority={tdce_metrics['authority_score']:.2f}")
+            return result
 
         except Exception as e:
             if args.verbose:
                 print(f"  {pair['id']:2d}: ERROR - {e}")
-            all_results.append({
+            return {
                 "id": pair["id"],
                 "type": pair.get("type", "general"),
                 "config": args.config,
                 "accuracy@1": 0.0,
                 **{k: 0.0 for k in ["ap@3", "cascade_hit_rate", "authority_score",
-                                   "cohort_coverage", "ar@3", "displacement_rate"]}
-            })
+                                   "cohort_coverage", "ar@3", "displacement_rate"]},
+                "error": str(e)
+            }
+
+    # Execute concurrently
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        futures = {executor.submit(process_pair, pair): pair for pair in pairs}
+        
+        for future in as_completed(futures):
+            result = future.result()
+            all_results.append(result)
+            
+            if args.verbose:
+                p_id = result["id"]
+                acc1 = result["accuracy@1"]
+                print(f"  {p_id:2d}: acc={acc1:.2f} AP@3={result['ap@3']:.2f} "
+                      f"Cascade={result['cascade_hit_rate']:.2f} "
+                      f"Authority={result['authority_score']:.2f}")
+
+    # Sort results by ID for consistency
+    all_results.sort(key=lambda x: x["id"])
 
     # Compute averages
-    avg_metrics = {metric: sum(r[metric] for r in all_results) / len(all_results)
-                   for metric in ["accuracy@1", "ap@3", "cascade_hit_rate",
-                                 "authority_score", "cohort_coverage", "ar@3", "displacement_rate"]}
+    if all_results:
+        avg_metrics = {metric: sum(r.get(metric, 0.0) for r in all_results) / len(all_results)
+                       for metric in ["accuracy@1", "ap@3", "cascade_hit_rate",
+                                     "authority_score", "cohort_coverage", "ar@3", "displacement_rate"]}
+    else:
+        avg_metrics = {}
 
     print("\n=== TDCE Summary ===")
     for metric, avg in avg_metrics.items():
         print(f"  {metric:20s}: {avg:.3f}")
 
     # Group by type
-    types = set(r["type"] for r in all_results)
+    types = sorted(list(set(r["type"] for r in all_results)))
     print("\n=== By Type ===")
-    for type_name in sorted(types):
+    for type_name in types:
         subset = [r for r in all_results if r["type"] == type_name]
+        if not subset: continue
         avg_acc = sum(r["accuracy@1"] for r in subset) / len(subset)
         avg_ap3 = sum(r["ap@3"] for r in subset) / len(subset)
         print(f"  {type_name:20s}: acc={avg_acc:.2f} ap@3={avg_ap3:.2f} n={len(subset)}")

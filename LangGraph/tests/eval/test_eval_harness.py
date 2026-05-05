@@ -8,8 +8,9 @@ import pytest
 
 ROOT = Path(__file__).parents[2]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "tests" / "eval"))
 
-from tests.eval.run_evaluation import (
+from run_evaluation import (
     _normalise,
     _found,
     accuracy_at_1,
