@@ -28,5 +28,7 @@ jobs:
         uv sync
 
     - name: Run Pytest
+      env:
+        OPENAI_API_KEY: "dummy-key-for-tests"
       run: |
         cd LangGraph && uv run pytest tests/eval/
