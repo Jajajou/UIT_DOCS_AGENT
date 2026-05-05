@@ -420,3 +420,22 @@ User Query → prepare_input → Agent 1 (Understanding) → retrieve_data →
 - Agent 3: Expiration warnings in responses
 - Ping service: Automated document archiving
 - Comprehensive testing suite
+
+---
+
+## 9. Mermaid Figures for Scientific Documentation
+
+### Fig 1: System Overview
+![Figure 1](../uit-thesis-template-latex/undergraduate_thesis/graphics/ARCHITECTURE_DIAGRAM_fig_1.png)
+
+### Fig 2: Indexing Pipeline Detail
+![Figure 2](../uit-thesis-template-latex/undergraduate_thesis/graphics/ARCHITECTURE_DIAGRAM_fig_2.png)
+
+### Fig 3: Metadata RAG Subgraph (The 6-Node Workflow)
+![Figure 3](../uit-thesis-template-latex/undergraduate_thesis/graphics/ARCHITECTURE_DIAGRAM_fig_3.png)
+
+### Fig 4: Query Pipeline Detail
+![Figure 4](../uit-thesis-template-latex/undergraduate_thesis/graphics/ARCHITECTURE_DIAGRAM_fig_4.png)
+
+### Fig 5: Temporal Scoring Model
+![Figure 5](../uit-thesis-template-latex/undergraduate_thesis/graphics/ARCHITECTURE_DIAGRAM_fig_5.png)
