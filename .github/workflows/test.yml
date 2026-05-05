@@ -30,5 +30,6 @@ jobs:
     - name: Run Pytest
       env:
         OPENAI_API_KEY: "dummy-key-for-tests"
+        LIGHTRAG_URL: "http://dummy-url-for-tests"
       run: |
         cd LangGraph && uv run pytest tests/eval/
