@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.4.2.0] - 2026-05-09
+
+### Added
+- Authority scope scoring (`system` vs `local` contexts) in the reranker for precise routing.
+- Direct document content retrieval via `get_chunks_by_doc_ids` to provide the reranker with full semantic context during sibling enrichment.
+- Expanded historical query pattern recognition to better handle Vietnamese admissions syntax.
+
+### Fixed
+- Fixed an issue causing valid original documents to be incorrectly demoted by self-referential or error-prefixed `amended_by` metadata.
+- Restricted the "Amendment Override" functionality exclusively to queries with an `AMENDMENT` intent to prevent false displacements on general queries.
+- Cleaned up tracking for temporary evaluation output artifacts.
+
+## [0.4.1.0] - 2026-05-05
+
+### Added
+- Added 10 contrastive test pairs for temporal evaluation (`contrastive_test_pairs.json`).
+- Introduced concurrency and a `mock_mode` to the TDCE runner to improve robustness against transient API failures and speed up thesis evaluation runs.
+- Established a `ContextVar`-based dependency injection system in `config.py` for thread-safe testing parameters without mutating global settings.
+- Initialized `TODOS.md` for structured task tracking.
+
+### Fixed
+- Fixed regex matching and false displacement penalization in the TDCE metrics calculation.
+
 ## [0.4.0.0] - 2026-05-05
 
 ### Added

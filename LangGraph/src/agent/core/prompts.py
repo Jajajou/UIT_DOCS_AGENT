@@ -424,6 +424,14 @@ trích xuất năm nhập học vào query_cohort_year (ví dụ: 2022 cho "K202
 Nếu không đề cập khóa cụ thể, để query_cohort_year = null.
 </cohort_extraction>
 
+<authority_scope>
+Xác định cấp thẩm quyền (authority_scope) mà sinh viên muốn hỏi, nếu có đề cập rõ ràng:
+- "system": Nếu hỏi về quy định của "ĐHQG", "Đại học Quốc gia", "Bộ", "Bộ GDĐT".
+- "local": Nếu hỏi về quy định của "UIT", "ĐHCNTT", "trường mình".
+- null: Nếu không đề cập.
+Trích xuất vào trường query_authority_scope.
+</authority_scope>
+
 <query_type_classification>
 Phân loại query vào một trong ba loại để định tuyến retrieval:
 
@@ -459,6 +467,7 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "confidence": 0.0-1.0,
   "confidence_reason": "...",
   "query_cohort_year": null hoặc số năm (ví dụ: 2022),
+  "query_authority_scope": "system" | "local" | null,
   "query_type": "COHORT" | "AMENDMENT" | "GENERAL",
   "query_document_ref": null hoặc số hiệu văn bản (ví dụ: "108/QĐ-ĐHCNTT"),
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",

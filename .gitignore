@@ -295,3 +295,19 @@ BAO_CAO_TIEN_DO_22_12_2024.md
 *.pdf
 "UIT Assistant Chatbot.docx.md"
 .gitnexus
+
+# Temporary evaluation results and logs
+0805_*.json
+0905_*.json
+LangGraph/tests/eval/0805_*.json
+LangGraph/tests/eval/0905_*.json
+LangGraph/tests/eval/results_final_*.json
+LangGraph/tests/eval/eval_metadata_cache.json
+LangGraph/tests/eval/missing_metadata_audit.csv
+LangGraph/tests/eval/results_archive/
+TEMPORAL_AUDIT_REQUIRED.md
+
+# Temporary latex and update scripts
+update_latex.py
+update_latex_text.py
+update_results.py

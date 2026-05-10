@@ -118,42 +118,61 @@ def set_env_for_config(config_name: str) -> None:
     )
 
 
-def call_pipeline(query: str, cohort_year: int | None) -> dict[str, Any]:  # noqa: ARG001
+def call_pipeline(query: str, cohort_year: int | None, config_overrides: dict[str, Any] | None = None) -> dict[str, Any]:  # noqa: ARG001
     """Call the LangGraph retrieval graph and return the state values dict.
 
-    cohort_year is embedded in the query text and extracted by Agent 1.
-    It is accepted here for documentation/logging purposes only.
+    Includes exponential backoff retries for robustness.
     """
-    if USE_LOCAL:
-        # Call graph locally
-        inputs = {"messages": [{"type": "human", "content": query}]}
-        # We need to ensure settings are reloaded/applied for each config
-        # but since we are running in the same process, we rely on os.environ
-        # which the agent's config.py reads on initialization.
-        # Wait, settings are initialized at module level.
-        # We might need to reload settings or update them.
-        from agent.config import settings
-        settings.use_temporal_scoring = os.environ.get("USE_TEMPORAL_SCORING", "true").lower() == "true"
-        settings.use_cohort_boost = os.environ.get("USE_COHORT_BOOST", "true").lower() == "true"
-        settings.use_amendment_override = os.environ.get("USE_AMENDMENT_OVERRIDE", "false").lower() == "true"
-        settings.use_metadata_routing = os.environ.get("USE_METADATA_ROUTING", "true").lower() == "true"
+    max_retries = 3
+    base_delay = 2
 
-        return query_graph.invoke(inputs)
+    for attempt in range(max_retries + 1):
+        try:
+            if USE_LOCAL:
+                # Call graph locally
+                inputs = {"messages": [{"type": "human", "content": query}]}
+                
+                from agent.config import set_config_overrides, reset_config_overrides
+                
+                # Default overrides if not provided
+                if config_overrides is None:
+                    config_overrides = {
+                        "use_temporal_scoring": os.environ.get("USE_TEMPORAL_SCORING", "true").lower() == "true",
+                        "use_cohort_boost": os.environ.get("USE_COHORT_BOOST", "true").lower() == "true",
+                        "use_amendment_override": os.environ.get("USE_AMENDMENT_OVERRIDE", "false").lower() == "true",
+                        "use_metadata_routing": os.environ.get("USE_METADATA_ROUTING", "true").lower() == "true"
+                    }
+                
+                # Apply overrides in this thread/context
+                token = set_config_overrides(config_overrides)
+                try:
+                    return query_graph.invoke(inputs)
+                finally:
+                    reset_config_overrides(token)
 
-    payload: dict[str, Any] = {
-        "assistant_id": RETRIEVAL_ASSISTANT_ID,
-        "input": {
-            "messages": [{"type": "human", "content": query}]
-        }
-    }
-    resp = requests.post(
-        f"{LANGGRAPH_URL}/runs/wait",
-        json=payload,
-        timeout=REQUEST_TIMEOUT,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get("values", data)
+            payload: dict[str, Any] = {
+                "assistant_id": RETRIEVAL_ASSISTANT_ID,
+                "input": {
+                    "messages": [{"type": "human", "content": query}]
+                }
+            }
+            resp = requests.post(
+                f"{LANGGRAPH_URL}/runs/wait",
+                json=payload,
+                timeout=REQUEST_TIMEOUT,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("values", data)
+
+        except Exception as exc:
+            if attempt < max_retries:
+                delay = base_delay * (2 ** attempt)
+                print(f"[RETRY] Attempt {attempt + 1} failed: {exc}. Retrying in {delay}s...")
+                time.sleep(delay)
+            else:
+                print(f"[ERROR] All {max_retries + 1} attempts failed for query: {query[:50]}...")
+                raise exc
 
 
 # ---------------------------------------------------------------------------
@@ -247,9 +266,9 @@ def _found(text: str, doc_number: str) -> bool:
     norm_dn = _normalise(doc_number)
     
     # Create a regex that allows flexibility in separators
-    # "141/qd-dhcntt" -> "141[\s/\\-_]*qd[\s/\\-_]*dhcntt"
-    parts = re.split(r"[/\\-_]", norm_dn)
-    pattern = r"[\s/\\-_]*".join([re.escape(p) for n, p in enumerate(parts) if p])
+    # "141/qd-dhcntt" -> "141[\s/\\_\\-]*qd[\s/\\_\\-]*dhcntt"
+    parts = re.split(r"[/\\_\\-]", norm_dn)
+    pattern = r"[\s/\\_\\-]*".join([re.escape(p) for n, p in enumerate(parts) if p])
     
     try:
         # Check for word boundaries to avoid partial matches (like "14" matching "141")

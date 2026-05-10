@@ -116,6 +116,19 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
     print("=" * 80)
     
     try:
+        # 1. Direct Lookup by Document Number (Bypass semantic failure)
+        direct_chunks = []
+        doc_num_matches = re.findall(r'\b(\d{1,4}(?:/\d{4})?/(?:QĐ|TT|TB|NQ|HD|KL|VBHN)(?:-[A-ZĐ]+)+)\b', query, re.IGNORECASE)
+        # Also catch simple formats like 141/QĐ-ĐHCNTT without specific prefixes
+        simple_matches = re.findall(r'\b(\d{1,4}/[A-ZĐ]+-[A-ZĐ]+)\b', query, re.IGNORECASE)
+        all_matches = list(set(doc_num_matches + simple_matches))
+        
+        if all_matches:
+            print(f"[RETRIEVE] Direct lookup for doc numbers: {all_matches}")
+            direct_chunks = api_client.get_chunks_by_doc_numbers(all_matches)
+            if direct_chunks:
+                print(f"[RETRIEVE] Found {len(direct_chunks)} direct chunks via doc number lookup.")
+
         # Call LightRAG /query/data endpoint
         result = api_client.query_data(
             query_text=query,
@@ -131,6 +144,15 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
         entities = result["data"]["entities"]
         relationships = result["data"]["relationships"]
         chunks = result["data"]["chunks"]
+        
+        # Inject direct lookup chunks
+        if direct_chunks:
+            # Avoid duplicates based on file_path or doc_id
+            existing_paths = {c.get("file_path") for c in chunks}
+            for dc in direct_chunks:
+                if dc.get("file_path") not in existing_paths:
+                    chunks.append(dc)
+
         metadata = result["metadata"]
         
         print(f"[RETRIEVE] ✓ Retrieved {len(entities)} entities, {len(relationships)} relationships, {len(chunks)} chunks")
@@ -167,12 +189,9 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
 def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     """
     Enrich retrieved items with temporal metadata from PostgreSQL.
-
-    Joins temporal_metadata via file_source for all retrieved chunks,
-    entities, and relationships in a single batch query, then merges
-    the temporal fields into each item's metadata dict so that
-    calculate_temporal_score() and assess_temporal_freshness() receive
-    real data instead of empty dicts.
+    Also fetches sibling documents (documents that amend or are amended by
+    the retrieved documents) to ensure the amendment chain is complete
+    for the reranker to evaluate.
     """
     chunks = state.get("retrieved_chunks", [])
     entities = state.get("retrieved_entities", [])
@@ -194,6 +213,21 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
         print(f"[ENRICH] No temporal metadata found for {len(all_file_paths)} file paths")
         return {}
 
+    # Sibling enrichment: find docs that amend or are amended by the retrieved docs
+    sibling_file_paths = set()
+    for fp, meta in temporal_map.items():
+        # Get documents this doc amends
+        amends = meta.get("amends_documents", [])
+        if amends:
+            # We need to fetch metadata for these document numbers
+            # This is a bit tricky since get_temporal_metadata_by_file_sources takes file_paths, not doc numbers.
+            # We'll need a new client method or just add a placeholder.
+            pass
+        # Get documents that amend this doc
+        amended_by = meta.get("amended_by", [])
+        if amended_by:
+            pass
+
     def enrich(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result = []
         for item in items:
@@ -206,6 +240,42 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
         return result
 
     enriched_chunks = enrich(chunks)
+    
+    # Sibling Enrichment Implementation
+    # If doc X is retrieved and it's amended by doc Y (which wasn't retrieved),
+    # we MUST pull doc Y into the candidate set so the reranker can promote Y over X.
+    # We do this by checking the 'amended_by' field, which contains doc_ids of amending documents.
+    try:
+        sibling_doc_ids = set()
+        for fp, meta in temporal_map.items():
+            amended_by = meta.get("amended_by")
+            if isinstance(amended_by, list):
+                for doc_id in amended_by:
+                    sibling_doc_ids.add(str(doc_id))
+        
+        # Check which siblings are missing from chunks
+        existing_doc_ids = {c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id") for c in enriched_chunks}
+        missing_siblings = sibling_doc_ids - existing_doc_ids
+        
+        if missing_siblings:
+            print(f"[ENRICH] Found {len(missing_siblings)} missing sibling docs. Fetching from DB...")
+            sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
+            real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
+
+            # Merge metadata into real chunks and truncate content to avoid vLLM 400 Bad Request
+            for chunk in real_chunks:
+                s_doc_id = chunk.get("doc_id")
+                if s_doc_id in sibling_metadata:
+                    chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
+                # Truncate content to safe limit for reranker (e.g., 2000 chars)
+                if chunk.get("content") and len(chunk["content"]) > 2000:
+                    chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
+                enriched_chunks.append(chunk)
+
+            print(f"[ENRICH] Added {len(real_chunks)} full sibling chunks to candidate set.")
+    except Exception as e:
+        print(f"[ENRICH] Error during sibling enrichment: {e}")
+
     enriched_entities = enrich(entities)
     enriched_relationships = enrich(relationships)
 
@@ -342,7 +412,9 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             top_k_chunks=None,
             use_temporal_boost=settings.use_temporal_scoring,
             query_cohort_year=state.get("query_cohort_year"),
-            query_is_historical=query_is_historical
+            query_authority_scope=state.get("query_authority_scope"),
+            query_is_historical=query_is_historical,
+            query_type=state.get("query_type", "GENERAL")
         )
         
         return {

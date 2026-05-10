@@ -330,6 +330,34 @@ class Reranker:
         # never penalizes.
         return 0.5
 
+    def _compute_authority_score(self, item: Dict[str, Any], query_authority_scope: Optional[str]) -> float:
+        """
+        Compute authority match score (system vs local).
+        Returns:
+            1.0 if authority matches query scope
+            0.5 (neutral) if no scope in query
+            0.3 if authority mismatches query scope (gentle penalty)
+        """
+        if query_authority_scope is None:
+            return 0.5
+            
+        doc_num = str(item.get("metadata", {}).get("document_number", "")).upper()
+        # Fallback to file_path/source if doc_num is empty
+        if not doc_num:
+            doc_num = str(item.get("metadata", {}).get("file_path", "")).upper()
+        if not doc_num:
+            doc_num = str(item.get("metadata", {}).get("file_source", "")).upper()
+            
+        is_system = any(k in doc_num for k in ["ĐHQG", "BGDĐT", "BGDDT", "DHQG", "BỘ"])
+        is_local = any(k in doc_num for k in ["ĐHCNTT", "UIT"])
+        
+        if query_authority_scope == "system":
+            return 1.0 if is_system else 0.3
+        if query_authority_scope == "local":
+            return 1.0 if is_local else 0.3
+            
+        return 0.5
+
     def rerank_with_temporal_boost(
         self,
         query: str,
@@ -339,7 +367,9 @@ class Reranker:
         temporal_weight: Optional[float] = None,
         current_date: Optional[str] = None,
         query_cohort_year: Optional[int] = None,
-        query_is_historical: Optional[bool] = None
+        query_authority_scope: Optional[str] = None,
+        query_is_historical: Optional[bool] = None,
+        query_type: Optional[str] = None
     ) -> List[Tuple[Dict[str, Any], float]]:
         """
         Rerank items with temporal boosting.
@@ -380,37 +410,55 @@ class Reranker:
             for item in items
         ]
 
-        # Amendment override: only demote a doc if its amending document is
-        # actually present in the current candidate set. Firing unconditionally
-        # would demote correct docs when the amending doc was never retrieved.
+        # Amendment override: demote doc X only when BOTH conditions hold:
+        # 1. The amending doc Y is present in the candidate set.
+        # 2. Y has semantic_score >= X's semantic_score (confidence guard).
+        # Without (2), the override fires even when X is the correct answer for
+        # the query and Y is a partial/tangential amendment — causing regression
+        # on TDCE cases where the amended doc is the right retrieval target.
         if getattr(settings, 'use_amendment_override', False) and not query_is_historical:
             raw_override = settings.temporal.quality_penalties.get("amendment_override_score", 0.3)
             override_score = max(0.0, min(1.0, float(raw_override)))
-            # Collect all doc IDs present in the candidate list
-            candidate_doc_ids = set()
-            for item in items:
+            # Build doc_id → item index map for O(1) lookup + score comparison
+            candidate_doc_id_to_idx: dict = {}
+            for idx, item in enumerate(items):
                 doc_id = (item.get("doc_id") or
                           item.get("id") or
                           item.get("metadata", {}).get("doc_id"))
                 if doc_id:
-                    candidate_doc_ids.add(str(doc_id))
+                    candidate_doc_id_to_idx[str(doc_id)] = idx
             overridden = []
-            new_temporal_scores = []
-            for item, score in zip(items, temporal_scores):
+            new_temporal_scores = list(temporal_scores)
+            for idx, item in enumerate(items):
                 amended_by = item.get("metadata", {}).get("amended_by")
-                if isinstance(amended_by, list) and len(amended_by) > 0:
-                    amending_ids = [str(aid) for aid in amended_by]
-                    if any(aid in candidate_doc_ids for aid in amending_ids):
-                        new_temporal_scores.append(override_score)
-                        overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
+                if not (isinstance(amended_by, list) and len(amended_by) > 0):
+                    continue
+                
+                # F1: Identify current doc_id to prevent self-demotion
+                item_doc_id = str(item.get("doc_id") or item.get("id") or item.get("metadata", {}).get("doc_id", ""))
+                
+                amending_ids = [str(aid) for aid in amended_by]
+                for aid in amending_ids:
+                    # F1: Skip self-references and error-prefixed garbage IDs
+                    if aid == item_doc_id or aid.startswith('error-'):
                         continue
-                new_temporal_scores.append(score)
+                        
+                    if aid not in candidate_doc_id_to_idx:
+                        continue
+                    amender_idx = candidate_doc_id_to_idx[aid]
+                    # Confidence guard: only override if amender is semantically
+                    # at least as relevant. If amender has lower semantic score,
+                    # the query targets the original doc — skip override.
+                    if semantic_scores[amender_idx] >= semantic_scores[idx]:
+                        new_temporal_scores[idx] = override_score
+                        overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
+                        break
             if overridden:
                 print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
             temporal_scores = new_temporal_scores
 
         # Combined scoring logic: 3-weight formula (55/20/25)
-        # Use cohort formula if cohort present, otherwise 70/30 formula
+        # Use cohort/authority formula if metadata present, otherwise 70/30 formula
         use_cohort = getattr(settings, 'use_cohort_boost', True)
         temporal_config = getattr(settings, 'temporal', None)
         
@@ -419,11 +467,27 @@ class Reranker:
         t_w = 0.3
         c_w = 0.0
         
-        if use_cohort and query_cohort_year is not None:
+        if use_cohort and (query_cohort_year is not None or query_authority_scope is not None):
             s_w = getattr(temporal_config, 'semantic_weight_cohort', 0.55)
             t_w = getattr(temporal_config, 'temporal_weight_cohort', 0.20)
-            c_w = getattr(temporal_config, 'cohort_weight', 0.25)
-            cohort_scores = [self._compute_cohort_score(item, query_cohort_year) for item in items]
+            boost_w = getattr(temporal_config, 'cohort_weight', 0.25)
+            
+            # Compute raw boost scores
+            raw_cohort_scores = [self._compute_cohort_score(item, query_cohort_year) for item in items]
+            raw_authority_scores = [self._compute_authority_score(item, query_authority_scope) for item in items]
+            
+            # Combine cohort and authority into final c_w component
+            cohort_scores = []
+            for c, a in zip(raw_cohort_scores, raw_authority_scores):
+                if query_cohort_year is not None and query_authority_scope is not None:
+                    # Both present: weighted average (60/40)
+                    cohort_scores.append(0.6 * c + 0.4 * a)
+                elif query_cohort_year is not None:
+                    cohort_scores.append(c)
+                else:
+                    cohort_scores.append(a)
+            
+            c_w = boost_w
         else:
             if temporal_weight is not None:
                 t_w = temporal_weight
@@ -446,7 +510,7 @@ class Reranker:
                 score += 0.15
             
             # Clamp to 1.0
-            score = min(1.0, score)
+            score = min(1.0, max(0.0, score))
             combined_scores.append(score)
 
         # Zip items with combined scores
@@ -490,7 +554,9 @@ class MultiSourceReranker:
         top_k_chunks: Optional[int] = None,
         use_temporal_boost: bool = True,
         query_cohort_year: Optional[int] = None,
-        query_is_historical: Optional[bool] = None
+        query_authority_scope: Optional[str] = None,
+        query_is_historical: Optional[bool] = None,
+        query_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Rerank all sources and calculate overall confidence.
@@ -532,7 +598,9 @@ class MultiSourceReranker:
                 return self.reranker.rerank_with_temporal_boost(
                     q, items, text_field=text_field, top_k=top_k,
                     query_cohort_year=query_cohort_year,
-                    query_is_historical=query_is_historical
+                    query_authority_scope=query_authority_scope,
+                    query_is_historical=query_is_historical,
+                    query_type=query_type
                 )
         else:
             rerank_func = self.reranker.rerank_items  # type: ignore
