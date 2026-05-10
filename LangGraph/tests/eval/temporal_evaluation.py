@@ -29,11 +29,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-try:
-    import psycopg2
-except ImportError:
-    psycopg2 = None
-
 from run_evaluation import extract_text, call_pipeline, accuracy_at_1
 
 # Add src to path
@@ -61,74 +56,19 @@ class TemporalEvaluationRunner:
             except Exception:
                 pass
 
-    def _get_db_connection(self) -> Any:
-        """Get PostgreSQL connection for amendment metadata."""
-        if self.mock_mode:
-            return None
-
-        if not psycopg2:
-            raise ImportError("psycopg2 not available")
-
-        if not self.db_conn:
-            try:
-                self.db_conn = psycopg2.connect(
-                    host=os.getenv('POSTGRES_HOST', 'localhost'),
-                    port=os.getenv('POSTGRES_PORT', '5432'),
-                    database=os.getenv('POSTGRES_DB', 'lightrag'),
-                    user=os.getenv('POSTGRES_USER', 'lightrag'),
-                    password=os.getenv('POSTGRES_PASSWORD', 'lightrag123'),
-                    connect_timeout=5
-                )
-            except Exception as e:
-                print(f"[WARN] Database connection failed: {e}. Using static chains.")
-                return None
-        return self.db_conn
-
     def _load_amendment_chains(self) -> Dict[str, Dict[str, Any]]:
-        """Load document amendment relationships from database."""
-        if self.mock_mode:
-            return self._load_static_chains()
-
-        try:
-            conn = self._get_db_connection()
-            if not conn:
-                return self._load_static_chains()
-                
-            cur = conn.cursor()
-
-            # Build amendment chains
-            cur.execute("""
-                SELECT document_number, doc_id, amends_documents, amended_by,
-                       cohort_years, valid_from, valid_until
-                FROM lightrag_doc_status
-                WHERE amends_documents IS NOT NULL OR amended_by IS NOT NULL
-            """)
-
-            chains = {}
-            for row in cur.fetchall():
-                doc_num, doc_id, amends, amended_by, cohorts, valid_from, valid_until = row
-                chains[doc_num] = {
-                    'doc_id': doc_id,
-                    'amends_documents': json.loads(amends) if amends else [],
-                    'amended_by': json.loads(amended_by) if amended_by else [],
-                    'cohort_years': json.loads(cohorts) if cohorts else [],
-                    'valid_from': str(valid_from) if valid_from else None,
-                    'valid_until': str(valid_until) if valid_until else None
-                }
-
-            cur.close()
-            return chains
-
-        except Exception as e:
-            print(f"[WARN] Failed to load chains from DB: {e}. Using static chains.")
-            return self._load_static_chains()
-
-    def _load_static_chains(self) -> Dict[str, Dict[str, Any]]:
-        """Load static amendment chains from JSON file (fallback)."""
-        chains_file = Path(__file__).parent / "amendment_chains.json"
+        """Load document metadata and amendment chains from JSON cache."""
+        chains_file = Path(__file__).parent / "eval_metadata_cache.json"
         if chains_file.exists():
             with open(chains_file) as f:
                 return json.load(f)
+        
+        # Fallback to static chains if cache is missing
+        fallback_file = Path(__file__).parent / "amendment_chains.json"
+        if fallback_file.exists():
+            with open(fallback_file) as f:
+                return json.load(f)
+                
         return {}
 
     # ------------------------------------------------------------------------
