@@ -15,6 +15,7 @@ TDCE Metrics:
 Usage:
     python tests/eval/temporal_evaluation.py --config System
     python tests/eval/temporal_evaluation.py --config v0.3.0_Full --verbose
+    python tests/eval/temporal_evaluation.py --retrieval-only --workers 10
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from run_evaluation import extract_text, call_pipeline, accuracy_at_1
+from run_evaluation import extract_text, call_pipeline, accuracy_at_1, _found, _normalise
 
 # Add src to path
 ROOT = Path(__file__).parent.parent.parent
@@ -37,6 +38,90 @@ sys.path.insert(0, str(ROOT / "src"))
 
 # Re-use existing pipeline infrastructure
 from agent.config import settings
+
+
+def extract_retrieved_doc_numbers(state: Dict[str, Any], top_k: int = 10) -> List[str]:
+    """
+    Extract document numbers from reranked chunks and entities.
+    
+    Args:
+        state: LangGraph state dictionary
+        top_k: Number of top items to consider
+        
+    Returns:
+        List of unique document numbers
+    """
+    doc_numbers = []
+    
+    # 1. Check reranked_chunks
+    for chunk_wrapper in state.get("reranked_chunks", [])[:top_k]:
+        # Handle [chunk, score] or just chunk
+        chunk = chunk_wrapper[0] if isinstance(chunk_wrapper, (list, tuple)) else chunk_wrapper
+        if isinstance(chunk, dict):
+            # Try metadata first
+            meta = chunk.get("metadata", {})
+            doc_num = meta.get("document_number")
+            if doc_num:
+                doc_numbers.append(doc_num)
+            else:
+                # Try file_path extraction if metadata is missing
+                fp = chunk.get("file_path") or chunk.get("file_source")
+                if fp:
+                    # Match pattern like .../141-qd-dhcntt.pdf
+                    match = re.search(r'([^/]+)\.pdf$', fp, re.IGNORECASE)
+                    if match:
+                        doc_numbers.append(match.group(1).upper())
+
+    # 2. Check reranked_entities
+    for ent_wrapper in state.get("reranked_entities", [])[:top_k]:
+        ent = ent_wrapper[0] if isinstance(ent_wrapper, (list, tuple)) else ent_wrapper
+        if isinstance(ent, dict):
+            meta = ent.get("metadata", {})
+            doc_num = meta.get("document_number")
+            if doc_num:
+                doc_numbers.append(doc_num)
+
+    # Deduplicate while preserving order
+    seen = set()
+    return [x for x in doc_numbers if not (x in seen or seen.add(x))]
+
+
+def call_pipeline_retrieval_only(query: str, cohort_year: int | None, 
+                                 config_overrides: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    """
+    Call the LangGraph pipeline but stop after rerank_data node.
+    
+    This is used for retrieval-only evaluation to save time/tokens.
+    """
+    from run_evaluation import USE_LOCAL
+    
+    if USE_LOCAL:
+        # Import graph locally
+        from agent.graphs.query_graph import graph as query_graph
+        from agent.config import set_config_overrides, reset_config_overrides
+        
+        inputs = {"messages": [{"type": "human", "content": query}]}
+        if cohort_year:
+            inputs["query_cohort_year"] = cohort_year
+
+        if config_overrides is None:
+            config_overrides = {
+                "use_temporal_scoring": os.environ.get("USE_TEMPORAL_SCORING", "true").lower() == "true",
+                "use_cohort_boost": os.environ.get("USE_COHORT_BOOST", "true").lower() == "true",
+                "use_amendment_override": os.environ.get("USE_AMENDMENT_OVERRIDE", "false").lower() == "true",
+                "use_metadata_routing": os.environ.get("USE_METADATA_ROUTING", "true").lower() == "true"
+            }
+        
+        token = set_config_overrides(config_overrides)
+        try:
+            # We use the 'interrupt_before' feature of LangGraph to stop before generation
+            return query_graph.invoke(inputs, config={"interrupt_before": ["agent3_generate_response"]})
+        finally:
+            reset_config_overrides(token)
+    else:
+        # Fallback to full pipeline for remote (not optimized)
+        from run_evaluation import call_pipeline
+        return call_pipeline(query, cohort_year, config_overrides)
 
 
 class TemporalEvaluationRunner:
@@ -75,7 +160,7 @@ class TemporalEvaluationRunner:
     # TDCE Metrics Implementation
     # ------------------------------------------------------------------------
 
-    def amendment_precision_at_k(self, response: str, expected_doc_numbers: List[str],
+    def amendment_precision_at_k(self, response: str | List[str], expected_doc_numbers: List[str],
                                  k: int = 5) -> float:
         """
         Amendment Precision@k - Quality of amendment chain selection.
@@ -103,7 +188,8 @@ class TemporalEvaluationRunner:
                 expected_chains.update(chain)
 
         if not expected_chains:
-            return accuracy_at_1(response, expected_doc_numbers)
+            return accuracy_at_1(response, expected_doc_numbers) if isinstance(response, str) else \
+                   (1.0 if any(self._normalise_mentions(response, d) for d in expected_doc_numbers) else 0.0)
 
         # Count correct amendment selections
         correct_hits = 0
@@ -113,7 +199,7 @@ class TemporalEvaluationRunner:
 
         return correct_hits / min(k, len(expected_doc_numbers))
 
-    def temporal_cascade_hit_rate(self, response: str, expected_doc_numbers: List[str]) -> float:
+    def temporal_cascade_hit_rate(self, response: str | List[str], expected_doc_numbers: List[str]) -> float:
         """
         Temporal Cascade Hit Rate - Success in chain traversal.
 
@@ -139,7 +225,7 @@ class TemporalEvaluationRunner:
 
         return 1.0 if mentioned_chains else 0.0
 
-    def authority_resolution_score(self, response: str, expected_doc_numbers: List[str],
+    def authority_resolution_score(self, response: str | List[str], expected_doc_numbers: List[str],
                                  pair_type: str) -> float:
         """
         Authority Resolution Score - Choosing correct authority level.
@@ -157,14 +243,19 @@ class TemporalEvaluationRunner:
 
         base_confidence = authority_map.get(pair_type, 0.5)
 
-        if accuracy_at_1(response, expected_doc_numbers) > 0:
+        # Accuracy check
+        is_accurate = False
+        if isinstance(response, str):
+            is_accurate = accuracy_at_1(response, expected_doc_numbers) > 0
+        else:
+            is_accurate = any(self._normalise_mentions(response, d) for d in expected_doc_numbers)
+
+        if is_accurate:
             return base_confidence
 
-        # Penalty for authority resolution failures
-        authority_indicators = [
-            'ĐH-CNTT', 'UIT', 'ĐHQG', 'Bo GDĐT', 'Bộ Giáo dục',
-            'Trường ĐH', 'TĐT', 'Khoa', 'Ban', 'Phòng'
-        ]
+        # Penalty for authority resolution failures (only for full response mode)
+        if isinstance(response, list):
+            return base_confidence * 0.5 # Neutral penalty for retrieval-only misses
 
         # Check for inappropriate authority mentions
         lower_score = 1.0
@@ -176,7 +267,7 @@ class TemporalEvaluationRunner:
 
         return base_confidence * lower_score
 
-    def cohort_coverage_rate(self, response: str, query_cohort_year: Optional[int],
+    def cohort_coverage_rate(self, response: str | List[str], query_cohort_year: Optional[int],
                            expected_doc_numbers: List[str]) -> float:
         """
         Cohort Coverage Rate - Targeting right cohort boundaries.
@@ -186,7 +277,10 @@ class TemporalEvaluationRunner:
         in the response against the query's cohort year.
         """
         if not query_cohort_year:
-            return accuracy_at_1(response, expected_doc_numbers)
+            # Fallback
+            if isinstance(response, str):
+                return accuracy_at_1(response, expected_doc_numbers)
+            return 1.0 if any(self._normalise_mentions(response, d) for d in expected_doc_numbers) else 0.0
 
         mentioned_matching_cohort = 0
         total_mentioned = 0
@@ -201,11 +295,13 @@ class TemporalEvaluationRunner:
 
         if total_mentioned == 0:
             # Fallback to whether they got the exact expected document
-            return accuracy_at_1(response, expected_doc_numbers)
+            if isinstance(response, str):
+                return accuracy_at_1(response, expected_doc_numbers)
+            return 1.0 if any(self._normalise_mentions(response, d) for d in expected_doc_numbers) else 0.0
 
         return mentioned_matching_cohort / total_mentioned
 
-    def amendment_recall_at_k(self, response: str, expected_doc_numbers: List[str],
+    def amendment_recall_at_k(self, response: str | List[str], expected_doc_numbers: List[str],
                              k: int = 3) -> float:
         """
         Amendment Recall@k - Capturing all relevant amendments.
@@ -227,7 +323,9 @@ class TemporalEvaluationRunner:
                 related_amendments.update(self.amendment_chains[doc_num]['amends_documents'] or [])
 
         if not related_amendments:
-            return accuracy_at_1(response, expected_doc_numbers)
+            if isinstance(response, str):
+                return accuracy_at_1(response, expected_doc_numbers)
+            return 1.0 if any(self._normalise_mentions(response, d) for d in expected_doc_numbers) else 0.0
 
         # Count how many related amendments are mentioned
         found_amendments = 0
@@ -237,7 +335,7 @@ class TemporalEvaluationRunner:
 
         return found_amendments / min(k, len(related_amendments))
 
-    def temporal_displacement_rate(self, response: str, expected_doc_numbers: List[str],
+    def temporal_displacement_rate(self, response: str | List[str], expected_doc_numbers: List[str],
                                  query_cohort_year: Optional[int]) -> float:
         """
         Temporal Displacement Rate - Avoiding temporal confusion.
@@ -245,8 +343,6 @@ class TemporalEvaluationRunner:
         Measures the rate at which the system incorrectly selects documents
         from the wrong temporal context (expired, future, or wrong cohort).
         """
-        wrong_temporal_mentions = 0
-
         if not expected_doc_numbers:
             return 0.0
 
@@ -293,9 +389,15 @@ class TemporalEvaluationRunner:
     # Evaluation helper methods
     # ------------------------------------------------------------------------
 
-    def _normalise_mentions(self, response: str, doc_num: str) -> bool:
-        """Check if document number is mentioned in response."""
-        from run_evaluation import _found
+    def _normalise_mentions(self, response: str | List[str], doc_num: str) -> bool:
+        """Check if document number is mentioned in response or exists in retrieval list."""
+        if isinstance(response, list):
+            # Retrieval-only mode: response is a list of doc numbers
+            for r in response:
+                if _found(r, doc_num):
+                    return True
+            return False
+            
         return _found(response, doc_num)
 
     def _get_amendment_chain(self, doc_num: str) -> List[str]:
@@ -375,9 +477,13 @@ class TemporalEvaluationRunner:
         local_terms = ['uit', 'trường công nghệ thông tin', 'đh-cntt']
         return any(term in response.lower() for term in local_terms)
 
-    def evaluate_pair(self, pair: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
+    def evaluate_pair(self, pair: Dict[str, Any], state: Dict[str, Any], 
+                      retrieval_only: bool = False) -> Dict[str, Any]:
         """Compute TDCE metrics for a single evaluation pair."""
-        response = extract_text(state)
+        if retrieval_only:
+            response = extract_retrieved_doc_numbers(state)
+        else:
+            response = extract_text(state)
 
         query = pair["query"]
         expected_docs = pair.get("expected_doc_numbers", [])
@@ -411,6 +517,7 @@ def main():
     parser.add_argument("--output", default=None)
     parser.add_argument("--mock", action="store_true", help="Run in mock mode (no LLM calls)")
     parser.add_argument("--workers", type=int, default=3, help="Number of concurrent workers")
+    parser.add_argument("--retrieval-only", action="store_true", help="Stop after retrieval, check metadata")
 
     args = parser.parse_args()
 
@@ -418,7 +525,10 @@ def main():
     pairs_path = args.pairs
     if not pairs_path:
         # Default relative to script
-        pairs_path = Path(__file__).parent / "temporal_test_pairs_100.json"
+        pairs_path = Path(__file__).parent / "temporal_test_pairs_200.json"
+        if not pairs_path.exists():
+            # Fallback to 100 if 200 is missing
+            pairs_path = Path(__file__).parent / "temporal_test_pairs_100.json"
     
     # Load test pairs
     with open(pairs_path) as f:
@@ -445,7 +555,7 @@ def main():
         config_overrides = None
 
     print(f"=== TDCE Framework - {args.config} {'[MOCK]' if args.mock else ''} ===")
-    print(f"Pairs: {len(pairs)}, Workers: {args.workers}")
+    print(f"Pairs: {len(pairs)}, Workers: {args.workers}, RetrievalOnly: {args.retrieval_only}")
 
     all_results = []
 
@@ -455,18 +565,29 @@ def main():
                 # Return dummy state for metric logic testing
                 state = {
                     "final_answer": f"According to document {pair.get('expected_doc_numbers', ['unknown'])[0]}...",
-                    "messages": [{"type": "ai", "content": f"Resolved via {pair.get('type')}"}]
+                    "messages": [{"type": "ai", "content": f"Resolved via {pair.get('type')}"}],
+                    "reranked_chunks": [[{"metadata": {"document_number": pair.get("expected_doc_numbers", ["unknown"])[0]}}, 0.9]]
                 }
             else:
-                # Simulate pipeline call (existing infrastructure with retries)
-                state = call_pipeline(pair["query"], pair.get("query_cohort_year"), config_overrides=config_overrides)
+                # Simulate pipeline call
+                if args.retrieval_only:
+                    state = call_pipeline_retrieval_only(pair["query"], pair.get("query_cohort_year"), 
+                                                          config_overrides=config_overrides)
+                else:
+                    state = call_pipeline(pair["query"], pair.get("query_cohort_year"), 
+                                           config_overrides=config_overrides)
 
             # Compute standard metrics
-            response = extract_text(state)
-            acc1 = accuracy_at_1(response, pair.get("expected_doc_numbers", []))
+            if args.retrieval_only:
+                retrieved_docs = extract_retrieved_doc_numbers(state)
+                # Accuracy is 1.0 if ANY expected doc is in top retrieval
+                acc1 = 1.0 if any(any(_found(r, e) for e in pair.get("expected_doc_numbers", [])) for r in retrieved_docs) else 0.0
+            else:
+                response = extract_text(state)
+                acc1 = accuracy_at_1(response, pair.get("expected_doc_numbers", []))
 
             # Compute TDCE metrics
-            tdce_metrics = runner.evaluate_pair(pair, state)
+            tdce_metrics = runner.evaluate_pair(pair, state, retrieval_only=args.retrieval_only)
 
             result = {
                 "id": pair["id"],
@@ -480,6 +601,8 @@ def main():
         except Exception as e:
             if args.verbose:
                 print(f"  {pair['id']:2d}: ERROR - {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 "id": pair["id"],
                 "type": pair.get("type", "general"),
