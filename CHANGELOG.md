@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.2.0] - 2026-05-09
+
+### Added
+- Authority scope scoring (`system` vs `local` contexts) in the reranker for precise routing.
+- Direct document content retrieval via `get_chunks_by_doc_ids` to provide the reranker with full semantic context during sibling enrichment.
+- Expanded historical query pattern recognition to better handle Vietnamese admissions syntax.
+
+### Fixed
+- Fixed an issue causing valid original documents to be incorrectly demoted by self-referential or error-prefixed `amended_by` metadata.
+- Restricted the "Amendment Override" functionality exclusively to queries with an `AMENDMENT` intent to prevent false displacements on general queries.
+- Cleaned up tracking for temporary evaluation output artifacts.
+
 ## [0.4.1.0] - 2026-05-05
 
 ### Added
