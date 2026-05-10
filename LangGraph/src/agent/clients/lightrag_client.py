@@ -1152,6 +1152,202 @@ class LightRAGAPIClient:
             print(f"[LightRAG Client] Error fetching all documents: {e}")
             return []
 
+    def get_temporal_metadata_by_doc_ids(
+        self,
+        doc_ids: List[str]
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Batch-fetch temporal metadata for a list of doc_ids.
+        Returns a mapping of doc_id -> temporal metadata dict.
+        """
+        if not doc_ids:
+            return {}
+
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                      lds.file_path AS file_source,
+                      tm.doc_id,
+                      tm.document_number,
+                      tm.document_type,
+                      tm.valid_from::text,
+                      tm.valid_until::text,
+                      tm.cohort_years,
+                      tm.cohort_scope,
+                      tm.amends_documents,
+                      tm.amended_by_documents,
+                      tm.is_archived,
+                      tm.archived_at::text,
+                      tm.archive_reason,
+                      tm.extraction_confidence,
+                      tm.extraction_timestamp::text AS indexed_at
+                    FROM lightrag_doc_status lds
+                    LEFT JOIN temporal_metadata tm ON tm.doc_id = lds.id
+                    WHERE lds.workspace = %s
+                      AND lds.id = ANY(%s)
+                    """,
+                    (workspace, list(doc_ids))
+                )
+                rows = cur.fetchall()
+
+            conn.close()
+
+            result = {}
+            for row in rows:
+                doc_id = row[1]
+                if not doc_id:
+                    continue
+
+                amended_by_docs = row[9] if row[9] else []
+
+                result[doc_id] = {
+                    "file_path": row[0],
+                    "document_number": row[2],
+                    "document_type": row[3],
+                    "valid_from": row[4],
+                    "valid_until": row[5],
+                    "cohort_years": row[6] if row[6] else [],
+                    "cohort_scope": row[7],
+                    "amends_documents": row[8] if row[8] else [],
+                    "amended_by": amended_by_docs,
+                    "is_archived": bool(row[10]),
+                    "archived_at": row[11],
+                    "archive_reason": row[12],
+                    "extraction_confidence": float(row[13]) if row[13] else 0.0,
+                    "indexed_at": row[14]
+                }
+
+            return result
+
+        except Exception as e:
+            print(f"[LightRAG Client] Error fetching temporal metadata by doc_ids: {e}")
+            return {}
+
+    def get_chunks_by_doc_numbers(
+        self,
+        doc_numbers: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Directly fetch full document content by document_number.
+        Returns a list of chunks (one per document) to bypass semantic search failures.
+        """
+        if not doc_numbers:
+            return []
+
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                # Find matching doc_ids and file_paths for the given document numbers
+                # We use ILIKE for case-insensitive matching
+                query = """
+                    SELECT tm.doc_id, tm.document_number, lds.file_path, f.content
+                    FROM temporal_metadata tm
+                    JOIN lightrag_doc_status lds ON tm.doc_id = lds.id
+                    LEFT JOIN lightrag_doc_full f ON lds.id = f.id
+                    WHERE tm.workspace = %s
+                      AND (
+                """
+                
+                conditions = []
+                params = [workspace]
+                for num in doc_numbers:
+                    conditions.append("tm.document_number ILIKE %s")
+                    params.append(f"%{num}%")
+                
+                query += " OR ".join(conditions) + ")"
+                
+                cur.execute(query, tuple(params))
+                rows = cur.fetchall()
+
+            conn.close()
+
+            chunks = []
+            for row in rows:
+                doc_id = row[0]
+                doc_num = row[1]
+                file_path = row[2]
+                content = row[3]
+                
+                if content:
+                    chunks.append({
+                        "content": content,
+                        "file_path": file_path,
+                        "doc_id": doc_id,
+                        "metadata": {
+                            "document_number": doc_num
+                        },
+                        "score": 1.0  # Exact match gets high score
+                    })
+
+            return chunks
+
+        except Exception as e:
+            print(f"[LightRAG Client] Error fetching chunks by doc_numbers: {e}")
+            return []
+
+    def get_chunks_by_doc_ids(
+        self,
+        doc_ids: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Directly fetch full document content by doc_ids.
+        Returns a list of chunks (one per document).
+        """
+        if not doc_ids:
+            return []
+
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                # Find matching doc_ids and file_paths for the given doc_ids
+                cur.execute(
+                    """
+                    SELECT tm.doc_id, tm.document_number, lds.file_path, f.content
+                    FROM temporal_metadata tm
+                    JOIN lightrag_doc_status lds ON tm.doc_id = lds.id
+                    LEFT JOIN lightrag_doc_full f ON lds.id = f.id
+                    WHERE tm.workspace = %s
+                      AND tm.doc_id = ANY(%s)
+                    """,
+                    (workspace, list(doc_ids))
+                )
+                rows = cur.fetchall()
+
+            conn.close()
+
+            chunks = []
+            for row in rows:
+                doc_id = row[0]
+                doc_num = row[1]
+                file_path = row[2]
+                content = row[3]
+                
+                if content:
+                    chunks.append({
+                        "content": content,
+                        "file_path": file_path,
+                        "doc_id": doc_id,
+                        "metadata": {
+                            "document_number": doc_num
+                        },
+                        "score": 1.0  # Exact match gets high score
+                    })
+
+            return chunks
+
+        except Exception as e:
+            print(f"[LightRAG Client] Error fetching chunks by doc_ids: {e}")
+            return []
+
     def get_temporal_metadata_by_file_sources(
         self,
         file_sources: List[str]

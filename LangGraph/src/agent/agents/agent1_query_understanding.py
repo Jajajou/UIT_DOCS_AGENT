@@ -66,6 +66,14 @@ _HISTORICAL_PATTERNS_ASCII = [
     "nam do",
     "giai doan dich",
     "thoi ky dich",
+    # F4: Vietnamese admissions and versioning syntax
+    "truoc khi",
+    "truoc nam",
+    "giai doan truoc",
+    "truoc dot",
+    "da bi thay the",
+    "cu hon",
+    "phien ban cu",
 ]
 
 
@@ -168,6 +176,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_confidence = get_attr_safe(understanding,"confidence")
         query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
         query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
+        query_authority_scope = get_attr_safe(understanding,"query_authority_scope")
         query_type = get_attr_safe(understanding,"query_type", "GENERAL")
         query_document_ref = get_attr_safe(understanding,"query_document_ref")
 
@@ -184,6 +193,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         print(f"[AGENT 1] Confidence: {query_confidence:.2f}")
         print(f"[AGENT 1] Reason: {query_confidence_reason}")
         print(f"[AGENT 1] Cohort Year: {query_cohort_year}")
+        print(f"[AGENT 1] Authority Scope: {query_authority_scope}")
         print(f"[AGENT 1] Query Type: {query_type}")
         print(f"[AGENT 1] Document Ref: {query_document_ref}")
 
@@ -201,6 +211,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_confidence": query_confidence,
             "query_confidence_reason": query_confidence_reason,
             "query_cohort_year": query_cohort_year,
+            "query_authority_scope": query_authority_scope,
             "query_type": query_type,
             "query_document_ref": query_document_ref,
             "query_is_historical": query_is_historical,

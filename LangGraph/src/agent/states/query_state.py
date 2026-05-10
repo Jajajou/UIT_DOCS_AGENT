@@ -55,6 +55,15 @@ class QueryUnderstanding(BaseModel):
         description="Nam nhap hoc cua khoa sinh vien neu co (vi du: 2022 cho 'K2022', 'khoa 2022')"
     )
 
+    # Authority scope extracted from query (system vs local)
+    query_authority_scope: Optional[Literal["system", "local"]] = Field(
+        default=None,
+        description=(
+            "system: quy định của ĐHQG/Bộ. "
+            "local: quy định của UIT/ĐHCNTT."
+        )
+    )
+
     # Query type for dual-mode retrieval routing (v0.3.0)
     query_type: Literal["COHORT", "AMENDMENT", "GENERAL"] = Field(
         default="GENERAL",
@@ -169,6 +178,7 @@ class QueryState(TypedDict):
     query_confidence: NotRequired[float]
     query_confidence_reason: NotRequired[Optional[str]]
     query_cohort_year: NotRequired[Optional[int]]  # e.g. 2022 for "K2022" queries
+    query_authority_scope: NotRequired[Optional[Literal["system", "local"]]]
     query_type: NotRequired[Optional[Literal["COHORT", "AMENDMENT", "GENERAL"]]]
     query_document_ref: NotRequired[Optional[str]]  # e.g. '108/QD-DHCNTT' for AMENDMENT path
     query_is_historical: NotRequired[Optional[bool]]  # True if historical query detected
