@@ -74,17 +74,17 @@ export HF_TOKEN="hf_DienTokenCuaBanVaoDay"
 
 Chạy Embeddings (Cổng 8000):
 ```bash
-nohup vllm serve AITeamVN/Vietnamese_Embedding_V2 --task embed --host 0.0.0.0 --port 8000 --gpu-memory-utilization 0.08 > embed.log 2>&1 &
+nohup vllm serve AITeamVN/Vietnamese_Embedding_V2 --host 0.0.0.0 --port 8000 --gpu-memory-utilization 0.08 > embed.log 2>&1 &
 ```
 
 Chạy Reranker (Cổng 8001):
 ```bash
-nohup vllm serve AITeamVN/Vietnamese_Reranker --task score --host 0.0.0.0 --port 8001 --gpu-memory-utilization 0.08 > rerank.log 2>&1 &
+nohup vllm serve AITeamVN/Vietnamese_Reranker --host 0.0.0.0 --port 8001 --gpu-memory-utilization 0.08 > rerank.log 2>&1 &
 ```
 
 Chạy LLM Qwen3-8B (Cổng 8002) - Đã bật Chunked Prefill và FP8 KV Cache:
 ```bash
-nohup vllm serve Qwen/Qwen3-8B --host 0.0.0.0 --port 8002 --gpu-memory-utilization 0.50 --max-model-len 32768 --enable-chunked-prefill --kv-cache-dtype fp8 --enable-reasoning --reasoning-parser deepseek_r1 > llm.log 2>&1 &
+nohup vllm serve Qwen/Qwen3-8B --host 0.0.0.0 --port 8002 --gpu-memory-utilization 0.50 --max-model-len 32768 --enable-chunked-prefill --kv-cache-dtype fp8 > llm.log 2>&1 &
 ```
 
 Chạy Rerank Adapter (Cổng 8003):
