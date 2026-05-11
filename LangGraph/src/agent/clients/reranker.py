@@ -76,16 +76,18 @@ class Reranker:
 
         if settings.reranker_base_url:
             import requests
-            url = f"{settings.reranker_base_url}/v1/score"
+            url = f"{settings.reranker_base_url}/v2/rerank"
             payload = {
                 "model": self.config.default_model,
-                "text_1": query,
-                "text_2": texts
+                "query": query,
+                "documents": texts,
             }
             response = requests.post(url, json=payload, timeout=60)
             response.raise_for_status()
             data = response.json()
-            return [item["score"] for item in data["data"]]
+            # Cohere /v2/rerank returns results sorted by relevance_score with original index
+            scored = sorted(data["results"], key=lambda x: x["index"])
+            return [item["relevance_score"] for item in scored]
 
         if self._model is None:
             raise RuntimeError("Reranker model not loaded")

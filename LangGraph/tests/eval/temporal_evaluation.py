@@ -40,48 +40,78 @@ sys.path.insert(0, str(ROOT / "src"))
 from agent.config import settings
 
 
-def extract_retrieved_doc_numbers(state: Dict[str, Any], top_k: int = 10) -> List[str]:
+def extract_retrieved_doc_numbers(state: Dict[str, Any], top_k: int = 10,
+                                   db_conn=None) -> List[str]:
     """
     Extract document numbers from reranked chunks and entities.
-    
+
+    Priority order:
+    1. chunk.metadata.document_number (direct, if present)
+    2. DB lookup: file_path → temporal_metadata.document_number (JOIN)
+    3. Filename regex fallback with dash→slash normalization
+
     Args:
         state: LangGraph state dictionary
         top_k: Number of top items to consider
-        
+        db_conn: Optional psycopg2 connection for temporal_metadata lookup
+
     Returns:
         List of unique document numbers
     """
     doc_numbers = []
-    
+    file_paths = []
+
     # 1. Check reranked_chunks
     for chunk_wrapper in state.get("reranked_chunks", [])[:top_k]:
-        # Handle [chunk, score] or just chunk
         chunk = chunk_wrapper[0] if isinstance(chunk_wrapper, (list, tuple)) else chunk_wrapper
         if isinstance(chunk, dict):
-            # Try metadata first
             meta = chunk.get("metadata", {})
             doc_num = meta.get("document_number")
             if doc_num:
                 doc_numbers.append(doc_num)
             else:
-                # Try file_path extraction if metadata is missing
                 fp = chunk.get("file_path") or chunk.get("file_source")
                 if fp:
-                    # Match pattern like .../141-qd-dhcntt.pdf
-                    match = re.search(r'([^/]+)\.pdf$', fp, re.IGNORECASE)
-                    if match:
-                        doc_numbers.append(match.group(1).upper())
+                    file_paths.append(fp)
 
     # 2. Check reranked_entities
     for ent_wrapper in state.get("reranked_entities", [])[:top_k]:
         ent = ent_wrapper[0] if isinstance(ent_wrapper, (list, tuple)) else ent_wrapper
         if isinstance(ent, dict):
-            meta = ent.get("metadata", {})
-            doc_num = meta.get("document_number")
+            doc_num = ent.get("metadata", {}).get("document_number")
             if doc_num:
                 doc_numbers.append(doc_num)
 
-    # Deduplicate while preserving order
+    # 3. DB lookup: file_path → document_number via temporal_metadata JOIN
+    if file_paths and db_conn:
+        try:
+            with db_conn.cursor() as cur:
+                cur.execute("""
+                    SELECT tm.document_number
+                    FROM temporal_metadata tm
+                    JOIN lightrag_doc_status lds ON tm.doc_id = lds.id
+                    WHERE lds.file_path = ANY(%s)
+                    AND tm.document_number IS NOT NULL
+                    AND tm.document_number != ''
+                """, (file_paths,))
+                for row in cur.fetchall():
+                    doc_numbers.append(row[0])
+        except Exception:
+            pass  # fall through to filename regex
+
+    # 4. Filename regex fallback with dash→slash normalization
+    # Only if DB lookup produced nothing
+    if file_paths and not doc_numbers:
+        for fp in file_paths:
+            match = re.search(r'([^/]+)\.pdf$', fp, re.IGNORECASE)
+            if match:
+                raw = match.group(1).upper()
+                # 09-2022-TT-BGDDT → 09/2022/TT-BGDDT
+                norm = re.sub(r'^(\d+)-(\d+)-([A-Z]+)-([A-Z]+)$', r'\1/\2/\3-\4', raw)
+                # 790-QD-DHCNTT → 790/QD-DHCNTT
+                norm = re.sub(r'^(\d+)-([A-Z]+-[A-Z]+)$', r'\1/\2', norm)
+                doc_numbers.append(norm)
+
     seen = set()
     return [x for x in doc_numbers if not (x in seen or seen.add(x))]
 
@@ -100,7 +130,7 @@ def call_pipeline_retrieval_only(query: str, cohort_year: int | None,
         from agent.graphs.query_graph import graph as query_graph
         from agent.config import set_config_overrides, reset_config_overrides
         
-        inputs = {"messages": [{"type": "human", "content": query}]}
+        inputs: Dict[str, Any] = {"messages": [{"type": "human", "content": query}]}
         if cohort_year:
             inputs["query_cohort_year"] = cohort_year
 
@@ -131,8 +161,22 @@ class TemporalEvaluationRunner:
         self.config_name = config_name
         self.verbose = verbose
         self.mock_mode = mock_mode
-        self.db_conn = None
+        self.db_conn = self._open_db_conn()
         self.amendment_chains = self._load_amendment_chains()
+
+    def _open_db_conn(self):
+        try:
+            import psycopg2
+            return psycopg2.connect(
+                host="localhost",
+                port=5433,
+                user=os.getenv("POSTGRES_USER"),
+                password=os.getenv("POSTGRES_PASSWORD"),
+                database=os.getenv("POSTGRES_DATABASE", "lightrag"),
+            )
+        except Exception as e:
+            print(f"[WARN] DB connection failed, doc_number DB lookup disabled: {e}")
+            return None
 
     def __del__(self):
         if self.db_conn:
@@ -481,11 +525,10 @@ class TemporalEvaluationRunner:
                       retrieval_only: bool = False) -> Dict[str, Any]:
         """Compute TDCE metrics for a single evaluation pair."""
         if retrieval_only:
-            response = extract_retrieved_doc_numbers(state)
+            response = extract_retrieved_doc_numbers(state, db_conn=self.db_conn)
         else:
             response = extract_text(state)
 
-        query = pair["query"]
         expected_docs = pair.get("expected_doc_numbers", [])
         query_cohort = pair.get("query_cohort_year")
         pair_type = pair.get("type", "general")
@@ -579,7 +622,7 @@ def main():
 
             # Compute standard metrics
             if args.retrieval_only:
-                retrieved_docs = extract_retrieved_doc_numbers(state)
+                retrieved_docs = extract_retrieved_doc_numbers(state, db_conn=runner.db_conn)
                 # Accuracy is 1.0 if ANY expected doc is in top retrieval
                 acc1 = 1.0 if any(any(_found(r, e) for e in pair.get("expected_doc_numbers", [])) for r in retrieved_docs) else 0.0
             else:
