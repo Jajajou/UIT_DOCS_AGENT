@@ -105,11 +105,17 @@ def extract_retrieved_doc_numbers(state: Dict[str, Any], top_k: int = 10,
         for fp in file_paths:
             match = re.search(r'([^/]+)\.pdf$', fp, re.IGNORECASE)
             if match:
-                raw = match.group(1).upper()
-                # 09-2022-TT-BGDDT → 09/2022/TT-BGDDT
-                norm = re.sub(r'^(\d+)-(\d+)-([A-Z]+)-([A-Z]+)$', r'\1/\2/\3-\4', raw)
-                # 790-QD-DHCNTT → 790/QD-DHCNTT
-                norm = re.sub(r'^(\d+)-([A-Z]+-[A-Z]+)$', r'\1/\2', norm)
+                raw = match.group(1)
+                # Normalize separators: replace underscores with dashes for pattern matching
+                raw_dash = re.sub(r'_', '-', raw).upper()
+                # 03-TT-2022-BGDDT-... → 03/2022/TT-BGDDT (Ministry circular format with extra words)
+                norm = re.sub(r'^(\d+)-([A-Z]+)-(\d{4})-([A-Z]+)(?:-.*)?$', r'\1/\3/\2-\4', raw_dash)
+                if norm == raw_dash:
+                    # 09-2022-TT-BGDDT → 09/2022/TT-BGDDT
+                    norm = re.sub(r'^(\d+)-(\d{4})-([A-Z]+)-([A-Z]+)(?:-.*)?$', r'\1/\2/\3-\4', raw_dash)
+                if norm == raw_dash:
+                    # 790-QD-DHCNTT → 790/QD-DHCNTT
+                    norm = re.sub(r'^(\d+)-([A-Z]+-[A-Z]+)(?:-.*)?$', r'\1/\2', raw_dash)
                 doc_numbers.append(norm)
 
     seen = set()
@@ -623,10 +629,15 @@ def main():
             # Compute standard metrics
             if args.retrieval_only:
                 retrieved_docs = extract_retrieved_doc_numbers(state, db_conn=runner.db_conn)
-                # Accuracy is 1.0 if ANY expected doc is in top retrieval
-                acc1 = 1.0 if any(any(_found(r, e) for e in pair.get("expected_doc_numbers", [])) for r in retrieved_docs) else 0.0
+                # Normalize: strip all separators for direct comparison (handles DH_CNTT vs DHCNTT)
+                def _norm_sep(s: str) -> str:
+                    return re.sub(r'[\s/_\-]', '', s).upper()
+                def _docnum_match(r: str, e: str) -> bool:
+                    return _found(r, e) or _norm_sep(r) == _norm_sep(e)
+                acc1 = 1.0 if any(any(_docnum_match(r, e) for e in pair.get("expected_doc_numbers", [])) for r in retrieved_docs) else 0.0
             else:
-                response = extract_text(state)
+                response = extract_text(state) or ""
+                retrieved_docs = None
                 acc1 = accuracy_at_1(response, pair.get("expected_doc_numbers", []))
 
             # Compute TDCE metrics
@@ -636,9 +647,15 @@ def main():
                 "id": pair["id"],
                 "type": pair.get("type", "general"),
                 "config": args.config,
+                "query": pair.get("query"),
+                "expected_doc_numbers": pair.get("expected_doc_numbers", []),
                 "accuracy@1": acc1,
                 **tdce_metrics
             }
+            if args.retrieval_only:
+                result["retrieved_doc_numbers"] = retrieved_docs
+            else:
+                result["response_excerpt"] = response[:300]
             return result
 
         except Exception as e:

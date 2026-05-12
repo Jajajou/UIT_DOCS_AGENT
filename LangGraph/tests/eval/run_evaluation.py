@@ -130,8 +130,10 @@ def call_pipeline(query: str, cohort_year: int | None, config_overrides: dict[st
         try:
             if USE_LOCAL:
                 # Call graph locally
-                inputs = {"messages": [{"type": "human", "content": query}]}
-                
+                inputs: dict[str, Any] = {"messages": [{"type": "human", "content": query}]}
+                if cohort_year:
+                    inputs["query_cohort_year"] = cohort_year
+
                 from agent.config import set_config_overrides, reset_config_overrides
                 
                 # Default overrides if not provided

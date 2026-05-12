@@ -122,7 +122,6 @@ class QdrantCohortClient:
                         "should": [
                             {"key": "cohort_years", "match": {"value": cohort_year}},
                             {"key": "cohort_years", "match": {"value": "*"}},
-                            {"is_empty": {"key": "cohort_years"}},
                         ]
                     }
                 ],
