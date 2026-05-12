@@ -251,7 +251,8 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
             amended_by = meta.get("amended_by")
             if isinstance(amended_by, list):
                 for doc_id in amended_by:
-                    sibling_doc_ids.add(str(doc_id))
+                    if not str(doc_id).startswith("error-"):
+                        sibling_doc_ids.add(str(doc_id))
         
         # Check which siblings are missing from chunks
         existing_doc_ids = {c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id") for c in enriched_chunks}

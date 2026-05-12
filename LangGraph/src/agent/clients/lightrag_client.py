@@ -1377,7 +1377,7 @@ class LightRAGAPIClient:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT
+                    SELECT DISTINCT ON (lds.file_path)
                       lds.file_path AS file_source,
                       tm.doc_id,
                       tm.document_number,
@@ -1397,6 +1397,7 @@ class LightRAGAPIClient:
                     LEFT JOIN temporal_metadata tm ON tm.doc_id = lds.id
                     WHERE lds.workspace = %s
                       AND lds.file_path = ANY(%s)
+                    ORDER BY lds.file_path, tm.extraction_confidence DESC NULLS LAST
                     """,
                     (workspace, list(file_sources))
                 )
