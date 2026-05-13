@@ -506,6 +506,7 @@ class LightRAGAPIClient:
             cohort_scope = metadata.get("cohort_scope")
             student_cohorts = metadata.get("student_cohorts")
             amends_documents = metadata.get("amends_documents")
+            amended_clauses = metadata.get("amended_clauses")
             extraction_method = metadata.get("extraction_method")
             extraction_confidence = metadata.get("extraction_confidence")
 
@@ -513,6 +514,7 @@ class LightRAGAPIClient:
             known_fields = {
                 "document_number", "document_type", "valid_from", "valid_until",
                 "cohort_years", "cohort_scope", "student_cohorts", "amends_documents",
+                "amended_clauses",
                 "extraction_method", "extraction_confidence"
             }
             additional_metadata = {
@@ -528,6 +530,7 @@ class LightRAGAPIClient:
                         valid_from, valid_until,
                         cohort_years, cohort_scope, student_cohorts,
                         amends_documents,
+                        amended_clauses,
                         extraction_method, extraction_confidence,
                         extraction_timestamp,
                         additional_metadata
@@ -536,6 +539,7 @@ class LightRAGAPIClient:
                         %s, %s,
                         %s, %s,
                         %s, %s, %s,
+                        %s,
                         %s,
                         %s, %s,
                         CURRENT_TIMESTAMP,
@@ -552,6 +556,7 @@ class LightRAGAPIClient:
                         cohort_scope = EXCLUDED.cohort_scope,
                         student_cohorts = EXCLUDED.student_cohorts,
                         amends_documents = EXCLUDED.amends_documents,
+                        amended_clauses = EXCLUDED.amended_clauses,
                         extraction_method = EXCLUDED.extraction_method,
                         extraction_confidence = EXCLUDED.extraction_confidence,
                         extraction_timestamp = CURRENT_TIMESTAMP,
@@ -566,6 +571,7 @@ class LightRAGAPIClient:
                     cohort_scope,
                     json.dumps(student_cohorts) if student_cohorts else None,
                     json.dumps(amends_documents) if amends_documents else None,
+                    json.dumps(amended_clauses) if amended_clauses else None,
                     extraction_method, extraction_confidence,
                     json.dumps(additional_metadata) if additional_metadata else None
                 ))
