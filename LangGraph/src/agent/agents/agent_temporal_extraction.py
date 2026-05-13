@@ -61,6 +61,10 @@ class TemporalMetadata(BaseModel):
         default_factory=list,
         description="List of specific articles/clauses amended (e.g., ['Điều 5', 'Điều 12.1'])"
     )
+    amended_clauses: Optional[Dict[str, Dict[str, str]]] = Field(
+        None,
+        description="Clause-level amendment map: {'Điều 5': {'action': 'modified'}, 'Khoản 2': {'action': 'added'}}"
+    )
     amends_documents: List[str] = Field(
         default_factory=list,
         description="List of document numbers that this document amends or supplements"
@@ -363,6 +367,26 @@ class TemporalExtractionAgent:
             metadata.amended_articles = sorted(list(article_set))
             reasoning_parts.append(f"Found specific amended articles: {metadata.amended_articles}")
 
+            # Build amended_clauses dict from keyword context
+            _ACTION_MAP = [
+                (["thay thế", "thế bằng", "bãi bỏ"], "replaced"),
+                (["bổ sung"], "added"),
+                (["xóa bỏ", "huỷ bỏ", "hủy bỏ"], "removed"),
+                (["sửa đổi", "điều chỉnh", "chỉnh sửa"], "modified"),
+            ]
+            clauses_dict: Dict[str, Dict[str, str]] = {}
+            for art in article_set:
+                action = "modified"  # default
+                # Search for art in content, check 100 chars before for action verb
+                for m in re.finditer(re.escape(art), content, re.IGNORECASE):
+                    window = content[max(0, m.start()-100):m.start()]
+                    for verbs, act in _ACTION_MAP:
+                        if any(v in window.lower() for v in verbs):
+                            action = act
+                            break
+                clauses_dict[art] = {"action": action}
+            metadata.amended_clauses = clauses_dict
+
         metadata.reasoning = " | ".join(reasoning_parts) if reasoning_parts else "No temporal patterns found locally"
 
         return metadata
@@ -593,6 +617,7 @@ class TemporalExtractionAgent:
             "document_number": result.document_number,
             "is_vbhn": result.is_vbhn,
             "amended_articles": result.amended_articles,
+            "amended_clauses": result.amended_clauses,
 
             # Document relationships
             "amends_documents": result.amends_documents,
