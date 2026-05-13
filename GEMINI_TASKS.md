@@ -1034,3 +1034,200 @@ git commit -m "feat: replace DeepSeek-OCR-2 with MinerU2.5-Pro + Vietnamese text
 
 6 commits landed: test → gitignore → remove artifacts → delete stale files → reorganize tests → consolidate docs.
 99/99 unit tests passing. No egg-info or pycache tracked. Root `.langgraph_api/` deleted.
+
+---
+
+## TASK-010 — 2026-05-13 — backfill-temporal-and-amended-clauses
+
+**Status:** - [x] Done
+**Branch:** `develop`
+**Priority:** high
+
+### Context
+
+Post-ablation sprint. Three code changes needed: (B) a backfill script to populate `temporal_metadata` for ~24 docs that are indexed but have no temporal scores; (C1) a SQL migration adding `amended_clauses` JSONB column; (C2) expanding `TemporalExtractionAgent` to produce `amended_clauses` dict from `amended_articles`; (C3) wiring `amended_clauses` into `lightrag_client.save_temporal_metadata()`. All changes are standalone — no live services needed except the backfill script which requires PostgreSQL at localhost:5433.
+
+---
+
+### Phase 1 — Create backfill_missing_temporal.py
+
+Create `/Users/jajajou1778/UIT_DOCS_AGENT/LangGraph/scripts/backfill_missing_temporal.py`
+
+The script must:
+1. Connect to PostgreSQL: host=localhost, port=5433, user=lightrag, db=lightrag. Read POSTGRES_PASSWORD from `LangGraph/.env` (key `POSTGRES_PASSWORD`).
+2. Query for docs missing from temporal_metadata:
+```sql
+SELECT lds.id AS doc_id, lds.file_path, lds.track_id, lds.metadata
+FROM lightrag_doc_status lds
+LEFT JOIN temporal_metadata tm ON tm.doc_id = lds.id
+WHERE lds.workspace = 'default'
+  AND tm.doc_id IS NULL
+  AND lds.status IN ('success', 'completed', 'indexed')
+ORDER BY lds.created_at;
+```
+3. For each doc, find text content:
+   - Try `data/DeepSeek-OCR/<basename>.txt` first (OCR cache)
+   - Fallback: read raw bytes from `file_path` as utf-8 (ignore errors)
+   - If file_path is None or file not found, log warning and skip
+4. Call `TemporalExtractionAgent.extract(content, filename, file_source)` — this is async, run via `asyncio.run()` or existing event loop.
+   - Imports: `from agent.agents.agent_temporal_extraction import TemporalExtractionAgent`
+   - Initialize agent: needs `llm_model` and `config`. Get config via `from agent.config import settings`. For llm_model, initialize a LangChain ChatOpenAI-compatible client using `OPENAI_BASE_URL` and `OPENAI_API_KEY` from env, model = `LLM_MODEL` from env or `"Qwen/Qwen3-4B-Instruct"`.
+5. Compute cohort_scope from cohort_years:
+   - `"universal"` if `cohort_years == ["*"]`
+   - `"explicit"` if `len(cohort_years) > 0 and cohort_years != ["*"]`
+   - `"unspecified"` if empty — **NEVER set "universal" for empty list**
+6. Save via `LightRAGClient().save_temporal_metadata(track_id=track_id, doc_id=doc_id, metadata=meta_dict)`.
+   - `from agent.clients.lightrag_client import LightRAGClient`
+   - meta_dict keys: `document_number`, `document_type`, `valid_from`, `valid_until`, `cohort_years`, `cohort_scope`, `amends_documents`, `extraction_method` (set to `metadata_result.extraction_method`), `extraction_confidence` (set to `metadata_result.confidence`).
+7. After all docs, call `LightRAGClient().backfill_amendment_links()` (method at lightrag_client.py lines 917-966).
+8. CLI flags:
+   - `--dry-run`: print what would be inserted, skip DB write
+   - `--limit N`: process only first N docs
+
+Run path from project root: `cd LangGraph && python scripts/backfill_missing_temporal.py --dry-run --limit 3`
+
+Commit: `feat: add backfill_missing_temporal.py script for 24 orphan docs`
+
+---
+
+### Phase 2 — DB Migration SQL
+
+Create `/Users/jajajou1778/UIT_DOCS_AGENT/LangGraph/scripts/migrations/04_add_amended_clauses.sql`:
+
+```sql
+ALTER TABLE temporal_metadata
+  ADD COLUMN IF NOT EXISTS amended_clauses JSONB;
+
+CREATE INDEX IF NOT EXISTS idx_temporal_amended_clauses
+  ON temporal_metadata USING GIN(amended_clauses);
+```
+
+Do NOT run against the DB — just create the file. Verify syntax with `python -c "pass"` (or just review manually).
+
+Commit: `feat: add migration 04_add_amended_clauses.sql`
+
+---
+
+### Phase 3 — Expand TemporalExtractionAgent (amended_clauses)
+
+File: `/Users/jajajou1778/UIT_DOCS_AGENT/LangGraph/src/agent/agents/agent_temporal_extraction.py`
+
+**Change 1**: Add `amended_clauses` field to `TemporalMetadata` Pydantic model (after `amended_articles` field, around line 63):
+```python
+amended_clauses: Optional[Dict[str, Dict[str, str]]] = Field(
+    None,
+    description="Clause-level amendment map: {'Điều 5': {'action': 'modified'}, 'Khoản 2': {'action': 'added'}}"
+)
+```
+Also add `Dict` to the `typing` imports (already has `List`, `Optional`, etc.).
+
+**Change 2**: After the `amended_articles` extraction block (lines 347-364), add logic to build `amended_clauses`:
+
+```python
+# Build amended_clauses dict from keyword context
+if article_set:
+    # Vietnamese action verb → enum
+    _ACTION_MAP = [
+        (["thay thế", "thế bằng", "bãi bỏ"], "replaced"),
+        (["bổ sung"], "added"),
+        (["xóa bỏ", "huỷ bỏ", "hủy bỏ"], "removed"),
+        (["sửa đổi", "điều chỉnh", "chỉnh sửa"], "modified"),
+    ]
+    clauses_dict: Dict[str, Dict[str, str]] = {}
+    for art in article_set:
+        action = "modified"  # default
+        # Search for art in content, check 100 chars before for action verb
+        for m in re.finditer(re.escape(art), content, re.IGNORECASE):
+            window = content[max(0, m.start()-100):m.start()]
+            for verbs, act in _ACTION_MAP:
+                if any(v in window.lower() for v in verbs):
+                    action = act
+                    break
+        clauses_dict[art] = {"action": action}
+    metadata.amended_clauses = clauses_dict
+```
+
+Keep `amended_articles` unchanged for backward compatibility.
+
+Commit: `feat: extract amended_clauses with action verbs in TemporalExtractionAgent`
+
+---
+
+### Phase 4 — Wire amended_clauses into lightrag_client.save_temporal_metadata()
+
+File: `/Users/jajajou1778/UIT_DOCS_AGENT/LangGraph/src/agent/clients/lightrag_client.py`
+
+In `save_temporal_metadata()` (lines 466-590):
+
+1. After line 508 (`amends_documents = metadata.get("amends_documents")`), add:
+```python
+amended_clauses = metadata.get("amended_clauses")
+```
+
+2. Add `amended_clauses` to `known_fields` set (line 513-516):
+```python
+known_fields = {
+    "document_number", "document_type", "valid_from", "valid_until",
+    "cohort_years", "cohort_scope", "student_cohorts", "amends_documents",
+    "amended_clauses",  # ADD THIS
+    "extraction_method", "extraction_confidence"
+}
+```
+
+3. In the INSERT statement, add `amended_clauses` column after `amends_documents`:
+```sql
+amends_documents,
+amended_clauses,
+```
+And in VALUES, add after `json.dumps(amends_documents) if amends_documents else None`:
+```python
+json.dumps(amended_clauses) if amended_clauses else None,
+```
+
+4. In ON CONFLICT DO UPDATE, add after `amends_documents = EXCLUDED.amends_documents,`:
+```sql
+amended_clauses = EXCLUDED.amended_clauses,
+```
+
+Commit: `feat: add amended_clauses JSONB field to save_temporal_metadata`
+
+---
+
+### Verification
+
+After Phase 1:
+```bash
+source .venv/bin/activate && cd LangGraph && python scripts/backfill_missing_temporal.py --dry-run --limit 3
+```
+Expected: prints 3 doc entries with extracted metadata, no exceptions.
+
+After Phase 3:
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT && source .venv/bin/activate && cd LangGraph
+python -c "from src.agent.agents.agent_temporal_extraction import TemporalMetadata; print('amended_clauses' in TemporalMetadata.__fields__)"
+```
+Expected: `True`
+
+After Phase 4:
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT && source .venv/bin/activate && cd LangGraph
+python -c "from src.agent.clients.lightrag_client import LightRAGClient; import inspect; src=inspect.getsource(LightRAGClient.save_temporal_metadata); print('amended_clauses' in src)"
+```
+Expected: `True`
+
+Run existing tests:
+```bash
+cd /Users/jajajou1778/UIT_DOCS_AGENT/LangGraph && make test 2>&1 | tail -20
+```
+Expected: 0 failures.
+
+---
+
+### Acceptance Criteria
+- [x] `LangGraph/scripts/backfill_missing_temporal.py` exists and runs with `--dry-run --limit 3` without exception
+- [x] `LangGraph/scripts/migrations/04_add_amended_clauses.sql` exists with correct ALTER TABLE and CREATE INDEX
+- [x] `TemporalMetadata` Pydantic model has `amended_clauses: Optional[Dict[str, Dict[str, str]]]` field
+- [x] Extraction logic builds `amended_clauses` dict with action verbs after `amended_articles` block
+- [x] `save_temporal_metadata()` includes `amended_clauses` in INSERT, known_fields, and ON CONFLICT UPDATE
+- [x] `make test` passes with 0 failures
+- [x] 4 commits exist with messages matching `feat:` convention

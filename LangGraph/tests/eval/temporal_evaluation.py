@@ -122,7 +122,20 @@ def extract_retrieved_doc_numbers(state: Dict[str, Any], top_k: int = 10,
     return [x for x in doc_numbers if not (x in seen or seen.add(x))]
 
 
-def call_pipeline_retrieval_only(query: str, cohort_year: int | None, 
+def mrr_at_k(ranked_docs: List[str], expected_docs: List[str], k: int = 10) -> float:
+    """Mean Reciprocal Rank — 1/rank of first correct doc in ranked_docs[:k]."""
+    if not expected_docs or not ranked_docs:
+        return 0.0
+    def _norm(s: str) -> str:
+        return re.sub(r'[\s/_\-]', '', s).upper()
+    expected_norm = {_norm(e) for e in expected_docs}
+    for rank, doc in enumerate(ranked_docs[:k], start=1):
+        if any(_found(doc, e) for e in expected_docs) or _norm(doc) in expected_norm:
+            return 1.0 / rank
+    return 0.0
+
+
+def call_pipeline_retrieval_only(query: str, cohort_year: int | None,
                                  config_overrides: Dict[str, Any] | None = None) -> Dict[str, Any]:
     """
     Call the LangGraph pipeline but stop after rerank_data node.
@@ -627,18 +640,21 @@ def main():
                                            config_overrides=config_overrides)
 
             # Compute standard metrics
+            expected_doc_numbers = pair.get("expected_doc_numbers", [])
+            def _norm_sep(s: str) -> str:
+                return re.sub(r'[\s/_\-]', '', s).upper()
+            def _docnum_match(r: str, e: str) -> bool:
+                return _found(r, e) or _norm_sep(r) == _norm_sep(e)
+
+            retrieved_docs = extract_retrieved_doc_numbers(state, db_conn=runner.db_conn)
+            response = ""
             if args.retrieval_only:
-                retrieved_docs = extract_retrieved_doc_numbers(state, db_conn=runner.db_conn)
-                # Normalize: strip all separators for direct comparison (handles DH_CNTT vs DHCNTT)
-                def _norm_sep(s: str) -> str:
-                    return re.sub(r'[\s/_\-]', '', s).upper()
-                def _docnum_match(r: str, e: str) -> bool:
-                    return _found(r, e) or _norm_sep(r) == _norm_sep(e)
-                acc1 = 1.0 if any(any(_docnum_match(r, e) for e in pair.get("expected_doc_numbers", [])) for r in retrieved_docs) else 0.0
+                acc1 = 1.0 if any(any(_docnum_match(r, e) for e in expected_doc_numbers) for r in retrieved_docs) else 0.0
+                mrr = mrr_at_k(retrieved_docs, expected_doc_numbers, k=10)
             else:
                 response = extract_text(state) or ""
-                retrieved_docs = None
-                acc1 = accuracy_at_1(response, pair.get("expected_doc_numbers", []))
+                acc1 = 1.0 if any(any(_docnum_match(r, e) for e in expected_doc_numbers) for r in retrieved_docs) else 0.0
+                mrr = mrr_at_k(retrieved_docs, expected_doc_numbers, k=10)
 
             # Compute TDCE metrics
             tdce_metrics = runner.evaluate_pair(pair, state, retrieval_only=args.retrieval_only)
@@ -648,13 +664,15 @@ def main():
                 "type": pair.get("type", "general"),
                 "config": args.config,
                 "query": pair.get("query"),
-                "expected_doc_numbers": pair.get("expected_doc_numbers", []),
+                "expected_doc_numbers": expected_doc_numbers,
                 "accuracy@1": acc1,
+                "mrr@10": mrr,
                 **tdce_metrics
             }
             if args.retrieval_only:
                 result["retrieved_doc_numbers"] = retrieved_docs
             else:
+                result["retrieved_doc_numbers"] = retrieved_docs
                 result["response_excerpt"] = response[:300]
             return result
 
@@ -668,6 +686,7 @@ def main():
                 "type": pair.get("type", "general"),
                 "config": args.config,
                 "accuracy@1": 0.0,
+                "mrr@10": 0.0,
                 **{k: 0.0 for k in ["ap@3", "cascade_hit_rate", "authority_score",
                                    "cohort_coverage", "ar@3", "displacement_rate"]},
                 "error": str(e)
@@ -694,7 +713,7 @@ def main():
     # Compute averages
     if all_results:
         avg_metrics = {metric: sum(r.get(metric, 0.0) for r in all_results) / len(all_results)
-                       for metric in ["accuracy@1", "ap@3", "cascade_hit_rate",
+                       for metric in ["accuracy@1", "mrr@10", "ap@3", "cascade_hit_rate",
                                      "authority_score", "cohort_coverage", "ar@3", "displacement_rate"]}
     else:
         avg_metrics = {}
@@ -710,8 +729,9 @@ def main():
         subset = [r for r in all_results if r["type"] == type_name]
         if not subset: continue
         avg_acc = sum(r["accuracy@1"] for r in subset) / len(subset)
+        avg_mrr = sum(r.get("mrr@10", 0.0) for r in subset) / len(subset)
         avg_ap3 = sum(r["ap@3"] for r in subset) / len(subset)
-        print(f"  {type_name:20s}: acc={avg_acc:.2f} ap@3={avg_ap3:.2f} n={len(subset)}")
+        print(f"  {type_name:20s}: acc={avg_acc:.2f} mrr={avg_mrr:.2f} ap@3={avg_ap3:.2f} n={len(subset)}")
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:

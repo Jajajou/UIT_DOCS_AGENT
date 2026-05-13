@@ -129,16 +129,27 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
             if direct_chunks:
                 print(f"[RETRIEVE] Found {len(direct_chunks)} direct chunks via doc number lookup.")
 
-        # Call LightRAG /query/data endpoint
-        result = api_client.query_data(
-            query_text=query,
-            mode=mode,
-            top_k=top_k,
-            chunk_top_k=chunk_top_k,
-            max_entity_tokens=max_entity_tokens,
-            max_relation_tokens=max_relation_tokens,
-            max_total_tokens=max_total_tokens
-        )
+        # Call LightRAG /query/data endpoint (retry up to 3x on 5xx)
+        import time as _time
+        result = None
+        for _attempt in range(3):
+            try:
+                result = api_client.query_data(
+                    query_text=query,
+                    mode=mode,
+                    top_k=top_k,
+                    chunk_top_k=chunk_top_k,
+                    max_entity_tokens=max_entity_tokens,
+                    max_relation_tokens=max_relation_tokens,
+                    max_total_tokens=max_total_tokens
+                )
+                break
+            except Exception as _e:
+                if _attempt < 2:
+                    print(f"[RETRIEVE] Attempt {_attempt+1} failed: {_e}, retrying in 5s...")
+                    _time.sleep(5)
+                else:
+                    raise
         
         # Parse result
         entities = result["data"]["entities"]
