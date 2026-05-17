@@ -238,6 +238,27 @@ class TemporalExtractionAgent:
                     reasoning_parts.append(f"Found 'valid_from' date via regex: {metadata.valid_from}")
                     break
 
+        # Handle "hiệu lực kể từ ngày ký" / "hiệu lực từ ngày ký" — no explicit date,
+        # resolve to doc signing date extracted from header (Tp. ... ngày DD tháng MM năm YYYY)
+        if not metadata.valid_from:
+            signing_trigger = re.search(
+                r"hiệu lực\s+(?:kể từ|từ)\s+ngày\s+ký",
+                content,
+                re.IGNORECASE,
+            )
+            if signing_trigger:
+                header_date = re.search(
+                    r"ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})",
+                    content[:500],
+                )
+                if header_date:
+                    day, month, year = header_date.groups()
+                    metadata.valid_from = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                    metadata.confidence = max(metadata.confidence, 0.88)
+                    reasoning_parts.append(
+                        f"'Hiệu lực kể từ ngày ký' resolved to signing date: {metadata.valid_from}"
+                    )
+
         if not metadata.valid_until:
             for pattern in self.regex_patterns["valid_until"]:
                 match = re.search(pattern, content, re.IGNORECASE)
