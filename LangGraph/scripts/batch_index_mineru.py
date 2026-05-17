@@ -26,6 +26,15 @@ from agent.utils import get_url
 OCR_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/data/MinerU2.5_ocr_rerun")
 PDF_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/firecrawl/data/daa")
 
+# Government-level decree patterns that UIT docs never amend (only cite as legal basis)
+_EXTERNAL_DOC_PATTERNS = ("NĐ-CP", "ND-CP", "QĐ-TTg", "QD-TTg", "CT-TTg", "NQ-CP", "NQ-UBTVQH")
+
+def _filter_external_amends(amends: list) -> tuple[list, list]:
+    """Split amends into linkable (in-corpus) vs external (govt decrees cited as legal basis)."""
+    linkable = [d for d in amends if not any(p in d for p in _EXTERNAL_DOC_PATTERNS)]
+    external = [d for d in amends if any(p in d for p in _EXTERNAL_DOC_PATTERNS)]
+    return linkable, external
+
 
 def find_pdf(stem: str) -> Path | None:
     """Find PDF by stem (exact or with hash suffix)."""
@@ -107,12 +116,65 @@ async def process_one(
             "doc_id": "",
             "messages": [],
         }
-        await extract_temporal_metadata_rag(state)
-        print(f"  [META] temporal extraction done: {stem[:50]}")
+        meta_result = await extract_temporal_metadata_rag(state)
+        document_metadata = meta_result.get("document_metadata", {})
+        print(f"  [META] extraction done: doc_num={document_metadata.get('document_number')!r} conf={document_metadata.get('extraction_confidence', 0):.2f}")
     except Exception as e:
         print(f"  [WARN] temporal extraction failed: {e}")
+        return {"stem": stem, "status": "ok", "track_id": track_id, "url": url}
 
-    return {"stem": stem, "status": "ok", "track_id": track_id, "url": url}
+    # Look up doc_id from DB by track_id (LightRAG creates row async)
+    doc_id = None
+    for attempt in range(15):
+        try:
+            conn = client._get_pg_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT id FROM lightrag_doc_status WHERE track_id = %s",
+                        (track_id,)
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        doc_id = row[0]
+            finally:
+                conn.close()
+        except Exception as e:
+            print(f"  [WARN] DB lookup attempt {attempt+1}: {e}")
+        if doc_id:
+            break
+        await asyncio.sleep(2)
+
+    if not doc_id:
+        print(f"  [WARN] doc_id not found for track_id={track_id}, skipping metadata save")
+        return {"stem": stem, "status": "ok", "track_id": track_id, "url": url}
+
+    # Save to temporal_metadata table
+    if document_metadata:
+        try:
+            save_result = client.save_temporal_metadata(
+                track_id=track_id,
+                doc_id=doc_id,
+                metadata=document_metadata,
+            )
+            if save_result.get("success"):
+                print(f"  [META] saved to temporal_metadata (doc_id={doc_id})")
+                # Link amended documents (skip external govt decrees)
+                amends = document_metadata.get("amends_documents") or []
+                if amends:
+                    linkable, external = _filter_external_amends(amends)
+                    if external:
+                        print(f"  [META] skipping {len(external)} external refs (NĐ-CP etc): {external}")
+                    if linkable:
+                        link_result = client.link_amended_documents(doc_id, linkable)
+                        linked = len(link_result.get("linked_docs", []))
+                        print(f"  [META] linked {linked}/{len(linkable)} amended docs")
+            else:
+                print(f"  [WARN] metadata save failed: {save_result.get('error')}")
+        except Exception as e:
+            print(f"  [WARN] metadata save exception: {e}")
+
+    return {"stem": stem, "status": "ok", "track_id": track_id, "doc_id": doc_id, "url": url}
 
 
 async def main():
