@@ -373,9 +373,11 @@ Tự động chọn tham số retrieval dựa trên query type:
   - Ưu điểm: Bao quát, phù hợp cho câu hỏi rộng
 
 - **"hybrid"** (Kết hợp local + global):
-  - Dùng khi: Query cần cả thông tin cụ thể và context rộng
+  - Dùng khi: Query hỏi về quy định/chính sách trong quy chế (không có khóa cụ thể, không có số hiệu văn bản) hoặc cần cả thông tin cụ thể và context rộng
   - Ví dụ: "Điều kiện và thủ tục chuyển ngành từ CNTT sang KHMT?"
-  - Ưu điểm: Cân bằng giữa độ chính xác và độ bao quát
+  - Ví dụ: "Quy định cảnh báo học vụ tại UIT là gì?"
+  - Ví dụ: "Điều kiện xét tốt nghiệp sớm?"
+  - Ưu điểm: Cân bằng giữa độ chính xác và độ bao quát; không bỏ sót điều khoản nằm rải rác trong quy chế
 
 - **"mix"** (Kết hợp tất cả modes):
   - Dùng khi: Query phức tạp, nhiều khía cạnh
@@ -566,6 +568,42 @@ Output:
   "suggested_top_k": 8,
   "suggested_chunk_top_k": 17,
   "tuning_reason": "Mặc dù cần clarification, vẫn suggest params mặc định (mix, 8, 17) để sẵn sàng retrieve nếu user không trả lời clarification."
+}
+
+Example 6 - General policy/regulation query (no cohort, no document ref):
+User: "Quy định về điểm trung bình tích lũy và cảnh báo học vụ tại UIT như thế nào?"
+Output:
+{
+  "parsed_intention": "Hỏi về quy định điểm trung bình tích lũy và điều kiện cảnh báo học vụ tại UIT",
+  "extracted_entities": ["điểm trung bình tích lũy", "cảnh báo học vụ", "UIT"],
+  "extracted_topics": ["quy chế đào tạo", "học vụ", "đánh giá kết quả học tập"],
+  "confidence": 0.88,
+  "confidence_reason": "Query rõ ràng, hỏi về quy định cụ thể trong quy chế đào tạo. Không hỏi về khóa cụ thể hay văn bản cụ thể.",
+  "query_cohort_year": null,
+  "query_type": "GENERAL",
+  "query_document_ref": null,
+  "suggested_mode": "hybrid",
+  "suggested_top_k": 8,
+  "suggested_chunk_top_k": 30,
+  "tuning_reason": "Query về quy định chính sách (quy chế đào tạo) cần cả thông tin cụ thể (ngưỡng điểm số) lẫn context rộng (bối cảnh quy định). Mode 'hybrid' kết hợp local+global đảm bảo tìm được cả điều khoản cụ thể và văn bản liên quan. Không dùng 'local' vì quy định này nằm rải rác trong nhiều điều khoản của quy chế."
+}
+
+Example 7 - General policy query about procedures/thủ tục:
+User: "Thủ tục và điều kiện để được xét học lại tại UIT?"
+Output:
+{
+  "parsed_intention": "Hỏi về quy trình và điều kiện xét cho học lại (học cải thiện điểm) tại UIT",
+  "extracted_entities": ["học lại", "xét học lại", "UIT"],
+  "extracted_topics": ["quy chế đào tạo", "thủ tục hành chính", "học vụ"],
+  "confidence": 0.85,
+  "confidence_reason": "Query rõ ràng về thủ tục và điều kiện, không hỏi về khóa cụ thể hay số hiệu văn bản.",
+  "query_cohort_year": null,
+  "query_type": "GENERAL",
+  "query_document_ref": null,
+  "suggested_mode": "hybrid",
+  "suggested_top_k": 8,
+  "suggested_chunk_top_k": 30,
+  "tuning_reason": "Query về thủ tục/quy trình từ quy chế: cần 'hybrid' để tìm cả điều khoản điều kiện (local) lẫn văn bản quy định liên quan (global). Mode 'local' sẽ bỏ sót context quy chế tổng thể. chunk_top_k=30 đủ recall mà không quá tải."
 }
 </examples>
 """
