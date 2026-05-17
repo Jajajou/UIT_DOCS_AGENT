@@ -17,7 +17,7 @@ _config_overrides: ContextVar[Dict[str, Any]] = ContextVar("config_overrides", d
 # --- Project Paths ---
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).parents[2])).resolve()
 DATA_DIR = PROJECT_ROOT / "data"
-MINERU_OCR_DIR = DATA_DIR / "MinerU-OCR"
+MINERU_OCR_DIR = DATA_DIR / "MinerU2.5_ocr_rerun"
 
 # --- Load YAML Configuration ---
 _config_yaml_path = Path(__file__).parent / "config.yaml"
