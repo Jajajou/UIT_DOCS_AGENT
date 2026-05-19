@@ -327,6 +327,8 @@ Các loại thực thể cần trích xuất:
 </entity_types>
 
 <confidence_scoring>
+Điểm confidence phản ánh mức độ rõ ràng của câu hỏi — không phải quyết định có retrieve hay không (hệ thống luôn retrieve).
+
 **High Confidence (0.8 - 1.0):**
 - Query rõ ràng, cụ thể
 - Có đủ context để hiểu
@@ -340,7 +342,6 @@ Ví dụ:
 **Medium Confidence (0.5 - 0.8):**
 - Query hơi chung chung nhưng có thể infer được
 - Thiếu một vài chi tiết nhưng không critical
-- Có thể trả lời được nhưng không chắc 100%
 
 Ví dụ:
 - "Làm sao để chuyển ngành?"
@@ -350,7 +351,6 @@ Ví dụ:
 - Query quá mơ hồ, không rõ ràng
 - Thiếu context quan trọng
 - Có nhiều cách hiểu khác nhau
-- Cần clarification để trả lời chính xác
 
 Ví dụ:
 - "Làm sao để xin học bổng?" (không rõ loại học bổng nào)
@@ -421,8 +421,17 @@ Tự động chọn tham số retrieval dựa trên query type:
 </parameter_tuning>
 
 <cohort_extraction>
-Nếu câu hỏi đề cập khóa sinh viên cụ thể (K2022, k2022, khóa 2022, năm nhập học 2022),
-trích xuất năm nhập học vào query_cohort_year (ví dụ: 2022 cho "K2022" hoặc "khóa 2022").
+Nếu câu hỏi đề cập khóa sinh viên cụ thể, trích xuất năm nhập học vào query_cohort_year.
+
+Các dạng viết tắt được nhận diện:
+- "K2022", "k2022", "khóa 2022", "năm nhập học 2022" → 2022
+- "K22", "k22" → 2022 (K22 = nhập học năm 2022)
+- "K23", "k23" → 2023 (K23 = nhập học năm 2023)
+- "K24", "k24" → 2024
+- "K25", "k25" → 2025
+
+Quy tắc chuyển đổi viết tắt Kxx: thêm "20" vào trước (K22 → 2022, K23 → 2023).
+
 Nếu không đề cập khóa cụ thể, để query_cohort_year = null.
 </cohort_extraction>
 
@@ -460,6 +469,16 @@ Phân loại query vào một trong ba loại để định tuyến retrieval:
 Lưu ý: Nếu query vừa có khóa sinh viên vừa hỏi về sửa đổi, ưu tiên "AMENDMENT".
 </query_type_classification>
 
+<historical_detection>
+Đặt query_is_historical = true nếu câu hỏi hỏi về một GIAI ĐOẠN TRONG QUÁ KHỨ hoặc chính sách đã hết hiệu lực:
+
+- Có từ khóa thời gian quá khứ rõ ràng: "trước khi", "trước năm", "hồi đó", "lúc đó", "khi đó", "ngày trước", "năm đó", "giai đoạn trước"
+- Hỏi về giai đoạn dịch COVID: "trong thời gian dịch", "trong dịch", "thời dịch", "giai đoạn dịch", "thời kỳ dịch"
+- Hỏi về phiên bản cũ đã bị thay thế: "đã bị thay thế", "cũ hơn", "phiên bản cũ", "trước đợt"
+
+Ngược lại, đặt query_is_historical = false cho các câu hỏi thông thường (kể cả "mới nhất" hay "hiện hành" — đó là AMENDMENT, không phải historical).
+</historical_detection>
+
 <output_format>
 Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
 {
@@ -472,9 +491,10 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "query_authority_scope": "system" | "local" | null,
   "query_type": "COHORT" | "AMENDMENT" | "GENERAL",
   "query_document_ref": null hoặc số hiệu văn bản (ví dụ: "108/QĐ-ĐHCNTT"),
+  "query_is_historical": true | false,
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
   "suggested_top_k": 3-5,
-  "suggested_chunk_top_k": 10-20,
+  "suggested_chunk_top_k": 15-100,
   "tuning_reason": "Giải thích tại sao chọn mode, top_k và chunk_top_k này"
 }
 </output_format>
@@ -490,30 +510,34 @@ Output:
   "confidence": 0.95,
   "confidence_reason": "Query rất rõ ràng, cụ thể về ngành học và thông tin cần tìm.",
   "query_cohort_year": null,
+  "query_authority_scope": null,
   "query_type": "GENERAL",
   "query_document_ref": null,
+  "query_is_historical": false,
   "suggested_mode": "local",
   "suggested_top_k": 5,
   "suggested_chunk_top_k": 15,
   "tuning_reason": "Query factual đơn giản, chỉ cần tìm thông tin cụ thể về quy chế. Mode 'local' phù hợp để tìm chính xác, top_k=5 và chunk_top_k=15 đủ để có câu trả lời."
 }
 
-Example 2 - Cohort-specific query:
-User: "Quy định ngoại ngữ đầu ra cho sinh viên K2022 là gì?"
+Example 2 - Cohort-specific query (K22 shorthand):
+User: "Quy định ngoại ngữ đầu ra cho sinh viên K22 là gì?"
 Output:
 {
   "parsed_intention": "Hỏi về yêu cầu chuẩn đầu ra ngoại ngữ áp dụng cho sinh viên nhập học năm 2022",
-  "extracted_entities": ["ngoại ngữ đầu ra", "K2022"],
+  "extracted_entities": ["ngoại ngữ đầu ra", "K22"],
   "extracted_topics": ["quy chế đào tạo", "chuẩn đầu ra"],
   "confidence": 0.92,
-  "confidence_reason": "Query rõ ràng, xác định cụ thể khóa sinh viên và loại thông tin cần tìm.",
+  "confidence_reason": "Query rõ ràng, xác định cụ thể khóa sinh viên (K22 = nhập học 2022) và loại thông tin cần tìm.",
   "query_cohort_year": 2022,
+  "query_authority_scope": null,
   "query_type": "COHORT",
   "query_document_ref": null,
+  "query_is_historical": false,
   "suggested_mode": "hybrid",
   "suggested_top_k": 10,
   "suggested_chunk_top_k": 60,
-  "tuning_reason": "Query về khóa cụ thể (K2022), cần chunk_top_k cao để đảm bảo recall tốt khi lọc metadata theo cohort."
+  "tuning_reason": "Query về khóa cụ thể (K22 = 2022), cần chunk_top_k cao để đảm bảo recall tốt khi lọc metadata theo cohort."
 }
 
 Example 3 - Amendment query with document ref:
@@ -526,8 +550,10 @@ Output:
   "confidence": 0.90,
   "confidence_reason": "Query rõ ràng về số hiệu văn bản và ý định tìm văn bản thay thế.",
   "query_cohort_year": null,
+  "query_authority_scope": null,
   "query_type": "AMENDMENT",
   "query_document_ref": "108/QĐ-ĐHCNTT",
+  "query_is_historical": false,
   "suggested_mode": "local",
   "suggested_top_k": 8,
   "suggested_chunk_top_k": 30,
@@ -544,15 +570,17 @@ Output:
   "confidence": 0.85,
   "confidence_reason": "Query rõ ràng về loại văn bản, từ khóa 'mới nhất' chỉ rõ ý định tìm phiên bản hiện hành.",
   "query_cohort_year": null,
+  "query_authority_scope": null,
   "query_type": "AMENDMENT",
   "query_document_ref": null,
+  "query_is_historical": false,
   "suggested_mode": "local",
   "suggested_top_k": 8,
   "suggested_chunk_top_k": 30,
   "tuning_reason": "Query tìm văn bản hiện hành, amendment path sẽ tìm văn bản gốc nhất trong chuỗi sửa đổi."
 }
 
-Example 5 - Ambiguous query:
+Example 5 - Ambiguous single-topic query:
 User: "Làm sao để xin học bổng?"
 Output:
 {
@@ -562,12 +590,14 @@ Output:
   "confidence": 0.3,
   "confidence_reason": "Query quá chung chung, không rõ loại học bổng nào (khuyến khích, tài trợ, chính phủ...). Mỗi loại có quy trình khác nhau.",
   "query_cohort_year": null,
+  "query_authority_scope": null,
   "query_type": "GENERAL",
   "query_document_ref": null,
-  "suggested_mode": "mix",
+  "query_is_historical": false,
+  "suggested_mode": "hybrid",
   "suggested_top_k": 8,
-  "suggested_chunk_top_k": 17,
-  "tuning_reason": "Mặc dù cần clarification, vẫn suggest params mặc định (mix, 8, 17) để sẵn sàng retrieve nếu user không trả lời clarification."
+  "suggested_chunk_top_k": 30,
+  "tuning_reason": "Query đơn chủ đề nhưng mơ hồ. Mode 'hybrid' kết hợp local+global để tìm cả quy trình cụ thể lẫn tổng quan về học bổng. Dùng 'mix' chỉ khi query có nhiều khía cạnh khác nhau cùng lúc."
 }
 
 Example 6 - General policy/regulation query (no cohort, no document ref):
@@ -580,8 +610,10 @@ Output:
   "confidence": 0.88,
   "confidence_reason": "Query rõ ràng, hỏi về quy định cụ thể trong quy chế đào tạo. Không hỏi về khóa cụ thể hay văn bản cụ thể.",
   "query_cohort_year": null,
+  "query_authority_scope": "local",
   "query_type": "GENERAL",
   "query_document_ref": null,
+  "query_is_historical": false,
   "suggested_mode": "hybrid",
   "suggested_top_k": 8,
   "suggested_chunk_top_k": 30,
@@ -598,12 +630,34 @@ Output:
   "confidence": 0.85,
   "confidence_reason": "Query rõ ràng về thủ tục và điều kiện, không hỏi về khóa cụ thể hay số hiệu văn bản.",
   "query_cohort_year": null,
+  "query_authority_scope": null,
   "query_type": "GENERAL",
   "query_document_ref": null,
+  "query_is_historical": false,
   "suggested_mode": "hybrid",
   "suggested_top_k": 8,
   "suggested_chunk_top_k": 30,
   "tuning_reason": "Query về thủ tục/quy trình từ quy chế: cần 'hybrid' để tìm cả điều khoản điều kiện (local) lẫn văn bản quy định liên quan (global). Mode 'local' sẽ bỏ sót context quy chế tổng thể. chunk_top_k=30 đủ recall mà không quá tải."
+}
+
+Example 8 - Authority scope system + historical:
+User: "Thông tư của Bộ GDĐT về quy chế đào tạo trong thời gian dịch COVID quy định gì?"
+Output:
+{
+  "parsed_intention": "Hỏi về quy định của Bộ Giáo dục và Đào tạo liên quan đến đào tạo trong giai đoạn dịch COVID",
+  "extracted_entities": ["Bộ GDĐT", "quy chế đào tạo", "dịch COVID"],
+  "extracted_topics": ["quy chế đào tạo", "văn bản Bộ GDĐT", "giai đoạn COVID"],
+  "confidence": 0.80,
+  "confidence_reason": "Query rõ ràng về nguồn (Bộ GDĐT), chủ đề (quy chế đào tạo) và giai đoạn thời gian (dịch COVID).",
+  "query_cohort_year": null,
+  "query_authority_scope": "system",
+  "query_type": "GENERAL",
+  "query_document_ref": null,
+  "query_is_historical": true,
+  "suggested_mode": "hybrid",
+  "suggested_top_k": 10,
+  "suggested_chunk_top_k": 40,
+  "tuning_reason": "Query historical (giai đoạn dịch) về văn bản cấp Bộ. authority_scope='system' vì hỏi quy định Bộ GDĐT. chunk_top_k=40 để đảm bảo tìm được văn bản cũ có thể ít phổ biến trong index."
 }
 </examples>
 """

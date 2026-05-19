@@ -12,12 +12,8 @@ New capabilities:
 
 from __future__ import annotations
 
-import os
-import re
 import json as json_module
-import unicodedata
 from typing import Any, List, Dict
-from openai import OpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from agent.states.query_state import (
     QueryState,
@@ -48,40 +44,6 @@ llm = init_chat_model(
 # ============================================================================
 # Helper Functions
 # ============================================================================
-
-def _remove_accents(text: str) -> str:
-    """Strip Vietnamese diacritics, return ASCII-only lowercase string."""
-    return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii').lower()
-
-
-_HISTORICAL_PATTERNS_ASCII = [
-    "trong thoi gian",
-    "trong dich",
-    "thoi dich",
-    "khi do",
-    "luc do",
-    "truoc day",
-    "hoi do",
-    "ngay truoc",
-    "nam do",
-    "giai doan dich",
-    "thoi ky dich",
-    # F4: Vietnamese admissions and versioning syntax
-    "truoc khi",
-    "truoc nam",
-    "giai doan truoc",
-    "truoc dot",
-    "da bi thay the",
-    "cu hon",
-    "phien ban cu",
-]
-
-
-def _is_historical_query(query: str) -> bool:
-    """Return True if query asks about a past period (historical, pandemic era)."""
-    q_ascii = _remove_accents(query)
-    return any(pat in q_ascii for pat in _HISTORICAL_PATTERNS_ASCII)
-
 
 def _content_to_text(content: Any) -> str:
     """Extract text from message content."""
@@ -130,19 +92,12 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
     query = state.get("query")
     if not query:
         query = _last_human_text(state.get("messages", []))
-    
-    # Detect historical query (post-LLM, regex-based — no LLM prompt change)
-    query_is_historical = False
-    if query:
-        query_is_historical = _is_historical_query(query)
-        if query_is_historical:
-            print(f"[AGENT 1] Historical query detected: {query[:60]}")
 
     if not query:
         return {
             "error": "No query provided",
             "status_message": "Error: No query",
-            "query_is_historical": False
+            "query_is_historical": False,
         }
     
     print("=" * 80)
@@ -179,6 +134,9 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_authority_scope = get_attr_safe(understanding,"query_authority_scope")
         query_type = get_attr_safe(understanding,"query_type", "GENERAL")
         query_document_ref = get_attr_safe(understanding,"query_document_ref")
+        query_is_historical = bool(get_attr_safe(understanding, "query_is_historical", False))
+        if query_is_historical:
+            print(f"[AGENT 1] Historical query detected (LLM): {query[:60]}")
 
         # Retrieval parameters
         suggested_mode = get_attr_safe(understanding,"suggested_mode")
@@ -226,14 +184,14 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
     except Exception as e:
         error_msg = f"{e}"
         print(f"[AGENT 1] ✗ {error_msg}")
-        
+
         # Return error state and default values to allow graceful degradation
         return {
             "error": error_msg,
             "status_message": "Error in query understanding",
             "query": query,
             "query_confidence": 0.0,
-            "query_is_historical": query_is_historical,
+            "query_is_historical": False,
             "retrieval_mode": settings.retrieval.default_mode,
             "top_k": settings.retrieval.default_top_k,
             "chunk_top_k": settings.retrieval.default_chunk_top_k,
