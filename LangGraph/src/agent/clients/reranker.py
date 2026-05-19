@@ -311,9 +311,9 @@ class Reranker:
         if not cohort_years:
             return 0.5  # neutral — no cohort metadata or empty list
 
-        # 1. Check for Universal marker ("*") - matches any query cohort
+        # 1. Check for Universal marker ("*") - partial boost, not exact match
         if "*" in cohort_years or "*" in [str(y) for y in cohort_years]:
-            return 1.0
+            return 0.75
 
         # 2. Check for explicit year match
         try:

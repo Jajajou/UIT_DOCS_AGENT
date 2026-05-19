@@ -659,6 +659,26 @@ Output:
   "suggested_chunk_top_k": 40,
   "tuning_reason": "Query historical (giai đoạn dịch) về văn bản cấp Bộ. authority_scope='system' vì hỏi quy định Bộ GDĐT. chunk_top_k=40 để đảm bảo tìm được văn bản cũ có thể ít phổ biến trong index."
 }
+
+Example 9 - Cohort query with authority_scope="local" (UIT internal regulation for specific cohort):
+User: "Sinh viên K22 tại UIT cần đáp ứng điều kiện tốt nghiệp gì?"
+Output:
+{
+  "parsed_intention": "Hỏi về điều kiện tốt nghiệp áp dụng cho sinh viên khóa 2022 (K22) tại UIT",
+  "extracted_entities": ["K22", "điều kiện tốt nghiệp", "UIT"],
+  "extracted_topics": ["quy chế đào tạo", "điều kiện tốt nghiệp", "K22"],
+  "confidence": 0.93,
+  "confidence_reason": "Query rõ ràng về khóa học (K22), trường cụ thể (UIT) và loại thông tin cần tìm.",
+  "query_cohort_year": 2022,
+  "query_authority_scope": "local",
+  "query_type": "COHORT",
+  "query_document_ref": null,
+  "query_is_historical": false,
+  "suggested_mode": "hybrid",
+  "suggested_top_k": 10,
+  "suggested_chunk_top_k": 60,
+  "tuning_reason": "Query về khóa cụ thể (K22=2022) tại UIT, authority_scope='local' vì hỏi quy định nội bộ trường. chunk_top_k=60 đảm bảo recall tốt khi lọc metadata theo cohort_year=2022 trong Qdrant. Hybrid mode để tìm cả điều khoản cụ thể và văn bản quy chế."
+}
 </examples>
 """
 
@@ -699,7 +719,12 @@ Dữ liệu sau đã được sắp xếp theo độ liên quan (cao nhất trư
    - Với mỗi thông tin, trích dẫn nguồn: `[Nguồn 1]`, `[Nguồn 2, 3]`.
    - Tạo hyperlink đến tài liệu khi có URL: `[Tên tài liệu](URL)`.
 
-4. **Tài liệu tham khảo:**
+4. **Ưu tiên văn bản mới nhất trong chuỗi sửa đổi:**
+   - Nếu dữ liệu truy xuất chứa nhiều văn bản trong cùng một chuỗi sửa đổi (ví dụ: văn bản A sửa đổi văn bản B), hãy **ưu tiên trích dẫn và sử dụng nội dung từ văn bản mới nhất** (văn bản đang sửa đổi), không phải văn bản bị thay thế.
+   - Dấu hiệu nhận biết: metadata có trường `amends_documents` (văn bản này sửa đổi văn bản khác) hoặc `amended_by` (văn bản này đã bị sửa đổi bởi văn bản khác). Văn bản có `amended_by` là văn bản cũ, đã bị thay thế — không nên là nguồn trích dẫn chính.
+   - Ví dụ: nếu có [790/QĐ-ĐHCNTT] (cũ, đã bị thay bởi 1393) và [1393/QĐ-ĐHCNTT] (mới), hãy trích dẫn [1393] và chỉ đề cập [790] nếu cần so sánh lịch sử.
+
+5. **Tài liệu tham khảo:**
    - Cuối câu trả lời, thêm mục "## Tài liệu tham khảo" với danh sách hyperlink.
 
 5. **Xử lý khi dữ liệu chưa đủ:**
