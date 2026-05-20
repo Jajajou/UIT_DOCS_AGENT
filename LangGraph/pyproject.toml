@@ -34,6 +34,7 @@ dependencies = [
     "dateparser>=1.4.0",
     "underthesea>=9.4.0",
     "apscheduler>=3.11.2",
+    "rank-bm25>=0.2.2",
 ]
 
 
