@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-13T05:31:37.713Z"
+last_updated: "2026-05-20T07:21:28.293Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 0
-  total_plans: 3
+  total_plans: 6
   completed_plans: 0
   percent: 0
 ---
@@ -72,6 +72,10 @@ progress:
 2. Set up React/Next.js project scaffold
 3. Configure university SSO integration planning
 4. Create 50+ temporal test scenarios
+
+## Roadmap Evolution
+
+- Phase 4 added: Sprint A: System Completeness Bug Fixes — citation URL, education_system routing, amendment chain SQL patches (expected +0.8-1.2pp acc@1 from 0.767)
 
 ## Risk Register
 
