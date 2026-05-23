@@ -10,6 +10,7 @@ This graph implements a temporal-aware RAG pipeline with:
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any, Dict, List
 from langgraph.graph import StateGraph, START,END
@@ -103,7 +104,9 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
         return {"error": "No query for retrieval"}
     
     # Get retrieval parameters (tuned by Agent 1)
-    mode = state.get("retrieval_mode", settings.retrieval.default_mode)
+    # FORCE_RETRIEVAL_MODE env var overrides agent1 suggestion (for ablation testing)
+    forced_mode = os.getenv("FORCE_RETRIEVAL_MODE")
+    mode = forced_mode or state.get("retrieval_mode", settings.retrieval.default_mode)
     top_k = state.get("top_k", settings.retrieval.default_top_k)
     chunk_top_k = state.get("chunk_top_k", settings.retrieval.default_chunk_top_k)
     max_entity_tokens = state.get("max_entity_tokens")
@@ -312,7 +315,8 @@ def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
     """
     query = state.get("query", "")
     query_cohort_year = state.get("query_cohort_year")
-    
+    query_edu_system = state.get("education_system", "chinh_quy")
+
     chunks = state.get("retrieved_chunks", [])
     entities = state.get("retrieved_entities", [])
     relationships = state.get("retrieved_relationships", [])
@@ -344,7 +348,12 @@ def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
                         return False # Explicit cohort mismatch
             except (ValueError, TypeError):
                 pass
-            
+
+        # --- 2. Education System Filtering ---
+        item_edu_system = meta.get("education_system")
+        if item_edu_system and item_edu_system != "universal" and item_edu_system != query_edu_system:
+            return False
+
         return True
 
     filtered_chunks = [c for c in chunks if is_match(c)]
@@ -368,6 +377,8 @@ def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
     
     if query_cohort_year:
         print(f"[FILTER] Dropped {dropped} items that don't match cohort {query_cohort_year}")
+    if query_edu_system != "chinh_quy":
+        print(f"[FILTER] Education system filter active: {query_edu_system}")
     
     return {
         "retrieved_chunks": filtered_chunks,

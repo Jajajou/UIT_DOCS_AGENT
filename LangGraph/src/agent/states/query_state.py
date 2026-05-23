@@ -87,6 +87,17 @@ class QueryUnderstanding(BaseModel):
         description="True if query asks about a past period (historical, pandemic era)."
     )
 
+    # NEW: Education system (he dao tao) classification
+    education_system: Literal["chinh_quy", "tu_xa", "tien_tien", "song_nganh"] = Field(
+        default="chinh_quy",
+        description=(
+            "He dao tao: chinh_quy (default, most students), "
+            "tu_xa (distance learning, keywords: tu xa, VLVH, vua lam vua hoc), "
+            "tien_tien (advanced program, keywords: tien tien, chuong trinh tien tien), "
+            "song_nganh (dual degree, keywords: song nganh)"
+        )
+    )
+
     # NEW: Parameter tuning outputs
     suggested_mode: Literal["naive", "local", "global", "hybrid", "mix"] = Field(
         default=settings.retrieval.default_mode,
@@ -182,6 +193,7 @@ class QueryState(TypedDict):
     query_type: NotRequired[Optional[Literal["COHORT", "AMENDMENT", "GENERAL"]]]
     query_document_ref: NotRequired[Optional[str]]  # e.g. '108/QD-DHCNTT' for AMENDMENT path
     query_is_historical: NotRequired[Optional[bool]]  # True if historical query detected
+    education_system: NotRequired[Optional[Literal["chinh_quy", "tu_xa", "tien_tien", "song_nganh"]]]
     cohort_fallback: NotRequired[bool]  # True if COHORT path returned 0 results
     amendment_fallback: NotRequired[bool]  # True if AMENDMENT path returned 0 results
 

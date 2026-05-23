@@ -137,6 +137,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_is_historical = bool(get_attr_safe(understanding, "query_is_historical", False))
         if query_is_historical:
             print(f"[AGENT 1] Historical query detected (LLM): {query[:60]}")
+        education_system = get_attr_safe(understanding, "education_system", "chinh_quy")
 
         # Retrieval parameters
         suggested_mode = get_attr_safe(understanding,"suggested_mode")
@@ -159,6 +160,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         print(f"[AGENT 1] Suggested Mode: {suggested_mode}")
         print(f"[AGENT 1] Suggested Top-K: {suggested_top_k}")
         print(f"[AGENT 1] Tuning Reason: {tuning_reason}")
+        print(f"[AGENT 1] Education System: {education_system}")
 
         # Return partial update
         return {
@@ -173,6 +175,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_type": query_type,
             "query_document_ref": query_document_ref,
             "query_is_historical": query_is_historical,
+            "education_system": education_system,
             "retrieval_mode": suggested_mode,
             "top_k": suggested_top_k,
             "chunk_top_k": suggested_chunk_top_k,

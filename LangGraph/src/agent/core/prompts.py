@@ -479,6 +479,21 @@ Lưu ý: Nếu query vừa có khóa sinh viên vừa hỏi về sửa đổi, �
 Ngược lại, đặt query_is_historical = false cho các câu hỏi thông thường (kể cả "mới nhất" hay "hiện hành" — đó là AMENDMENT, không phải historical).
 </historical_detection>
 
+<education_system_detection>
+Xác định hệ đào tạo (education_system) từ từ khóa trong câu hỏi:
+- "chinh_quy" (MẶC ĐỊNH): hệ chính quy, đại học chính quy; dùng khi không có chỉ báo nào khác
+- "tu_xa": đào tạo từ xa / vừa làm vừa học; từ khóa: "từ xa", "VLVH", "vừa làm vừa học", "đào tạo từ xa", "học từ xa"
+- "tien_tien": chương trình tiên tiến / chất lượng cao; từ khóa: "tiên tiến", "chương trình tiên tiến", "hệ tiên tiến", "chất lượng cao"
+- "song_nganh": chương trình song ngành / hai ngành; từ khóa: "song ngành", "2 ngành", "hai ngành"
+
+Ví dụ:
+- "quy chế đào tạo hệ từ xa" → education_system: "tu_xa"
+- "sinh viên VLVH" → education_system: "tu_xa"
+- "chương trình tiên tiến kỹ thuật" → education_system: "tien_tien"
+- "sinh viên song ngành" → education_system: "song_nganh"
+- "quy chế đào tạo đại học" → education_system: "chinh_quy" (mặc định)
+</education_system_detection>
+
 <output_format>
 Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
 {
@@ -492,6 +507,7 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "query_type": "COHORT" | "AMENDMENT" | "GENERAL",
   "query_document_ref": null hoặc số hiệu văn bản (ví dụ: "108/QĐ-ĐHCNTT"),
   "query_is_historical": true | false,
+  "education_system": "chinh_quy" | "tu_xa" | "tien_tien" | "song_nganh",
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
   "suggested_top_k": 3-5,
   "suggested_chunk_top_k": 15-100,
