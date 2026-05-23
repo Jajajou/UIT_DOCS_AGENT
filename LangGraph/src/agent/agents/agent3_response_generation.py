@@ -20,7 +20,7 @@ from agent.states.query_state import (
 )
 from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
-from agent.utils import strip_think_tags
+from agent.utils import strip_think_tags, get_url
 
 
 # ============================================================================
@@ -208,7 +208,8 @@ def _format_reranked_data(
                 lines.append(f"   Document: {doc_num}")
             lines.append(f"   Content: {content[:300]}...")
             if file_source:
-                lines.append(f"   Source: {file_source}")
+                resolved = get_url(file_source)
+                lines.append(f"   Source: {resolved or file_source}")
         lines.append("")
     
     return "\n".join(lines) if lines else "Không có dữ liệu."
@@ -245,9 +246,10 @@ def _extract_references(
         content = chunk.get("content", "")
         excerpt = content[:200] + "..." if len(content) > 200 else content
         
+        resolved_url = get_url(file_source) if file_source else None
         references.append({
             "title": title,
-            "url": file_source,
+            "url": resolved_url or file_source,
             "relevance": float(score),
             "excerpt": excerpt
         })
