@@ -41,8 +41,8 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql://uitrag:admin123@localhost:5433/lightrag"
 )
-QDRANT_BASE_URL = os.environ.get("QDRANT_BASE_URL", "http://localhost:6333")
-QDRANT_COLLECTION = "lightrag_vdb_chunks"
+QDRANT_BASE_URL = os.environ.get("QDRANT_BASE_URL", "http://localhost:6336")
+QDRANT_COLLECTION = "lightrag_vdb_chunks_aiteamvn_vietnamese_embedding_v2_1024d"
 WORKSPACE = "uit_docs_agent"
 
 # ---------------------------------------------------------------------------
@@ -203,48 +203,51 @@ def verify_db(conn) -> None:
 # ---------------------------------------------------------------------------
 
 def update_qdrant_for_doc(
-    doc_id: str, education_system: str, dry_run: bool = False
+    document_number: str, education_system: str, dry_run: bool = False
 ) -> bool:
     """
-    Set education_system payload on all Qdrant points for this doc_id.
-    Uses PUT /collections/{collection}/points/payload with a filter.
+    Set education_system payload on all Qdrant chunk points matching document_number.
+    Chunks have no full_doc_id field; filter by document_number instead.
     """
     url = f"{QDRANT_BASE_URL}/collections/{QDRANT_COLLECTION}/points/payload"
     body = {
         "payload": {"education_system": education_system},
         "filter": {
             "must": [
-                {"key": "full_doc_id", "match": {"value": doc_id}}
+                {"key": "document_number", "match": {"value": document_number}}
             ]
         },
     }
     if dry_run:
-        print(f"[DRY-RUN] PUT {url} -- doc_id={doc_id}, education_system={education_system}")
+        print(f"[DRY-RUN] PUT {url} -- doc_num={document_number}, education_system={education_system}")
         return True
 
     try:
         r = requests.put(url, json=body, timeout=30)
         if r.status_code == 200:
             return True
-        print(f"[QDRANT] WARN: doc_id={doc_id} -> status {r.status_code}: {r.text[:200]}")
+        print(f"[QDRANT] WARN: doc_num={document_number} -> status {r.status_code}: {r.text[:200]}")
         return False
     except requests.RequestException as e:
-        print(f"[QDRANT] ERROR: doc_id={doc_id} -> {e}")
+        print(f"[QDRANT] ERROR: doc_num={document_number} -> {e}")
         return False
 
 
 def backfill_qdrant(
-    classifications: Dict[str, str], dry_run: bool = False
+    docnum_to_edu: Dict[str, str], dry_run: bool = False
 ) -> Tuple[int, int]:
     """
-    Update Qdrant payloads for all docs.
+    Update Qdrant payloads for all docs keyed by document_number.
     Returns (success_count, fail_count).
     """
     success = 0
     fail = 0
-    total = len(classifications)
-    for i, (doc_id, edu_system) in enumerate(classifications.items(), 1):
-        ok = update_qdrant_for_doc(doc_id, edu_system, dry_run=dry_run)
+    total = len(docnum_to_edu)
+    for i, (document_number, edu_system) in enumerate(docnum_to_edu.items(), 1):
+        if not document_number:
+            fail += 1
+            continue
+        ok = update_qdrant_for_doc(document_number, edu_system, dry_run=dry_run)
         if ok:
             success += 1
         else:
@@ -258,15 +261,23 @@ def backfill_qdrant(
 # Main
 # ---------------------------------------------------------------------------
 
-def build_classifications_from_db(conn) -> Dict[str, str]:
-    """Fetch docs and classify all."""
+def build_classifications_from_db(conn) -> Tuple[Dict[str, str], Dict[str, str]]:
+    """
+    Fetch docs and classify all.
+    Returns (doc_id_to_edu, docnum_to_edu).
+    doc_id_to_edu used for DB UPDATE.
+    docnum_to_edu used for Qdrant payload filter (chunks indexed by document_number).
+    """
     rows = fetch_all_docs(conn)
-    classifications: Dict[str, str] = {}
+    doc_id_to_edu: Dict[str, str] = {}
+    docnum_to_edu: Dict[str, str] = {}
     for doc_id, document_number, file_path in rows:
         edu = classify_document(doc_id, document_number, file_path)
-        classifications[doc_id] = edu
+        doc_id_to_edu[doc_id] = edu
+        if document_number:
+            docnum_to_edu[document_number] = edu
         print(f"  {doc_id}: {document_number!r} -> {edu}")
-    return classifications
+    return doc_id_to_edu, docnum_to_edu
 
 
 def main() -> None:
@@ -302,31 +313,39 @@ def main() -> None:
     if args.from_json:
         print(f"[INFO] Loading classifications from {args.from_json}")
         with open(args.from_json, "r", encoding="utf-8") as f:
-            classifications = json.load(f)
+            data = json.load(f)
+        # Support both old format {doc_id: edu} and new format {doc_id_to_edu, docnum_to_edu}
+        if "doc_id_to_edu" in data:
+            doc_id_to_edu = data["doc_id_to_edu"]
+            docnum_to_edu = data["docnum_to_edu"]
+        else:
+            doc_id_to_edu = data
+            docnum_to_edu = {}
         conn = None
     else:
         conn = get_db_connection()
         if not args.qdrant_only:
             alter_table(conn)
-        classifications = build_classifications_from_db(conn)
+        doc_id_to_edu, docnum_to_edu = build_classifications_from_db(conn)
 
     # ---- Export if requested ----
     if args.export:
+        export_data = {"doc_id_to_edu": doc_id_to_edu, "docnum_to_edu": docnum_to_edu}
         with open(args.export, "w", encoding="utf-8") as f:
-            json.dump(classifications, f, ensure_ascii=False, indent=2)
-        print(f"[INFO] Exported {len(classifications)} classifications to {args.export}")
+            json.dump(export_data, f, ensure_ascii=False, indent=2)
+        print(f"[INFO] Exported {len(doc_id_to_edu)} classifications to {args.export}")
 
     # ---- Apply DB updates ----
     if not args.qdrant_only:
         if conn is None:
             conn = get_db_connection()
-        apply_classifications(conn, classifications, dry_run=dry_run)
+        apply_classifications(conn, doc_id_to_edu, dry_run=dry_run)
         verify_db(conn)
 
     # ---- Qdrant backfill ----
     if not args.db_only:
-        print(f"\n[QDRANT] Backfilling {len(classifications)} docs...")
-        success, fail = backfill_qdrant(classifications, dry_run=dry_run)
+        print(f"\n[QDRANT] Backfilling {len(docnum_to_edu)} docs by document_number...")
+        success, fail = backfill_qdrant(docnum_to_edu, dry_run=dry_run)
         print(f"[QDRANT] Done: {success} OK, {fail} failed")
 
     if conn:

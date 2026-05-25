@@ -179,7 +179,9 @@ class TestParsePdf:
         client = self._client()
         with patch("agent.clients.mineru_ocr_client.settings", _mock_settings()):
             with patch("httpx.post", return_value=fake_resp):
-                result = client.parse_pdf(str(pdf), return_md=True)
+                # Mock normalization to return input as-is for this test
+                with patch("agent.clients.mineru_ocr_client.MinerUOCRClient._normalize_vietnamese", side_effect=lambda x: x):
+                    result = client.parse_pdf(str(pdf), return_md=True)
 
         assert result["status"] == "success"
         assert result["markdown"] == md
@@ -199,7 +201,9 @@ class TestParsePdf:
         client = self._client()
         with patch("agent.clients.mineru_ocr_client.settings", _mock_settings()):
             with patch("httpx.post", return_value=fake_resp):
-                result = client.parse_pdf(str(pdf), output_dir=str(out_dir), return_md=True)
+                # Mock normalization to return input as-is for this test
+                with patch("agent.clients.mineru_ocr_client.MinerUOCRClient._normalize_vietnamese", side_effect=lambda x: x):
+                    result = client.parse_pdf(str(pdf), output_dir=str(out_dir), return_md=True)
 
         assert "markdown_path" in result
         saved = Path(result["markdown_path"]).read_text(encoding="utf-8")

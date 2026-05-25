@@ -23,7 +23,7 @@ from agent.config import settings
 from agent.clients.lightrag_client import LightRAGAPIClient as LightRAGClient
 from agent.utils import get_url
 
-OCR_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/data/MinerU2.5_ocr_rerun")
+OCR_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/data/MinerU2.5_ocr_corrected")
 PDF_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/firecrawl/data/daa")
 
 # Government-level decree patterns that UIT docs never amend (only cite as legal basis)
@@ -182,11 +182,15 @@ async def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int, default=0, help="Max docs to process (0=all)")
     parser.add_argument("--skip", type=int, default=0, help="Skip first N docs")
+    parser.add_argument("--stems", nargs="+", help="Only process these specific stems")
     args = parser.parse_args()
 
     stems = sorted(d.name for d in OCR_DIR.iterdir() if d.is_dir())
     print(f"Found {len(stems)} stems in MinerU2.5_ocr_rerun")
 
+    if args.stems:
+        stems = [s for s in stems if s in args.stems]
+        print(f"Filtered to {len(stems)} stems via --stems")
     if args.skip:
         stems = stems[args.skip:]
         print(f"Skipping first {args.skip} -> {len(stems)} remaining")

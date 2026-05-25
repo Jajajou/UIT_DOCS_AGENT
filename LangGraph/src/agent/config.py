@@ -81,7 +81,6 @@ class Config(BaseModel):
     llm_model: str = Field(default_factory=lambda: os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"))
     indexing_llm_model: str = Field(default_factory=lambda: os.getenv("INDEXING_LLM_MODEL", os.getenv("LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")))
     agent1_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT1_TEMPERATURE", "0.1")))
-    agent2_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT2_TEMPERATURE", "0.2")))
     agent3_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT3_TEMPERATURE", "0.3")))
     lightrag_url: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_URL"))
     lightrag_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_API_KEY"))

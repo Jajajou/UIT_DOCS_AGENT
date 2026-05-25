@@ -70,14 +70,24 @@ def main():
     rows = cur.fetchall()
     conn.close()
 
-    # First pass: build doc_number → doc_id map
+    # First pass: build bidirectional maps doc_number ↔ doc_id
     num_to_id: dict[str, str] = {}
+    id_to_num: dict[str, str] = {}
     for row in rows:
         dn = row["document_number"]
         if dn:
             num_to_id[dn] = row["doc_id"]
+            id_to_num[row["doc_id"]] = dn
 
-    # Second pass: build cache entries + compute reverse amended_by from amends_documents
+    def _resolve_to_docnum(val: str) -> str | None:
+        """Resolve either a doc_id or doc_number to a doc_number."""
+        if val in id_to_num:
+            return id_to_num[val]
+        if val in num_to_id:
+            return val
+        return None
+
+    # Second pass: build cache entries
     cache: dict[str, dict] = {}
 
     for row in rows:
@@ -86,13 +96,18 @@ def main():
             continue
 
         amends = row["amends_documents"] or []
-        # amended_by_documents col may have doc_ids or doc_numbers — use as-is
-        amended_by_col = row["amended_by_documents"] or []
+        # Resolve amended_by_documents: may contain doc_ids or doc_numbers — normalise to doc_numbers
+        raw_amended_by = row["amended_by_documents"] or []
+        amended_by_nums = []
+        for val in raw_amended_by:
+            resolved = _resolve_to_docnum(val)
+            if resolved and resolved not in amended_by_nums:
+                amended_by_nums.append(resolved)
 
         cache[dn] = {
             "doc_id": row["doc_id"],
             "amends_documents": amends,
-            "amended_by": list(amended_by_col),
+            "amended_by": amended_by_nums,
             "cohort_years": row["cohort_years"],
             "valid_from": _fmt_date(row["valid_from"]),
             "valid_until": _fmt_date(row["valid_until"]),
@@ -100,13 +115,13 @@ def main():
             "authority_level": _authority_level(dn),
         }
 
-    # Third pass: fill reverse links from amends_documents
-    # For each doc A that amends [B, C, ...], add A's doc_id to B.amended_by and C.amended_by
+    # Third pass: fill reverse links from amends_documents (store doc_number not doc_id)
+    # For each doc A that amends [B, C, ...], add A's doc_number to B.amended_by and C.amended_by
     for dn, entry in cache.items():
         for amended_target in entry["amends_documents"]:
             if amended_target in cache:
-                if entry["doc_id"] not in cache[amended_target]["amended_by"]:
-                    cache[amended_target]["amended_by"].append(entry["doc_id"])
+                if dn not in cache[amended_target]["amended_by"]:
+                    cache[amended_target]["amended_by"].append(dn)
 
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=2)
