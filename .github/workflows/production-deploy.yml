@@ -83,7 +83,6 @@ jobs:
     timeout-minutes: 1440
     environment:
       name: production
-      url: ${{ secrets.PROD_FRONTEND_URL }}
     env:
       SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
       SSH_USER: ${{ secrets.PROD_SSH_USER }}
