@@ -4,7 +4,7 @@ import yaml
 from contextvars import ContextVar
 from dotenv import load_dotenv
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Any, Dict, List, Literal, Optional
 
 # Load environment variables from .env file
@@ -123,8 +123,7 @@ class Config(BaseModel):
             return overrides["use_metadata_routing"]
         return os.getenv("USE_METADATA_ROUTING", "true").lower() != "false"
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 # Initialize settings
 settings = Config(

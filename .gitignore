@@ -312,6 +312,10 @@ TEMPORAL_AUDIT_REQUIRED.md
 .gstack/
 LangGraph/data/
 
+# Local infra scripts (contain secrets)
+deploy_vast.sh
+start_vast.sh
+
 # Temporary latex and update scripts
 update_latex.py
 update_latex_text.py
