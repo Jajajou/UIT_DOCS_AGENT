@@ -469,6 +469,37 @@ class Reranker:
         t_w = 0.3
         c_w = 0.0
         
+        # --- Clause-level Temporal Scoring Modification ---
+        # Before applying whole-doc penalties, check for clause-level amendments
+        if not query_is_historical:
+            for idx, item in enumerate(items):
+                metadata = item.get("metadata", {})
+                amended_clauses = metadata.get("amended_clauses")
+                if amended_clauses and isinstance(amended_clauses, dict):
+                    # item might be a chunk, check its clause_number
+                    chunk_clause_num = item.get("clause_number") or metadata.get("clause_number")
+                    doc_num = metadata.get("document_number")
+                    
+                    # If this is a chunk and we know its clause number and doc number
+                    if chunk_clause_num is not None and doc_num:
+                        is_clause_amended = False
+                        
+                        # amended_clauses is {target_doc_num: [clause_nums]}
+                        # Check if THIS document is amended
+                        if doc_num in amended_clauses:
+                            amended_list = amended_clauses[doc_num]
+                            if isinstance(amended_list, list) and int(chunk_clause_num) in [int(c) for c in amended_list]:
+                                is_clause_amended = True
+                        
+                        if is_clause_amended:
+                            temporal_scores[idx] = 0.3
+                        else:
+                            temporal_scores[idx] = 1.0
+                    else:
+                        # Chunk has no clause_number or we don't know the doc num, apply mild penalty
+                        temporal_scores[idx] = 0.7
+        # --- End of Modification ---
+
         if use_cohort and (query_cohort_year is not None or query_authority_scope is not None):
             s_w = getattr(temporal_config, 'semantic_weight_cohort', 0.55)
             t_w = getattr(temporal_config, 'temporal_weight_cohort', 0.20)

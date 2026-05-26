@@ -555,14 +555,9 @@ class TemporalEvaluationRunner:
         if self.verbose:
             print(f"Evaluating: {pair['id']} - {pair_type}")
 
-        # Compute all TDCE metrics
         tdce_metrics = {
             "ap@3": self.amendment_precision_at_k(response, expected_docs, k=3),
-            "cascade_hit_rate": self.temporal_cascade_hit_rate(response, expected_docs),
             "authority_score": self.authority_resolution_score(response, expected_docs, pair_type),
-            "cohort_coverage": self.cohort_coverage_rate(response, query_cohort, expected_docs),
-            "ar@3": self.amendment_recall_at_k(response, expected_docs, k=3),
-            "displacement_rate": self.temporal_displacement_rate(response, expected_docs, query_cohort)
         }
 
         return tdce_metrics
@@ -650,11 +645,9 @@ def main():
             response = ""
             if args.retrieval_only:
                 acc1 = 1.0 if any(any(_docnum_match(r, e) for e in expected_doc_numbers) for r in retrieved_docs) else 0.0
-                mrr = mrr_at_k(retrieved_docs, expected_doc_numbers, k=10)
             else:
                 response = extract_text(state) or ""
                 acc1 = 1.0 if any(any(_docnum_match(r, e) for e in expected_doc_numbers) for r in retrieved_docs) else 0.0
-                mrr = mrr_at_k(retrieved_docs, expected_doc_numbers, k=10)
 
             # Compute TDCE metrics
             tdce_metrics = runner.evaluate_pair(pair, state, retrieval_only=args.retrieval_only)
@@ -666,7 +659,6 @@ def main():
                 "query": pair.get("query"),
                 "expected_doc_numbers": expected_doc_numbers,
                 "accuracy@1": acc1,
-                "mrr@10": mrr,
                 **tdce_metrics
             }
             if args.retrieval_only:
@@ -686,9 +678,8 @@ def main():
                 "type": pair.get("type", "general"),
                 "config": args.config,
                 "accuracy@1": 0.0,
-                "mrr@10": 0.0,
-                **{k: 0.0 for k in ["ap@3", "cascade_hit_rate", "authority_score",
-                                   "cohort_coverage", "ar@3", "displacement_rate"]},
+                "ap@3": 0.0,
+                "authority_score": 0.0,
                 "error": str(e)
             }
 
@@ -703,9 +694,7 @@ def main():
             if args.verbose:
                 p_id = result["id"]
                 acc1 = result["accuracy@1"]
-                print(f"  {p_id:2d}: acc={acc1:.2f} AP@3={result['ap@3']:.2f} "
-                      f"Cascade={result['cascade_hit_rate']:.2f} "
-                      f"Authority={result['authority_score']:.2f}")
+                print(f"  {p_id:2d}: acc={acc1:.2f} ap@3={result['ap@3']:.2f} auth={result['authority_score']:.2f}")
 
     # Sort results by ID for consistency
     all_results.sort(key=lambda x: x["id"])
@@ -713,8 +702,7 @@ def main():
     # Compute averages
     if all_results:
         avg_metrics = {metric: sum(r.get(metric, 0.0) for r in all_results) / len(all_results)
-                       for metric in ["accuracy@1", "mrr@10", "ap@3", "cascade_hit_rate",
-                                     "authority_score", "cohort_coverage", "ar@3", "displacement_rate"]}
+                       for metric in ["accuracy@1", "ap@3", "authority_score"]}
     else:
         avg_metrics = {}
 
@@ -729,9 +717,9 @@ def main():
         subset = [r for r in all_results if r["type"] == type_name]
         if not subset: continue
         avg_acc = sum(r["accuracy@1"] for r in subset) / len(subset)
-        avg_mrr = sum(r.get("mrr@10", 0.0) for r in subset) / len(subset)
-        avg_ap3 = sum(r["ap@3"] for r in subset) / len(subset)
-        print(f"  {type_name:20s}: acc={avg_acc:.2f} mrr={avg_mrr:.2f} ap@3={avg_ap3:.2f} n={len(subset)}")
+        avg_ap3 = sum(r.get("ap@3", 0.0) for r in subset) / len(subset)
+        avg_auth = sum(r.get("authority_score", 0.0) for r in subset) / len(subset)
+        print(f"  {type_name:20s}: acc={avg_acc:.2f} ap@3={avg_ap3:.2f} auth={avg_auth:.2f} n={len(subset)}")
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
