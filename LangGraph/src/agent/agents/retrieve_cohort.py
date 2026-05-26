@@ -115,7 +115,8 @@ def route_retrieval(state: QueryState) -> str:
     if os.getenv("USE_METADATA_ROUTING", "true").lower() == "false":
         return "retrieve_data"
     query_type = state.get("query_type", "GENERAL")
-    if query_type == "COHORT":
+    # Force COHORT path if cohort_year explicitly set (eval injection or Agent 1)
+    if query_type == "COHORT" or state.get("query_cohort_year"):
         return "retrieve_cohort_data"
     if query_type == "AMENDMENT":
         return "retrieve_amendment_data"

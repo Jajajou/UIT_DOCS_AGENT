@@ -10,6 +10,7 @@ This graph implements a temporal-aware RAG pipeline with:
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any, Dict, List
 from langgraph.graph import StateGraph, START,END
@@ -103,7 +104,9 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
         return {"error": "No query for retrieval"}
     
     # Get retrieval parameters (tuned by Agent 1)
-    mode = state.get("retrieval_mode", settings.retrieval.default_mode)
+    # FORCE_RETRIEVAL_MODE env var overrides agent1 suggestion (for ablation testing)
+    forced_mode = os.getenv("FORCE_RETRIEVAL_MODE")
+    mode = forced_mode or state.get("retrieval_mode", settings.retrieval.default_mode)
     top_k = state.get("top_k", settings.retrieval.default_top_k)
     chunk_top_k = state.get("chunk_top_k", settings.retrieval.default_chunk_top_k)
     max_entity_tokens = state.get("max_entity_tokens")
@@ -129,16 +132,27 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
             if direct_chunks:
                 print(f"[RETRIEVE] Found {len(direct_chunks)} direct chunks via doc number lookup.")
 
-        # Call LightRAG /query/data endpoint
-        result = api_client.query_data(
-            query_text=query,
-            mode=mode,
-            top_k=top_k,
-            chunk_top_k=chunk_top_k,
-            max_entity_tokens=max_entity_tokens,
-            max_relation_tokens=max_relation_tokens,
-            max_total_tokens=max_total_tokens
-        )
+        # Call LightRAG /query/data endpoint (retry up to 3x on 5xx)
+        import time as _time
+        result = None
+        for _attempt in range(3):
+            try:
+                result = api_client.query_data(
+                    query_text=query,
+                    mode=mode,
+                    top_k=top_k,
+                    chunk_top_k=chunk_top_k,
+                    max_entity_tokens=max_entity_tokens,
+                    max_relation_tokens=max_relation_tokens,
+                    max_total_tokens=max_total_tokens
+                )
+                break
+            except Exception as _e:
+                if _attempt < 2:
+                    print(f"[RETRIEVE] Attempt {_attempt+1} failed: {_e}, retrying in 5s...")
+                    _time.sleep(5)
+                else:
+                    raise
         
         # Parse result
         entities = result["data"]["entities"]
@@ -251,7 +265,8 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
             amended_by = meta.get("amended_by")
             if isinstance(amended_by, list):
                 for doc_id in amended_by:
-                    sibling_doc_ids.add(str(doc_id))
+                    if not str(doc_id).startswith("error-"):
+                        sibling_doc_ids.add(str(doc_id))
         
         # Check which siblings are missing from chunks
         existing_doc_ids = {c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id") for c in enriched_chunks}
@@ -300,7 +315,8 @@ def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
     """
     query = state.get("query", "")
     query_cohort_year = state.get("query_cohort_year")
-    
+    query_edu_system = state.get("education_system", "chinh_quy")
+
     chunks = state.get("retrieved_chunks", [])
     entities = state.get("retrieved_entities", [])
     relationships = state.get("retrieved_relationships", [])
@@ -332,7 +348,12 @@ def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
                         return False # Explicit cohort mismatch
             except (ValueError, TypeError):
                 pass
-            
+
+        # --- 2. Education System Filtering ---
+        item_edu_system = meta.get("education_system")
+        if item_edu_system and item_edu_system != "universal" and item_edu_system != query_edu_system:
+            return False
+
         return True
 
     filtered_chunks = [c for c in chunks if is_match(c)]
@@ -356,6 +377,8 @@ def filter_by_metadata(state: QueryState) -> Dict[str, Any]:
     
     if query_cohort_year:
         print(f"[FILTER] Dropped {dropped} items that don't match cohort {query_cohort_year}")
+    if query_edu_system != "chinh_quy":
+        print(f"[FILTER] Education system filter active: {query_edu_system}")
     
     return {
         "retrieved_chunks": filtered_chunks,

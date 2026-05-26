@@ -30,7 +30,7 @@ from agent.clients.qdrant_cohort_client import QdrantCohortClient
 logger = logging.getLogger(__name__)
 
 QDRANT_BASE_URL = "http://localhost:6336"
-QDRANT_COLLECTION = "lightrag_vdb_chunks"
+QDRANT_COLLECTION = "lightrag_vdb_chunks_aiteamvn_vietnamese_embedding_v2_1024d"
 DEFAULT_TOP_K = 30
 DEFAULT_WORKSPACE = "uit_docs_agent"
 MAX_CHAIN_DEPTH = 10

@@ -3,8 +3,12 @@ import uuid
 import logging
 import json
 import re
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Union, Literal
 from datetime import datetime
+
+# LangGraph
+from langgraph.types import interrupt
+from langgraph.graph.state import Command
 
 # LangChain & Models
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -15,10 +19,11 @@ import numpy as np
 # Internal
 from ..states.metadata_rag_state import MetadataRAGState
 from ..core.prompts import METADATA_PROMPTS
+from .header_extraction import extract_from_header
 from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
 from agent.utils import strip_think_tags
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ValidationInfo
 
 llm = init_chat_model(
     model_provider="openai",
@@ -120,6 +125,44 @@ def get_embeddings_from_vllm(texts: List[str]) -> List[List[float]]:
 
 
 # --- NODES IMPLEMENTATION ---
+
+def extract_header_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
+    """
+    Fast extraction of document_number and amends_documents from header (first 2000 chars).
+    This node runs first to provide immediate results.
+    """
+    try:
+        doc_text = state["doc_text"]
+        file_source = state["file_source"]
+        
+        logger.info(f"Extracting header metadata for {file_source}")
+        header_result = extract_from_header(doc_text, file_source)
+        
+        # Simple regex for Type and Authority from the top 500 chars
+        header_chunk = doc_text[:500].upper()
+        doc_type = None
+        if "QUYẾT ĐỊNH" in header_chunk or "QUYET DINH" in header_chunk: doc_type = "Quyết định"
+        elif "THÔNG BÁO" in header_chunk or "THONG BAO" in header_chunk: doc_type = "Thông báo"
+        elif "QUY ĐỊNH" in header_chunk or "QUY DINH" in header_chunk: doc_type = "Quy định"
+        elif "QUY CHẾ" in header_chunk or "QUY CHE" in header_chunk: doc_type = "Quy chế"
+        elif "TỜ TRÌNH" in header_chunk or "TO TRINH" in header_chunk: doc_type = "Tờ trình"
+        
+        authority = None
+        if "HIỆU TRƯỞNG" in header_chunk or "HIEU TRUONG" in header_chunk: authority = "Hiệu trưởng"
+        elif "PHÒNG ĐÀO TẠ" in header_chunk or "PHONG DAO TA" in header_chunk: authority = "Phòng Đào tạo"
+        elif "HỘI ĐỒNG" in header_chunk or "HOI DONG" in header_chunk: authority = "Hội đồng"
+
+        return {
+            "document_number": header_result.get("document_number"),
+            "document_type": doc_type,
+            "issuing_authority": authority,
+            "amends_documents": header_result.get("amends_documents", []),
+            "review_status": "pending" # Initial status
+        }
+    except Exception as e:
+        logger.error(f"Error in header extraction node: {e}")
+        return {}
+
 
 def chunk_document_node(state: MetadataRAGState) -> Dict[str, Any]:
     """Chia nhỏ văn bản thành chunks 1024 tokens."""
@@ -229,6 +272,12 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
         file_source = state.get("file_source", "")
         filename = os.path.basename(file_source) if file_source else "unknown"
 
+        # HITL Feedback logic
+        human_feedback = state.get("human_feedback")
+        feedback_instruction = ""
+        if human_feedback:
+            feedback_instruction = f"\n\nCRITICAL: A human reviewer has provided the following correction. You MUST prioritize this feedback over your initial extraction:\n<feedback>\n{human_feedback}\n</feedback>"
+
         updates: Dict[str, Any] = {}
 
         # NOTE: document_number and amends_documents are extracted by
@@ -247,6 +296,10 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             filename=filename,
             context="\n---\n".join(docs_date)
         )
+
+        if feedback_instruction:
+            prompt_date += feedback_instruction
+
         res_date = llm.invoke(prompt_date)
         content_date = res_date.content if hasattr(res_date, 'content') else str(res_date)
 
@@ -270,6 +323,21 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             updates["valid_from"] = None
             updates["valid_until"] = None
         
+        # --- 2. Document Type ---
+        q_type = "Loại văn bản: Quyết định, Thông báo, Quy định, Quy chế, Hướng dẫn?"
+        docs_type = _rag_retrieve_and_rerank(col_name, q_type)
+        
+        prompt_type = f"Phân tích các đoạn văn bản sau và xác định loại văn bản (document_type). Ví dụ: 'Quyết định', 'Thông báo', 'Quy định', 'Hướng dẫn'.\n\nContext:\n{chr(10).join(docs_type)}\n\nTrả về JSON: {{\"document_type\": \"...\"}}"
+        if feedback_instruction:
+            prompt_type += feedback_instruction
+            
+        res_type = llm.invoke(prompt_type)
+        try:
+            type_data = json.loads(strip_think_tags(res_type.content if hasattr(res_type, 'content') else str(res_type)))
+            updates["document_type"] = type_data.get("document_type")
+        except:
+            pass
+
         # --- 3. Cohorts ---
         q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng? Khóa 1 khóa 2 khóa 3?"
         docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
@@ -281,6 +349,10 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             filename=filename,
             context="\n---\n".join(docs_cohort)
         )
+
+        if feedback_instruction:
+            prompt_cohort += feedback_instruction
+
         res_cohort = llm.invoke(prompt_cohort)
         content_cohort = res_cohort.content if hasattr(res_cohort, 'content') else str(res_cohort)
 
@@ -454,6 +526,8 @@ class DocumentMetadata(BaseModel):
     """Validated metadata schema matching PostgreSQL table."""
 
     document_number: str | None = None
+    document_type: str | None = None # "Quyết định", "Thông báo", etc.
+    issuing_authority: str | None = None # "Hiệu trưởng", "Phòng Đào tạo"
     valid_from: str | None = None
     valid_until: str | None = None
     cohort_years: List[int | str] = Field(default_factory=list)
@@ -461,21 +535,29 @@ class DocumentMetadata(BaseModel):
     amends_documents: List[str] = Field(default_factory=list)
     extraction_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
 
-    @validator("valid_from", "valid_until")
+    @field_validator("valid_from", "valid_until")
+    @classmethod
     def validate_date_format(cls, v):
-        """Ensure dates are YYYY-MM-DD or None."""
+        """Ensure dates are YYYY-MM-DD or None. Supports DD/MM/YYYY input."""
         if v is None or v == "NULL" or v == "":
             return None
-        try:
-            # Try to parse the date to validate format
-            datetime.strptime(v, "%Y-%m-%d")
-            return v
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid date format: {v}, setting to None")
-            print(f"Invalid date format: {v}, setting to None")
-            return None
+        
+        # Try multiple formats for user-friendliness
+        formats = ["%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"]
+        for fmt in formats:
+            try:
+                dt = datetime.strptime(v, fmt)
+                # Always convert to ISO format YYYY-MM-DD for the DB
+                return dt.strftime("%Y-%m-%d")
+            except (ValueError, TypeError):
+                continue
+        
+        logger.warning(f"Invalid date format: {v}, setting to None")
+        print(f"Invalid date format: {v}, setting to None")
+        return None
 
-    @validator("cohort_years", pre=True)
+    @field_validator("cohort_years", mode="before")
+    @classmethod
     def normalize_cohorts(cls, v):
         """Convert ["*"] to universal scope, validate year format."""
         if not v:
@@ -502,10 +584,11 @@ class DocumentMetadata(BaseModel):
 
         return normalized if normalized else []
 
-    @validator("cohort_scope")
-    def validate_cohort_scope(cls, v, values):
+    @field_validator("cohort_scope")
+    @classmethod
+    def validate_cohort_scope(cls, v: str, info: ValidationInfo):
         """Auto-detect cohort_scope based on cohort_years."""
-        cohort_years = values.get("cohort_years", [])
+        cohort_years = info.data.get("cohort_years", [])
 
         if not cohort_years or len(cohort_years) == 0:
             return "unspecified"
@@ -515,12 +598,30 @@ class DocumentMetadata(BaseModel):
             return "explicit"
 
 
+class MetadataReviewAction(BaseModel):
+    """Payload for human review resume (from langgraph interrupt)."""
+
+    action: Literal["approved", "rejected", "edited"] = Field(..., description="approved, rejected, or edited")
+    feedback: str | None = Field(None, description="Human notes for the AI")
+    
+    # Field-level updates (Option B)
+    document_number: str | None = None
+    document_type: str | None = None
+    issuing_authority: str | None = None
+    valid_from: str | None = None
+    valid_until: str | None = None
+    cohort_years: List[int | str] | None = None
+    amends_documents: List[str] | None = None
+
+
 def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
     """Validate and format metadata using Pydantic."""
     try:
         # Extract values from state
         metadata = DocumentMetadata(
             document_number=state.get("document_number"),
+            document_type=state.get("document_type"),
+            issuing_authority=state.get("issuing_authority"),
             valid_from=state.get("valid_from"),
             valid_until=state.get("valid_until"),
             cohort_years=state.get("cohort_years", []),
@@ -530,13 +631,14 @@ def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
         )
 
         # Convert to dict, excluding None values
-        final_metadata = metadata.dict(exclude_none=True)
+        final_metadata = metadata.model_dump(exclude_none=True)
 
         logger.info(f"Metadata validated and formatted: {final_metadata}")
         print(f"Metadata validated and formatted: {final_metadata}")
 
         return {
-            "final_metadata": final_metadata,
+            "document_metadata": final_metadata,
+            "temporal_extraction_complete": True,
             "success": True
         }
 
@@ -545,7 +647,8 @@ def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
         print(f"Metadata validation failed: {e}")
         return {
             "error": str(e),
-            "success": False
+            "success": False,
+            "temporal_extraction_complete": False
         }
 
 
@@ -560,4 +663,70 @@ def cleanup_node(state: MetadataRAGState) -> Dict[str, Any]:
     except Exception as e:
         logger.warning(f"Cleanup failed: {e}")
         print(f"Cleanup failed: {e}")
-    return {"success": True}
+    return {}
+
+
+def review_metadata_node(state: MetadataRAGState) -> Command:
+    """Pause graph for human review of extracted metadata."""
+    current_metadata = {
+        "document_number": state.get("document_number"),
+        "document_type": state.get("document_type"),
+        "issuing_authority": state.get("issuing_authority"),
+        "valid_from": state.get("valid_from"),
+        "valid_until": state.get("valid_until"),
+        "cohort_years": state.get("cohort_years", []),
+        "amends_documents": state.get("amends_documents", [])
+    }
+    
+    logger.info(f"Interrupting for metadata review. Current: {current_metadata}")
+    
+    # Trigger interrupt (Option B: Kill index, then interrupt is handled in graph wiring)
+    decision_raw = interrupt({
+        "action": "review_temporal_tags",
+        "metadata": current_metadata,
+        "human_feedback": state.get("human_feedback"),
+        "loop_count": state.get("loop_count", 0)
+    })
+    
+    # Validate decision
+    try:
+        if isinstance(decision_raw, dict):
+            decision = MetadataReviewAction(**decision_raw)
+        else:
+            return Command(update={"error": "Invalid review format", "success": False})
+    except Exception as e:
+        logger.error(f"Review validation failed: {e}")
+        return Command(update={"error": f"Validation error: {str(e)}", "success": False})
+
+    # Prepare updates
+    updates: Dict[str, Any] = {
+        "review_status": decision.action,
+        "human_feedback": decision.feedback,
+        "loop_count": state.get("loop_count", 0) + 1
+    }
+    
+    # Apply field-level edits (Option B)
+    if decision.document_number is not None: updates["document_number"] = decision.document_number
+    if decision.document_type is not None: updates["document_type"] = decision.document_type
+    if decision.issuing_authority is not None: updates["issuing_authority"] = decision.issuing_authority
+    if decision.valid_from is not None: updates["valid_from"] = decision.valid_from
+    if decision.valid_until is not None: updates["valid_until"] = decision.valid_until
+    if decision.cohort_years is not None: updates["cohort_years"] = decision.cohort_years
+    if decision.amends_documents is not None: updates["amends_documents"] = decision.amends_documents
+
+    logger.info(f"Resume from review with action: {decision.action}")
+    return Command(update=updates)
+
+
+def decide_after_review_node(state: MetadataRAGState) -> str:
+    """Route after review: approve/edit -> finalize, reject -> retry/fail."""
+    status = state.get("review_status")
+    loop_count = state.get("loop_count", 0)
+    
+    if status == "rejected" and loop_count < 2: # Max 2 retries (loop_count 0 and 1)
+        logger.info("Human rejected metadata. Looping back with feedback.")
+        return "retry"
+    
+    # If approved or edited, or rejected twice, move to format/cleanup
+    logger.info(f"Finalizing metadata extraction with status: {status}")
+    return "finalize"

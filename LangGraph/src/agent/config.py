@@ -4,7 +4,7 @@ import yaml
 from contextvars import ContextVar
 from dotenv import load_dotenv
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Any, Dict, List, Literal, Optional
 
 # Load environment variables from .env file
@@ -17,7 +17,7 @@ _config_overrides: ContextVar[Dict[str, Any]] = ContextVar("config_overrides", d
 # --- Project Paths ---
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).parents[2])).resolve()
 DATA_DIR = PROJECT_ROOT / "data"
-MINERU_OCR_DIR = DATA_DIR / "MinerU-OCR"
+MINERU_OCR_DIR = DATA_DIR / "MinerU2.5_ocr_rerun"
 
 # --- Load YAML Configuration ---
 _config_yaml_path = Path(__file__).parent / "config.yaml"
@@ -81,7 +81,6 @@ class Config(BaseModel):
     llm_model: str = Field(default_factory=lambda: os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"))
     indexing_llm_model: str = Field(default_factory=lambda: os.getenv("INDEXING_LLM_MODEL", os.getenv("LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")))
     agent1_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT1_TEMPERATURE", "0.1")))
-    agent2_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT2_TEMPERATURE", "0.2")))
     agent3_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT3_TEMPERATURE", "0.3")))
     lightrag_url: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_URL"))
     lightrag_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_API_KEY"))
@@ -124,8 +123,7 @@ class Config(BaseModel):
             return overrides["use_metadata_routing"]
         return os.getenv("USE_METADATA_ROUTING", "true").lower() != "false"
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 # Initialize settings
 settings = Config(

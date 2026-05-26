@@ -25,12 +25,13 @@ Output (to parent IndexingState):
 from langgraph.graph import StateGraph, END
 from ..states.metadata_rag_state import MetadataRAGState
 from ..agents.metadata_rag_nodes import (
+    extract_header_metadata_node,
     chunk_document_node,
     index_to_vector_db_node,
     query_metadata_fields_node,
     calculate_confidence_node,
     format_metadata_node,
-    cleanup_node
+    cleanup_node,
 )
 import logging
 
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 def create_metadata_rag_subgraph() -> StateGraph:
     """
-    Create the Metadata RAG subgraph.
+    Create the Metadata RAG subgraph with Human-in-the-Loop review.
 
     Returns:
         Compiled StateGraph for metadata extraction
@@ -48,30 +49,32 @@ def create_metadata_rag_subgraph() -> StateGraph:
     graph = StateGraph(MetadataRAGState)
 
     # Add nodes
+    graph.add_node("extract_header", extract_header_metadata_node)
     graph.add_node("chunk_document", chunk_document_node)
     graph.add_node("index_to_vector_db", index_to_vector_db_node)
     graph.add_node("query_metadata", query_metadata_fields_node)
     graph.add_node("calculate_confidence", calculate_confidence_node)
-    graph.add_node("format_metadata", format_metadata_node)
     graph.add_node("cleanup", cleanup_node)
+    graph.add_node("format_metadata", format_metadata_node)
 
     # Set entry point
-    graph.set_entry_point("chunk_document")
+    graph.set_entry_point("extract_header")
 
-    # Add edges (linear flow)
+    # Linear pipeline — HITL interrupt lives in parent graph (review_temporal_tags node)
+    graph.add_edge("extract_header", "chunk_document")
     graph.add_edge("chunk_document", "index_to_vector_db")
     graph.add_edge("index_to_vector_db", "query_metadata")
     graph.add_edge("query_metadata", "calculate_confidence")
-    graph.add_edge("calculate_confidence", "format_metadata")
-    graph.add_edge("format_metadata", "cleanup")
-    graph.add_edge("cleanup", END)
+    graph.add_edge("calculate_confidence", "cleanup")
+    graph.add_edge("cleanup", "format_metadata")
+    graph.add_edge("format_metadata", END)
 
     logger.info("Metadata RAG subgraph created successfully")
 
     return graph
 
 
-# Compile the subgraph
+# Compile the subgraph. Persistence is handled by the platform (LangGraph API).
 metadata_rag_subgraph = create_metadata_rag_subgraph().compile()
 
 

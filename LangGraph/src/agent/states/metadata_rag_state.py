@@ -31,6 +31,8 @@ class MetadataRAGState(TypedDict):
     
     # --- EXTRACTED METADATA (Final Output) ---
     document_number: NotRequired[Optional[str]]
+    document_type: NotRequired[Optional[str]]        # "Quyết định", "Thông báo", etc.
+    issuing_authority: NotRequired[Optional[str]]    # "Hiệu trưởng", "Phòng Đào tạo"
     
     valid_from: NotRequired[Optional[str]]
     valid_until: NotRequired[Optional[str]]
@@ -42,7 +44,13 @@ class MetadataRAGState(TypedDict):
     
     extraction_confidence: NotRequired[float]        # 0.0 to 1.0
     
+    # --- HITL (Human-in-the-Loop) ---
+    human_feedback: NotRequired[Optional[str]]
+    loop_count: NotRequired[int]                     # Max 1 retry
+    review_status: NotRequired[str]                 # "pending", "approved", "rejected", "edited"
+    
     # --- OUTPUT (Trả về Parent Graph) ---
     final_metadata: NotRequired[Dict[str, Any]]      # Dict hoàn chỉnh để save vào DB
+    document_metadata: NotRequired[Dict[str, Any]]   # Shared key with IndexingState for subgraph→parent merge
     success: bool
     error: NotRequired[str]

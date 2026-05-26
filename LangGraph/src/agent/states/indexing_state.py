@@ -44,6 +44,7 @@ class IndexingState(TypedDict):
     is_pdf: NotRequired[bool]
 
     # OCR fields
+    doc_text: NotRequired[Optional[str]]
     parsed_content: NotRequired[Optional[str]]
     ocr_output_dir: NotRequired[Optional[str]]
     ocr_success: NotRequired[bool]
@@ -53,6 +54,11 @@ class IndexingState(TypedDict):
     # Extracted temporal metadata (valid_from, valid_until, cohorts, etc.)
     document_metadata: NotRequired[Dict[str, Any]]
     temporal_extraction_complete: NotRequired[bool]
+
+    # ============ HITL Review (review_temporal_tags node) ============
+    human_feedback: NotRequired[Optional[str]]
+    loop_count: NotRequired[int]
+    review_status: NotRequired[str]
 
     # File source tracking
     file_path: NotRequired[str]
