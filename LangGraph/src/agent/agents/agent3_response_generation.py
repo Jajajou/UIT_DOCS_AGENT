@@ -346,7 +346,7 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             reranked_entities,
             reranked_relationships,
             reranked_chunks,
-            top_n=10
+            top_n=15
         )
 
         # Prepare prompt
@@ -358,9 +358,16 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
         # Call LLM directly, strip think tags, parse manually
         llm_json = llm.bind(response_format={"type": "json_object"})
 
+        # Handle validation critique if it's a retry
+        critique = state.get("validation_critique")
+        human_content = f"{parsed_intention}\n\nGenerate JSON response."
+        if critique:
+            human_content = f"LƯU Ý: Câu trả lời trước của bạn bị từ chối với lỗi sau:\n{critique}\n\nHãy sửa lại câu trả lời dựa trên lưu ý này và tài liệu đã cung cấp. {parsed_intention}\n\nGenerate JSON response."
+            print(f"[AGENT 3] Retrying with critique: {critique[:100]}...")
+
         msgs = [
             SystemMessage(content=prompt_text),
-            HumanMessage(content=f"{parsed_intention}\n\nGenerate JSON response.")
+            HumanMessage(content=human_content)
         ]
         raw_response = llm_json.invoke(input=msgs)
         content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)

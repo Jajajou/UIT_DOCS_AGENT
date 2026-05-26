@@ -427,10 +427,18 @@ Các dạng viết tắt được nhận diện:
 - "K2022", "k2022", "khóa 2022", "năm nhập học 2022" → 2022
 - "K22", "k22" → 2022 (K22 = nhập học năm 2022)
 - "K23", "k23" → 2023 (K23 = nhập học năm 2023)
-- "K24", "k24" → 2024
-- "K25", "k25" → 2025
+- "K19" -> 2024
+- "K18" -> 2023
+- "K17" -> 2022
+- "K16" -> 2021
+- "K15" -> 2020
+- "K14" -> 2019
+- "K13" -> 2018
+- "K12" -> 2017
 
-Quy tắc chuyển đổi viết tắt Kxx: thêm "20" vào trước (K22 → 2022, K23 → 2023).
+Cú pháp nhận diện khác:
+- "K2022", "khóa 2022" -> 2022
+- "K22" (nếu không phải định dạng K-UIT) -> 2022
 
 Nếu không đề cập khóa cụ thể, để query_cohort_year = null.
 </cohort_extraction>
@@ -480,19 +488,33 @@ Ngược lại, đặt query_is_historical = false cho các câu hỏi thông th
 </historical_detection>
 
 <education_system_detection>
-Xác định hệ đào tạo (education_system) từ từ khóa trong câu hỏi:
-- "chinh_quy" (MẶC ĐỊNH): hệ chính quy, đại học chính quy; dùng khi không có chỉ báo nào khác
-- "tu_xa": đào tạo từ xa / vừa làm vừa học; từ khóa: "từ xa", "VLVH", "vừa làm vừa học", "đào tạo từ xa", "học từ xa"
-- "tien_tien": chương trình tiên tiến / chất lượng cao; từ khóa: "tiên tiến", "chương trình tiên tiến", "hệ tiên tiến", "chất lượng cao"
-- "song_nganh": chương trình song ngành / hai ngành; từ khóa: "song ngành", "2 ngành", "hai ngành"
+Xác định hệ đào tạo (education_system) TỪ TỪ KHÓA TRONG CÂU HỎI:
+- "tu_xa": đào tạo từ xa / vừa làm vừa học; từ khóa: "từ xa", "VLVH", "vừa làm vừa học", "đào tạo từ xa"
+- "tien_tien": chương trình tiên tiến / chất lượng cao; từ khóa: "tiên tiến", "CLC", "chất lượng cao"
+- "song_nganh": chương trình song ngành; từ khóa: "song ngành", "2 ngành"
+- "chinh_quy": hệ chính quy; từ khóa: "chính quy", "hệ chuẩn", "đại trà"
 
-Ví dụ:
-- "quy chế đào tạo hệ từ xa" → education_system: "tu_xa"
-- "sinh viên VLVH" → education_system: "tu_xa"
-- "chương trình tiên tiến kỹ thuật" → education_system: "tien_tien"
-- "sinh viên song ngành" → education_system: "song_nganh"
-- "quy chế đào tạo đại học" → education_system: "chinh_quy" (mặc định)
+*** LUẬT THÉP (CẤM VI PHẠM) ***: 
+NẾU VÀ CHỈ NẾU sinh viên GÕ ĐÚNG TỪ KHÓA của hệ đào tạo vào câu hỏi thì bạn mới được điền. 
+Nếu câu hỏi KHÔNG CHỨA từ khóa nào (ví dụ: "Học phí là bao nhiêu?"), BẮT BUỘC trả về `null`. KHÔNG ĐƯỢC tự suy luận hay mặc định là "chinh_quy".
 </education_system_detection>
+
+<context_dependency_classification>
+Xác định câu hỏi có phụ thuộc vào thông tin riêng của sinh viên (Khóa/Hệ đào tạo) hay không:
+
+**needs_student_context = true (CẦN context):**
+- Câu hỏi về chương trình đào tạo, danh sách môn học, học phí (Mức học phí CÙNG MỘT NĂM vẫn khác nhau tùy theo Khóa nhập học).
+- Câu hỏi về điều kiện tốt nghiệp, chuẩn đầu ra ngoại ngữ/tin học.
+- Câu hỏi về xét học bổng, cảnh cáo học vụ, buộc thôi học (vì quy trình xét có thể thay đổi theo năm nhập học).
+- Ví dụ: "Học phí năm nay là bao nhiêu?", "Em cần học những môn gì?", "Điều kiện tốt nghiệp K17?"
+
+**needs_student_context = false (KHÔNG CẦN context):**
+- Câu hỏi về thủ tục hành chính chung cho mọi sinh viên (xin giấy xác nhận, làm thẻ SV...).
+- Thông tin định danh: địa chỉ, email, số điện thoại các phòng ban.
+- Định nghĩa các thuật ngữ chung: GPA là gì, tín chỉ là gì.
+- Quy trình chung: cách đăng ký môn học trên portal, CÁCH thanh toán học phí (hỏi về quy trình, không phải số tiền).
+- Ví dụ: "Phòng đào tạo ở đâu?", "Làm sao để xin giấy xác nhận sinh viên?", "Đóng học phí qua ngân hàng nào?"
+</context_dependency_classification>
 
 <output_format>
 Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
@@ -507,7 +529,8 @@ Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
   "query_type": "COHORT" | "AMENDMENT" | "GENERAL",
   "query_document_ref": null hoặc số hiệu văn bản (ví dụ: "108/QĐ-ĐHCNTT"),
   "query_is_historical": true | false,
-  "education_system": "chinh_quy" | "tu_xa" | "tien_tien" | "song_nganh",
+  "education_system": "chinh_quy" | "tu_xa" | "tien_tien" | "song_nganh" | null,
+  "needs_student_context": true | false,
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
   "suggested_top_k": 3-5,
   "suggested_chunk_top_k": 15-100,
@@ -530,6 +553,7 @@ Output:
   "query_type": "GENERAL",
   "query_document_ref": null,
   "query_is_historical": false,
+  "needs_student_context": false,
   "suggested_mode": "local",
   "suggested_top_k": 5,
   "suggested_chunk_top_k": 15,
@@ -550,6 +574,7 @@ Output:
   "query_type": "COHORT",
   "query_document_ref": null,
   "query_is_historical": false,
+  "needs_student_context": true,
   "suggested_mode": "hybrid",
   "suggested_top_k": 10,
   "suggested_chunk_top_k": 60,

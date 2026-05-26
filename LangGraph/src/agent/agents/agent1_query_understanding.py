@@ -218,6 +218,7 @@ def route_after_agent1(state: QueryState) -> str:
        but it's missing, route to request_context (HITL).
     2. Retrieval Router: Otherwise, route to specific retrieval paths.
     """
+    import os
     query_type = state.get("query_type", "GENERAL")
     cohort_year = state.get("query_cohort_year")
     edu_system = state.get("education_system")

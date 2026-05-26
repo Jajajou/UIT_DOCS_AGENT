@@ -23,11 +23,12 @@ from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.clients.reranker import MultiSourceReranker
 from agent.agents.agent1_query_understanding import (
     agent1_understand_query,
+    route_after_agent1,
 )
 from agent.agents.agent3_response_generation import agent3_generate_response
+from agent.agents.agent4_validation import agent4_validate_response, route_after_validation
 from agent.agents.retrieve_cohort import (
     retrieve_cohort_data,
-    route_retrieval,
     route_after_cohort,
 )
 from agent.agents.retrieve_amendment import (
@@ -515,6 +516,40 @@ def format_final_answer(state: QueryState) -> Dict[str, Any]:
     }
 
 
+def request_context(state: QueryState) -> Dict[str, Any]:
+    """
+    HITL node: pause and ask user for missing student context (cohort / education system).
+    Resumes when user provides: {"cohort_year": int, "education_system": str}
+    """
+    from langgraph.types import interrupt
+
+    cohort_year = state.get("query_cohort_year")
+    edu_system = state.get("education_system")
+
+    missing = []
+    if cohort_year is None:
+        missing.append("khóa học (ví dụ: 2022, K22)")
+    if edu_system is None:
+        missing.append("hệ đào tạo (chinh_quy / lien_thong / tu_xa)")
+
+    response = interrupt({
+        "action": "request_context",
+        "missing_fields": missing,
+        "message": f"Câu hỏi liên quan đến quy chế/quy định sinh viên. Vui lòng cung cấp: {', '.join(missing)}.",
+        "current_query": state.get("query", ""),
+    })
+
+    updates: Dict[str, Any] = {}
+    if isinstance(response, dict):
+        if "cohort_year" in response:
+            updates["query_cohort_year"] = response["cohort_year"]
+        if "education_system" in response:
+            updates["education_system"] = response["education_system"]
+
+    print(f"[HITL] Context received: {updates}")
+    return updates
+
+
 # ============================================================================
 # Graph Builder
 # ============================================================================
@@ -531,20 +566,36 @@ builder.add_node("enrich_with_temporal_metadata", enrich_with_temporal_metadata)
 builder.add_node("filter_by_metadata", filter_by_metadata)
 builder.add_node("rerank_data", rerank_data)
 builder.add_node("agent3_generate_response", agent3_generate_response)
+builder.add_node("agent4_validate_response", agent4_validate_response)
 builder.add_node("format_final_answer", format_final_answer)
+builder.add_node("request_context", request_context)
 
 # Set entry point
 builder.add_edge(START, "prepare_input")
 builder.add_edge("prepare_input", "agent1_understand_query")
 
-# Tri-mode routing after Agent 1:
-#   COHORT    → retrieve_cohort_data
-#   AMENDMENT → retrieve_amendment_data
-#   GENERAL   → retrieve_data (LightRAG)
+# Consolidated routing after Agent 1:
+#   request_context → stop and ask user (HITL)
+#   retrieve_cohort_data →Filtered Qdrant search
+#   retrieve_amendment_data → PostgreSQL amendment chain
+#   retrieve_data → Standard LightRAG retrieval
 builder.add_conditional_edges(
     "agent1_understand_query",
-    route_retrieval,
+    route_after_agent1,
     {
+        "request_context": "request_context",
+        "retrieve_cohort_data": "retrieve_cohort_data",
+        "retrieve_amendment_data": "retrieve_amendment_data",
+        "retrieve_data": "retrieve_data",
+    },
+)
+
+# After user provides context, re-route to the correct retrieval node
+builder.add_conditional_edges(
+    "request_context",
+    route_after_agent1,
+    {
+        "request_context": "request_context",
         "retrieve_cohort_data": "retrieve_cohort_data",
         "retrieve_amendment_data": "retrieve_amendment_data",
         "retrieve_data": "retrieve_data",
@@ -576,9 +627,20 @@ builder.add_edge("retrieve_data", "enrich_with_temporal_metadata")
 builder.add_edge("enrich_with_temporal_metadata", "filter_by_metadata")
 builder.add_edge("filter_by_metadata", "rerank_data")
 
-# Common tail: rerank → answer → format → end
+# Common tail: rerank → answer → validate → format → end
 builder.add_edge("rerank_data", "agent3_generate_response")
-builder.add_edge("agent3_generate_response", "format_final_answer")
+builder.add_edge("agent3_generate_response", "agent4_validate_response")
+
+# Validation loop: either retry Agent 3 or proceed to formatting
+builder.add_conditional_edges(
+    "agent4_validate_response",
+    route_after_validation,
+    {
+        "retry_agent3": "agent3_generate_response",
+        "format_final_answer": "format_final_answer"
+    }
+)
+
 builder.add_edge("format_final_answer", END)
 
 # Compile graph

@@ -88,17 +88,22 @@ class QueryUnderstanding(BaseModel):
     )
 
     # NEW: Education system (he dao tao) classification
-    education_system: Literal["chinh_quy", "tu_xa", "tien_tien", "song_nganh"] = Field(
-        default="chinh_quy",
+    education_system: Optional[Literal["chinh_quy", "tu_xa", "tien_tien", "song_nganh"]] = Field(
+        default=None,
         description=(
-            "He dao tao: chinh_quy (default, most students), "
+            "He dao tao: chinh_quy, "
             "tu_xa (distance learning, keywords: tu xa, VLVH, vua lam vua hoc), "
             "tien_tien (advanced program, keywords: tien tien, chuong trinh tien tien), "
-            "song_nganh (dual degree, keywords: song nganh)"
+            "song_nganh (dual degree, keywords: song nganh). "
+            "Để null nếu không được nhắc đến."
         )
     )
 
     # NEW: Parameter tuning outputs
+    needs_student_context: bool = Field(
+        default=False,
+        description="True nếu câu hỏi phụ thuộc vào thông tin riêng của sinh viên (khóa, hệ đào tạo) để trả lời đúng."
+    )
     suggested_mode: Literal["naive", "local", "global", "hybrid", "mix"] = Field(
         default=settings.retrieval.default_mode,
         description="Suggested retrieval mode based on query type"
@@ -201,6 +206,7 @@ class QueryState(TypedDict):
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]
     top_k: NotRequired[Optional[int]]
     chunk_top_k: NotRequired[Optional[int]]
+    needs_student_context: NotRequired[bool] # True if query requires profile info
     tuning_reason: NotRequired[Optional[str]]  # Explanation for parameter choices
     
     # ============ Data Retrieval (LightRAG) ============
@@ -232,6 +238,12 @@ class QueryState(TypedDict):
     generated_response: NotRequired[Optional[str]]  
     response_type: NotRequired[Literal["full_answer", "partial_answer", "fallback"]]
     references: NotRequired[List[Dict[str, Any]]]  
+    
+    # ============ Agent 4: Validation (Internal Auditor) ============
+    validation_passed: NotRequired[bool]
+    validation_reasoning: NotRequired[Optional[str]]
+    validation_critique: NotRequired[Optional[str]]
+    validation_retry_count: Annotated[int, operator.add]
     
     # ============ Final Output ============
     final_answer: NotRequired[Optional[str]]  
