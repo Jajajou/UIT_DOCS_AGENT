@@ -15,6 +15,9 @@ from urllib.parse import unquote
 
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END, START
+from langgraph.types import interrupt
+from langgraph.graph.state import Command
+from agent.agents.metadata_rag_nodes import MetadataReviewAction
 
 from agent.config import MINERU_OCR_DIR
 from agent.clients.mineru_ocr_client import MinerUOCRClient, MinerUOCRClientError
@@ -242,6 +245,7 @@ def prepare_indexing(state: IndexingState) -> Dict[str, Any]:
         return {
             "source_type": "text",
             "input_source": parsed["text"],
+            "doc_text": parsed["text"], # Set for metadata subgraph
             "description": "Insert text from chat",
             "error": None
         }
@@ -356,11 +360,21 @@ def check_if_pdf(state: IndexingState) -> Dict[str, Any]:
     # Set file_path and file_source for all files (for temporal extraction)
     file_source = get_url(current_file)
 
+    doc_text = None
+    if not is_pdf:
+        # Read text content for non-PDF supported files
+        try:
+            with open(current_file, 'r', encoding='utf-8') as f:
+                doc_text = f.read()
+        except Exception as e:
+            print(f"[CHECK_PDF] Warning: Could not read text file {current_file}: {e}")
+
     return {
         "is_pdf": is_pdf,
         "current_file_path": current_file,
         "file_path": current_file,
         "file_source": file_source,
+        "doc_text": doc_text,
         "all_files_processed": False
     }
 
@@ -385,6 +399,7 @@ def parse_with_ocr(state: IndexingState) -> Dict[str, Any]:
 
         return {
             "parsed_content": md_content,
+            "doc_text": md_content, # Set for metadata subgraph
             "ocr_output_dir": output_path,
             "ocr_success": True,
             "file_path": file_path,
@@ -396,131 +411,6 @@ def parse_with_ocr(state: IndexingState) -> Dict[str, Any]:
             "ocr_success": False,
             "ocr_error": str(e),
         }
-
-
-async def extract_temporal_metadata_rag(state: IndexingState) -> Dict[str, Any]:
-    """
-    Two-stage temporal metadata extraction.
-
-    Stage 1 — Header extraction (fast, deterministic):
-        Sends first 2000 chars directly to LLM + regex.
-        Extracts: document_number, amends_documents, implicit_amendment_flag.
-        These fields are ALWAYS in the document header/preamble.
-
-    Stage 2 — RAG subgraph (for scattered fields):
-        Runs ChromaDB bi-encoder + cross-encoder reranking.
-        Extracts: cohort_years, valid_dates (legitimately scattered in curriculum docs).
-
-    Merge: Header results take precedence for document_number / amends_documents.
-    RAG results fill in cohort_years / dates.
-    """
-    from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
-    from agent.agents.header_extraction import extract_from_header
-
-    try:
-        # --- Resolve document text ---
-        doc_text = state.get("parsed_content", "")
-        if not doc_text:
-            file_path = state.get("current_file_path")
-            if file_path:
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        doc_text = f.read()
-                except Exception as e:
-                    print(f"[Metadata] WARNING: Could not read file {file_path}: {e}")
-
-        file_source = state.get("file_source") or state.get("current_file_path", "unknown")
-        doc_id = state.get("doc_id", "")
-
-        if not doc_text:
-            print(f"[Metadata] WARNING: No document text for {file_source}, falling back to regex")
-            return await extract_temporal_metadata_node(state)
-
-        # ------------------------------------------------------------------ #
-        # Stage 1: Header extraction
-        # ------------------------------------------------------------------ #
-        print(f"[Header] Extracting doc_number + amends from header: {file_source}")
-        header_result = extract_from_header(doc_text, file_source)
-        print(
-            f"[Header] doc_num={header_result.get('document_number')!r} "
-            f"amends={header_result.get('amends_documents')} "
-            f"amendment_confidence={header_result.get('amendment_confidence')} "
-            f"implicit={header_result.get('implicit_amendment_flag')} "
-            f"via {header_result.get('extraction_method_header')}"
-        )
-
-        # ------------------------------------------------------------------ #
-        # Stage 2: RAG subgraph for cohort_years + dates
-        # ------------------------------------------------------------------ #
-        print(f"[Metadata RAG] Processing cohort/dates: {file_source}")
-        subgraph_input = {
-            "doc_text": doc_text,
-            "file_source": file_source,
-            "doc_id": doc_id,
-            "success": False
-        }
-        rag_result = await metadata_rag_subgraph.ainvoke(subgraph_input)
-
-        rag_success = rag_result.get("success", False)
-        rag_metadata = rag_result.get("final_metadata", {})
-        rag_confidence = rag_result.get("extraction_confidence", 0.0)
-
-        if not rag_success:
-            error = rag_result.get("error", "Unknown error")
-            print(f"[Metadata RAG] Failed: {error}, falling back to regex for dates/cohorts")
-            # Still use header results even if RAG fails
-            fallback = await extract_temporal_metadata_node(state)
-            fallback_meta = fallback.get("document_metadata", {})
-            merged = _merge_metadata(header_result, fallback_meta)
-            return {"document_metadata": merged, "temporal_extraction_complete": True}
-
-        # ------------------------------------------------------------------ #
-        # Merge: header wins for doc_number + amends; RAG for dates + cohorts
-        # ------------------------------------------------------------------ #
-        final_metadata = _merge_metadata(header_result, rag_metadata)
-        final_metadata["extraction_confidence"] = rag_confidence
-
-        print(
-            f"[Metadata] Final confidence: {rag_confidence:.2f} | "
-            f"doc_num={final_metadata.get('document_number')!r} | "
-            f"amends={final_metadata.get('amends_documents')} | "
-            f"cohorts={final_metadata.get('cohort_years')}"
-        )
-
-        return {"document_metadata": final_metadata, "temporal_extraction_complete": True}
-
-    except Exception as e:
-        print(f"[Metadata] Exception: {str(e)}, falling back to regex")
-        return await extract_temporal_metadata_node(state)
-
-
-def _merge_metadata(header: dict, rag: dict) -> dict:
-    """
-    Merge header extraction results with RAG results.
-
-    Priority:
-    - document_number:    header > RAG (header reads the "So:" line directly)
-    - amends_documents:   header (RAG no longer extracts this)
-    - cohort_years:       RAG (header doesn't touch this)
-    - valid_from/until:   RAG (header doesn't touch this)
-    - everything else:    RAG
-    """
-    merged = dict(rag)  # start with RAG as base
-
-    # Header fields take precedence
-    if header.get("document_number"):
-        merged["document_number"] = header["document_number"]
-
-    merged["amends_documents"] = header.get("amends_documents", [])
-    merged["amendment_confidence"] = header.get("amendment_confidence", "none")
-    merged["implicit_amendment_flag"] = header.get("implicit_amendment_flag", False)
-
-    # Track which method was used for header fields
-    header_method = header.get("extraction_method_header", "header_regex_only")
-    rag_method = rag.get("extraction_method", "rag")
-    merged["extraction_method"] = f"{header_method}+{rag_method}"
-
-    return merged
 
 
 def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
@@ -735,7 +625,10 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
             "ocr_success": False,
             "ocr_error": None,
             "document_metadata": {},
-            "temporal_extraction_complete": False
+            "temporal_extraction_complete": False,
+            "human_feedback": None,
+            "loop_count": 0,
+            "review_status": None
         }
     
     return {}
@@ -833,6 +726,51 @@ def error_handler(state: IndexingState) -> Dict[str, Any]:
 
 # ---------------------- Router Functions ----------------------
 
+def review_temporal_tags_node(state: IndexingState) -> Command:
+    """HITL: interrupt at parent graph level so platform checkpointer handles state."""
+    document_metadata = state.get("document_metadata", {})
+
+    decision_raw = interrupt({
+        "action": "review_temporal_tags",
+        "metadata": document_metadata,
+        "human_feedback": state.get("human_feedback"),
+        "loop_count": state.get("loop_count", 0)
+    })
+
+    try:
+        if isinstance(decision_raw, dict):
+            decision = MetadataReviewAction(**decision_raw)
+        else:
+            return Command(update={"review_status": "error", "error": "Invalid review format"})
+    except Exception as e:
+        return Command(update={"review_status": "error", "error": f"Validation error: {str(e)}"})
+
+    updated_metadata = dict(document_metadata)
+    if decision.document_number is not None: updated_metadata["document_number"] = decision.document_number
+    if decision.document_type is not None: updated_metadata["document_type"] = decision.document_type
+    if decision.issuing_authority is not None: updated_metadata["issuing_authority"] = decision.issuing_authority
+    if decision.valid_from is not None: updated_metadata["valid_from"] = decision.valid_from
+    if decision.valid_until is not None: updated_metadata["valid_until"] = decision.valid_until
+    if decision.cohort_years is not None: updated_metadata["cohort_years"] = decision.cohort_years
+    if decision.amends_documents is not None: updated_metadata["amends_documents"] = decision.amends_documents
+
+    return Command(update={
+        "document_metadata": updated_metadata,
+        "review_status": decision.action,
+        "human_feedback": decision.feedback,
+        "loop_count": state.get("loop_count", 0) + 1
+    })
+
+
+def decide_after_hitl(state: IndexingState) -> Literal["retry", "upload"]:
+    """Route after HITL review: rejected → re-extract, otherwise → upload."""
+    status = state.get("review_status")
+    loop_count = state.get("loop_count", 0)
+    if status == "rejected" and loop_count < 2:
+        return "retry"
+    return "upload"
+
+
 def route_after_prepare(state: IndexingState) -> Literal["error_handler", "upload_to_lightrag", "prepare_file_list"]:
     """Route after prepare: check for errors, then route by type."""
     if state.get("error"):
@@ -892,7 +830,12 @@ builder.add_node("prepare_indexing", prepare_indexing)
 builder.add_node("prepare_file_list", prepare_file_list)
 builder.add_node("check_if_pdf", check_if_pdf)
 builder.add_node("parse_with_ocr", parse_with_ocr)
-builder.add_node("extract_temporal_metadata", extract_temporal_metadata_rag)
+
+# Use the compiled subgraph directly as a node (Like your company code)
+# This allows interrupts inside the subgraph to bubble up to the UI.
+builder.add_node("extract_temporal_metadata", metadata_rag_subgraph)
+builder.add_node("review_temporal_tags", review_temporal_tags_node)
+
 builder.add_node("upload_to_lightrag", upload_to_lightrag)
 builder.add_node("finalize_upload", finalize_upload)
 builder.add_node("error_handler", error_handler)
@@ -932,8 +875,16 @@ builder.add_conditional_edges(
 # After parsing PDF, extract temporal metadata
 builder.add_edge("parse_with_ocr", "extract_temporal_metadata")
 
-# After temporal extraction, upload to LightRAG
-builder.add_edge("extract_temporal_metadata", "upload_to_lightrag")
+# After extraction, HITL review at parent level, then upload
+builder.add_edge("extract_temporal_metadata", "review_temporal_tags")
+builder.add_conditional_edges(
+    "review_temporal_tags",
+    decide_after_hitl,
+    {
+        "retry": "extract_temporal_metadata",
+        "upload": "upload_to_lightrag"
+    }
+)
 
 builder.add_conditional_edges(
     "upload_to_lightrag",
@@ -948,5 +899,6 @@ builder.add_conditional_edges(
 builder.add_edge("finalize_upload", END)
 builder.add_edge("error_handler", END)
 
+# Compile the graph. Persistence is handled by the platform (LangGraph API).
 graph = builder.compile()
 graph.name = "IndexGraph"
