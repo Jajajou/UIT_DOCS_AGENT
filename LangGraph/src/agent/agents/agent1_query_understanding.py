@@ -13,6 +13,7 @@ New capabilities:
 from __future__ import annotations
 
 import json as json_module
+import os
 from typing import Any, List, Dict
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from agent.states.query_state import (
@@ -137,7 +138,8 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_is_historical = bool(get_attr_safe(understanding, "query_is_historical", False))
         if query_is_historical:
             print(f"[AGENT 1] Historical query detected (LLM): {query[:60]}")
-        education_system = get_attr_safe(understanding, "education_system", "chinh_quy")
+        education_system = get_attr_safe(understanding, "education_system")
+        needs_student_context = bool(get_attr_safe(understanding, "needs_student_context", False))
 
         # Retrieval parameters
         suggested_mode = get_attr_safe(understanding,"suggested_mode")
@@ -176,6 +178,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_document_ref": query_document_ref,
             "query_is_historical": query_is_historical,
             "education_system": education_system,
+            "needs_student_context": needs_student_context,
             "retrieval_mode": suggested_mode,
             "top_k": suggested_top_k,
             "chunk_top_k": suggested_chunk_top_k,
@@ -207,12 +210,34 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
 # Decision Function
 # ============================================================================
 
-def decide_after_agent1(state: QueryState) -> str:
+def route_after_agent1(state: QueryState) -> str:
     """
-    Decide next step after Agent 1.
-    Always retrieves — clarification gating removed.
-    Temporal reranking handles result quality downstream.
+    Consolidated routing after Agent 1.
+    
+    1. Context Guard: If query requires specific student info (needs_student_context=True)
+       but it's missing, route to request_context (HITL).
+    2. Retrieval Router: Otherwise, route to specific retrieval paths.
     """
+    query_type = state.get("query_type", "GENERAL")
+    cohort_year = state.get("query_cohort_year")
+    edu_system = state.get("education_system")
+    needs_context = state.get("needs_student_context", False)
+    
+    # 1. Context Guard (Only if LLM determines context is needed)
+    if needs_context:
+        if cohort_year is None or edu_system is None:
+            print(f"[AGENT 1] Context needed but missing: cohort={cohort_year}, system={edu_system}. Routing to request_context.")
+            return "request_context"
+
+    # 2. Standard Retrieval Routing
+    if os.getenv("USE_METADATA_ROUTING", "true").lower() == "false":
+        return "retrieve_data"
+        
+    if query_type == "COHORT" or cohort_year is not None:
+        return "retrieve_cohort_data"
+    if query_type == "AMENDMENT":
+        return "retrieve_amendment_data"
+        
     return "retrieve_data"
 
 
@@ -222,5 +247,5 @@ def decide_after_agent1(state: QueryState) -> str:
 
 __all__ = [
     "agent1_understand_query",
-    "decide_after_agent1",
+    "route_after_agent1",
 ]
