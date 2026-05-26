@@ -246,6 +246,12 @@ class QueryState(TypedDict):
     response_type: NotRequired[Literal["full_answer", "partial_answer", "fallback"]]
     references: NotRequired[List[Dict[str, Any]]]  
     
+    # ============ Agent 4: Validation (Internal Auditor) ============
+    validation_passed: NotRequired[bool]
+    validation_reasoning: NotRequired[Optional[str]]
+    validation_critique: NotRequired[Optional[str]]
+    validation_retry_count: Annotated[int, operator.add]
+    
     # ============ Final Output ============
     final_answer: NotRequired[Optional[str]]  
     confidence_summary: NotRequired[Dict[str, Any]]  
