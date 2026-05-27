@@ -34,7 +34,7 @@ llm = init_chat_model(
     model=settings.agent3_llm_model,
     streaming=False,
     temperature=settings.agent3_temperature,
-    model_kwargs={"tool_choice": "none"}
+    model_kwargs={"tool_choice": "none", "extra_body": {"enable_thinking": False}}
 )
 
 
