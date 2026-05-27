@@ -602,22 +602,22 @@ builder.add_conditional_edges(
     },
 )
 
-# COHORT path: results → rerank, 0 results → fallback to GENERAL
+# COHORT path: results → enrich → filter → rerank, 0 results → fallback to GENERAL
 builder.add_conditional_edges(
     "retrieve_cohort_data",
     route_after_cohort,
     {
-        "rerank_data": "rerank_data",
+        "enrich_with_temporal_metadata": "enrich_with_temporal_metadata",
         "retrieve_data": "retrieve_data",
     },
 )
 
-# AMENDMENT path: results → rerank, no ref / 0 results → fallback to GENERAL
+# AMENDMENT path: results → enrich → filter → rerank, no ref / 0 results → fallback to GENERAL
 builder.add_conditional_edges(
     "retrieve_amendment_data",
     route_after_amendment,
     {
-        "rerank_data": "rerank_data",
+        "enrich_with_temporal_metadata": "enrich_with_temporal_metadata",
         "retrieve_data": "retrieve_data",
     },
 )

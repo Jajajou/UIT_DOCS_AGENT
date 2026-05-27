@@ -107,11 +107,11 @@ def route_after_amendment(state: QueryState) -> str:
     Conditional edge: route after retrieve_amendment_data.
 
     0 results / no ref (fallback=True) → retrieve_data (GENERAL path)
-    Has results                         → rerank_data (skip enrich + filter)
+    Has results                         → enrich_with_temporal_metadata
     """
     if state.get("amendment_fallback", False):
         return "retrieve_data"
-    return "rerank_data"
+    return "enrich_with_temporal_metadata"
 
 
 __all__ = [
