@@ -152,13 +152,13 @@ class TestRouteAfterCohort:
         state: QueryState = {"messages": [], "logs": [], "cohort_fallback": True}
         assert route_after_cohort(state) == "retrieve_data"
 
-    def test_fallback_false_routes_to_rerank(self):
+    def test_fallback_false_routes_to_enrich(self):
         state: QueryState = {"messages": [], "logs": [], "cohort_fallback": False}
-        assert route_after_cohort(state) == "rerank_data"
+        assert route_after_cohort(state) == "enrich_with_temporal_metadata"
 
-    def test_missing_fallback_defaults_to_rerank(self):
+    def test_missing_fallback_defaults_to_enrich(self):
         state: QueryState = {"messages": [], "logs": []}
-        assert route_after_cohort(state) == "rerank_data"
+        assert route_after_cohort(state) == "enrich_with_temporal_metadata"
 
 
 # ============================================================================
