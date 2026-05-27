@@ -27,13 +27,24 @@ from agent.utils import strip_think_tags, get_url
 # Configuration
 # ============================================================================
 
-llm = init_chat_model(
+llm_thinker = init_chat_model(
     model_provider="openai",
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
     model=settings.agent3_llm_model,
     streaming=False,
     temperature=settings.agent3_temperature,
+    max_tokens=2000,
+    model_kwargs={"tool_choice": "none"}
+)
+
+llm_formatter = init_chat_model(
+    model_provider="openai",
+    api_key=settings.openai_api_key,
+    base_url=settings.openai_base_url,
+    model=settings.agent3_llm_model,
+    streaming=False,
+    temperature=0.0,
     model_kwargs={"tool_choice": "none", "extra_body": {"enable_thinking": False}}
 )
 
@@ -206,7 +217,7 @@ def _format_reranked_data(
             lines.append(f"{i}. (score: {score:.2f})")
             if doc_num:
                 lines.append(f"   Document: {doc_num}")
-            lines.append(f"   Content: {content[:300]}...")
+            lines.append(f"   Content: {content[:800]}...")
             if file_source:
                 resolved = get_url(file_source)
                 lines.append(f"   Source: {resolved or file_source}")
@@ -346,7 +357,7 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             [],
             [],
             reranked_chunks,
-            top_n=15
+            top_n=10
         )
 
         # Prepare prompt
@@ -361,32 +372,45 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
         elif cohort_year:
             student_context_note = f"<student_context>\nSinh viên khóa {cohort_year}.\n</student_context>"
 
-        prompt_text = PROMPTS["response_generation_prompt"].format(
+        thinking_prompt = PROMPTS["response_generation_thinking_prompt"].format(
             parsed_intention=parsed_intention,
             reranked_data_formatted=reranked_data_formatted,
             student_context_note=student_context_note,
         )
-        
-        # Call LLM directly, strip think tags, parse manually
-        llm_json = llm.bind(response_format={"type": "json_object"})
 
         # Handle validation critique if it's a retry
         critique = state.get("validation_critique")
-        human_content = f"{parsed_intention}\n\nGenerate JSON response."
+        human_content = parsed_intention
         if critique:
-            human_content = f"LƯU Ý: Câu trả lời trước của bạn bị từ chối với lỗi sau:\n{critique}\n\nHãy sửa lại câu trả lời dựa trên lưu ý này và tài liệu đã cung cấp. {parsed_intention}\n\nGenerate JSON response."
+            human_content = f"LƯU Ý: Câu trả lời trước của bạn bị từ chối với lỗi sau:\n{critique}\n\nHãy sửa lại câu trả lời. {parsed_intention}"
             print(f"[AGENT 3] Retrying with critique: {critique[:100]}...")
 
-        msgs = [
-            SystemMessage(content=prompt_text),
+        # Call 1: thinking pass — free text answer with CoT
+        thinking_msgs = [
+            SystemMessage(content=thinking_prompt),
             HumanMessage(content=human_content)
         ]
-        raw_response = llm_json.invoke(input=msgs)
-        content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
+        raw_thinking = llm_thinker.invoke(input=thinking_msgs)
+        thinking_content = raw_thinking.content if hasattr(raw_thinking, "content") else str(raw_thinking)
+        response_text = strip_think_tags(thinking_content).strip()
+        print(f"[AGENT 3] Call 1 done, response length: {len(response_text)} chars")
 
-        content = strip_think_tags(content)
+        # Call 2: format pass — classify response_type + wrap JSON
+        format_prompt = PROMPTS["response_format_json_prompt"].format(
+            response_text=response_text
+        )
+        llm_formatter_json = llm_formatter.bind(response_format={"type": "json_object"})
+        format_msgs = [
+            SystemMessage(content=format_prompt),
+            HumanMessage(content="Format thành JSON.")
+        ]
+        raw_format = llm_formatter_json.invoke(input=format_msgs)
+        format_content = raw_format.content if hasattr(raw_format, "content") else str(raw_format)
+        format_content = strip_think_tags(format_content)
 
-        data = json.loads(content)
+        data = json.loads(format_content)
+        # Ensure response_text comes from Call 1, not Call 2 (formatter may truncate)
+        data["response_text"] = response_text
         response_gen = ResponseGeneration(**data)
 
         if not response_gen:
