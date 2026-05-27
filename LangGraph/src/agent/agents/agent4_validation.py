@@ -27,7 +27,7 @@ llm = init_chat_model(
     model=settings.llm_model,
     streaming=False,
     temperature=0.0, # Zero temperature for strict validation
-    model_kwargs={"tool_choice": "none"}
+    model_kwargs={"tool_choice": "none", "extra_body": {"enable_thinking": False}}
 )
 
 # ============================================================================
