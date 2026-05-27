@@ -115,13 +115,15 @@ Trả về JSON với schema ValidationResult:
             "validation_passed": result.is_valid,
             "validation_reasoning": result.reasoning,
             "validation_critique": result.critique,
+            "validation_retry_count": 1,
             "logs": [f"Agent 4 validation: {'Passed' if result.is_valid else 'Failed'}"]
         }
-        
+
     except Exception as e:
         print(f"[AGENT 4] Error: {e}")
         return {
             "validation_passed": True, # Fail-safe: proceed if validator fails
+            "validation_retry_count": 1,
             "logs": [f"Agent 4 error: {str(e)}"]
         }
 
