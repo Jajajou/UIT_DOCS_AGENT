@@ -31,7 +31,7 @@ llm = init_chat_model(
     model_provider="openai",
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
-    model=settings.llm_model,
+    model=settings.agent3_llm_model,
     streaming=False,
     temperature=settings.agent3_temperature,
     model_kwargs={"tool_choice": "none"}
@@ -341,18 +341,30 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
     print("=" * 80)
 
     try:
-        # Format reranked data
+        # Format reranked data — chunks only (entities/rels are noise for regulatory RAG)
         reranked_data_formatted = _format_reranked_data(
-            reranked_entities,
-            reranked_relationships,
+            [],
+            [],
             reranked_chunks,
             top_n=15
         )
 
         # Prepare prompt
+        cohort_year = state.get("query_cohort_year")
+        education_system = state.get("education_system")
+        student_context_note = ""
+        if cohort_year and education_system:
+            student_context_note = PROMPTS["student_context_note_template"].format(
+                cohort_year=cohort_year,
+                education_system=education_system
+            )
+        elif cohort_year:
+            student_context_note = f"<student_context>\nSinh viên khóa {cohort_year}.\n</student_context>"
+
         prompt_text = PROMPTS["response_generation_prompt"].format(
             parsed_intention=parsed_intention,
             reranked_data_formatted=reranked_data_formatted,
+            student_context_note=student_context_note,
         )
         
         # Call LLM directly, strip think tags, parse manually

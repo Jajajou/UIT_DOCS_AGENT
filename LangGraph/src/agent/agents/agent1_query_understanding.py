@@ -224,11 +224,11 @@ def route_after_agent1(state: QueryState) -> str:
     edu_system = state.get("education_system")
     needs_context = state.get("needs_student_context", False)
     
-    # 1. Context Guard (Only if LLM determines context is needed)
-    if needs_context:
-        if cohort_year is None or edu_system is None:
-            print(f"[AGENT 1] Context needed but missing: cohort={cohort_year}, system={edu_system}. Routing to request_context.")
-            return "request_context"
+    # 1. Context Guard (Only if LLM determines context is needed and cohort unknown)
+    # Gate on cohort_year only — edu_system is optional enrichment, not required for routing
+    if needs_context and cohort_year is None:
+        print(f"[AGENT 1] Context needed but cohort missing. Routing to request_context.")
+        return "request_context"
 
     # 2. Standard Retrieval Routing
     if os.getenv("USE_METADATA_ROUTING", "true").lower() == "false":

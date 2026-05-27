@@ -740,6 +740,8 @@ Luôn trả lời trực tiếp dựa trên tài liệu. Không hỏi lại sinh
 {parsed_intention}
 </user_query>
 
+{student_context_note}
+
 <reranked_data>
 Dữ liệu sau đã được sắp xếp theo độ liên quan (cao nhất trước):
 
@@ -807,6 +809,11 @@ PROMPTS["partial_answer_suffix"] = """
 
 **Lưu ý:** Thông tin trên có thể chưa đầy đủ. Để được tư vấn chi tiết hơn, bạn vui lòng liên hệ cố vấn học tập hoặc phòng ban liên quan.
 """
+
+PROMPTS["student_context_note_template"] = """<student_context>
+Sinh viên này thuộc: Khóa {cohort_year}, Hệ đào tạo: {education_system}.
+Ưu tiên thông tin áp dụng cho khóa này. Nếu tài liệu không có thông tin cho khóa cụ thể, ghi rõ điều đó.
+</student_context>"""
 
 # ============================================================================
 # Helper Functions
