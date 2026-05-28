@@ -17,7 +17,7 @@ query_thresholds:
 
 # Default Retrieval Parameters
 retrieval:
-  default_mode: "mix"
+  default_mode: "hybrid"
   default_top_k: 8
   default_chunk_top_k: 16
 
