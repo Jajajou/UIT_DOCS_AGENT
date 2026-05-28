@@ -21,7 +21,7 @@ from agent.config import settings
 logger = logging.getLogger(__name__)
 
 QDRANT_BASE_URL = "http://localhost:6336"
-QDRANT_COLLECTION = "lightrag_vdb_chunks_aiteamvn_vietnamese_embedding_v2_1024d"
+QDRANT_COLLECTION = "lightrag_vdb_chunks"
 DEFAULT_TOP_K = 40
 DEFAULT_WORKSPACE = "uit_docs_agent"
 

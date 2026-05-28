@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path, PurePosixPath
-from typing import Optional, Union, Iterable, Tuple, List, Any
+from typing import Optional, Union, Iterable, List, Any
 import re
 from urllib.parse import urlparse, unquote
 import sys
@@ -27,7 +27,6 @@ def find_urls_by_filename(
     Matching ignores query strings and fragments (they're not part of the basename).
     """
     key = filename.casefold() if case_insensitive else filename
-    out: List[str] = []
 
     for url in links:
         p = urlparse(url)
@@ -171,8 +170,21 @@ def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
     return None
 
 def strip_think_tags(content: str) -> str:
-    """Strip Qwen3 chain-of-thought <think>...</think> tokens before JSON parsing."""
-    return re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+    """Strip Qwen3 chain-of-thought thinking block before parsing.
+
+    Handles two formats:
+    - <think>...</think>answer  (full tags)
+    - thinking text...</think>answer  (no opening tag — vllm Qwen3.5-9B behavior)
+    """
+    # Full tags present
+    stripped = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+    if stripped != content.strip():
+        return stripped
+    # Only closing tag — strip everything up to and including </think>
+    close_idx = content.find("</think>")
+    if close_idx != -1:
+        return content[close_idx + 8:].strip()
+    return content.strip()
 
 
 def content_to_text(content: Any) -> str:

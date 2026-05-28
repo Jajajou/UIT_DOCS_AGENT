@@ -5,7 +5,7 @@ from contextvars import ContextVar
 from dotenv import load_dotenv
 
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 # Load environment variables from .env file
 load_dotenv()

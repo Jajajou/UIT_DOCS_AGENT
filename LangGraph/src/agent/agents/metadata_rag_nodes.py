@@ -3,7 +3,7 @@ import uuid
 import logging
 import json
 import re
-from typing import List, Dict, Any, Tuple, Union, Literal
+from typing import List, Dict, Any, Literal
 from datetime import datetime
 
 # LangGraph
@@ -21,7 +21,7 @@ from ..states.metadata_rag_state import MetadataRAGState
 from ..core.prompts import METADATA_PROMPTS
 from .header_extraction import extract_from_header
 from langchain.chat_models import init_chat_model
-from agent.config import get_attr_safe, settings
+from agent.config import settings
 from agent.utils import strip_think_tags
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 
@@ -33,7 +33,9 @@ llm = init_chat_model(
     streaming=False,
     temperature=0,
     model_kwargs={
-        "tool_choice": "none"
+        "tool_choice": "none",
+        "extra_body": {"enable_thinking": False},
+        "max_tokens": 1024,
     }
 )
 
@@ -54,6 +56,84 @@ except Exception as e:
     logger.error(f"Error loading vector DB: {e}")
     print(f"Error loading vector DB: {e}")
     raise e
+
+
+# Known OCR-stripped abbreviations → canonical Vietnamese form
+_ABBREV_MAP = {
+    "QD": "QĐ",
+    "DHCNTT": "ĐHCNTT",
+    "DHQG": "ĐHQG",
+    "BGDDT": "BGDĐT",
+    "BDGDT": "BGDĐT",  # common OCR transposition
+}
+
+
+def _restore_diacritics(segment: str) -> str:
+    """Restore diacritics for known Vietnamese abbreviations (word-boundary safe)."""
+    for ascii_form, unicode_form in _ABBREV_MAP.items():
+        segment = re.sub(r"\b" + ascii_form + r"\b", unicode_form, segment)
+    return segment
+
+
+def _normalize_docnum(v) -> str | None:
+    """Normalize document number to canonical form: NUM/[YEAR/]TYPE-ISSUER.
+
+    - Strip spaces around / and -
+    - Restore diacritics for known abbreviations (QD→QĐ, DHCNTT→ĐHCNTT, etc.)
+    - Underscore before first slash = NUM_TYPE/ISSUER filename artifact → NUM/TYPE-ISSUER
+    - Extra slash in TYPE-ISSUER (not 4-digit year) → replace with dash
+    - Collapse double slashes
+    """
+    if not v or not isinstance(v, str):
+        return None
+    v = v.strip().upper()
+    if not v or len(v) > 80:
+        return None
+
+    # Strip spaces around separators: "807 / QĐ-ĐHCNTT" → "807/QĐ-ĐHCNTT"
+    v = re.sub(r"\s*/\s*", "/", v)
+    v = re.sub(r"\s*-\s*", "-", v)
+
+    slash_pos = v.find("/")
+    if slash_pos > 0 and "_" in v[:slash_pos]:
+        # "1139_QD/DHCNTT": underscore = NUM/TYPE separator, slash = TYPE/ISSUER separator
+        underscore_pos = v.index("_")
+        num = v[:underscore_pos]
+        rest = v[underscore_pos + 1:].replace("/", "-")
+        v = num + "/" + rest
+    elif slash_pos < 0:
+        v = v.replace("_", "/", 1)
+
+    # Collapse double slashes
+    v = re.sub(r"/+", "/", v)
+
+    # Fix "NUM/TYPE/ISSUER" → "NUM/TYPE-ISSUER" unless second segment is 4-digit year
+    first_slash = v.find("/")
+    if first_slash > 0:
+        after_first = v[first_slash + 1:]
+        second_slash = after_first.find("/")
+        if second_slash > 0:
+            between = after_first[:second_slash]
+            if not (len(between) == 4 and between.isdigit()):
+                after_first = between + "-" + after_first[second_slash + 1:]
+                v = v[:first_slash + 1] + after_first
+
+    if "/" not in v or not v[0].isdigit():
+        return None
+
+    # Restore diacritics for known abbreviations
+    v = _restore_diacritics(v)
+    return v
+
+
+# Cache for static query embeddings — same queries used for every doc
+_QUERY_EMBEDDING_CACHE: Dict[str, List[float]] = {}
+
+
+def get_cached_query_embedding(query: str) -> List[float]:
+    if query not in _QUERY_EMBEDDING_CACHE:
+        _QUERY_EMBEDDING_CACHE[query] = get_embeddings_from_vllm([query])[0]
+    return _QUERY_EMBEDDING_CACHE[query]
 
 
 # --- RERANKER HTTP CLIENT ---
@@ -231,12 +311,12 @@ def index_to_vector_db_node(state: MetadataRAGState) -> Dict[str, Any]:
         print(f"Error indexing: {e}")
         return {"error": str(e), "success": False}
 
-def _rag_retrieve_and_rerank(collection_name: str, query: str, top_k_retrieve=50, top_k_rerank=5) -> List[str]:
+def _rag_retrieve_and_rerank(collection_name: str, query: str, top_k_retrieve=10, top_k_rerank=5) -> List[str]:
     """Helper function: Retrieve (Bi-encoder) -> Rerank (Cross-encoder)."""
     collection = CHROMA_CLIENT.get_collection(collection_name)
 
-    # 1. Bi-encoder Retrieval (using vLLM API)
-    query_vec = get_embeddings_from_vllm([query])[0]
+    # 1. Bi-encoder Retrieval — use cached embedding for static queries
+    query_vec = get_cached_query_embedding(query)
     results = collection.query(
         query_embeddings=[query_vec],
         n_results=top_k_retrieve
@@ -280,99 +360,61 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
 
         updates: Dict[str, Any] = {}
 
-        # NOTE: document_number and amends_documents are extracted by
-        # header_extraction.py (positional, first 2000 chars) BEFORE this
-        # subgraph is invoked. RAG is kept only for cohort_years and valid_dates
-        # which are legitimately scattered throughout curriculum documents.
+        # NOTE: document_number, amends_documents, document_type are extracted by
+        # header_extraction.py (positional, first 2000 chars) BEFORE this subgraph.
+        # RAG is only needed for cohort_years and valid_dates which are scattered
+        # throughout curriculum documents. Both fields are extracted in ONE LLM call.
 
-        # --- 1. Valid Dates (Temporal Aware) ---
-        q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
-        docs_date = _rag_retrieve_and_rerank(col_name, q_date)
-        updates["valid_from_chunks"] = docs_date
-        
         current_date = datetime.now().strftime("%Y-%m-%d")
-        prompt_date = METADATA_PROMPTS['valid_dates'].format(
-            current_date=current_date,
-            filename=filename,
-            context="\n---\n".join(docs_date)
+
+        # Retrieve relevant chunks for dates and cohorts (2 embed calls, both cached)
+        q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
+        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng?"
+        docs_date = _rag_retrieve_and_rerank(col_name, q_date)
+        docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
+
+        updates["valid_from_chunks"] = docs_date
+        updates["cohort_years_chunks"] = docs_cohort
+
+        # Single combined LLM call for both dates and cohorts
+        combined_context = (
+            "<dates_context>\n" + "\n---\n".join(docs_date) + "\n</dates_context>\n\n"
+            "<cohorts_context>\n" + "\n---\n".join(docs_cohort) + "\n</cohorts_context>"
         )
-
+        combined_prompt = (
+            f"Tài liệu: {filename}\nNgày hiện tại: {current_date}\n\n"
+            f"{combined_context}\n\n"
+            "Trích xuất thông tin sau từ văn bản và trả về JSON duy nhất:\n"
+            "- valid_from: ngày hiệu lực/ban hành (YYYY-MM-DD hoặc null)\n"
+            "- valid_until: ngày hết hiệu lực (YYYY-MM-DD hoặc null)\n"
+            "- cohort_years: danh sách năm khóa sinh viên áp dụng (list[int], [] nếu không có, [\"*\"] nếu tất cả)\n"
+            "- cohort_scope: \"explicit\" nếu có khóa cụ thể, \"universal\" nếu tất cả, \"unspecified\" nếu không rõ\n\n"
+            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\"}"
+        )
         if feedback_instruction:
-            prompt_date += feedback_instruction
+            combined_prompt += feedback_instruction
 
-        res_date = llm.invoke(prompt_date)
-        content_date = res_date.content if hasattr(res_date, 'content') else str(res_date)
+        res = llm.invoke(combined_prompt)
+        content = res.content if hasattr(res, "content") else str(res)
+        content = strip_think_tags(content) if isinstance(content, str) else str(content)
 
-        # Ensure content_date is a string
-        if not isinstance(content_date, str):
-            content_date = str(content_date)
-
-        # Try to parse JSON from response
         try:
-            json_match = re.search(r'\{.*?"valid_from".*?\}', content_date, re.DOTALL)
+            json_match = re.search(r'\{[^{}]*"valid_from"[^{}]*\}', content, re.DOTALL)
             if json_match:
-                date_data = json.loads(json_match.group())
-                updates["valid_from"] = date_data.get("valid_from")
-                updates["valid_until"] = date_data.get("valid_until")
+                combined_data = json.loads(json_match.group())
+                updates["valid_from"] = combined_data.get("valid_from")
+                updates["valid_until"] = combined_data.get("valid_until")
+                updates["cohort_years"] = combined_data.get("cohort_years", [])
+                updates["cohort_scope"] = combined_data.get("cohort_scope", "unspecified")
             else:
                 updates["valid_from"] = None
                 updates["valid_until"] = None
-        except Exception as e:
-            logger.warning(f"Error parsing date JSON: {e}")
-            print(f"Error parsing date JSON: {e}")
-            updates["valid_from"] = None
-            updates["valid_until"] = None
-        
-        # --- 2. Document Type ---
-        q_type = "Loại văn bản: Quyết định, Thông báo, Quy định, Quy chế, Hướng dẫn?"
-        docs_type = _rag_retrieve_and_rerank(col_name, q_type)
-        
-        prompt_type = f"Phân tích các đoạn văn bản sau và xác định loại văn bản (document_type). Ví dụ: 'Quyết định', 'Thông báo', 'Quy định', 'Hướng dẫn'.\n\nContext:\n{chr(10).join(docs_type)}\n\nTrả về JSON: {{\"document_type\": \"...\"}}"
-        if feedback_instruction:
-            prompt_type += feedback_instruction
-            
-        res_type = llm.invoke(prompt_type)
-        try:
-            type_data = json.loads(strip_think_tags(res_type.content if hasattr(res_type, 'content') else str(res_type)))
-            updates["document_type"] = type_data.get("document_type")
-        except:
-            pass
-
-        # --- 3. Cohorts ---
-        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng? Khóa 1 khóa 2 khóa 3?"
-        docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
-        updates["cohort_years_chunks"] = docs_cohort
-
-        # Use current_date for temporal awareness (already defined above)
-        prompt_cohort = METADATA_PROMPTS['cohorts'].format(
-            current_date=current_date,
-            filename=filename,
-            context="\n---\n".join(docs_cohort)
-        )
-
-        if feedback_instruction:
-            prompt_cohort += feedback_instruction
-
-        res_cohort = llm.invoke(prompt_cohort)
-        content_cohort = res_cohort.content if hasattr(res_cohort, 'content') else str(res_cohort)
-
-        # Ensure content is string
-        if not isinstance(content_cohort, str):
-            content_cohort = str(content_cohort)
-
-        # Try to parse JSON from response
-        try:
-            json_match = re.search(r'\{.*?"cohort_years".*?\}', content_cohort, re.DOTALL)
-            if json_match:
-                cohort_data = json.loads(json_match.group())
-                updates["cohort_years"] = cohort_data.get("cohort_years", [])
-                updates["cohort_scope"] = cohort_data.get("cohort_scope", "unspecified")
-            else:
                 updates["cohort_years"] = []
                 updates["cohort_scope"] = "unspecified"
         except Exception as e:
-            logger.warning(f"Error parsing cohort JSON: {e}")
-            print(f"Error parsing cohort JSON: {e}")
+            logger.warning(f"Error parsing combined metadata JSON: {e}")
+            updates["valid_from"] = None
+            updates["valid_until"] = None
             updates["cohort_years"] = []
             updates["cohort_scope"] = "unspecified"
         
@@ -534,6 +576,12 @@ class DocumentMetadata(BaseModel):
     cohort_scope: str = "unspecified"  # "universal", "explicit", "unspecified"
     amends_documents: List[str] = Field(default_factory=list)
     extraction_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+
+    @field_validator("document_number", mode="before")
+    @classmethod
+    def normalize_document_number(cls, v):
+        """Normalize to canonical form: NUM/[YEAR/]TYPE-ISSUER (uppercase, diacritics preserved/restored)."""
+        return _normalize_docnum(v)
 
     @field_validator("valid_from", "valid_until")
     @classmethod

@@ -7,7 +7,7 @@ It scores and re-ranks retrieved entities, relationships, and chunks based on re
 
 from __future__ import annotations
 
-import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
@@ -638,33 +638,35 @@ class MultiSourceReranker:
         else:
             rerank_func = self.reranker.rerank_items  # type: ignore
 
-        # Rerank entities
-        reranked_entities = rerank_func(
-            query, entities, text_field="entity_name", top_k=top_k_entities
-        )
+        # Rerank entities, relationships, chunks in parallel
+        _tasks = {
+            "entities": (entities, "entity_name", top_k_entities),
+            "relationships": (relationships, "description", top_k_relationships),
+            "chunks": (chunks, "content", top_k_chunks),
+        }
+        _results: Dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(rerank_func, query, items, text_field, top_k): key
+                for key, (items, text_field, top_k) in _tasks.items()
+            }
+            for future in as_completed(futures):
+                key = futures[future]
+                _results[key] = future.result()
+
+        reranked_entities = _results["entities"]
+        reranked_relationships = _results["relationships"]
+        reranked_chunks = _results["chunks"]
+
         entity_scores = [score for _, score in reranked_entities]
-
-        print(f"[RERANKER] Reranked {len(reranked_entities)} entities")
-        if entity_scores:
-            print(f"[RERANKER]   Top entity score: {max(entity_scores):.4f}")
-
-        # Rerank relationships
-        reranked_relationships = rerank_func(
-            query, relationships, text_field="description", top_k=top_k_relationships
-        )
         relationship_scores = [score for _, score in reranked_relationships]
-
-        print(f"[RERANKER] Reranked {len(reranked_relationships)} relationships")
-        if relationship_scores:
-            print(f"[RERANKER]   Top relationship score: {max(relationship_scores):.4f}")
-
-        # Rerank chunks
-        reranked_chunks = rerank_func(
-            query, chunks, text_field="content", top_k=top_k_chunks
-        )
         chunk_scores = [score for _, score in reranked_chunks]
 
-        print(f"[RERANKER] ✓ Reranked {len(reranked_chunks)} chunks")
+        print(f"[RERANKER] Reranked {len(reranked_entities)} entities, {len(reranked_relationships)} rels, {len(reranked_chunks)} chunks (parallel)")
+        if entity_scores:
+            print(f"[RERANKER]   Top entity score: {max(entity_scores):.4f}")
+        if relationship_scores:
+            print(f"[RERANKER]   Top relationship score: {max(relationship_scores):.4f}")
         if chunk_scores:
             print(f"[RERANKER]   Top chunk score: {max(chunk_scores):.4f}")
 

@@ -7,9 +7,8 @@ It creates a comprehensive answer with hyperlinked references.
 
 from __future__ import annotations
 
-import os
 import re
-import json
+import time as _t
 from typing import Any, Dict, List, Tuple
 from datetime import datetime
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
@@ -34,24 +33,83 @@ llm_thinker = init_chat_model(
     model=settings.agent3_llm_model,
     streaming=False,
     temperature=settings.agent3_temperature,
-    max_tokens=2000,
+    max_tokens=2048,
     model_kwargs={"tool_choice": "none"}
-)
-
-llm_formatter = init_chat_model(
-    model_provider="openai",
-    api_key=settings.openai_api_key,
-    base_url=settings.openai_base_url,
-    model=settings.agent3_llm_model,
-    streaming=False,
-    temperature=0.0,
-    model_kwargs={"tool_choice": "none", "extra_body": {"enable_thinking": False}}
 )
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
+_FALLBACK_KEYWORDS = [
+    "không tìm thấy thông tin", "không có thông tin", "xin lỗi, tôi không",
+    "không thể trả lời", "không có dữ liệu",
+]
+_PARTIAL_KEYWORDS = [
+    "không đủ thông tin", "thông tin chưa đầy đủ", "thông tin hạn chế",
+    "chỉ tìm thấy một phần", "chưa tìm thấy đầy đủ",
+]
+
+
+def _classify_response_type(text: str) -> str:
+    """Deterministic response_type classifier — no LLM needed."""
+    if not text.strip():
+        return "fallback"
+    lower = text.lower()
+    if any(k in lower for k in _FALLBACK_KEYWORDS):
+        return "fallback"
+    if any(k in lower for k in _PARTIAL_KEYWORDS):
+        return "partial_answer"
+    return "full_answer"
+
+
+def _check_citation_validity(
+    final_answer: str,
+    reranked_chunks: List[Tuple[Dict[str, Any], float]],
+    references_list: List[Dict[str, Any]],
+) -> str:
+    """Option A: Rule-based citation check — no LLM needed.
+
+    Detects two classes of phantom citations:
+    1. [Nguồn N] references where N > len(references_list)
+    2. Doc numbers (e.g. 108/QĐ-ĐHCNTT) mentioned in answer but absent from retrieved chunks
+    """
+    # Collect retrieved doc numbers (normalised: strip separators, uppercase)
+    def _norm(s: str) -> str:
+        return re.sub(r"[\s/_\-]", "", s).upper()
+
+    retrieved_norms: set[str] = set()
+    for chunk, _ in reranked_chunks:
+        dn = chunk.get("metadata", {}).get("document_number", "")
+        if dn:
+            retrieved_norms.add(_norm(dn))
+
+    warnings: List[str] = []
+
+    # Check [Nguồn N] numbered refs exceed available sources
+    cited_nums = {int(m) for m in re.findall(r"\[Nguồn\s+(\d+)\]", final_answer)}
+    max_valid = len(references_list)
+    phantom_nums = sorted(n for n in cited_nums if n > max_valid)
+    if phantom_nums:
+        nums_str = ", ".join(str(n) for n in phantom_nums)
+        warnings.append(f"[Nguồn {nums_str}] không tồn tại trong kết quả tìm kiếm.")
+
+    # Check explicit doc numbers mentioned in answer
+    # Pattern: digits/UPPERCASE-UPPERCASE (e.g. 108/QĐ-ĐHCNTT)
+    mentioned = re.findall(r"\b\d+/[A-ZĐQTBCN][A-ZĐQTBCN\-]+", final_answer)
+    phantom_docs = sorted({d for d in mentioned if _norm(d) not in retrieved_norms})
+    if phantom_docs:
+        docs_str = ", ".join(phantom_docs)
+        warnings.append(f"Văn bản {docs_str} không có trong dữ liệu truy xuất.")
+
+    if warnings:
+        print(f"[AGENT 3] Citation check: {len(warnings)} issue(s) found")
+        return "\n\n> **Cảnh báo trích dẫn:** " + " ".join(warnings)
+
+    print("[AGENT 3] Citation check: OK")
+    return ""
+
 
 def _generate_expiration_warnings(
     reranked_chunks: List[Tuple[Dict[str, Any], float]],
@@ -378,40 +436,26 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             student_context_note=student_context_note,
         )
 
-        # Handle validation critique if it's a retry
-        critique = state.get("validation_critique")
         human_content = parsed_intention
-        if critique:
-            human_content = f"LƯU Ý: Câu trả lời trước của bạn bị từ chối với lỗi sau:\n{critique}\n\nHãy sửa lại câu trả lời. {parsed_intention}"
-            print(f"[AGENT 3] Retrying with critique: {critique[:100]}...")
 
         # Call 1: thinking pass — free text answer with CoT
         thinking_msgs = [
             SystemMessage(content=thinking_prompt),
             HumanMessage(content=human_content)
         ]
+        _t1 = _t.perf_counter()
         raw_thinking = llm_thinker.invoke(input=thinking_msgs)
+        print(f"[TIMING] agent3_call1_thinking: {_t.perf_counter() - _t1:.2f}s")
         thinking_content = raw_thinking.content if hasattr(raw_thinking, "content") else str(raw_thinking)
         response_text = strip_think_tags(thinking_content).strip()
         print(f"[AGENT 3] Call 1 done, response length: {len(response_text)} chars")
 
-        # Call 2: format pass — classify response_type + wrap JSON
-        format_prompt = PROMPTS["response_format_json_prompt"].format(
-            response_text=response_text
+        # Classify response_type deterministically — no LLM Call 2 needed
+        response_type_classified = _classify_response_type(response_text)
+        response_gen = ResponseGeneration(
+            response_type=response_type_classified,
+            response_text=response_text,
         )
-        llm_formatter_json = llm_formatter.bind(response_format={"type": "json_object"})
-        format_msgs = [
-            SystemMessage(content=format_prompt),
-            HumanMessage(content="Format thành JSON.")
-        ]
-        raw_format = llm_formatter_json.invoke(input=format_msgs)
-        format_content = raw_format.content if hasattr(raw_format, "content") else str(raw_format)
-        format_content = strip_think_tags(format_content)
-
-        data = json.loads(format_content)
-        # Ensure response_text comes from Call 1, not Call 2 (formatter may truncate)
-        data["response_text"] = response_text
-        response_gen = ResponseGeneration(**data)
 
         if not response_gen:
             raise ValueError("LLM did not return structured output")
@@ -444,10 +488,15 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
                 final_answer += "\n"
             final_answer += transparency_notes
 
+        # Option A: rule-based citation validity check
+        citation_warning = _check_citation_validity(final_answer, reranked_chunks, references_list)
+        if citation_warning:
+            final_answer += citation_warning
+
         # Add partial answer suffix if needed
         if response_type == "partial_answer":
             final_answer += PROMPTS["partial_answer_suffix"]
-        
+
         # Log results
         print(f"[AGENT 3] ✓ Response generated")
         print(f"[AGENT 3] Response type: {response_type}")

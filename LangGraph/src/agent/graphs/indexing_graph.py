@@ -1,16 +1,11 @@
 # indexing_graph.py - Matches the perfect flowchart
 from __future__ import annotations
 
-import io
 import os
 import re
-import glob
-import requests
-import sys
-import tempfile
 import time
 from pathlib import Path
-from typing import Literal, List, Dict, Any, Union, Optional, cast
+from typing import Literal, List, Dict, Any, cast
 from urllib.parse import unquote
 
 from dotenv import load_dotenv
@@ -20,13 +15,12 @@ from langgraph.graph.state import Command
 from agent.agents.metadata_rag_nodes import MetadataReviewAction
 
 from agent.config import MINERU_OCR_DIR
-from agent.clients.mineru_ocr_client import MinerUOCRClient, MinerUOCRClientError
+from agent.clients.mineru_ocr_client import MinerUOCRClient
 from agent.states.indexing_state import IndexingState
 from agent.clients.lightrag_client import LightRAGAPIClient
-from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
-from agent.agents.agent_temporal_extraction import extract_temporal_metadata_node
+from agent.utils import get_url, content_to_text, get_last_human_message
 from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
-from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
+from langchain_core.messages import AIMessage, AnyMessage
 
 load_dotenv() 
 

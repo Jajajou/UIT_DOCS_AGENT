@@ -177,11 +177,8 @@ def extract_from_header(doc_text: str, file_source: str = "") -> dict[str, Any]:
     # 2. Always run LLM on the header to catch patterns regex misses
     llm_result = _llm_extract(header_text, file_source)
 
-    # 3. Merge: prefer LLM doc_num if found, regex as fallback
-    doc_num = llm_result.get("document_number") or regex_doc_num
-    # Validate length — real doc numbers are short
-    if doc_num and len(doc_num) > 80:
-        doc_num = regex_doc_num
+    # 3. Merge: prefer LLM doc_num if found, regex as fallback; normalize both
+    doc_num = _normalise_doc_ref(llm_result.get("document_number")) or _normalise_doc_ref(regex_doc_num)
 
     # Merge amends: union of regex and LLM findings
     llm_amends = llm_result.get("amends_documents", [])
@@ -297,17 +294,54 @@ def _merge_amends(regex: list[str], llm: list[str]) -> list[str]:
     return combined
 
 
-def _normalise_doc_ref(ref: str) -> str | None:
-    """Upper-case, strip whitespace, basic sanity check."""
-    if not ref:
+_ABBREV_MAP = {
+    "QD": "QĐ",
+    "DHCNTT": "ĐHCNTT",
+    "DHQG": "ĐHQG",
+    "BGDDT": "BGDĐT",
+    "BDGDT": "BGDĐT",
+}
+
+
+def _normalise_doc_ref(ref: str | None) -> str | None:
+    """Normalize to canonical form: NUM/[YEAR/]TYPE-ISSUER (uppercase, diacritics preserved/restored)."""
+    if not ref or not isinstance(ref, str):
         return None
-    ref = ref.upper().strip()
-    # Must contain a slash — bare numbers are noise
-    if "/" not in ref:
+    ref = ref.strip().upper()
+    if not ref or len(ref) > 80:
         return None
-    # Max length guard
-    if len(ref) > 80:
+
+    # Strip spaces around separators: "807 / QĐ-ĐHCNTT" → "807/QĐ-ĐHCNTT"
+    ref = re.sub(r"\s*/\s*", "/", ref)
+    ref = re.sub(r"\s*-\s*", "-", ref)
+
+    slash_pos = ref.find("/")
+    if slash_pos > 0 and "_" in ref[:slash_pos]:
+        underscore_pos = ref.index("_")
+        num = ref[:underscore_pos]
+        rest = ref[underscore_pos + 1:].replace("/", "-")
+        ref = num + "/" + rest
+    elif slash_pos < 0:
+        ref = ref.replace("_", "/", 1)
+
+    ref = re.sub(r"/+", "/", ref)
+
+    first_slash = ref.find("/")
+    if first_slash > 0:
+        after_first = ref[first_slash + 1:]
+        second_slash = after_first.find("/")
+        if second_slash > 0:
+            between = after_first[:second_slash]
+            if not (len(between) == 4 and between.isdigit()):
+                after_first = between + "-" + after_first[second_slash + 1:]
+                ref = ref[:first_slash + 1] + after_first
+
+    if "/" not in ref or not ref[0].isdigit():
         return None
+
+    # Restore diacritics for known abbreviations
+    for ascii_form, unicode_form in _ABBREV_MAP.items():
+        ref = re.sub(r"\b" + ascii_form + r"\b", unicode_form, ref)
     return ref
 
 

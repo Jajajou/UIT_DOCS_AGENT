@@ -9,12 +9,11 @@ This graph implements a temporal-aware RAG pipeline with:
 
 from __future__ import annotations
 
-import json
 import os
 import re
+import time as _time_module
 from typing import Any, Dict, List
-from langgraph.graph import StateGraph, START,END
-from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
+from langgraph.graph import StateGraph, START, END
 
 from agent.states.query_state import (
     QueryState,
@@ -26,7 +25,7 @@ from agent.agents.agent1_query_understanding import (
     route_after_agent1,
 )
 from agent.agents.agent3_response_generation import agent3_generate_response
-from agent.agents.agent4_validation import agent4_validate_response, route_after_validation
+
 from agent.agents.retrieve_cohort import (
     retrieve_cohort_data,
     route_after_cohort,
@@ -45,6 +44,16 @@ from agent.config import settings
 
 api_client = LightRAGAPIClient()
 reranker = MultiSourceReranker()
+
+
+def _timed(name: str, fn):
+    """Wrap a graph node to print wall-clock time."""
+    def wrapper(state):
+        t0 = _time_module.perf_counter()
+        result = fn(state)
+        print(f"[TIMING] {name}: {_time_module.perf_counter() - t0:.2f}s")
+        return result
+    return wrapper
 
 
 # ============================================================================
@@ -228,21 +237,6 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
         print(f"[ENRICH] No temporal metadata found for {len(all_file_paths)} file paths")
         return {}
 
-    # Sibling enrichment: find docs that amend or are amended by the retrieved docs
-    sibling_file_paths = set()
-    for fp, meta in temporal_map.items():
-        # Get documents this doc amends
-        amends = meta.get("amends_documents", [])
-        if amends:
-            # We need to fetch metadata for these document numbers
-            # This is a bit tricky since get_temporal_metadata_by_file_sources takes file_paths, not doc numbers.
-            # We'll need a new client method or just add a placeholder.
-            pass
-        # Get documents that amend this doc
-        amended_by = meta.get("amended_by", [])
-        if amended_by:
-            pass
-
     def enrich(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result = []
         for item in items:
@@ -255,11 +249,22 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
         return result
 
     enriched_chunks = enrich(chunks)
-    
-    # Sibling Enrichment Implementation
-    # If doc X is retrieved and it's amended by doc Y (which wasn't retrieved),
-    # we MUST pull doc Y into the candidate set so the reranker can promote Y over X.
-    # We do this by checking the 'amended_by' field, which contains doc_ids of amending documents.
+
+    # Sibling enrichment only matters for AMENDMENT queries — skip for GENERAL/COHORT
+    # to avoid 2 extra DB round-trips on every query.
+    query_type = state.get("query_type", "GENERAL")
+    if query_type != "AMENDMENT":
+        enriched_entities = enrich(entities)
+        enriched_relationships = enrich(relationships)
+        matched = sum(1 for item in chunks + entities + relationships if (item.get("file_path") or item.get("file_source")) in temporal_map)
+        total = len(chunks) + len(entities) + len(relationships)
+        print(f"[ENRICH] Enriched {matched}/{total} items (sibling enrichment skipped for {query_type})")
+        return {
+            "retrieved_chunks": enriched_chunks,
+            "retrieved_entities": enriched_entities,
+            "retrieved_relationships": enriched_relationships,
+        }
+
     try:
         sibling_doc_ids = set()
         for fp, meta in temporal_map.items():
@@ -404,11 +409,14 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
     if not query:
         return {"error": "No query for reranking"}
     
-    # Get retrieved data
-    entities = state.get("retrieved_entities", [])
-    relationships = state.get("retrieved_relationships", [])
-    chunks = state.get("retrieved_chunks", [])
-    
+    # Get retrieved data — cap before reranker to limit HTTP payload
+    _MAX_ENTITIES = 20
+    _MAX_RELS = 20
+    _MAX_CHUNKS = 30
+    entities = state.get("retrieved_entities", [])[:_MAX_ENTITIES]
+    relationships = state.get("retrieved_relationships", [])[:_MAX_RELS]
+    chunks = state.get("retrieved_chunks", [])[:_MAX_CHUNKS]
+
     if not entities and not relationships and not chunks:
         print("[RERANK] No data to rerank, setting zero confidence")
         return {
@@ -422,7 +430,7 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             "rerank_metadata": {"error": "No data to rerank"},
             "logs": ["No data to rerank"]
         }
-    
+
     try:
         # Rerank all sources
         query_is_historical = state.get("query_is_historical", False)
@@ -431,7 +439,7 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             entities=entities,
             relationships=relationships,
             chunks=chunks,
-            top_k_entities=None,  # Keep all
+            top_k_entities=None,
             top_k_relationships=None,
             top_k_chunks=None,
             use_temporal_boost=settings.use_temporal_scoring,
@@ -556,18 +564,17 @@ def request_context(state: QueryState) -> Dict[str, Any]:
 
 builder = StateGraph(state_schema=QueryState)
 
-# Add nodes
-builder.add_node("prepare_input", prepare_input)
-builder.add_node("agent1_understand_query", agent1_understand_query)
-builder.add_node("retrieve_cohort_data", retrieve_cohort_data)
-builder.add_node("retrieve_amendment_data", retrieve_amendment_data)
-builder.add_node("retrieve_data", retrieve_data)
-builder.add_node("enrich_with_temporal_metadata", enrich_with_temporal_metadata)
-builder.add_node("filter_by_metadata", filter_by_metadata)
-builder.add_node("rerank_data", rerank_data)
-builder.add_node("agent3_generate_response", agent3_generate_response)
-builder.add_node("agent4_validate_response", agent4_validate_response)
-builder.add_node("format_final_answer", format_final_answer)
+# Add nodes (wrapped with per-node wall-clock timing)
+builder.add_node("prepare_input", _timed("prepare_input", prepare_input))
+builder.add_node("agent1_understand_query", _timed("agent1_understand_query", agent1_understand_query))
+builder.add_node("retrieve_cohort_data", _timed("retrieve_cohort_data", retrieve_cohort_data))
+builder.add_node("retrieve_amendment_data", _timed("retrieve_amendment_data", retrieve_amendment_data))
+builder.add_node("retrieve_data", _timed("retrieve_data", retrieve_data))
+builder.add_node("enrich_with_temporal_metadata", _timed("enrich_with_temporal_metadata", enrich_with_temporal_metadata))
+builder.add_node("filter_by_metadata", _timed("filter_by_metadata", filter_by_metadata))
+builder.add_node("rerank_data", _timed("rerank_data", rerank_data))
+builder.add_node("agent3_generate_response", _timed("agent3_generate_response", agent3_generate_response))
+builder.add_node("format_final_answer", _timed("format_final_answer", format_final_answer))
 builder.add_node("request_context", request_context)
 
 # Set entry point
@@ -627,20 +634,8 @@ builder.add_edge("retrieve_data", "enrich_with_temporal_metadata")
 builder.add_edge("enrich_with_temporal_metadata", "filter_by_metadata")
 builder.add_edge("filter_by_metadata", "rerank_data")
 
-# Common tail: rerank → answer → validate → format → end
 builder.add_edge("rerank_data", "agent3_generate_response")
-builder.add_edge("agent3_generate_response", "agent4_validate_response")
-
-# Validation loop: either retry Agent 3 or proceed to formatting
-builder.add_conditional_edges(
-    "agent4_validate_response",
-    route_after_validation,
-    {
-        "retry_agent3": "agent3_generate_response",
-        "format_final_answer": "format_final_answer"
-    }
-)
-
+builder.add_edge("agent3_generate_response", "format_final_answer")
 builder.add_edge("format_final_answer", END)
 
 # Compile graph

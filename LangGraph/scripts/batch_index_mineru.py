@@ -23,7 +23,7 @@ from agent.config import settings
 from agent.clients.lightrag_client import LightRAGAPIClient as LightRAGClient
 from agent.utils import get_url
 
-OCR_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/data/MinerU2.5_ocr_corrected")
+OCR_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/data/MinerU2.5_final_cleaned")
 PDF_DIR = Path("/Users/jajajou1778/UIT_DOCS_AGENT/firecrawl/data/daa")
 
 # Government-level decree patterns that UIT docs never amend (only cite as legal basis)
@@ -105,18 +105,15 @@ async def process_one(
         return {"stem": stem, "status": "no_track_id", "url": url}
 
     try:
-        from agent.graphs.indexing_graph import extract_temporal_metadata_rag
-        from agent.states.indexing_state import IndexingState
+        from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
+        from agent.states.metadata_rag_state import MetadataRAGState
 
-        state: IndexingState = {
-            "parsed_content": md_content,
+        state: MetadataRAGState = {
+            "doc_text": md_content,
             "file_source": url,
-            "current_file_path": str(pdf_path) if pdf_path else str(md_path),
-            "track_id": track_id,
             "doc_id": "",
-            "messages": [],
         }
-        meta_result = await extract_temporal_metadata_rag(state)
+        meta_result = await metadata_rag_subgraph.ainvoke(state)
         document_metadata = meta_result.get("document_metadata", {})
         print(f"  [META] extraction done: doc_num={document_metadata.get('document_number')!r} conf={document_metadata.get('extraction_confidence', 0):.2f}")
     except Exception as e:

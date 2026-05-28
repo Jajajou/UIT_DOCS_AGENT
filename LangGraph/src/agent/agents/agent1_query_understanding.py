@@ -13,7 +13,6 @@ New capabilities:
 from __future__ import annotations
 
 import json as json_module
-import os
 from typing import Any, List, Dict
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from agent.states.query_state import (
@@ -38,7 +37,8 @@ llm = init_chat_model(
     model=settings.llm_model,
     streaming=False,
     temperature=settings.agent1_temperature,
-    model_kwargs={"tool_choice": "none"}
+    max_tokens=1024,
+    model_kwargs={"tool_choice": "none", "extra_body": {"enable_thinking": False}}
 )
 
 
@@ -221,12 +221,13 @@ def route_after_agent1(state: QueryState) -> str:
     import os
     query_type = state.get("query_type", "GENERAL")
     cohort_year = state.get("query_cohort_year")
-    edu_system = state.get("education_system")
     needs_context = state.get("needs_student_context", False)
     
     # 1. Context Guard (Only if LLM determines context is needed and cohort unknown)
     # Gate on cohort_year only — edu_system is optional enrichment, not required for routing
-    if needs_context and cohort_year is None:
+    # Skip HITL in eval mode to prevent blocking
+    eval_mode = os.getenv("EVAL_MODE", "false").lower() == "true"
+    if needs_context and cohort_year is None and not eval_mode:
         print(f"[AGENT 1] Context needed but cohort missing. Routing to request_context.")
         return "request_context"
 

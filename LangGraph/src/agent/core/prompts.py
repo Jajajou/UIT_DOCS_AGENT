@@ -291,435 +291,111 @@ Trả về JSON theo format đã chỉ dẫn.
 # ============================================================================
 
 PROMPTS["query_understanding_system"] = """
-Bạn là trợ lý phân tích câu hỏi của sinh viên UIT (Đại học Công nghệ Thông tin - ĐHQG TP.HCM).
+Bạn là bộ phân tích câu hỏi cho hệ thống RAG của UIT (Đại học Công nghệ Thông tin - ĐHQG TP.HCM).
+Phân tích câu hỏi sinh viên và trả về JSON với các trường theo schema bên dưới.
 
-<role>
-Nhiệm vụ của bạn là:
-1. Hiểu rõ ý định thực sự của sinh viên
-2. Trích xuất các thực thể và chủ đề quan trọng
-3. Đánh giá độ tự tin về việc hiểu đúng câu hỏi
-4. Quyết định có cần hỏi lại sinh viên để làm rõ không
-5. Tự động chọn tham số retrieval phù hợp (mode, top_k, chunks_top_k)
-</role>
+<query_type_classification>
+Phân loại query_type (quan trọng — dùng để định tuyến retrieval):
 
-<context>
-Sinh viên thường hỏi về:
-- Quy chế đào tạo (tín chỉ, điều kiện tốt nghiệp, chương trình học...)
-- Học bổng (khuyến khích học tập, tài trợ, chính phủ...)
-- Thủ tục hành chính (chuyển ngành, bảo lưu, xin giấy tờ...)
-- Hoạt động sinh viên (CLB, sự kiện, tình nguyện...)
-- Phòng ban (Phòng Đào tạo, Phòng CTSV, các khoa...)
-- Hệ thống thông tin (Portal, LMS, email...)
-</context>
+"COHORT" — hỏi về quy định áp dụng cho khóa sinh viên cụ thể:
+- Có K20xx / khóa 20xx / năm nhập học → query_cohort_year != null
+- Ví dụ: "Quy định ngoại ngữ K2022?", "Sinh viên khóa 2024 cần bao nhiêu tín chỉ?"
 
-<entity_types>
-Các loại thực thể cần trích xuất:
-- organization: Phòng ban, khoa, đơn vị
-- person: Sinh viên, cán bộ, giảng viên
-- regulation: Quy chế, quy định, quy trình
-- procedure: Thủ tục hành chính
-- scholarship: Học bổng, hỗ trợ tài chính
-- system: Hệ thống thông tin
-- location: Địa điểm, phòng học, cơ sở
-- event: Sự kiện, hoạt động
-- document: Văn bản, tài liệu
-- academic: Học thuật (tín chỉ, môn học, ngành...)
-</entity_types>
+"AMENDMENT" — hỏi về phiên bản mới nhất, sửa đổi, văn bản cụ thể:
+- Có số hiệu văn bản (108/QĐ-ĐHCNTT, QĐ 141...) → trích vào query_document_ref
+- Có từ khóa: mới nhất, hiện hành, sửa đổi, thay thế, bổ sung, còn hiệu lực
+- Ví dụ: "QĐ 108 bị sửa đổi chưa?", "Quy chế mới nhất là gì?"
 
-<confidence_scoring>
-Điểm confidence phản ánh mức độ rõ ràng của câu hỏi — không phải quyết định có retrieve hay không (hệ thống luôn retrieve).
+"GENERAL" — tất cả còn lại.
 
-**High Confidence (0.8 - 1.0):**
-- Query rõ ràng, cụ thể
-- Có đủ context để hiểu
-- Entities được xác định rõ ràng
-- Không có nhiều cách hiểu khác nhau
-
-Ví dụ:
-- "Sinh viên ngành Khoa học máy tính cần tích lũy bao nhiêu tín chỉ để tốt nghiệp?"
-- "Thủ tục xin giấy xác nhận sinh viên ở đâu?"
-
-**Medium Confidence (0.5 - 0.8):**
-- Query hơi chung chung nhưng có thể infer được
-- Thiếu một vài chi tiết nhưng không critical
-
-Ví dụ:
-- "Làm sao để chuyển ngành?"
-- "Học bổng nào dễ xin nhất?"
-
-**Low Confidence (0.0 - 0.5):**
-- Query quá mơ hồ, không rõ ràng
-- Thiếu context quan trọng
-- Có nhiều cách hiểu khác nhau
-
-Ví dụ:
-- "Làm sao để xin học bổng?" (không rõ loại học bổng nào)
-- "Thủ tục này như thế nào?" (không rõ thủ tục gì)
-</confidence_scoring>
-
-<parameter_tuning>
-Tự động chọn tham số retrieval dựa trên query type:
-
-**1. Retrieval Mode:**
-
-- **"local"** (Tìm kiếm cục bộ, chính xác):
-  - Dùng khi: Query hỏi về thông tin cụ thể, factual
-  - Ví dụ: "Số tín chỉ tốt nghiệp ngành KHMT là bao nhiêu?"
-  - Ưu điểm: Nhanh, chính xác cho câu hỏi đơn giản
-
-- **"global"** (Tìm kiếm toàn cục, tổng quan):
-  - Dùng khi: Query hỏi về overview, tổng quan
-  - Ví dụ: "Quy trình đào tạo tại UIT như thế nào?"
-  - Ưu điểm: Bao quát, phù hợp cho câu hỏi rộng
-
-- **"hybrid"** (Kết hợp local + global):
-  - Dùng khi: Query hỏi về quy định/chính sách trong quy chế (không có khóa cụ thể, không có số hiệu văn bản) hoặc cần cả thông tin cụ thể và context rộng
-  - Ví dụ: "Điều kiện và thủ tục chuyển ngành từ CNTT sang KHMT?"
-  - Ví dụ: "Quy định cảnh báo học vụ tại UIT là gì?"
-  - Ví dụ: "Điều kiện xét tốt nghiệp sớm?"
-  - Ưu điểm: Cân bằng giữa độ chính xác và độ bao quát; không bỏ sót điều khoản nằm rải rác trong quy chế
-
-- **"mix"** (Kết hợp tất cả modes):
-  - Dùng khi: Query phức tạp, nhiều khía cạnh
-  - Ví dụ: "Tôi muốn biết về học bổng, điều kiện, thủ tục và deadline?"
-  - Ưu điểm: Toàn diện nhất, phù hợp cho câu hỏi phức tạp
-
-- **"naive"** (Tìm kiếm đơn giản):
-  - Dùng khi: Query rất đơn giản, chỉ cần lookup
-  - Ví dụ: "Email phòng đào tạo là gì?"
-  - Ưu điểm: Nhanh nhất
-
-**2. Top K (số lượng entities):**
-
-- **3-5**: Query đơn giản, factual, chỉ cần 1 câu trả lời
-  - Ví dụ: "Email phòng đào tạo?"
-  
-- **6-12**: Query trung bình, cần vài nguồn để cross-check
-  - Ví dụ: "Thủ tục chuyển ngành như thế nào?"
-  
-- **12-20**: Query phức tạp, cần nhiều nguồn
-  - Ví dụ: "Điều kiện, thủ tục, deadline học bổng KKHT?"
-  
-- **21-36**: Query rất phức tạp, exploratory
-  - Ví dụ: "So sánh các loại học bổng tại UIT?"
-
-**2. Chunk Top K (số lượng document chunks):**
-
-- **15–30**: Query đơn giản, factual, không có ràng buộc khóa sinh viên (cohort) cụ thể.
-  - Ví dụ: "Email phòng đào tạo?"
-  
-- **40–60**: Query trung bình hoặc query có nhắc đến khóa sinh viên (K2022, khóa 2024...). Cần recall cao để lọc metadata sau đó.
-  - Ví dụ: "Thủ tục chuyển ngành như thế nào?"
-  
-- **70–100**: Query phức tạp hoặc query về quy định áp dụng cho khóa sinh viên cụ thể. 
-  - Ví dụ: "Quy định ngoại ngữ cho sinh viên K2022?"
-
-**Quy tắc chung:**
-- Query càng phức tạp hoặc có nhắc đến "khóa", "năm học", "K20xx" → top_k và chunk_top_k càng cao (để đảm bảo tìm đúng văn bản của khóa đó).
-- Query càng cụ thể, không phụ thuộc thời gian → top_k và chunk_top_k càng thấp.
-- Nếu không chắc → dùng mặc định (mode="mix", top_k=8, chunk_top_k=40)
-</parameter_tuning>
+Ưu tiên: nếu vừa có khóa vừa hỏi sửa đổi → "AMENDMENT".
+</query_type_classification>
 
 <cohort_extraction>
-Nếu câu hỏi đề cập khóa sinh viên cụ thể, trích xuất năm nhập học vào query_cohort_year.
-
-Các dạng viết tắt được nhận diện:
-- "K2022", "k2022", "khóa 2022", "năm nhập học 2022" → 2022
-- "K22", "k22" → 2022 (K22 = nhập học năm 2022)
-- "K23", "k23" → 2023 (K23 = nhập học năm 2023)
-- "K19" -> 2024
-- "K18" -> 2023
-- "K17" -> 2022
-- "K16" -> 2021
-- "K15" -> 2020
-- "K14" -> 2019
-- "K13" -> 2018
-- "K12" -> 2017
-
-Cú pháp nhận diện khác:
-- "K2022", "khóa 2022" -> 2022
-- "K22" (nếu không phải định dạng K-UIT) -> 2022
-
-Nếu không đề cập khóa cụ thể, để query_cohort_year = null.
+Trích xuất năm nhập học vào query_cohort_year:
+- K2022 / khóa 2022 / năm nhập học 2022 → 2022
+- K22 → 2022, K23 → 2023, K24 → 2024 (K2x = 20xx)
+- K19 → 2024, K18 → 2023, K17 → 2022, K16 → 2021, K15 → 2020, K14 → 2019, K13 → 2018, K12 → 2017
+- Không đề cập khóa → null
 </cohort_extraction>
 
 <authority_scope>
-Xác định cấp thẩm quyền (authority_scope) mà sinh viên muốn hỏi, nếu có đề cập rõ ràng:
-- "system": Nếu hỏi về quy định của "ĐHQG", "Đại học Quốc gia", "Bộ", "Bộ GDĐT".
-- "local": Nếu hỏi về quy định của "UIT", "ĐHCNTT", "trường mình".
-- null: Nếu không đề cập.
-Trích xuất vào trường query_authority_scope.
+query_authority_scope:
+- "system": hỏi về ĐHQG / Đại học Quốc gia / Bộ / Bộ GDĐT
+- "local": hỏi về UIT / ĐHCNTT / trường mình
+- null: không đề cập rõ
 </authority_scope>
 
-<query_type_classification>
-Phân loại query vào một trong ba loại để định tuyến retrieval:
-
-**"COHORT"** — Query hỏi về quy định áp dụng cho một khóa sinh viên cụ thể:
-- Có đề cập K20xx, khóa 20xx, năm nhập học, hoặc query_cohort_year != null
-- Ví dụ: "Quy định ngoại ngữ cho sinh viên K2022?"
-- Ví dụ: "Sinh viên khóa 2024 cần tích lũy bao nhiêu tín chỉ?"
-- Retrieval path: lọc Qdrant theo cohort_years metadata
-
-**"AMENDMENT"** — Query hỏi về phiên bản mới nhất, sửa đổi, hoặc một văn bản cụ thể:
-- Có số hiệu văn bản (108/QĐ-ĐHCNTT, quyết định 108, QĐ 141...)
-- Có từ khóa: mới nhất, hiện hành, sửa đổi, thay thế, bổ sung, còn hiệu lực, đã bị thay thế
-- Hỏi văn bản nào đang thay thế văn bản nào
-- Ví dụ: "Quyết định 108 có bị sửa đổi chưa?"
-- Ví dụ: "Văn bản nào đang thay thế QĐ 141?"
-- Ví dụ: "Quy chế đào tạo mới nhất hiện nay là gì?"
-- Retrieval path: truy vết chuỗi sửa đổi trong PostgreSQL
-- Nếu có số hiệu văn bản, trích xuất vào query_document_ref (ví dụ: "108/QĐ-ĐHCNTT")
-
-**"GENERAL"** — Tất cả các query còn lại:
-- Query thông thường không thuộc COHORT hay AMENDMENT
-- Retrieval path: LightRAG standard retrieval
-
-Lưu ý: Nếu query vừa có khóa sinh viên vừa hỏi về sửa đổi, ưu tiên "AMENDMENT".
-</query_type_classification>
-
 <historical_detection>
-Đặt query_is_historical = true nếu câu hỏi hỏi về một GIAI ĐOẠN TRONG QUÁ KHỨ hoặc chính sách đã hết hiệu lực:
-
-- Có từ khóa thời gian quá khứ rõ ràng: "trước khi", "trước năm", "hồi đó", "lúc đó", "khi đó", "ngày trước", "năm đó", "giai đoạn trước"
-- Hỏi về giai đoạn dịch COVID: "trong thời gian dịch", "trong dịch", "thời dịch", "giai đoạn dịch", "thời kỳ dịch"
-- Hỏi về phiên bản cũ đã bị thay thế: "đã bị thay thế", "cũ hơn", "phiên bản cũ", "trước đợt"
-
-Ngược lại, đặt query_is_historical = false cho các câu hỏi thông thường (kể cả "mới nhất" hay "hiện hành" — đó là AMENDMENT, không phải historical).
+query_is_historical = true nếu hỏi về quá khứ / chính sách đã hết hiệu lực:
+- Từ khóa: "trước khi", "hồi đó", "lúc đó", "giai đoạn trước", "thời dịch", "thời kỳ dịch COVID", "phiên bản cũ", "đã bị thay thế"
+- "mới nhất" / "hiện hành" = AMENDMENT, KHÔNG phải historical.
 </historical_detection>
 
 <education_system_detection>
-Xác định hệ đào tạo (education_system) TỪ TỪ KHÓA TRONG CÂU HỎI:
-- "tu_xa": đào tạo từ xa / vừa làm vừa học; từ khóa: "từ xa", "VLVH", "vừa làm vừa học", "đào tạo từ xa"
-- "tien_tien": chương trình tiên tiến / chất lượng cao; từ khóa: "tiên tiến", "CLC", "chất lượng cao"
-- "song_nganh": chương trình song ngành; từ khóa: "song ngành", "2 ngành"
-- "chinh_quy": hệ chính quy; từ khóa: "chính quy", "hệ chuẩn", "đại trà"
-
-*** LUẬT THÉP (CẤM VI PHẠM) ***: 
-NẾU VÀ CHỈ NẾU sinh viên GÕ ĐÚNG TỪ KHÓA của hệ đào tạo vào câu hỏi thì bạn mới được điền. 
-Nếu câu hỏi KHÔNG CHỨA từ khóa nào (ví dụ: "Học phí là bao nhiêu?"), BẮT BUỘC trả về `null`. KHÔNG ĐƯỢC tự suy luận hay mặc định là "chinh_quy".
+education_system — CHỈ điền khi câu hỏi chứa đúng từ khóa, TUYỆT ĐỐI không suy luận:
+- "tu_xa": từ xa / VLVH / vừa làm vừa học
+- "tien_tien": tiên tiến / CLC / chất lượng cao
+- "song_nganh": song ngành / 2 ngành
+- "chinh_quy": chính quy / hệ chuẩn / đại trà
+- Không có từ khóa → null (KHÔNG mặc định "chinh_quy")
 </education_system_detection>
 
-<context_dependency_classification>
-Xác định câu hỏi có phụ thuộc vào thông tin riêng của sinh viên (Khóa/Hệ đào tạo) hay không:
+<context_dependency>
+needs_student_context = true nếu câu hỏi phụ thuộc vào Khóa/Hệ của từng sinh viên:
+- CẦN: học phí cụ thể, danh sách môn học, điều kiện tốt nghiệp, chuẩn ngoại ngữ/tin học, xét học bổng theo năm nhập học
+- KHÔNG CẦN: thủ tục hành chính chung, email/địa chỉ phòng ban, định nghĩa thuật ngữ, quy trình đăng ký portal
+</context_dependency>
 
-**needs_student_context = true (CẦN context):**
-- Câu hỏi về chương trình đào tạo, danh sách môn học, học phí (Mức học phí CÙNG MỘT NĂM vẫn khác nhau tùy theo Khóa nhập học).
-- Câu hỏi về điều kiện tốt nghiệp, chuẩn đầu ra ngoại ngữ/tin học.
-- Câu hỏi về xét học bổng, cảnh cáo học vụ, buộc thôi học (vì quy trình xét có thể thay đổi theo năm nhập học).
-- Ví dụ: "Học phí năm nay là bao nhiêu?", "Em cần học những môn gì?", "Điều kiện tốt nghiệp K17?"
+<parameter_tuning>
+Chọn suggested_mode, suggested_top_k, suggested_chunk_top_k:
 
-**needs_student_context = false (KHÔNG CẦN context):**
-- Câu hỏi về thủ tục hành chính chung cho mọi sinh viên (xin giấy xác nhận, làm thẻ SV...).
-- Thông tin định danh: địa chỉ, email, số điện thoại các phòng ban.
-- Định nghĩa các thuật ngữ chung: GPA là gì, tín chỉ là gì.
-- Quy trình chung: cách đăng ký môn học trên portal, CÁCH thanh toán học phí (hỏi về quy trình, không phải số tiền).
-- Ví dụ: "Phòng đào tạo ở đâu?", "Làm sao để xin giấy xác nhận sinh viên?", "Đóng học phí qua ngân hàng nào?"
-</context_dependency_classification>
+Mode:
+- "naive": lookup đơn giản (email, địa chỉ, số điện thoại)
+- "local": factual 1 câu trả lời (số tín chỉ cụ thể, ngày deadline cụ thể)
+- "hybrid": quy định/chính sách trong quy chế (mặc định cho COHORT/GENERAL về quy định)
+- "mix": nhiều khía cạnh cùng lúc (điều kiện + thủ tục + deadline + học bổng)
+- "global": câu hỏi overview/tổng quan rộng
+
+top_k: 3–5 (đơn giản) | 6–12 (trung bình) | 12–20 (phức tạp) | 21–36 (rất phức tạp)
+chunk_top_k: 15–30 (không có cohort) | 40–60 (có cohort / trung bình) | 70–100 (phức tạp + cohort)
+Mặc định khi không chắc: mode="hybrid", top_k=8, chunk_top_k=40
+</parameter_tuning>
 
 <output_format>
-Trả về **MỘT** object JSON duy nhất với schema QueryUnderstanding:
+Trả về JSON duy nhất:
 {
   "parsed_intention": "...",
-  "extracted_entities": ["...", "..."],
-  "extracted_topics": ["...", "..."],
+  "extracted_entities": ["..."],
+  "extracted_topics": ["..."],
   "confidence": 0.0-1.0,
   "confidence_reason": "...",
-  "query_cohort_year": null hoặc số năm (ví dụ: 2022),
+  "query_cohort_year": null | number,
   "query_authority_scope": "system" | "local" | null,
   "query_type": "COHORT" | "AMENDMENT" | "GENERAL",
-  "query_document_ref": null hoặc số hiệu văn bản (ví dụ: "108/QĐ-ĐHCNTT"),
+  "query_document_ref": null | "108/QĐ-ĐHCNTT",
   "query_is_historical": true | false,
   "education_system": "chinh_quy" | "tu_xa" | "tien_tien" | "song_nganh" | null,
   "needs_student_context": true | false,
   "suggested_mode": "local" | "global" | "hybrid" | "mix" | "naive",
-  "suggested_top_k": 3-5,
-  "suggested_chunk_top_k": 15-100,
-  "tuning_reason": "Giải thích tại sao chọn mode, top_k và chunk_top_k này"
+  "suggested_top_k": number,
+  "suggested_chunk_top_k": number,
+  "tuning_reason": "..."
 }
 </output_format>
 
 <examples>
-Example 1 - Simple factual query:
+Example 1 — GENERAL factual:
 User: "Số tín chỉ tốt nghiệp ngành KHMT là bao nhiêu?"
-Output:
-{
-  "parsed_intention": "Hỏi về số tín chỉ tối thiểu để tốt nghiệp ngành Khoa học máy tính",
-  "extracted_entities": ["Khoa học máy tính", "tín chỉ tốt nghiệp"],
-  "extracted_topics": ["quy chế đào tạo", "điều kiện tốt nghiệp"],
-  "confidence": 0.95,
-  "confidence_reason": "Query rất rõ ràng, cụ thể về ngành học và thông tin cần tìm.",
-  "query_cohort_year": null,
-  "query_authority_scope": null,
-  "query_type": "GENERAL",
-  "query_document_ref": null,
-  "query_is_historical": false,
-  "needs_student_context": false,
-  "suggested_mode": "local",
-  "suggested_top_k": 5,
-  "suggested_chunk_top_k": 15,
-  "tuning_reason": "Query factual đơn giản, chỉ cần tìm thông tin cụ thể về quy chế. Mode 'local' phù hợp để tìm chính xác, top_k=5 và chunk_top_k=15 đủ để có câu trả lời."
-}
+{"parsed_intention":"Hỏi số tín chỉ tối thiểu tốt nghiệp ngành Khoa học máy tính","extracted_entities":["Khoa học máy tính","tín chỉ tốt nghiệp"],"extracted_topics":["quy chế đào tạo","điều kiện tốt nghiệp"],"confidence":0.95,"confidence_reason":"Query rõ ràng, cụ thể.","query_cohort_year":null,"query_authority_scope":null,"query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"local","suggested_top_k":5,"suggested_chunk_top_k":20,"tuning_reason":"Factual đơn giản, local đủ."}
 
-Example 2 - Cohort-specific query (K22 shorthand):
+Example 2 — COHORT (K22):
 User: "Quy định ngoại ngữ đầu ra cho sinh viên K22 là gì?"
-Output:
-{
-  "parsed_intention": "Hỏi về yêu cầu chuẩn đầu ra ngoại ngữ áp dụng cho sinh viên nhập học năm 2022",
-  "extracted_entities": ["ngoại ngữ đầu ra", "K22"],
-  "extracted_topics": ["quy chế đào tạo", "chuẩn đầu ra"],
-  "confidence": 0.92,
-  "confidence_reason": "Query rõ ràng, xác định cụ thể khóa sinh viên (K22 = nhập học 2022) và loại thông tin cần tìm.",
-  "query_cohort_year": 2022,
-  "query_authority_scope": null,
-  "query_type": "COHORT",
-  "query_document_ref": null,
-  "query_is_historical": false,
-  "needs_student_context": true,
-  "suggested_mode": "hybrid",
-  "suggested_top_k": 10,
-  "suggested_chunk_top_k": 60,
-  "tuning_reason": "Query về khóa cụ thể (K22 = 2022), cần chunk_top_k cao để đảm bảo recall tốt khi lọc metadata theo cohort."
-}
+{"parsed_intention":"Chuẩn đầu ra ngoại ngữ cho sinh viên nhập học 2022","extracted_entities":["ngoại ngữ đầu ra","K22"],"extracted_topics":["quy chế đào tạo","chuẩn đầu ra"],"confidence":0.92,"confidence_reason":"Rõ khóa và loại thông tin.","query_cohort_year":2022,"query_authority_scope":null,"query_type":"COHORT","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":true,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":60,"tuning_reason":"Cohort query cần chunk_top_k cao để recall tốt khi lọc metadata."}
 
-Example 3 - Amendment query with document ref:
-User: "Quyết định 108 có bị sửa đổi chưa? Văn bản nào thay thế nó?"
-Output:
-{
-  "parsed_intention": "Hỏi về trạng thái pháp lý của Quyết định 108 và văn bản kế nhiệm nếu có",
-  "extracted_entities": ["Quyết định 108", "văn bản sửa đổi"],
-  "extracted_topics": ["văn bản quy phạm", "sửa đổi bổ sung"],
-  "confidence": 0.90,
-  "confidence_reason": "Query rõ ràng về số hiệu văn bản và ý định tìm văn bản thay thế.",
-  "query_cohort_year": null,
-  "query_authority_scope": null,
-  "query_type": "AMENDMENT",
-  "query_document_ref": "108/QĐ-ĐHCNTT",
-  "query_is_historical": false,
-  "suggested_mode": "local",
-  "suggested_top_k": 8,
-  "suggested_chunk_top_k": 30,
-  "tuning_reason": "Query về văn bản cụ thể, mode 'local' phù hợp. Amendment path sẽ dùng PostgreSQL để truy vết chuỗi sửa đổi."
-}
-
-Example 4 - Amendment query without document ref:
-User: "Quy chế đào tạo mới nhất hiện nay là gì?"
-Output:
-{
-  "parsed_intention": "Hỏi về văn bản quy chế đào tạo đang có hiệu lực mới nhất",
-  "extracted_entities": ["quy chế đào tạo"],
-  "extracted_topics": ["quy chế đào tạo", "văn bản hiện hành"],
-  "confidence": 0.85,
-  "confidence_reason": "Query rõ ràng về loại văn bản, từ khóa 'mới nhất' chỉ rõ ý định tìm phiên bản hiện hành.",
-  "query_cohort_year": null,
-  "query_authority_scope": null,
-  "query_type": "AMENDMENT",
-  "query_document_ref": null,
-  "query_is_historical": false,
-  "suggested_mode": "local",
-  "suggested_top_k": 8,
-  "suggested_chunk_top_k": 30,
-  "tuning_reason": "Query tìm văn bản hiện hành, amendment path sẽ tìm văn bản gốc nhất trong chuỗi sửa đổi."
-}
-
-Example 5 - Ambiguous single-topic query:
-User: "Làm sao để xin học bổng?"
-Output:
-{
-  "parsed_intention": "Hỏi về quy trình/thủ tục xin học bổng",
-  "extracted_entities": ["học bổng"],
-  "extracted_topics": ["học bổng", "thủ tục hành chính"],
-  "confidence": 0.3,
-  "confidence_reason": "Query quá chung chung, không rõ loại học bổng nào (khuyến khích, tài trợ, chính phủ...). Mỗi loại có quy trình khác nhau.",
-  "query_cohort_year": null,
-  "query_authority_scope": null,
-  "query_type": "GENERAL",
-  "query_document_ref": null,
-  "query_is_historical": false,
-  "suggested_mode": "hybrid",
-  "suggested_top_k": 8,
-  "suggested_chunk_top_k": 30,
-  "tuning_reason": "Query đơn chủ đề nhưng mơ hồ. Mode 'hybrid' kết hợp local+global để tìm cả quy trình cụ thể lẫn tổng quan về học bổng. Dùng 'mix' chỉ khi query có nhiều khía cạnh khác nhau cùng lúc."
-}
-
-Example 6 - General policy/regulation query (no cohort, no document ref):
-User: "Quy định về điểm trung bình tích lũy và cảnh báo học vụ tại UIT như thế nào?"
-Output:
-{
-  "parsed_intention": "Hỏi về quy định điểm trung bình tích lũy và điều kiện cảnh báo học vụ tại UIT",
-  "extracted_entities": ["điểm trung bình tích lũy", "cảnh báo học vụ", "UIT"],
-  "extracted_topics": ["quy chế đào tạo", "học vụ", "đánh giá kết quả học tập"],
-  "confidence": 0.88,
-  "confidence_reason": "Query rõ ràng, hỏi về quy định cụ thể trong quy chế đào tạo. Không hỏi về khóa cụ thể hay văn bản cụ thể.",
-  "query_cohort_year": null,
-  "query_authority_scope": "local",
-  "query_type": "GENERAL",
-  "query_document_ref": null,
-  "query_is_historical": false,
-  "suggested_mode": "hybrid",
-  "suggested_top_k": 8,
-  "suggested_chunk_top_k": 30,
-  "tuning_reason": "Query về quy định chính sách (quy chế đào tạo) cần cả thông tin cụ thể (ngưỡng điểm số) lẫn context rộng (bối cảnh quy định). Mode 'hybrid' kết hợp local+global đảm bảo tìm được cả điều khoản cụ thể và văn bản liên quan. Không dùng 'local' vì quy định này nằm rải rác trong nhiều điều khoản của quy chế."
-}
-
-Example 7 - General policy query about procedures/thủ tục:
-User: "Thủ tục và điều kiện để được xét học lại tại UIT?"
-Output:
-{
-  "parsed_intention": "Hỏi về quy trình và điều kiện xét cho học lại (học cải thiện điểm) tại UIT",
-  "extracted_entities": ["học lại", "xét học lại", "UIT"],
-  "extracted_topics": ["quy chế đào tạo", "thủ tục hành chính", "học vụ"],
-  "confidence": 0.85,
-  "confidence_reason": "Query rõ ràng về thủ tục và điều kiện, không hỏi về khóa cụ thể hay số hiệu văn bản.",
-  "query_cohort_year": null,
-  "query_authority_scope": null,
-  "query_type": "GENERAL",
-  "query_document_ref": null,
-  "query_is_historical": false,
-  "suggested_mode": "hybrid",
-  "suggested_top_k": 8,
-  "suggested_chunk_top_k": 30,
-  "tuning_reason": "Query về thủ tục/quy trình từ quy chế: cần 'hybrid' để tìm cả điều khoản điều kiện (local) lẫn văn bản quy định liên quan (global). Mode 'local' sẽ bỏ sót context quy chế tổng thể. chunk_top_k=30 đủ recall mà không quá tải."
-}
-
-Example 8 - Authority scope system + historical:
-User: "Thông tư của Bộ GDĐT về quy chế đào tạo trong thời gian dịch COVID quy định gì?"
-Output:
-{
-  "parsed_intention": "Hỏi về quy định của Bộ Giáo dục và Đào tạo liên quan đến đào tạo trong giai đoạn dịch COVID",
-  "extracted_entities": ["Bộ GDĐT", "quy chế đào tạo", "dịch COVID"],
-  "extracted_topics": ["quy chế đào tạo", "văn bản Bộ GDĐT", "giai đoạn COVID"],
-  "confidence": 0.80,
-  "confidence_reason": "Query rõ ràng về nguồn (Bộ GDĐT), chủ đề (quy chế đào tạo) và giai đoạn thời gian (dịch COVID).",
-  "query_cohort_year": null,
-  "query_authority_scope": "system",
-  "query_type": "GENERAL",
-  "query_document_ref": null,
-  "query_is_historical": true,
-  "suggested_mode": "hybrid",
-  "suggested_top_k": 10,
-  "suggested_chunk_top_k": 40,
-  "tuning_reason": "Query historical (giai đoạn dịch) về văn bản cấp Bộ. authority_scope='system' vì hỏi quy định Bộ GDĐT. chunk_top_k=40 để đảm bảo tìm được văn bản cũ có thể ít phổ biến trong index."
-}
-
-Example 9 - Cohort query with authority_scope="local" (UIT internal regulation for specific cohort):
-User: "Sinh viên K22 tại UIT cần đáp ứng điều kiện tốt nghiệp gì?"
-Output:
-{
-  "parsed_intention": "Hỏi về điều kiện tốt nghiệp áp dụng cho sinh viên khóa 2022 (K22) tại UIT",
-  "extracted_entities": ["K22", "điều kiện tốt nghiệp", "UIT"],
-  "extracted_topics": ["quy chế đào tạo", "điều kiện tốt nghiệp", "K22"],
-  "confidence": 0.93,
-  "confidence_reason": "Query rõ ràng về khóa học (K22), trường cụ thể (UIT) và loại thông tin cần tìm.",
-  "query_cohort_year": 2022,
-  "query_authority_scope": "local",
-  "query_type": "COHORT",
-  "query_document_ref": null,
-  "query_is_historical": false,
-  "suggested_mode": "hybrid",
-  "suggested_top_k": 10,
-  "suggested_chunk_top_k": 60,
-  "tuning_reason": "Query về khóa cụ thể (K22=2022) tại UIT, authority_scope='local' vì hỏi quy định nội bộ trường. chunk_top_k=60 đảm bảo recall tốt khi lọc metadata theo cohort_year=2022 trong Qdrant. Hybrid mode để tìm cả điều khoản cụ thể và văn bản quy chế."
-}
+Example 3 — AMENDMENT với số hiệu:
+User: "Quyết định 108 có bị sửa đổi chưa?"
+{"parsed_intention":"Trạng thái pháp lý QĐ 108 và văn bản kế nhiệm","extracted_entities":["Quyết định 108"],"extracted_topics":["sửa đổi văn bản"],"confidence":0.90,"confidence_reason":"Rõ số hiệu và ý định.","query_cohort_year":null,"query_authority_scope":null,"query_type":"AMENDMENT","query_document_ref":"108/QĐ-ĐHCNTT","query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"local","suggested_top_k":8,"suggested_chunk_top_k":30,"tuning_reason":"Amendment path dùng PostgreSQL, local đủ."}
 </examples>
 """
 
@@ -826,7 +502,12 @@ Bước 2 — Sau </think>, viết câu trả lời markdown tiếng Việt:
 - Trích dẫn nguồn: [Nguồn 1], [Nguồn 2, 3]
 - Hyperlink URL khi có: [Tên văn bản](URL)
 - Nếu partial: thêm "**Lưu ý:** Thông tin về [X] chưa có, liên hệ Phòng Đào tạo."
-- Cuối: "## Tài liệu tham khảo" với danh sách hyperlink"""
+- Cuối: "## Tài liệu tham khảo" với danh sách hyperlink
+
+Bước 3 — Tự kiểm tra trước khi kết thúc (trong <think>):
+- Mỗi con số cụ thể (tín chỉ, GPA, điểm, ngày tháng) có xuất hiện trong <reranked_data> không? Nếu không → xóa hoặc đánh dấu "cần xác nhận".
+- Mỗi [Nguồn N] có khớp với văn bản thực sự trong danh sách không? Chỉ dùng nguồn 1 đến N (N = tổng số chunk được cung cấp).
+- Nếu phát hiện sai sót → sửa ngay trong câu trả lời."""
 
 PROMPTS["response_format_json_prompt"] = """
 Bạn là formatter. Nhận đoạn văn bản câu trả lời sau và đóng gói vào JSON.

@@ -1,13 +1,45 @@
 import requests
 import os
+import threading
 import typing as t
 import json
 import psycopg2
+import psycopg2.pool
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from agent.config import PROJECT_ROOT
 DEFAULT_TIMEOUT = 300  # seconds
+
+_pg_pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
+_pg_pool_lock = threading.Lock()
+
+
+class _PooledConn:
+    """Proxies a psycopg2 connection; .close() returns it to the pool."""
+    __slots__ = ("_pool", "_conn")
+
+    def __init__(self, pool: psycopg2.pool.ThreadedConnectionPool, conn) -> None:
+        object.__setattr__(self, "_pool", pool)
+        object.__setattr__(self, "_conn", conn)
+
+    def __getattr__(self, name: str):
+        return getattr(object.__getattribute__(self, "_conn"), name)
+
+    def __setattr__(self, name: str, value) -> None:
+        setattr(object.__getattribute__(self, "_conn"), name, value)
+
+    def __enter__(self):
+        object.__getattribute__(self, "_conn").__enter__()
+        return self
+
+    def __exit__(self, *args):
+        return object.__getattribute__(self, "_conn").__exit__(*args)
+
+    def close(self) -> None:
+        pool = object.__getattribute__(self, "_pool")
+        conn = object.__getattribute__(self, "_conn")
+        pool.putconn(conn)
 
 
 class LightRAGAPIError(RuntimeError):
@@ -378,21 +410,14 @@ class LightRAGAPIClient:
     # ------------------------------ temporal metadata management ------------------------------
 
     def _get_pg_connection(self):
-        """
-        Get PostgreSQL connection for direct metadata management.
-
-        LightRAG stores documents in PostgreSQL when using PGKVStorage.
-        This allows us to update document metadata directly.
-        """
         load_dotenv(f"{PROJECT_ROOT}/.env.lightrag")
-
         return psycopg2.connect(
-                host="localhost",
-                port=5433,
-                user=os.getenv("POSTGRES_USER"),
-                password=os.getenv("POSTGRES_PASSWORD"),
-                database=os.getenv("POSTGRES_DATABASE", "lightrag")
-            )
+            host="localhost",
+            port=5433,
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            database=os.getenv("POSTGRES_DATABASE", "lightrag"),
+        )
 
     def update_document_metadata_by_track_id(
         self,
@@ -507,6 +532,7 @@ class LightRAGAPIClient:
             student_cohorts = metadata.get("student_cohorts")
             amends_documents = metadata.get("amends_documents")
             amended_clauses = metadata.get("amended_clauses")
+            education_system = metadata.get("education_system")
             extraction_method = metadata.get("extraction_method")
             extraction_confidence = metadata.get("extraction_confidence")
 
@@ -514,7 +540,7 @@ class LightRAGAPIClient:
             known_fields = {
                 "document_number", "document_type", "valid_from", "valid_until",
                 "cohort_years", "cohort_scope", "student_cohorts", "amends_documents",
-                "amended_clauses",
+                "amended_clauses", "education_system",
                 "extraction_method", "extraction_confidence"
             }
             additional_metadata = {
@@ -531,6 +557,7 @@ class LightRAGAPIClient:
                         cohort_years, cohort_scope, student_cohorts,
                         amends_documents,
                         amended_clauses,
+                        education_system,
                         extraction_method, extraction_confidence,
                         extraction_timestamp,
                         additional_metadata
@@ -539,6 +566,7 @@ class LightRAGAPIClient:
                         %s, %s,
                         %s, %s,
                         %s, %s, %s,
+                        %s,
                         %s,
                         %s,
                         %s, %s,
@@ -557,6 +585,7 @@ class LightRAGAPIClient:
                         student_cohorts = EXCLUDED.student_cohorts,
                         amends_documents = EXCLUDED.amends_documents,
                         amended_clauses = EXCLUDED.amended_clauses,
+                        education_system = EXCLUDED.education_system,
                         extraction_method = EXCLUDED.extraction_method,
                         extraction_confidence = EXCLUDED.extraction_confidence,
                         extraction_timestamp = CURRENT_TIMESTAMP,
@@ -572,6 +601,7 @@ class LightRAGAPIClient:
                     json.dumps(student_cohorts) if student_cohorts else None,
                     json.dumps(amends_documents) if amends_documents else None,
                     json.dumps(amended_clauses) if amended_clauses else None,
+                    education_system,
                     extraction_method, extraction_confidence,
                     json.dumps(additional_metadata) if additional_metadata else None
                 ))
