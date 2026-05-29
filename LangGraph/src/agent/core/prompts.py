@@ -490,24 +490,17 @@ PROMPTS["response_generation_thinking_prompt"] = """Bạn là trợ lý tư vấ
 {reranked_data_formatted}
 </reranked_data>
 
-Bước 1 — Suy nghĩ trong <think>...</think> (tối đa 350 từ, trả lời 4 câu hỏi này):
-- Chunks nào liên quan nhất? (liệt kê số thứ tự)
-- Văn bản nào có `amended_by`? (cần loại khỏi nguồn chính)
-- Thông tin có đủ cho full answer hay partial? (full/partial)
-- Cần structure gì? (ví dụ: điều kiện → quy trình → lưu ý)
-
-Bước 2 — Sau </think>, viết câu trả lời markdown tiếng Việt:
+<hướng_dẫn_trả_lời>
+Viết câu trả lời markdown tiếng Việt. Yêu cầu:
 - Tiêu đề rõ ràng (### 1. ..., ### 2. ...)
 - **BẮT BUỘC trích dẫn số liệu chính xác từ văn bản** (VD: "130 tín chỉ", "GPA >= 2.0", "IELTS >= 4.5", "30% điểm quá trình"). TUYỆT ĐỐI không dùng ngôn ngữ mơ hồ như "đủ điều kiện", "đáp ứng yêu cầu", "tương đương" mà không kèm con số cụ thể.
+- Ưu tiên văn bản có hiệu lực mới nhất, bỏ qua văn bản đã có `amended_by`.
 - Trích dẫn nguồn: [Nguồn 1], [Nguồn 2, 3]
 - Hyperlink URL khi có: [Tên văn bản](URL)
-- Nếu partial: thêm "**Lưu ý:** Thông tin về [X] chưa có, liên hệ Phòng Đào tạo."
+- Nếu thông tin chưa đầy đủ: thêm "**Lưu ý:** Thông tin về [X] chưa có trong hệ thống, liên hệ Phòng Đào tạo."
 - Cuối: "## Tài liệu tham khảo" với danh sách hyperlink
-
-Bước 3 — Tự kiểm tra trước khi kết thúc (trong <think>):
-- Mỗi con số cụ thể (tín chỉ, GPA, điểm, ngày tháng) có xuất hiện trong <reranked_data> không? Nếu không → xóa hoặc đánh dấu "cần xác nhận".
-- Mỗi [Nguồn N] có khớp với văn bản thực sự trong danh sách không? Chỉ dùng nguồn 1 đến N (N = tổng số chunk được cung cấp).
-- Nếu phát hiện sai sót → sửa ngay trong câu trả lời."""
+- Chỉ xuất nội dung câu trả lời — KHÔNG xuất quá trình suy nghĩ hay phân tích nội bộ.
+</hướng_dẫn_trả_lời>"""
 
 PROMPTS["response_format_json_prompt"] = """
 Bạn là formatter. Nhận đoạn văn bản câu trả lời sau và đóng gói vào JSON.

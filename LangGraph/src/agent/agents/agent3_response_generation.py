@@ -35,10 +35,8 @@ llm_thinker = init_chat_model(
     temperature=settings.agent3_temperature,
     max_tokens=6000,
     extra_body={
+        "enable_thinking": True,
         "thinking_token_budget": 1024,
-        "chat_template_kwargs": {
-            "enable_thinking": True,
-        },
     },
 )
 
@@ -345,7 +343,7 @@ def _generate_confidence_transparency(state: QueryState) -> str:
     
     # 1. Low overall confidence warning
     if confidence < 0.8:
-        warnings.append(f"Thông tin này được tổng hợp với độ tin cậy thấp ({confidence:.1%}).")
+        warnings.append("Thông tin này có thể chưa đầy đủ. Vui lòng xác nhận lại với Phòng Đào tạo.")
         
     # 2. Temporal ambiguity check (multiple conflicting amendments or old docs)
     unique_docs = set()
