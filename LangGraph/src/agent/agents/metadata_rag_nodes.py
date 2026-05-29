@@ -22,7 +22,7 @@ from ..core.prompts import METADATA_PROMPTS
 from .header_extraction import extract_from_header
 from langchain.chat_models import init_chat_model
 from agent.config import settings
-from agent.utils import strip_think_tags
+from agent.utils import strip_think_tags, normalize_docnum
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 
 llm = init_chat_model(
@@ -58,72 +58,6 @@ except Exception as e:
     raise e
 
 
-# Known OCR-stripped abbreviations → canonical Vietnamese form
-_ABBREV_MAP = {
-    "QD": "QĐ",
-    "DHCNTT": "ĐHCNTT",
-    "DHQG": "ĐHQG",
-    "BGDDT": "BGDĐT",
-    "BDGDT": "BGDĐT",  # common OCR transposition
-}
-
-
-def _restore_diacritics(segment: str) -> str:
-    """Restore diacritics for known Vietnamese abbreviations (word-boundary safe)."""
-    for ascii_form, unicode_form in _ABBREV_MAP.items():
-        segment = re.sub(r"\b" + ascii_form + r"\b", unicode_form, segment)
-    return segment
-
-
-def _normalize_docnum(v) -> str | None:
-    """Normalize document number to canonical form: NUM/[YEAR/]TYPE-ISSUER.
-
-    - Strip spaces around / and -
-    - Restore diacritics for known abbreviations (QD→QĐ, DHCNTT→ĐHCNTT, etc.)
-    - Underscore before first slash = NUM_TYPE/ISSUER filename artifact → NUM/TYPE-ISSUER
-    - Extra slash in TYPE-ISSUER (not 4-digit year) → replace with dash
-    - Collapse double slashes
-    """
-    if not v or not isinstance(v, str):
-        return None
-    v = v.strip().upper()
-    if not v or len(v) > 80:
-        return None
-
-    # Strip spaces around separators: "807 / QĐ-ĐHCNTT" → "807/QĐ-ĐHCNTT"
-    v = re.sub(r"\s*/\s*", "/", v)
-    v = re.sub(r"\s*-\s*", "-", v)
-
-    slash_pos = v.find("/")
-    if slash_pos > 0 and "_" in v[:slash_pos]:
-        # "1139_QD/DHCNTT": underscore = NUM/TYPE separator, slash = TYPE/ISSUER separator
-        underscore_pos = v.index("_")
-        num = v[:underscore_pos]
-        rest = v[underscore_pos + 1:].replace("/", "-")
-        v = num + "/" + rest
-    elif slash_pos < 0:
-        v = v.replace("_", "/", 1)
-
-    # Collapse double slashes
-    v = re.sub(r"/+", "/", v)
-
-    # Fix "NUM/TYPE/ISSUER" → "NUM/TYPE-ISSUER" unless second segment is 4-digit year
-    first_slash = v.find("/")
-    if first_slash > 0:
-        after_first = v[first_slash + 1:]
-        second_slash = after_first.find("/")
-        if second_slash > 0:
-            between = after_first[:second_slash]
-            if not (len(between) == 4 and between.isdigit()):
-                after_first = between + "-" + after_first[second_slash + 1:]
-                v = v[:first_slash + 1] + after_first
-
-    if "/" not in v or not v[0].isdigit():
-        return None
-
-    # Restore diacritics for known abbreviations
-    v = _restore_diacritics(v)
-    return v
 
 
 # Cache for static query embeddings — same queries used for every doc
@@ -216,7 +150,7 @@ def extract_header_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
         file_source = state["file_source"]
         
         logger.info(f"Extracting header metadata for {file_source}")
-        header_result = extract_from_header(doc_text, file_source)
+        header_result = extract_from_header(doc_text, file_source, fast=True)
         
         # Simple regex for Type and Authority from the top 500 chars
         header_chunk = doc_text[:500].upper()
@@ -581,7 +515,7 @@ class DocumentMetadata(BaseModel):
     @classmethod
     def normalize_document_number(cls, v):
         """Normalize to canonical form: NUM/[YEAR/]TYPE-ISSUER (uppercase, diacritics preserved/restored)."""
-        return _normalize_docnum(v)
+        return normalize_docnum(v)
 
     @field_validator("valid_from", "valid_until")
     @classmethod

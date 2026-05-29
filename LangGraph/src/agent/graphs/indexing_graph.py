@@ -528,66 +528,39 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
 
                 print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
 
-            # Save temporal metadata to separate table (to avoid LightRAG overwrite)
+            # Save temporal metadata immediately — no polling.
+            # Use doc_id if already available (upload_file path), else save by
+            # track_id only. doc_id resolved later via backfill_missing_temporal.py.
             document_metadata = state.get("document_metadata", {})
             if track_id and document_metadata and state.get("temporal_extraction_complete"): #type: ignore
                 try:
+                    immediate_doc_id = upload_result.get("doc_id")
                     print(f"[METADATA] Saving temporal metadata for {file_name} (track_id: {track_id})...")
+                    metadata_result = api_client.save_temporal_metadata(
+                        track_id=track_id,
+                        doc_id=immediate_doc_id,
+                        metadata=document_metadata
+                    )
 
-                    # LightRAG processes insert_text asynchronously — poll until the
-                    # lightrag_doc_status row appears (usually < 10s after upload).
-                    doc_id = None
-                    workspace = None
-                    for _attempt in range(60):
-                        conn = api_client._get_pg_connection()
-                        workspace = os.getenv("WORKSPACE", "default")
-                        try:
-                            with conn.cursor() as cur:
-                                cur.execute(
-                                    "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
-                                    (workspace, track_id)
-                                )
-                                row = cur.fetchone()
-                                doc_id = row[0] if row else None
-                        finally:
-                            conn.close()
-                        if doc_id:
-                            break
-                        print(f"[METADATA] Waiting for LightRAG to create doc row (attempt {_attempt + 1}/60)...")
-                        time.sleep(2)
+                    if metadata_result.get("success"):
+                        print(f"[METADATA] ✓ Temporal metadata saved (track_id: {track_id})")
+                        upload_result["temporal_metadata_saved"] = True
 
-                    if doc_id:
-                        # Save to separate temporal_metadata table
-                        metadata_result = api_client.save_temporal_metadata(
-                            track_id=track_id,
-                            doc_id=doc_id,
-                            metadata=document_metadata
-                        )
-
-                        if metadata_result.get("success"):
-                            print(f"[METADATA] ✓ Temporal metadata saved to separate table (doc_id: {doc_id})")
-                            upload_result["temporal_metadata_saved"] = True
-                            upload_result["doc_id"] = doc_id
-
-                            # Handle reverse linking for amended documents
+                        # Amendment linking only possible when doc_id known immediately
+                        if immediate_doc_id:
                             amended_docs = document_metadata.get("amends_documents", [])
-                            if amended_docs and doc_id:
+                            if amended_docs:
                                 print(f"[LINKING] Processing amendments for {len(amended_docs)} documents...")
-                                link_result = api_client.link_amended_documents(doc_id, amended_docs)
-
+                                link_result = api_client.link_amended_documents(immediate_doc_id, amended_docs)
                                 linked_count = len(link_result.get("linked_docs", []))
                                 upload_result["linked_amendments"] = linked_count
-
                                 if linked_count > 0:
-                                    print(f"[LINKING] ✓ Successfully linked to {linked_count} old documents")
+                                    print(f"[LINKING] ✓ Linked to {linked_count} amended documents")
                                 else:
-                                    print(f"[LINKING] WARNING: No matching old documents found to link")
-                        else:
-                            print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
-                            upload_result["temporal_metadata_error"] = metadata_result.get("error")
+                                    print(f"[LINKING] WARNING: No matching amended documents found")
                     else:
-                        print(f"[METADATA] WARNING: Document not found in LightRAG (track_id: {track_id})")
-                        upload_result["temporal_metadata_error"] = "Document not found in LightRAG"
+                        print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
+                        upload_result["temporal_metadata_error"] = metadata_result.get("error")
 
                 except Exception as meta_error:
                     print(f"[METADATA] ✗ Exception saving metadata: {str(meta_error)}")

@@ -15,7 +15,6 @@ Usage:
 
 import argparse
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -24,6 +23,9 @@ import psycopg2.extras
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+from agent.utils import normalize_docnum  # noqa: E402
 
 WORKSPACE = os.getenv("WORKSPACE", "uit_docs_agent")
 
@@ -36,55 +38,6 @@ def get_conn():
         password=os.getenv("POSTGRES_PASSWORD", "admin123"),
         dbname="lightrag",
     )
-
-
-_ABBREV_MAP = {
-    "QD": "QĐ",
-    "DHCNTT": "ĐHCNTT",
-    "DHQG": "ĐHQG",
-    "BGDDT": "BGDĐT",
-    "BDGDT": "BGDĐT",
-}
-
-
-def normalize_docnum(v: str | None) -> str | None:
-    """Mirror of DocumentMetadata._normalize_docnum."""
-    if not v or not isinstance(v, str):
-        return None
-    v = v.strip().upper()
-    if not v or len(v) > 80:
-        return None
-
-    v = re.sub(r"\s*/\s*", "/", v)
-    v = re.sub(r"\s*-\s*", "-", v)
-
-    slash_pos = v.find("/")
-    if slash_pos > 0 and "_" in v[:slash_pos]:
-        underscore_pos = v.index("_")
-        num = v[:underscore_pos]
-        rest = v[underscore_pos + 1:].replace("/", "-")
-        v = num + "/" + rest
-    elif slash_pos < 0:
-        v = v.replace("_", "/", 1)
-
-    v = re.sub(r"/+", "/", v)
-
-    first_slash = v.find("/")
-    if first_slash > 0:
-        after_first = v[first_slash + 1:]
-        second_slash = after_first.find("/")
-        if second_slash > 0:
-            between = after_first[:second_slash]
-            if not (len(between) == 4 and between.isdigit()):
-                after_first = between + "-" + after_first[second_slash + 1:]
-                v = v[:first_slash + 1] + after_first
-
-    if "/" not in v or not v[0].isdigit():
-        return None
-
-    for ascii_form, unicode_form in _ABBREV_MAP.items():
-        v = re.sub(r"\b" + ascii_form + r"\b", unicode_form, v)
-    return v
 
 
 def normalize_amends_list(items: list | None) -> list:

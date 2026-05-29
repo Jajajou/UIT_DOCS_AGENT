@@ -37,8 +37,8 @@ llm = init_chat_model(
     model=settings.llm_model,
     streaming=False,
     temperature=settings.agent1_temperature,
-    max_tokens=1024,
-    model_kwargs={"tool_choice": "none", "extra_body": {"enable_thinking": False}}
+    max_tokens=2048,
+    extra_body={"chat_template_kwargs": {"enable_thinking": False}},
 )
 
 

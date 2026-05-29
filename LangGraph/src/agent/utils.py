@@ -169,6 +169,66 @@ def get_url(pdf_path_input: Union[str, Path]) -> Optional[str]:
 
     return None
 
+# --------------------------------------------------------------------------- #
+# Document-number normalization (canonical source — imported by all agents/scripts)
+# --------------------------------------------------------------------------- #
+
+_DOCNUM_ABBREV_MAP = {
+    "QD": "QĐ",
+    "DHCNTT": "ĐHCNTT",
+    "DHQG": "ĐHQG",
+    "BGDDT": "BGDĐT",
+    "BDGDT": "BGDĐT",
+}
+
+
+def normalize_docnum(v) -> str | None:
+    """Normalize document number to canonical form: NUM/[YEAR/]TYPE-ISSUER.
+
+    - Strip spaces around / and -
+    - Restore diacritics for known abbreviations (QD→QĐ, DHCNTT→ĐHCNTT, etc.)
+    - Underscore before first slash = NUM_TYPE/ISSUER filename artifact → NUM/TYPE-ISSUER
+    - Extra slash in TYPE-ISSUER (not 4-digit year) → replace with dash
+    - Collapse double slashes
+    """
+    if not v or not isinstance(v, str):
+        return None
+    v = v.strip().upper()
+    if not v or len(v) > 80:
+        return None
+
+    v = re.sub(r"\s*/\s*", "/", v)
+    v = re.sub(r"\s*-\s*", "-", v)
+
+    slash_pos = v.find("/")
+    if slash_pos > 0 and "_" in v[:slash_pos]:
+        underscore_pos = v.index("_")
+        num = v[:underscore_pos]
+        rest = v[underscore_pos + 1:].replace("/", "-")
+        v = num + "/" + rest
+    elif slash_pos < 0:
+        v = v.replace("_", "/", 1)
+
+    v = re.sub(r"/+", "/", v)
+
+    first_slash = v.find("/")
+    if first_slash > 0:
+        after_first = v[first_slash + 1:]
+        second_slash = after_first.find("/")
+        if second_slash > 0:
+            between = after_first[:second_slash]
+            if not (len(between) == 4 and between.isdigit()):
+                after_first = between + "-" + after_first[second_slash + 1:]
+                v = v[:first_slash + 1] + after_first
+
+    if "/" not in v or not v[0].isdigit():
+        return None
+
+    for ascii_form, unicode_form in _DOCNUM_ABBREV_MAP.items():
+        v = re.sub(r"\b" + ascii_form + r"\b", unicode_form, v)
+    return v
+
+
 def strip_think_tags(content: str) -> str:
     """Strip Qwen3 chain-of-thought thinking block before parsing.
 

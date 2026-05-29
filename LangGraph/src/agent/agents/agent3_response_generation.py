@@ -33,8 +33,13 @@ llm_thinker = init_chat_model(
     model=settings.agent3_llm_model,
     streaming=False,
     temperature=settings.agent3_temperature,
-    max_tokens=2048,
-    model_kwargs={"tool_choice": "none"}
+    max_tokens=6000,
+    extra_body={
+        "thinking_token_budget": 1024,
+        "chat_template_kwargs": {
+            "enable_thinking": True,
+        },
+    },
 )
 
 

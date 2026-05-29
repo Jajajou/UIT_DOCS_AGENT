@@ -14,6 +14,7 @@ import argparse
 import psycopg2
 import json
 import sys
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -127,12 +128,14 @@ async def process_doc(
         print(f"  [PROC] {doc_id} | src={content_source} | len={len(content)}")
 
         try:
+            t0 = time.monotonic()
             state = {
                 "doc_text": content,
                 "file_source": file_path or "",
                 "doc_id": doc_id,
             }
             result = await metadata_rag_subgraph.ainvoke(state)
+            elapsed = time.monotonic() - t0
             metadata = result.get("final_metadata") or result.get("document_metadata") or {}
 
             if not metadata:
@@ -141,7 +144,7 @@ async def process_doc(
 
             conf = metadata.get("temporal_confidence") or metadata.get("extraction_confidence") or 0.0
             docnum = metadata.get("document_number", "")
-            print(f"  [META] {doc_id} | doc_num={docnum} | conf={conf:.3f}")
+            print(f"  [META] {doc_id} | doc_num={docnum} | conf={conf:.3f} | elapsed={elapsed:.1f}s")
 
             if dry_run:
                 print(f"  [DRY] {json.dumps(metadata, ensure_ascii=False, indent=2)}")

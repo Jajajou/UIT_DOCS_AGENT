@@ -30,7 +30,7 @@ from typing import Any
 from langchain.chat_models import init_chat_model
 
 from agent.config import settings
-from agent.utils import strip_think_tags
+from agent.utils import strip_think_tags, normalize_docnum
 
 logger = logging.getLogger(__name__)
 
@@ -154,9 +154,13 @@ Trả về JSON duy nhất:
 # Public API
 # --------------------------------------------------------------------------- #
 
-def extract_from_header(doc_text: str, file_source: str = "") -> dict[str, Any]:
+def extract_from_header(doc_text: str, file_source: str = "", fast: bool = False) -> dict[str, Any]:
     """
     Extract document_number and amends_documents from the first 2000 chars.
+
+    Args:
+        fast: Skip LLM call when regex already found document_number. Saves ~3-5s/doc
+              in batch processing. Amends still extracted via regex only.
 
     Returns a dict with keys:
         document_number         (str | None)
@@ -169,16 +173,20 @@ def extract_from_header(doc_text: str, file_source: str = "") -> dict[str, Any]:
     if not header_text:
         return _empty_result()
 
-    # 1. Try regex-only fast path first — covers common patterns with certainty
+    # 1. Regex pass — covers common patterns with certainty
     regex_doc_num = _regex_doc_number(header_text)
     regex_amends = _regex_amends(header_text)
     implicit_flag = _has_implicit_amendment(doc_text)  # scan full doc
 
-    # 2. Always run LLM on the header to catch patterns regex misses
-    llm_result = _llm_extract(header_text, file_source)
+    # 2. LLM pass — catches garbled OCR patterns regex misses.
+    #    Skip when fast=True AND regex already found a doc number.
+    if fast and regex_doc_num:
+        llm_result: dict[str, Any] = {"_llm_ok": False}
+    else:
+        llm_result = _llm_extract(header_text, file_source)
 
     # 3. Merge: prefer LLM doc_num if found, regex as fallback; normalize both
-    doc_num = _normalise_doc_ref(llm_result.get("document_number")) or _normalise_doc_ref(regex_doc_num)
+    doc_num = normalize_docnum(llm_result.get("document_number")) or normalize_docnum(regex_doc_num)
 
     # Merge amends: union of regex and LLM findings
     llm_amends = llm_result.get("amends_documents", [])
@@ -287,62 +295,13 @@ def _merge_amends(regex: list[str], llm: list[str]) -> list[str]:
     combined = []
     seen: set[str] = set()
     for item in regex + llm:
-        normalised = _normalise_doc_ref(item)
+        normalised = normalize_docnum(item)
         if normalised and normalised not in seen:
             seen.add(normalised)
             combined.append(normalised)
     return combined
 
 
-_ABBREV_MAP = {
-    "QD": "QĐ",
-    "DHCNTT": "ĐHCNTT",
-    "DHQG": "ĐHQG",
-    "BGDDT": "BGDĐT",
-    "BDGDT": "BGDĐT",
-}
-
-
-def _normalise_doc_ref(ref: str | None) -> str | None:
-    """Normalize to canonical form: NUM/[YEAR/]TYPE-ISSUER (uppercase, diacritics preserved/restored)."""
-    if not ref or not isinstance(ref, str):
-        return None
-    ref = ref.strip().upper()
-    if not ref or len(ref) > 80:
-        return None
-
-    # Strip spaces around separators: "807 / QĐ-ĐHCNTT" → "807/QĐ-ĐHCNTT"
-    ref = re.sub(r"\s*/\s*", "/", ref)
-    ref = re.sub(r"\s*-\s*", "-", ref)
-
-    slash_pos = ref.find("/")
-    if slash_pos > 0 and "_" in ref[:slash_pos]:
-        underscore_pos = ref.index("_")
-        num = ref[:underscore_pos]
-        rest = ref[underscore_pos + 1:].replace("/", "-")
-        ref = num + "/" + rest
-    elif slash_pos < 0:
-        ref = ref.replace("_", "/", 1)
-
-    ref = re.sub(r"/+", "/", ref)
-
-    first_slash = ref.find("/")
-    if first_slash > 0:
-        after_first = ref[first_slash + 1:]
-        second_slash = after_first.find("/")
-        if second_slash > 0:
-            between = after_first[:second_slash]
-            if not (len(between) == 4 and between.isdigit()):
-                after_first = between + "-" + after_first[second_slash + 1:]
-                ref = ref[:first_slash + 1] + after_first
-
-    if "/" not in ref or not ref[0].isdigit():
-        return None
-
-    # Restore diacritics for known abbreviations
-    for ascii_form, unicode_form in _ABBREV_MAP.items():
-        ref = re.sub(r"\b" + ascii_form + r"\b", unicode_form, ref)
-    return ref
 
 
 def _empty_result() -> dict[str, Any]:

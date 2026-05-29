@@ -491,7 +491,7 @@ class LightRAGAPIClient:
     def save_temporal_metadata(
         self,
         track_id: str,
-        doc_id: str,
+        doc_id: str | None,
         metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -573,8 +573,8 @@ class LightRAGAPIClient:
                         CURRENT_TIMESTAMP,
                         %s
                     )
-                    ON CONFLICT (doc_id) DO UPDATE SET
-                        track_id = EXCLUDED.track_id,
+                    ON CONFLICT (workspace, track_id) WHERE track_id IS NOT NULL DO UPDATE SET
+                        doc_id = COALESCE(EXCLUDED.doc_id, temporal_metadata.doc_id),
                         workspace = EXCLUDED.workspace,
                         document_number = EXCLUDED.document_number,
                         document_type = EXCLUDED.document_type,
