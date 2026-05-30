@@ -283,6 +283,11 @@ class Reranker:
 
             return 0.3  # superseded docs deprioritized
 
+        # Check if superseded: doc has amended_by → newer version exists
+        amended_by = metadata.get("amended_by", [])
+        if isinstance(amended_by, list) and len(amended_by) > 0:
+            return 0.3  # Superseded docs deprioritized regardless of validity dates
+
         # Get validity dates
         valid_from = metadata.get("valid_from")
         valid_until = metadata.get("valid_until")
