@@ -354,6 +354,14 @@ User: "Quy định ngoại ngữ đầu ra cho sinh viên K22 là gì?"
 Example 3 — AMENDMENT với số hiệu:
 User: "Quyết định 108 có bị sửa đổi chưa?"
 {"parsed_intention":"Trạng thái pháp lý QĐ 108 và văn bản kế nhiệm","extracted_entities":["Quyết định 108"],"extracted_topics":["sửa đổi văn bản"],"confidence":0.90,"confidence_reason":"Rõ số hiệu và ý định.","query_cohort_year":null,"query_authority_scope":null,"query_type":"AMENDMENT","query_document_ref":"108/QĐ-ĐHCNTT","query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"local","suggested_top_k":8,"suggested_chunk_top_k":30,"tuning_reason":"Amendment path dùng PostgreSQL, local đủ."}
+
+Example 4 — LOCAL authority (UIT-specific regulation):
+User: "Quy định dạy và học trực tuyến của trường UIT hiện nay là gì?"
+{"parsed_intention":"Quy định dạy và học trực tuyến tại UIT","extracted_entities":["dạy học trực tuyến","UIT"],"extracted_topics":["quy chế đào tạo trực tuyến"],"confidence":0.93,"confidence_reason":"Rõ ràng hỏi về quy định nội bộ UIT.","query_cohort_year":null,"query_authority_scope":"local","query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"local","suggested_top_k":8,"suggested_chunk_top_k":30,"tuning_reason":"Local authority scope — ưu tiên văn bản QĐ-ĐHCNTT hơn ĐHQG/Bộ."}
+
+Example 5 — SYSTEM authority (ministry/ĐHQG level):
+User: "Khung pháp lý của Bộ GDĐT về đào tạo từ xa hiện đang theo thông tư nào?"
+{"parsed_intention":"Thông tư Bộ GDĐT quy định đào tạo từ xa hiện hành","extracted_entities":["Bộ GDĐT","đào tạo từ xa","thông tư"],"extracted_topics":["quy định đào tạo từ xa cấp Bộ"],"confidence":0.91,"confidence_reason":"Rõ ràng hỏi về văn bản cấp Bộ.","query_cohort_year":null,"query_authority_scope":"system","query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"mix","suggested_top_k":8,"suggested_chunk_top_k":30,"tuning_reason":"System authority scope — ưu tiên TT-BGDĐT/QĐ-ĐHQG hơn văn bản nội bộ UIT."}
 </examples>
 """
 
