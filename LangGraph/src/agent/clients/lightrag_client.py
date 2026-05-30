@@ -1481,6 +1481,74 @@ class LightRAGAPIClient:
             print(f"[LightRAG Client] Error fetching temporal metadata by file_sources: {e}")
             return {}
 
+    def get_forward_amendments(
+        self,
+        doc_numbers: List[str],
+    ) -> List[Dict[str, Any]]:
+        """
+        Find documents that declare they amend any of the given doc_numbers.
+
+        Uses amends_documents JSONB array to do a forward lookup:
+        given original doc numbers, return amendment doc metadata + file_path.
+        Returns [] on error (graceful fallback).
+        """
+        if not doc_numbers:
+            return []
+
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT DISTINCT tm.doc_id, tm.document_number, lds.file_path,
+                           tm.amends_documents, tm.amended_by_documents,
+                           tm.valid_from::text, tm.valid_until::text,
+                           tm.cohort_years, tm.is_archived, tm.extraction_confidence
+                    FROM temporal_metadata tm
+                    JOIN lightrag_doc_status lds ON tm.doc_id = lds.id,
+                    jsonb_array_elements_text(tm.amends_documents) AS amended_num
+                    WHERE tm.workspace = %s
+                      AND tm.amends_documents IS NOT NULL
+                      AND jsonb_array_length(tm.amends_documents) > 0
+                      AND amended_num = ANY(%s)
+                    """,
+                    (workspace, list(doc_numbers))
+                )
+                rows = cur.fetchall()
+            conn.close()
+
+            results = []
+            for row in rows:
+                doc_id, doc_num, file_path, amends_docs, amended_by_docs, valid_from, valid_until, cohort_years, is_archived, conf = row
+
+                def ensure_list(val):
+                    if isinstance(val, str):
+                        try:
+                            return json.loads(val)
+                        except Exception:
+                            return []
+                    return val or []
+
+                results.append({
+                    "doc_id": doc_id,
+                    "document_number": doc_num,
+                    "file_path": file_path,
+                    "amends_documents": ensure_list(amends_docs),
+                    "amended_by": ensure_list(amended_by_docs),
+                    "valid_from": valid_from,
+                    "valid_until": valid_until,
+                    "cohort_years": ensure_list(cohort_years),
+                    "is_archived": bool(is_archived),
+                    "extraction_confidence": conf,
+                })
+            return results
+
+        except Exception as e:
+            print(f"[LightRAG Client] Error in get_forward_amendments: {e}")
+            return []
+
     def get_doc_id_by_track_id(
         self,
         track_id: str,

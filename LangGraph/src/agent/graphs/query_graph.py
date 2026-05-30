@@ -250,52 +250,84 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
 
     enriched_chunks = enrich(chunks)
 
-    # Sibling enrichment only matters for AMENDMENT queries — skip for GENERAL/COHORT
-    # to avoid 2 extra DB round-trips on every query.
     query_type = state.get("query_type", "GENERAL")
-    if query_type != "AMENDMENT":
-        enriched_entities = enrich(entities)
-        enriched_relationships = enrich(relationships)
-        matched = sum(1 for item in chunks + entities + relationships if (item.get("file_path") or item.get("file_source")) in temporal_map)
-        total = len(chunks) + len(entities) + len(relationships)
-        print(f"[ENRICH] Enriched {matched}/{total} items (sibling enrichment skipped for {query_type})")
-        return {
-            "retrieved_chunks": enriched_chunks,
-            "retrieved_entities": enriched_entities,
-            "retrieved_relationships": enriched_relationships,
+
+    # Forward amendment injection: for every retrieved doc, find docs that declare
+    # they amend it (via amends_documents JSONB). Works for all query types so
+    # sparse amendment docs are injected even when query_type != AMENDMENT.
+    try:
+        retrieved_doc_numbers = [
+            meta["document_number"]
+            for meta in temporal_map.values()
+            if meta.get("document_number")
+        ]
+
+        existing_doc_ids = {
+            c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+            for c in enriched_chunks
         }
 
-    try:
-        sibling_doc_ids = set()
-        for fp, meta in temporal_map.items():
-            amended_by = meta.get("amended_by")
-            if isinstance(amended_by, list):
-                for doc_id in amended_by:
-                    if not str(doc_id).startswith("error-"):
-                        sibling_doc_ids.add(str(doc_id))
-        
-        # Check which siblings are missing from chunks
-        existing_doc_ids = {c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id") for c in enriched_chunks}
-        missing_siblings = sibling_doc_ids - existing_doc_ids
-        
-        if missing_siblings:
-            print(f"[ENRICH] Found {len(missing_siblings)} missing sibling docs. Fetching from DB...")
-            sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
-            real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
+        if retrieved_doc_numbers:
+            forward_amendments = api_client.get_forward_amendments(retrieved_doc_numbers)
+            missing_amendments = [
+                a for a in forward_amendments
+                if a["doc_id"] not in existing_doc_ids
+            ]
 
-            # Merge metadata into real chunks and truncate content to avoid vLLM 400 Bad Request
-            for chunk in real_chunks:
-                s_doc_id = chunk.get("doc_id")
-                if s_doc_id in sibling_metadata:
-                    chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
-                # Truncate content to safe limit for reranker (e.g., 2000 chars)
-                if chunk.get("content") and len(chunk["content"]) > 2000:
-                    chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
-                enriched_chunks.append(chunk)
+            if missing_amendments:
+                missing_doc_ids = [a["doc_id"] for a in missing_amendments]
+                print(f"[ENRICH] Forward injection: {len(missing_amendments)} amendment docs not in candidate set. Fetching chunks...")
+                injected_chunks = api_client.get_chunks_by_doc_ids(missing_doc_ids)
 
-            print(f"[ENRICH] Added {len(real_chunks)} full sibling chunks to candidate set.")
+                amendment_meta_by_doc_id = {a["doc_id"]: a for a in missing_amendments}
+                for chunk in injected_chunks:
+                    chunk_doc_id = chunk.get("doc_id")
+                    if chunk_doc_id in amendment_meta_by_doc_id:
+                        amend_meta = amendment_meta_by_doc_id[chunk_doc_id]
+                        chunk["metadata"] = {**chunk.get("metadata", {}), **amend_meta}
+                    if chunk.get("content") and len(chunk["content"]) > 2000:
+                        chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
+                    enriched_chunks.append(chunk)
+
+                print(f"[ENRICH] Injected {len(injected_chunks)} chunks from {len(missing_amendments)} amendment docs.")
+            else:
+                print(f"[ENRICH] Forward injection: all amendment docs already in candidate set.")
     except Exception as e:
-        print(f"[ENRICH] Error during sibling enrichment: {e}")
+        print(f"[ENRICH] Error during forward amendment injection: {e}")
+
+    # Backward sibling enrichment for AMENDMENT queries (original amended_by approach).
+    if query_type == "AMENDMENT":
+        try:
+            sibling_doc_ids = set()
+            for fp, meta in temporal_map.items():
+                amended_by = meta.get("amended_by")
+                if isinstance(amended_by, list):
+                    for doc_id in amended_by:
+                        if not str(doc_id).startswith("error-"):
+                            sibling_doc_ids.add(str(doc_id))
+
+            existing_doc_ids_now = {
+                c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+                for c in enriched_chunks
+            }
+            missing_siblings = sibling_doc_ids - existing_doc_ids_now
+
+            if missing_siblings:
+                print(f"[ENRICH] Backward sibling: {len(missing_siblings)} docs. Fetching from DB...")
+                sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
+                real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
+
+                for chunk in real_chunks:
+                    s_doc_id = chunk.get("doc_id")
+                    if s_doc_id in sibling_metadata:
+                        chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
+                    if chunk.get("content") and len(chunk["content"]) > 2000:
+                        chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
+                    enriched_chunks.append(chunk)
+
+                print(f"[ENRICH] Added {len(real_chunks)} backward sibling chunks.")
+        except Exception as e:
+            print(f"[ENRICH] Error during backward sibling enrichment: {e}")
 
     enriched_entities = enrich(entities)
     enriched_relationships = enrich(relationships)
