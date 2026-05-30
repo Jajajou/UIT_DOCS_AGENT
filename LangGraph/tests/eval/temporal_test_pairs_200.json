@@ -1713,7 +1713,7 @@
       "query_cohort_year": 2022,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "671/DHQG"
+        "671/DHQG-DT"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
@@ -1740,7 +1740,7 @@
       "query_cohort_year": null,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "842/DHQG"
+        "842/DHQG-DT"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
@@ -1766,7 +1766,7 @@
       "query_cohort_year": null,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "2217/DHQG"
+        "2217/DHQG-DT"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
@@ -1844,7 +1844,7 @@
       "query_cohort_year": null,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "07/BGD"
+        "07/2025/TT-BGDDT"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
@@ -2442,11 +2442,11 @@
       "query_cohort_year": null,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "124/CP"
+        "124/2024/ND-CP"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
-        "07/BGD",
+        "07/2025/TT-BGDDT",
         "1758/QD-DHQG",
         "451/QD-DHCNTT"
       ],
@@ -3500,7 +3500,7 @@
       "query_cohort_year": 2024,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "2217/DHQG"
+        "2217/DHQG-DT"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
@@ -4502,7 +4502,7 @@
       "query_cohort_year": 2022,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "671/DHQG"
+        "671/DHQG-DT"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
@@ -5531,7 +5531,7 @@
       "query_cohort_year": 2024,
       "expected_doc_ids": [],
       "expected_doc_numbers": [
-        "2217/DHQG"
+        "2217/DHQG-DT"
       ],
       "confounding_doc_ids": [],
       "confounding_doc_numbers": [
