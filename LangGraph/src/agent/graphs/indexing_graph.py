@@ -21,12 +21,15 @@ from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.utils import get_url, content_to_text, get_last_human_message
 from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
 from langchain_core.messages import AIMessage, AnyMessage
+from agent.utils.clause_amendment_extractor import extract_clause_amendments
+from agent.clients.amendment_resolver import AmendmentResolver
 
-load_dotenv() 
+load_dotenv()
 
 
 api_client = LightRAGAPIClient()
 mineru_client = MinerUOCRClient()
+amendment_resolver = AmendmentResolver()
 
 # ---------------------- Helper Functions ----------------------
 
@@ -558,6 +561,40 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
                                     print(f"[LINKING] ✓ Linked to {linked_count} amended documents")
                                 else:
                                     print(f"[LINKING] WARNING: No matching amended documents found")
+
+                            # Clause-level amendment resolution
+                            doc_number = document_metadata.get("document_number")
+                            parsed_content = state.get("parsed_content") or ""
+                            if doc_number and amended_docs and parsed_content:
+                                try:
+                                    clause_amends = extract_clause_amendments(parsed_content, amended_docs)
+                                    if clause_amends:
+                                        print(f"[CLAUSE-AMEND] Resolving {len(clause_amends)} clause-level links...")
+                                        resolver_summary = amendment_resolver.resolve_for_doc(
+                                            doc_number=doc_number,
+                                            doc_id=immediate_doc_id,
+                                            clause_amendments=clause_amends,
+                                        )
+                                        upload_result["clause_amendments_resolved"] = resolver_summary["resolved"]
+                                        upload_result["clause_amendments_pending"] = resolver_summary["pending_inserted"]
+                                        upload_result["clause_amendments_backward"] = resolver_summary["backward_resolved"]
+                                        print(
+                                            f"[CLAUSE-AMEND] resolved={resolver_summary['resolved']} "
+                                            f"pending={resolver_summary['pending_inserted']} "
+                                            f"backward={resolver_summary['backward_resolved']}"
+                                        )
+                                    else:
+                                        # Still run backward pass — this doc may be a target
+                                        bw = amendment_resolver.resolve_for_doc(
+                                            doc_number=doc_number,
+                                            doc_id=immediate_doc_id,
+                                            clause_amendments=[],
+                                        )
+                                        if bw["backward_resolved"]:
+                                            upload_result["clause_amendments_backward"] = bw["backward_resolved"]
+                                            print(f"[CLAUSE-AMEND] Backward resolved {bw['backward_resolved']} pending links")
+                                except Exception as ca_err:
+                                    print(f"[CLAUSE-AMEND] ✗ Error: {ca_err}")
                     else:
                         print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
                         upload_result["temporal_metadata_error"] = metadata_result.get("error")
