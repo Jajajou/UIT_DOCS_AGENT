@@ -55,6 +55,12 @@ class QueryUnderstanding(BaseModel):
         description="Nam nhap hoc cua khoa sinh vien neu co (vi du: 2022 cho 'K2022', 'khoa 2022')"
     )
 
+    # Academic year extracted from query (e.g. "2024-2025")
+    query_academic_year: Optional[str] = Field(
+        default=None,
+        description="Nam hoc duoc nhac den trong cau hoi (vi du: '2024-2025')"
+    )
+
     # Authority scope extracted from query (system vs local)
     query_authority_scope: Optional[Literal["system", "local"]] = Field(
         default=None,
@@ -88,17 +94,22 @@ class QueryUnderstanding(BaseModel):
     )
 
     # NEW: Education system (he dao tao) classification
-    education_system: Literal["chinh_quy", "tu_xa", "tien_tien", "song_nganh"] = Field(
-        default="chinh_quy",
+    education_system: Optional[Literal["chinh_quy", "tu_xa", "tien_tien", "song_nganh"]] = Field(
+        default=None,
         description=(
-            "He dao tao: chinh_quy (default, most students), "
+            "He dao tao: chinh_quy, "
             "tu_xa (distance learning, keywords: tu xa, VLVH, vua lam vua hoc), "
             "tien_tien (advanced program, keywords: tien tien, chuong trinh tien tien), "
-            "song_nganh (dual degree, keywords: song nganh)"
+            "song_nganh (dual degree, keywords: song nganh). "
+            "Để null nếu không được nhắc đến."
         )
     )
 
     # NEW: Parameter tuning outputs
+    needs_student_context: bool = Field(
+        default=False,
+        description="True nếu câu hỏi phụ thuộc vào thông tin riêng của sinh viên (khóa, hệ đào tạo) để trả lời đúng."
+    )
     suggested_mode: Literal["naive", "local", "global", "hybrid", "mix"] = Field(
         default=settings.retrieval.default_mode,
         description="Suggested retrieval mode based on query type"
@@ -189,6 +200,7 @@ class QueryState(TypedDict):
     query_confidence: NotRequired[float]
     query_confidence_reason: NotRequired[Optional[str]]
     query_cohort_year: NotRequired[Optional[int]]  # e.g. 2022 for "K2022" queries
+    query_academic_year: NotRequired[Optional[str]]  # e.g. "2024-2025"
     query_authority_scope: NotRequired[Optional[Literal["system", "local"]]]
     query_type: NotRequired[Optional[Literal["COHORT", "AMENDMENT", "GENERAL"]]]
     query_document_ref: NotRequired[Optional[str]]  # e.g. '108/QD-DHCNTT' for AMENDMENT path
@@ -201,6 +213,7 @@ class QueryState(TypedDict):
     retrieval_mode: NotRequired[Literal["naive", "local", "global", "hybrid", "mix"]]
     top_k: NotRequired[Optional[int]]
     chunk_top_k: NotRequired[Optional[int]]
+    needs_student_context: NotRequired[bool] # True if query requires profile info
     tuning_reason: NotRequired[Optional[str]]  # Explanation for parameter choices
     
     # ============ Data Retrieval (LightRAG) ============

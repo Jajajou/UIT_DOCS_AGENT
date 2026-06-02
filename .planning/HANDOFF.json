@@ -1,1 +1,29 @@
-{"version":"1.0","timestamp":"2026-05-10T13:37:22.905Z","phase":"0","phase_name":"eval-and-url-fix","status":"paused","completed_tasks":[{"id":1,"name":"Audit 200-pair eval set","status":"done"},{"id":2,"name":"Verify 166 CSV URLs live","status":"done"},{"id":3,"name":"Add --retrieval-only to temporal_evaluation.py","status":"done"},{"id":4,"name":"Generate DB URL check script","status":"done"}],"remaining_tasks":[{"id":5,"name":"Fix CTDT fuzzy matcher space→dash","status":"not_started"},{"id":6,"name":"Apply SQL UPDATEs for dead DB URLs","status":"not_started"},{"id":7,"name":"Test --retrieval-only 5-pair subset","status":"not_started"},{"id":8,"name":"Run full 200-pair retrieval-only eval","status":"not_started"}],"blockers":[{"description":"LLM/GPU endpoint down","type":"external","workaround":"vast.ai RTX 4090 ~$0.5/hr"},{"description":"68/229 DB file_paths dead","type":"technical","workaround":"scripts/check_db_urls.py SQL UPDATEs ready after fuzzy fix"}],"human_actions_pending":[{"action":"Regenerate /tmp/db_pdf_paths.txt if /tmp cleared: docker exec uit_docs_agent-postgres_uit-1 psql -U uitrag -d lightrag -t -c \"SELECT file_path FROM lightrag_doc_status WHERE workspace='uit_docs_agent' AND file_path LIKE 'http%.pdf';\" > /tmp/db_pdf_paths.txt","blocking":true}],"uncommitted_files":["LangGraph/tests/eval/temporal_evaluation.py",".planning/STATE.md"],"next_action":"Fix CTDT fuzzy matcher in scripts/check_db_urls.py: normalize khoa%20N→khoa-N, then run and apply SQL UPDATEs","context_notes":"eval set at ~/Downloads/temporal_test_pairs_200.json. CSV at ~/Downloads/pdf_source_urls.csv. DB creds uitrag/admin123 db lightrag container uit_docs_agent-postgres_uit-1"}
+{
+  "version": "1.0",
+  "timestamp": "2026-05-27T13:48:02.826Z",
+  "phase": "06",
+  "phase_name": "post-phase05-bug-fixes",
+  "phase_dir": ".planning/phases/06-post-phase05-bug-fixes",
+  "plan": 1,
+  "task": 4,
+  "total_tasks": 4,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 1, "name": "Fix validation_retry_count infinite loop", "status": "done", "commit": "6f58b82"},
+    {"id": 2, "name": "Fix content 300->800, top_n 15->10 in agent3", "status": "done", "commit": "d92caf0"},
+    {"id": 3, "name": "Route COHORT/AMENDMENT through temporal enrichment", "status": "done", "commit": "ba76cf1"},
+    {"id": 4, "name": "Specificity directive + think budget 150->350", "status": "done", "commit": "4b5a381"}
+  ],
+  "remaining_tasks": [],
+  "blockers": [],
+  "human_actions_pending": [
+    {"action": "Run eval to measure phase05+06 combined impact", "context": "Eval pending before rethink — now pipeline fixed", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "COHORT/AMENDMENT route through enrich_with_temporal_metadata", "rationale": "Expiration warnings dead without it; filter safe since cohort_year=null for AMENDMENT"},
+    {"decision": "Agent4 stays Qwen3-4B — defer upgrade to after eval"}
+  ],
+  "uncommitted_files": ["STATE.md", "LangGraph/scripts/*", "LangGraph/src/agent/clients/amendment_chain_client.py", "LangGraph/src/agent/utils.py", "LangGraph/tests/eval/temporal_evaluation.py"],
+  "next_action": "Run eval: cd LangGraph && source ../.venv/bin/activate && python tests/eval/temporal_evaluation.py",
+  "context_notes": "Phase06 DONE. Vast.ai ssh2.vast.ai:11674 A100 LIVE: 8000=embed, 8001=reranker, 8002=Qwen3.5-9B. 10 pre-existing unrelated test failures."
+}

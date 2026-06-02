@@ -20,11 +20,11 @@ import pytest
 from agent.agents.header_extraction import (
     _has_implicit_amendment,
     _merge_amends,
-    _normalise_doc_ref,
     _regex_amends,
     _regex_doc_number,
     extract_from_header,
 )
+from agent.utils import normalize_docnum as _normalise_doc_ref
 
 
 # ---------------------------------------------------------------------------
@@ -48,7 +48,7 @@ So: 20/TB-KHTC
 THONG BAO
 Ve viec sua doi muc hoc phi
 
-Can cu Quyet dinh so 108/QD-DHCNTT ngay 15/3/2024 cua Hieu truong
+Can cu Quyet dinh so 108/QĐ-ĐHCNTT ngay 15/3/2024 cua Hieu truong
 Sua doi khoan 3 dieu 5 Quyet dinh so 141/QD-DHCNTT ngay 10/1/2023
 """
 
@@ -194,10 +194,10 @@ class TestImplicitAmendment:
 
 class TestNormalise:
     def test_uppercase(self):
-        assert _normalise_doc_ref("108/qd-dhcntt") == "108/QD-DHCNTT"
+        assert _normalise_doc_ref("108/qd-dhcntt") == "108/QĐ-ĐHCNTT"
 
     def test_strips_whitespace(self):
-        assert _normalise_doc_ref("  108/QD-DHCNTT  ") == "108/QD-DHCNTT"
+        assert _normalise_doc_ref("  108/QĐ-ĐHCNTT  ") == "108/QĐ-ĐHCNTT"
 
     def test_no_slash_returns_none(self):
         assert _normalise_doc_ref("108") is None
@@ -211,24 +211,24 @@ class TestNormalise:
 
 class TestMergeAmends:
     def test_union(self):
-        regex = ["108/QD-DHCNTT"]
+        regex = ["108/QĐ-ĐHCNTT"]
         llm = ["141/TB-KHTC"]
         result = _merge_amends(regex, llm)
-        assert "108/QD-DHCNTT" in result
+        assert "108/QĐ-ĐHCNTT" in result
         assert "141/TB-KHTC" in result
 
     def test_deduplication_across_sources(self):
-        regex = ["108/QD-DHCNTT"]
+        regex = ["108/QĐ-ĐHCNTT"]
         llm = ["108/qd-dhcntt"]  # same, different case
         result = _merge_amends(regex, llm)
         assert len(result) == 1
 
     def test_filters_invalid(self):
-        regex = ["NOSLASH", "108/QD-DHCNTT"]
+        regex = ["NOSLASH", "108/QĐ-ĐHCNTT"]
         llm = []
         result = _merge_amends(regex, llm)
         assert "NOSLASH" not in result
-        assert "108/QD-DHCNTT" in result
+        assert "108/QĐ-ĐHCNTT" in result
 
 
 # ---------------------------------------------------------------------------
@@ -250,11 +250,11 @@ class TestExtractFromHeader:
     @patch("agent.agents.header_extraction._get_llm")
     def test_simple_doc_number(self, mock_get_llm):
         mock_llm = MagicMock()
-        mock_llm.invoke.return_value = _make_llm_response(doc_number="108/QD-DHCNTT")
+        mock_llm.invoke.return_value = _make_llm_response(doc_number="108/QĐ-ĐHCNTT")
         mock_get_llm.return_value = mock_llm
 
         result = extract_from_header(SAMPLE_HEADER_SIMPLE)
-        assert result["document_number"] == "108/QD-DHCNTT"
+        assert result["document_number"] == "108/QĐ-ĐHCNTT"
         assert result["amends_documents"] == []
         assert result["amendment_confidence"] == "none"
         assert result["implicit_amendment_flag"] is False
@@ -270,7 +270,7 @@ class TestExtractFromHeader:
 
         result = extract_from_header(SAMPLE_HEADER_AMENDS)
         assert result["document_number"] == "20/TB-KHTC"
-        assert "141/QD-DHCNTT" in result["amends_documents"]
+        assert "141/QĐ-ĐHCNTT" in result["amends_documents"]
         assert result["amendment_confidence"] == "high"
 
     @patch("agent.agents.header_extraction._get_llm")
@@ -283,7 +283,7 @@ class TestExtractFromHeader:
         mock_get_llm.return_value = mock_llm
 
         result = extract_from_header(SAMPLE_HEADER_BLANKET)
-        assert result["document_number"] == "55/QD-DHCNTT"
+        assert result["document_number"] == "55/QĐ-ĐHCNTT"
         assert result["amends_documents"] == []
         assert result["implicit_amendment_flag"] is True
         assert result["amendment_confidence"] == "low"
@@ -310,8 +310,8 @@ class TestExtractFromHeader:
 
         # Even with LLM down, regex should still pull the header doc number
         result = extract_from_header(SAMPLE_HEADER_SIMPLE)
-        # Regex finds "So: 108/QD-DHCNTT"
-        assert result["document_number"] == "108/QD-DHCNTT"
+        # Regex finds "So: 108/QĐ-ĐHCNTT"
+        assert result["document_number"] == "108/QĐ-ĐHCNTT"
         assert result["extraction_method_header"] == "header_regex_only"
 
     @patch("agent.agents.header_extraction._get_llm")
@@ -335,8 +335,8 @@ class TestExtractFromHeader:
         mock_get_llm.return_value = mock_llm
 
         result = extract_from_header(SAMPLE_HEADER_SIMPLE)
-        # Should fall back to regex which finds 108/QD-DHCNTT
-        assert result["document_number"] == "108/QD-DHCNTT"
+        # Should fall back to regex which finds 108/QĐ-ĐHCNTT
+        assert result["document_number"] == "108/QĐ-ĐHCNTT"
 
     @patch("agent.agents.header_extraction._get_llm")
     def test_ministry_format_amends(self, mock_get_llm):
@@ -348,6 +348,6 @@ class TestExtractFromHeader:
         mock_get_llm.return_value = mock_llm
 
         result = extract_from_header(SAMPLE_HEADER_MINISTRY)
-        assert result["document_number"] == "02/2022/TT-BGDDT"
-        assert "07/2020/TT-BGDDT" in result["amends_documents"]
+        assert result["document_number"] == "02/2022/TT-BGDĐT"
+        assert "07/2020/TT-BGDĐT" in result["amends_documents"]
         assert result["amendment_confidence"] == "high"

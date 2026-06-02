@@ -18,19 +18,51 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 
 import psycopg2
+import psycopg2.pool
 import requests
 from dotenv import load_dotenv
-from typing import Any
+from typing import Any, Optional
 
-from agent.config import PROJECT_ROOT, settings
+from agent.config import PROJECT_ROOT
 from agent.clients.qdrant_cohort_client import QdrantCohortClient
+
+_amend_pg_pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
+_amend_pg_pool_lock = threading.Lock()
+
+
+class _PooledConn:
+    """Proxies a psycopg2 connection; .close() returns it to the pool."""
+    __slots__ = ("_pool", "_conn")
+
+    def __init__(self, pool: psycopg2.pool.ThreadedConnectionPool, conn) -> None:
+        object.__setattr__(self, "_pool", pool)
+        object.__setattr__(self, "_conn", conn)
+
+    def __getattr__(self, name: str):
+        return getattr(object.__getattribute__(self, "_conn"), name)
+
+    def __setattr__(self, name: str, value) -> None:
+        setattr(object.__getattribute__(self, "_conn"), name, value)
+
+    def __enter__(self):
+        object.__getattribute__(self, "_conn").__enter__()
+        return self
+
+    def __exit__(self, *args):
+        return object.__getattribute__(self, "_conn").__exit__(*args)
+
+    def close(self) -> None:
+        pool = object.__getattribute__(self, "_pool")
+        conn = object.__getattribute__(self, "_conn")
+        pool.putconn(conn)
 
 logger = logging.getLogger(__name__)
 
 QDRANT_BASE_URL = "http://localhost:6336"
-QDRANT_COLLECTION = "lightrag_vdb_chunks_aiteamvn_vietnamese_embedding_v2_1024d"
+QDRANT_COLLECTION = "lightrag_vdb_chunks"
 DEFAULT_TOP_K = 30
 DEFAULT_WORKSPACE = "uit_docs_agent"
 MAX_CHAIN_DEPTH = 10

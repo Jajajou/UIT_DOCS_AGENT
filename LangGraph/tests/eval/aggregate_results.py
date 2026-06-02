@@ -34,7 +34,7 @@ def aggregate(file_paths: List[str]):
         print("No valid results found.")
         return
 
-    metrics = ["accuracy@1", "ap@3", "authority_score"]
+    metrics = ["accuracy@1", "mrr@3", "ap@3", "authority_score"]
     
     report_lines = []
     report_lines.append("| Metric          | Mean  | Std   |")

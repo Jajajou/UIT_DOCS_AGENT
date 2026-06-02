@@ -7,8 +7,9 @@ It scores and re-ranks retrieved entities, relationships, and chunks based on re
 
 from __future__ import annotations
 
-import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+import re
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 from agent.config import settings
@@ -207,7 +208,10 @@ class Reranker:
     def calculate_temporal_score(
         self,
         item: Dict[str, Any],
-        current_date: Optional[str] = None
+        current_date: Optional[str] = None,
+        query_is_historical: Optional[bool] = False,
+        query_cohort_year: Optional[int] = None,
+        query_academic_year: Optional[str] = None
     ) -> float:
         """
         Calculate temporal relevance score for an item based on its metadata.
@@ -217,6 +221,7 @@ class Reranker:
         Args:
             item: Item dict (entity, relationship, or chunk)
             current_date: ISO date string for comparison. Defaults to today.
+            query_is_historical: If True, do not penalize amended/old docs.
 
         Returns:
             Temporal score (0.0-1.0)
@@ -234,7 +239,49 @@ class Reranker:
 
         # Check if archived
         if metadata.get("is_archived", False):
-            return 0.0  # Archived documents get zero temporal score
+            return 0.0
+
+        # Chunk-level: specific clause confirmed superseded by amendment_resolver
+        if item.get("is_superseded", False):
+            # If historical query, we might want the superseded one!
+            return 0.1 if not query_is_historical else 0.9
+
+        # Doc-level: whole doc has been amended (blunt signal)
+        amended_by = metadata.get("amended_by", [])
+        if isinstance(amended_by, list) and len(amended_by) > 0:
+            # Bypass penalty if historical or if this doc specifically matches the cohort
+            if query_is_historical:
+                return 0.9
+
+            # Check if this document is a primary authority for the student's cohort
+            # If it is, don't penalize it for being amended later.
+            is_cohort_match = False
+            if query_cohort_year is not None:
+                cohorts = metadata.get("cohort_years", [])
+                if "*" in cohorts or "*" in [str(c) for c in cohorts] or query_cohort_year in cohorts or str(query_cohort_year) in [str(c) for c in cohorts]:
+                    is_cohort_match = True
+
+            if is_cohort_match:
+                return 0.85  # cohort-matched: no penalty even if later amended
+
+            # Temporal exemption: if query anchors to a year and this doc was
+            # valid at that time, don't penalize — the amending docs came later.
+            anchor_year = None
+            if query_academic_year:
+                m = re.search(r"(\d{4})", str(query_academic_year))
+                if m:
+                    anchor_year = int(m.group(1))
+            if anchor_year is not None:
+                doc_valid_from = metadata.get("valid_from")
+                if doc_valid_from:
+                    try:
+                        vf_date = datetime.fromisoformat(str(doc_valid_from))
+                        if vf_date.year <= anchor_year:
+                            return 0.85  # was active in queried year, amendments came later
+                    except (ValueError, TypeError):
+                        pass
+
+            return 0.3  # superseded docs deprioritized
 
         # Get validity dates
         valid_from = metadata.get("valid_from")
@@ -243,7 +290,29 @@ class Reranker:
 
         # If no temporal info, assume always valid but not prioritized
         if not valid_from and not valid_until and not indexed_at:
-            return 0.5  # Neutral score
+            return 0.5  # no temporal info → neutral score
+
+        # --- TIME TRAVEL LOGIC FOR HISTORICAL QUERIES ---
+        if query_is_historical:
+            # Try to extract anchor year from query_academic_year or intention
+            anchor_year = None
+            if query_academic_year:
+                m = re.search(r"(\d{4})", str(query_academic_year))
+                if m: anchor_year = int(m.group(1))
+            
+            if anchor_year and valid_from:
+                try:
+                    vf_date = datetime.fromisoformat(str(valid_from))
+                    # DRASTIC PENALTY for documents from the FUTURE relative to query
+                    if vf_date.year > anchor_year:
+                        return 0.1
+                    # BONUS for documents in that specific era
+                    if vf_date.year == anchor_year:
+                        return 1.0
+                    if vf_date.year == anchor_year - 1:
+                        return 0.95
+                except: pass
+            return 0.8 # Default good score for valid past docs
 
         # Check if currently valid
         is_valid = True
@@ -332,6 +401,27 @@ class Reranker:
         # never penalizes.
         return 0.5
 
+    def _compute_academic_year_score(self, item: Dict[str, Any], query_academic_year: Optional[str]) -> float:
+        """
+        Compute academic year match score for an item.
+
+        Returns:
+            1.0 if item's academic_year matches query_academic_year
+            0.5 (neutral) if no academic year in query or metadata, or mismatch
+        """
+        if not query_academic_year:
+            return 0.5
+
+        doc_academic_year = item.get("metadata", {}).get("academic_year")
+        if not doc_academic_year:
+            return 0.5
+
+        # Exact match (e.g., "2024-2025" == "2024-2025")
+        if str(doc_academic_year).strip() == str(query_academic_year).strip():
+            return 1.0
+
+        return 0.5
+
     def _compute_authority_score(self, item: Dict[str, Any], query_authority_scope: Optional[str]) -> float:
         """
         Compute authority match score (system vs local).
@@ -369,6 +459,7 @@ class Reranker:
         temporal_weight: Optional[float] = None,
         current_date: Optional[str] = None,
         query_cohort_year: Optional[int] = None,
+        query_academic_year: Optional[str] = None,
         query_authority_scope: Optional[str] = None,
         query_is_historical: Optional[bool] = None,
         query_type: Optional[str] = None
@@ -387,6 +478,7 @@ class Reranker:
                            If None, uses config.temporal.recency_weight
             current_date: ISO date for temporal comparison. Defaults to today.
             query_cohort_year: Optional cohort year
+            query_academic_year: Optional academic year
             query_is_historical: Optional flag for historical queries
 
         Returns:
@@ -406,9 +498,14 @@ class Reranker:
         # Compute semantic scores
         semantic_scores = self.compute_scores(query, texts)
 
-        # Compute temporal scores
+        # 1. Compute Temporal Scores
         temporal_scores = [
-            self.calculate_temporal_score(item, current_date)
+            self.calculate_temporal_score(
+                item, current_date=current_date, 
+                query_is_historical=query_is_historical,
+                query_cohort_year=query_cohort_year,
+                query_academic_year=query_academic_year
+            ) 
             for item in items
         ]
 
@@ -453,7 +550,11 @@ class Reranker:
                     # the query targets the original doc — skip override.
                     if semantic_scores[amender_idx] >= semantic_scores[idx]:
                         new_temporal_scores[idx] = override_score
-                        overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
+                        overridden.append(
+                            item.get("metadata", {}).get("document_number")
+                            or item.get("metadata", {}).get("file_path")
+                            or item.get("doc_id", "unknown")
+                        )
                         break
             if overridden:
                 print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
@@ -500,7 +601,7 @@ class Reranker:
                         temporal_scores[idx] = 0.7
         # --- End of Modification ---
 
-        if use_cohort and (query_cohort_year is not None or query_authority_scope is not None):
+        if use_cohort and (query_cohort_year is not None or query_authority_scope is not None or query_academic_year is not None):
             s_w = getattr(temporal_config, 'semantic_weight_cohort', 0.55)
             t_w = getattr(temporal_config, 'temporal_weight_cohort', 0.20)
             boost_w = getattr(temporal_config, 'cohort_weight', 0.25)
@@ -508,17 +609,31 @@ class Reranker:
             # Compute raw boost scores
             raw_cohort_scores = [self._compute_cohort_score(item, query_cohort_year) for item in items]
             raw_authority_scores = [self._compute_authority_score(item, query_authority_scope) for item in items]
+            raw_academic_scores = [self._compute_academic_year_score(item, query_academic_year) for item in items]
             
-            # Combine cohort and authority into final c_w component
+            # Combine cohort, authority, and academic year into final c_w component
             cohort_scores = []
-            for c, a in zip(raw_cohort_scores, raw_authority_scores):
-                if query_cohort_year is not None and query_authority_scope is not None:
-                    # Both present: weighted average (60/40)
-                    cohort_scores.append(0.6 * c + 0.4 * a)
-                elif query_cohort_year is not None:
-                    cohort_scores.append(c)
+            for c, a, ac in zip(raw_cohort_scores, raw_authority_scores, raw_academic_scores):
+                components = []
+                weights = []
+                
+                if query_cohort_year is not None:
+                    components.append(c)
+                    weights.append(0.5)
+                if query_authority_scope is not None:
+                    components.append(a)
+                    weights.append(0.3)
+                if query_academic_year is not None:
+                    components.append(ac)
+                    weights.append(0.2)
+                
+                if not components:
+                    cohort_scores.append(0.5)
                 else:
-                    cohort_scores.append(a)
+                    # Normalize weights
+                    total_w = sum(weights)
+                    weighted_score = sum(comp * (w / total_w) for comp, w in zip(components, weights))
+                    cohort_scores.append(weighted_score)
             
             c_w = boost_w
         else:
@@ -587,6 +702,7 @@ class MultiSourceReranker:
         top_k_chunks: Optional[int] = None,
         use_temporal_boost: bool = True,
         query_cohort_year: Optional[int] = None,
+        query_academic_year: Optional[str] = None,
         query_authority_scope: Optional[str] = None,
         query_is_historical: Optional[bool] = None,
         query_type: Optional[str] = None
@@ -604,6 +720,7 @@ class MultiSourceReranker:
             top_k_chunks: Keep top K chunks
             use_temporal_boost: If True, apply temporal boosting (default: True)
             query_cohort_year: Optional cohort year
+            query_academic_year: Optional academic year
             query_is_historical: Optional flag for historical queries
 
         Returns:
@@ -631,6 +748,7 @@ class MultiSourceReranker:
                 return self.reranker.rerank_with_temporal_boost(
                     q, items, text_field=text_field, top_k=top_k,
                     query_cohort_year=query_cohort_year,
+                    query_academic_year=query_academic_year,
                     query_authority_scope=query_authority_scope,
                     query_is_historical=query_is_historical,
                     query_type=query_type
@@ -638,33 +756,35 @@ class MultiSourceReranker:
         else:
             rerank_func = self.reranker.rerank_items  # type: ignore
 
-        # Rerank entities
-        reranked_entities = rerank_func(
-            query, entities, text_field="entity_name", top_k=top_k_entities
-        )
+        # Rerank entities, relationships, chunks in parallel
+        _tasks = {
+            "entities": (entities, "entity_name", top_k_entities),
+            "relationships": (relationships, "description", top_k_relationships),
+            "chunks": (chunks, "content", top_k_chunks),
+        }
+        _results: Dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(rerank_func, query, items, text_field, top_k): key
+                for key, (items, text_field, top_k) in _tasks.items()
+            }
+            for future in as_completed(futures):
+                key = futures[future]
+                _results[key] = future.result()
+
+        reranked_entities = _results["entities"]
+        reranked_relationships = _results["relationships"]
+        reranked_chunks = _results["chunks"]
+
         entity_scores = [score for _, score in reranked_entities]
-
-        print(f"[RERANKER] Reranked {len(reranked_entities)} entities")
-        if entity_scores:
-            print(f"[RERANKER]   Top entity score: {max(entity_scores):.4f}")
-
-        # Rerank relationships
-        reranked_relationships = rerank_func(
-            query, relationships, text_field="description", top_k=top_k_relationships
-        )
         relationship_scores = [score for _, score in reranked_relationships]
-
-        print(f"[RERANKER] Reranked {len(reranked_relationships)} relationships")
-        if relationship_scores:
-            print(f"[RERANKER]   Top relationship score: {max(relationship_scores):.4f}")
-
-        # Rerank chunks
-        reranked_chunks = rerank_func(
-            query, chunks, text_field="content", top_k=top_k_chunks
-        )
         chunk_scores = [score for _, score in reranked_chunks]
 
-        print(f"[RERANKER] ✓ Reranked {len(reranked_chunks)} chunks")
+        print(f"[RERANKER] Reranked {len(reranked_entities)} entities, {len(reranked_relationships)} rels, {len(reranked_chunks)} chunks (parallel)")
+        if entity_scores:
+            print(f"[RERANKER]   Top entity score: {max(entity_scores):.4f}")
+        if relationship_scores:
+            print(f"[RERANKER]   Top relationship score: {max(relationship_scores):.4f}")
         if chunk_scores:
             print(f"[RERANKER]   Top chunk score: {max(chunk_scores):.4f}")
 

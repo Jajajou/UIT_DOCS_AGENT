@@ -1,16 +1,11 @@
 # indexing_graph.py - Matches the perfect flowchart
 from __future__ import annotations
 
-import io
 import os
 import re
-import glob
-import requests
-import sys
-import tempfile
 import time
 from pathlib import Path
-from typing import Literal, List, Dict, Any, Union, Optional, cast
+from typing import Literal, List, Dict, Any, cast
 from urllib.parse import unquote
 
 from dotenv import load_dotenv
@@ -20,19 +15,21 @@ from langgraph.graph.state import Command
 from agent.agents.metadata_rag_nodes import MetadataReviewAction
 
 from agent.config import MINERU_OCR_DIR
-from agent.clients.mineru_ocr_client import MinerUOCRClient, MinerUOCRClientError
+from agent.clients.mineru_ocr_client import MinerUOCRClient
 from agent.states.indexing_state import IndexingState
 from agent.clients.lightrag_client import LightRAGAPIClient
-from agent.utils import get_url, content_to_text, get_last_human_message, preprocess_image_for_ocr
-from agent.agents.agent_temporal_extraction import extract_temporal_metadata_node
+from agent.utils import get_url, content_to_text, get_last_human_message
 from agent.graphs.metadata_rag_subgraph import metadata_rag_subgraph
-from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
+from langchain_core.messages import AIMessage, AnyMessage
+from agent.utils.clause_amendment_extractor import extract_clause_amendments
+from agent.clients.amendment_resolver import AmendmentResolver
 
-load_dotenv() 
+load_dotenv()
 
 
 api_client = LightRAGAPIClient()
 mineru_client = MinerUOCRClient()
+amendment_resolver = AmendmentResolver()
 
 # ---------------------- Helper Functions ----------------------
 
@@ -534,66 +531,73 @@ def upload_to_lightrag(state: IndexingState) -> Dict[str, Any]:
 
                 print(f"[UPLOAD] ✓ Success (Direct) - Track: {result.get('track_id')}, Doc ID: {doc_id}")
 
-            # Save temporal metadata to separate table (to avoid LightRAG overwrite)
+            # Save temporal metadata immediately — no polling.
+            # Use doc_id if already available (upload_file path), else save by
+            # track_id only. doc_id resolved later via backfill_missing_temporal.py.
             document_metadata = state.get("document_metadata", {})
             if track_id and document_metadata and state.get("temporal_extraction_complete"): #type: ignore
                 try:
+                    immediate_doc_id = upload_result.get("doc_id")
                     print(f"[METADATA] Saving temporal metadata for {file_name} (track_id: {track_id})...")
+                    metadata_result = api_client.save_temporal_metadata(
+                        track_id=track_id,
+                        doc_id=immediate_doc_id,
+                        metadata=document_metadata
+                    )
 
-                    # LightRAG processes insert_text asynchronously — poll until the
-                    # lightrag_doc_status row appears (usually < 10s after upload).
-                    doc_id = None
-                    workspace = None
-                    for _attempt in range(60):
-                        conn = api_client._get_pg_connection()
-                        workspace = os.getenv("WORKSPACE", "default")
-                        try:
-                            with conn.cursor() as cur:
-                                cur.execute(
-                                    "SELECT id FROM lightrag_doc_status WHERE workspace = %s AND track_id = %s",
-                                    (workspace, track_id)
-                                )
-                                row = cur.fetchone()
-                                doc_id = row[0] if row else None
-                        finally:
-                            conn.close()
-                        if doc_id:
-                            break
-                        print(f"[METADATA] Waiting for LightRAG to create doc row (attempt {_attempt + 1}/60)...")
-                        time.sleep(2)
+                    if metadata_result.get("success"):
+                        print(f"[METADATA] ✓ Temporal metadata saved (track_id: {track_id})")
+                        upload_result["temporal_metadata_saved"] = True
 
-                    if doc_id:
-                        # Save to separate temporal_metadata table
-                        metadata_result = api_client.save_temporal_metadata(
-                            track_id=track_id,
-                            doc_id=doc_id,
-                            metadata=document_metadata
-                        )
-
-                        if metadata_result.get("success"):
-                            print(f"[METADATA] ✓ Temporal metadata saved to separate table (doc_id: {doc_id})")
-                            upload_result["temporal_metadata_saved"] = True
-                            upload_result["doc_id"] = doc_id
-
-                            # Handle reverse linking for amended documents
+                        # Amendment linking only possible when doc_id known immediately
+                        if immediate_doc_id:
                             amended_docs = document_metadata.get("amends_documents", [])
-                            if amended_docs and doc_id:
+                            if amended_docs:
                                 print(f"[LINKING] Processing amendments for {len(amended_docs)} documents...")
-                                link_result = api_client.link_amended_documents(doc_id, amended_docs)
-
+                                link_result = api_client.link_amended_documents(immediate_doc_id, amended_docs)
                                 linked_count = len(link_result.get("linked_docs", []))
                                 upload_result["linked_amendments"] = linked_count
-
                                 if linked_count > 0:
-                                    print(f"[LINKING] ✓ Successfully linked to {linked_count} old documents")
+                                    print(f"[LINKING] ✓ Linked to {linked_count} amended documents")
                                 else:
-                                    print(f"[LINKING] WARNING: No matching old documents found to link")
-                        else:
-                            print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
-                            upload_result["temporal_metadata_error"] = metadata_result.get("error")
+                                    print(f"[LINKING] WARNING: No matching amended documents found")
+
+                            # Clause-level amendment resolution
+                            doc_number = document_metadata.get("document_number")
+                            parsed_content = state.get("parsed_content") or ""
+                            if doc_number and amended_docs and parsed_content:
+                                try:
+                                    clause_amends = extract_clause_amendments(parsed_content, amended_docs)
+                                    if clause_amends:
+                                        print(f"[CLAUSE-AMEND] Resolving {len(clause_amends)} clause-level links...")
+                                        resolver_summary = amendment_resolver.resolve_for_doc(
+                                            doc_number=doc_number,
+                                            doc_id=immediate_doc_id,
+                                            clause_amendments=clause_amends,
+                                        )
+                                        upload_result["clause_amendments_resolved"] = resolver_summary["resolved"]
+                                        upload_result["clause_amendments_pending"] = resolver_summary["pending_inserted"]
+                                        upload_result["clause_amendments_backward"] = resolver_summary["backward_resolved"]
+                                        print(
+                                            f"[CLAUSE-AMEND] resolved={resolver_summary['resolved']} "
+                                            f"pending={resolver_summary['pending_inserted']} "
+                                            f"backward={resolver_summary['backward_resolved']}"
+                                        )
+                                    else:
+                                        # Still run backward pass — this doc may be a target
+                                        bw = amendment_resolver.resolve_for_doc(
+                                            doc_number=doc_number,
+                                            doc_id=immediate_doc_id,
+                                            clause_amendments=[],
+                                        )
+                                        if bw["backward_resolved"]:
+                                            upload_result["clause_amendments_backward"] = bw["backward_resolved"]
+                                            print(f"[CLAUSE-AMEND] Backward resolved {bw['backward_resolved']} pending links")
+                                except Exception as ca_err:
+                                    print(f"[CLAUSE-AMEND] ✗ Error: {ca_err}")
                     else:
-                        print(f"[METADATA] WARNING: Document not found in LightRAG (track_id: {track_id})")
-                        upload_result["temporal_metadata_error"] = "Document not found in LightRAG"
+                        print(f"[METADATA] ✗ Failed to save metadata: {metadata_result.get('error')}")
+                        upload_result["temporal_metadata_error"] = metadata_result.get("error")
 
                 except Exception as meta_error:
                     print(f"[METADATA] ✗ Exception saving metadata: {str(meta_error)}")

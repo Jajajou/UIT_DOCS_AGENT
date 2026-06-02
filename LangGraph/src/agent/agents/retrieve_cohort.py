@@ -128,11 +128,11 @@ def route_after_cohort(state: QueryState) -> str:
     Conditional edge: route after retrieve_cohort_data.
 
     0 results (fallback=True) → retrieve_data (GENERAL path)
-    Has results               → rerank_data (skip enrich + filter)
+    Has results               → enrich_with_temporal_metadata
     """
     if state.get("cohort_fallback", False):
         return "retrieve_data"
-    return "rerank_data"
+    return "enrich_with_temporal_metadata"
 
 
 __all__ = [

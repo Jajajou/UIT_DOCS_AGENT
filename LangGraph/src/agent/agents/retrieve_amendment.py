@@ -41,13 +41,12 @@ def retrieve_amendment_data(state: QueryState) -> Dict[str, Any]:
     chunk_top_k = state.get("chunk_top_k", settings.retrieval.default_chunk_top_k)
 
     if not query:
-        return {"error": "No query for amendment retrieval", "amendment_fallback": True, "query_cohort_year": None}
+        return {"error": "No query for amendment retrieval", "amendment_fallback": True}
 
     if not doc_number_ref:
         print("[AMENDMENT] No query_document_ref — falling back to GENERAL path")
         return {
             "amendment_fallback": True,
-            "query_cohort_year": None,
             "logs": ["AMENDMENT node: no document ref extracted, falling back to GENERAL"],
         }
 
@@ -68,7 +67,6 @@ def retrieve_amendment_data(state: QueryState) -> Dict[str, Any]:
         return {
             "error": error_msg,
             "amendment_fallback": True,
-            "query_cohort_year": None,
             "logs": [f"AMENDMENT retrieval error: {error_msg} — falling back to GENERAL"],
         }
 
@@ -76,7 +74,6 @@ def retrieve_amendment_data(state: QueryState) -> Dict[str, Any]:
         print(f"[AMENDMENT] 0 results for '{doc_number_ref}' — triggering fallback to GENERAL")
         return {
             "amendment_fallback": True,
-            "query_cohort_year": None,
             "logs": [f"AMENDMENT: no chunks found for '{doc_number_ref}', fallback to GENERAL"],
         }
 
@@ -107,11 +104,11 @@ def route_after_amendment(state: QueryState) -> str:
     Conditional edge: route after retrieve_amendment_data.
 
     0 results / no ref (fallback=True) → retrieve_data (GENERAL path)
-    Has results                         → rerank_data (skip enrich + filter)
+    Has results                         → enrich_with_temporal_metadata
     """
     if state.get("amendment_fallback", False):
         return "retrieve_data"
-    return "rerank_data"
+    return "enrich_with_temporal_metadata"
 
 
 __all__ = [

@@ -9,12 +9,11 @@ This graph implements a temporal-aware RAG pipeline with:
 
 from __future__ import annotations
 
-import json
 import os
 import re
+import time as _time_module
 from typing import Any, Dict, List
-from langgraph.graph import StateGraph, START,END
-from langchain_core.messages import HumanMessage, AIMessage, AnyMessage
+from langgraph.graph import StateGraph, START, END
 
 from agent.states.query_state import (
     QueryState,
@@ -23,11 +22,12 @@ from agent.clients.lightrag_client import LightRAGAPIClient
 from agent.clients.reranker import MultiSourceReranker
 from agent.agents.agent1_query_understanding import (
     agent1_understand_query,
+    route_after_agent1,
 )
 from agent.agents.agent3_response_generation import agent3_generate_response
+
 from agent.agents.retrieve_cohort import (
     retrieve_cohort_data,
-    route_retrieval,
     route_after_cohort,
 )
 from agent.agents.retrieve_amendment import (
@@ -44,6 +44,16 @@ from agent.config import settings
 
 api_client = LightRAGAPIClient()
 reranker = MultiSourceReranker()
+
+
+def _timed(name: str, fn):
+    """Wrap a graph node to print wall-clock time."""
+    def wrapper(state):
+        t0 = _time_module.perf_counter()
+        result = fn(state)
+        print(f"[TIMING] {name}: {_time_module.perf_counter() - t0:.2f}s")
+        return result
+    return wrapper
 
 
 # ============================================================================
@@ -227,21 +237,6 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
         print(f"[ENRICH] No temporal metadata found for {len(all_file_paths)} file paths")
         return {}
 
-    # Sibling enrichment: find docs that amend or are amended by the retrieved docs
-    sibling_file_paths = set()
-    for fp, meta in temporal_map.items():
-        # Get documents this doc amends
-        amends = meta.get("amends_documents", [])
-        if amends:
-            # We need to fetch metadata for these document numbers
-            # This is a bit tricky since get_temporal_metadata_by_file_sources takes file_paths, not doc numbers.
-            # We'll need a new client method or just add a placeholder.
-            pass
-        # Get documents that amend this doc
-        amended_by = meta.get("amended_by", [])
-        if amended_by:
-            pass
-
     def enrich(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result = []
         for item in items:
@@ -254,42 +249,89 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
         return result
 
     enriched_chunks = enrich(chunks)
-    
-    # Sibling Enrichment Implementation
-    # If doc X is retrieved and it's amended by doc Y (which wasn't retrieved),
-    # we MUST pull doc Y into the candidate set so the reranker can promote Y over X.
-    # We do this by checking the 'amended_by' field, which contains doc_ids of amending documents.
+
+    query_type = state.get("query_type", "GENERAL")
+
+    # Forward amendment injection: for every retrieved doc, find docs that declare
+    # they amend it (via amends_documents JSONB). Works for all query types so
+    # sparse amendment docs are injected even when query_type != AMENDMENT.
     try:
-        sibling_doc_ids = set()
-        for fp, meta in temporal_map.items():
-            amended_by = meta.get("amended_by")
-            if isinstance(amended_by, list):
-                for doc_id in amended_by:
-                    if not str(doc_id).startswith("error-"):
-                        sibling_doc_ids.add(str(doc_id))
-        
-        # Check which siblings are missing from chunks
-        existing_doc_ids = {c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id") for c in enriched_chunks}
-        missing_siblings = sibling_doc_ids - existing_doc_ids
-        
-        if missing_siblings:
-            print(f"[ENRICH] Found {len(missing_siblings)} missing sibling docs. Fetching from DB...")
-            sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
-            real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
+        retrieved_doc_numbers = [
+            meta["document_number"]
+            for meta in temporal_map.values()
+            if meta.get("document_number")
+        ]
 
-            # Merge metadata into real chunks and truncate content to avoid vLLM 400 Bad Request
-            for chunk in real_chunks:
-                s_doc_id = chunk.get("doc_id")
-                if s_doc_id in sibling_metadata:
-                    chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
-                # Truncate content to safe limit for reranker (e.g., 2000 chars)
-                if chunk.get("content") and len(chunk["content"]) > 2000:
-                    chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
-                enriched_chunks.append(chunk)
+        existing_doc_ids = {
+            c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+            for c in enriched_chunks
+        }
 
-            print(f"[ENRICH] Added {len(real_chunks)} full sibling chunks to candidate set.")
+        if retrieved_doc_numbers:
+            forward_amendments = api_client.get_forward_amendments(retrieved_doc_numbers)
+            missing_amendments = [
+                a for a in forward_amendments
+                if a["doc_id"] not in existing_doc_ids
+            ]
+
+            if missing_amendments:
+                missing_doc_ids = [a["doc_id"] for a in missing_amendments]
+                print(f"[ENRICH] Forward injection: {len(missing_amendments)} amendment docs not in candidate set. Fetching chunks...")
+                injected_chunks = api_client.get_chunks_by_doc_ids(missing_doc_ids)
+
+                amendment_meta_by_doc_id = {a["doc_id"]: a for a in missing_amendments}
+                for chunk in injected_chunks:
+                    chunk_doc_id = chunk.get("doc_id")
+                    if chunk_doc_id in amendment_meta_by_doc_id:
+                        amend_meta = amendment_meta_by_doc_id[chunk_doc_id]
+                        chunk["metadata"] = {**chunk.get("metadata", {}), **amend_meta}
+                    if chunk.get("content") and len(chunk["content"]) > 2000:
+                        chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
+                    enriched_chunks.append(chunk)
+
+                print(f"[ENRICH] Injected {len(injected_chunks)} chunks from {len(missing_amendments)} amendment docs.")
+            else:
+                print(f"[ENRICH] Forward injection: all amendment docs already in candidate set.")
     except Exception as e:
-        print(f"[ENRICH] Error during sibling enrichment: {e}")
+        print(f"[ENRICH] Error during forward amendment injection: {e}")
+
+    # Backward sibling enrichment for AMENDMENT queries (original amended_by approach)
+    # AND for historical queries (where semantic search might only find the new doc, but we need the old doc it replaced).
+    if query_type == "AMENDMENT" or state.get("query_is_historical", False):
+        try:
+            sibling_doc_nums = set()
+            for fp, meta in temporal_map.items():
+                amended_by = meta.get("amended_by")
+                if isinstance(amended_by, list):
+                    for doc_num in amended_by:
+                        if not str(doc_num).startswith("error-"):
+                            sibling_doc_nums.add(str(doc_num))
+
+            if sibling_doc_nums:
+                sibling_doc_ids = set(api_client.get_doc_ids_by_doc_numbers(list(sibling_doc_nums)))
+                
+                existing_doc_ids_now = {
+                    c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+                    for c in enriched_chunks
+                }
+                missing_siblings = sibling_doc_ids - existing_doc_ids_now
+
+                if missing_siblings:
+                    print(f"[ENRICH] Backward sibling: {len(missing_siblings)} docs missing. Fetching from DB...")
+                    sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
+                    real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
+
+                    for chunk in real_chunks:
+                        s_doc_id = chunk.get("doc_id")
+                        if s_doc_id in sibling_metadata:
+                            chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
+                        if chunk.get("content") and len(chunk["content"]) > 2000:
+                            chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
+                        enriched_chunks.append(chunk)
+
+                    print(f"[ENRICH] Added {len(real_chunks)} backward sibling chunks.")
+        except Exception as e:
+            print(f"[ENRICH] Error during backward sibling enrichment: {e}")
 
     enriched_entities = enrich(entities)
     enriched_relationships = enrich(relationships)
@@ -403,11 +445,14 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
     if not query:
         return {"error": "No query for reranking"}
     
-    # Get retrieved data
-    entities = state.get("retrieved_entities", [])
-    relationships = state.get("retrieved_relationships", [])
-    chunks = state.get("retrieved_chunks", [])
-    
+    # Get retrieved data — cap before reranker to limit HTTP payload
+    _MAX_ENTITIES = 20
+    _MAX_RELS = 20
+    _MAX_CHUNKS = 30
+    entities = state.get("retrieved_entities", [])[:_MAX_ENTITIES]
+    relationships = state.get("retrieved_relationships", [])[:_MAX_RELS]
+    chunks = state.get("retrieved_chunks", [])[:_MAX_CHUNKS]
+
     if not entities and not relationships and not chunks:
         print("[RERANK] No data to rerank, setting zero confidence")
         return {
@@ -421,7 +466,7 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             "rerank_metadata": {"error": "No data to rerank"},
             "logs": ["No data to rerank"]
         }
-    
+
     try:
         # Rerank all sources
         query_is_historical = state.get("query_is_historical", False)
@@ -430,11 +475,12 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             entities=entities,
             relationships=relationships,
             chunks=chunks,
-            top_k_entities=None,  # Keep all
+            top_k_entities=None,
             top_k_relationships=None,
             top_k_chunks=None,
             use_temporal_boost=settings.use_temporal_scoring,
             query_cohort_year=state.get("query_cohort_year"),
+            query_academic_year=state.get("query_academic_year"),
             query_authority_scope=state.get("query_authority_scope"),
             query_is_historical=query_is_historical,
             query_type=state.get("query_type", "GENERAL")
@@ -515,58 +561,107 @@ def format_final_answer(state: QueryState) -> Dict[str, Any]:
     }
 
 
+def request_context(state: QueryState) -> Dict[str, Any]:
+    """
+    HITL node: pause and ask user for missing student context (cohort / education system).
+    Resumes when user provides: {"cohort_year": int, "education_system": str}
+    """
+    from langgraph.types import interrupt
+
+    cohort_year = state.get("query_cohort_year")
+    edu_system = state.get("education_system")
+
+    missing = []
+    if cohort_year is None:
+        missing.append("khóa học (ví dụ: 2022, K22)")
+    if edu_system is None:
+        missing.append("hệ đào tạo (chinh_quy / lien_thong / tu_xa)")
+
+    response = interrupt({
+        "action": "request_context",
+        "missing_fields": missing,
+        "message": f"Câu hỏi liên quan đến quy chế/quy định sinh viên. Vui lòng cung cấp: {', '.join(missing)}.",
+        "current_query": state.get("query", ""),
+    })
+
+    updates: Dict[str, Any] = {}
+    if isinstance(response, dict):
+        if "cohort_year" in response:
+            updates["query_cohort_year"] = response["cohort_year"]
+        if "education_system" in response:
+            updates["education_system"] = response["education_system"]
+
+    print(f"[HITL] Context received: {updates}")
+    return updates
+
+
 # ============================================================================
 # Graph Builder
 # ============================================================================
 
 builder = StateGraph(state_schema=QueryState)
 
-# Add nodes
-builder.add_node("prepare_input", prepare_input)
-builder.add_node("agent1_understand_query", agent1_understand_query)
-builder.add_node("retrieve_cohort_data", retrieve_cohort_data)
-builder.add_node("retrieve_amendment_data", retrieve_amendment_data)
-builder.add_node("retrieve_data", retrieve_data)
-builder.add_node("enrich_with_temporal_metadata", enrich_with_temporal_metadata)
-builder.add_node("filter_by_metadata", filter_by_metadata)
-builder.add_node("rerank_data", rerank_data)
-builder.add_node("agent3_generate_response", agent3_generate_response)
-builder.add_node("format_final_answer", format_final_answer)
+# Add nodes (wrapped with per-node wall-clock timing)
+builder.add_node("prepare_input", _timed("prepare_input", prepare_input))
+builder.add_node("agent1_understand_query", _timed("agent1_understand_query", agent1_understand_query))
+builder.add_node("retrieve_cohort_data", _timed("retrieve_cohort_data", retrieve_cohort_data))
+builder.add_node("retrieve_amendment_data", _timed("retrieve_amendment_data", retrieve_amendment_data))
+builder.add_node("retrieve_data", _timed("retrieve_data", retrieve_data))
+builder.add_node("enrich_with_temporal_metadata", _timed("enrich_with_temporal_metadata", enrich_with_temporal_metadata))
+builder.add_node("filter_by_metadata", _timed("filter_by_metadata", filter_by_metadata))
+builder.add_node("rerank_data", _timed("rerank_data", rerank_data))
+builder.add_node("agent3_generate_response", _timed("agent3_generate_response", agent3_generate_response))
+builder.add_node("format_final_answer", _timed("format_final_answer", format_final_answer))
+builder.add_node("request_context", request_context)
 
 # Set entry point
 builder.add_edge(START, "prepare_input")
 builder.add_edge("prepare_input", "agent1_understand_query")
 
-# Tri-mode routing after Agent 1:
-#   COHORT    → retrieve_cohort_data
-#   AMENDMENT → retrieve_amendment_data
-#   GENERAL   → retrieve_data (LightRAG)
+# Consolidated routing after Agent 1:
+#   request_context → stop and ask user (HITL)
+#   retrieve_cohort_data →Filtered Qdrant search
+#   retrieve_amendment_data → PostgreSQL amendment chain
+#   retrieve_data → Standard LightRAG retrieval
 builder.add_conditional_edges(
     "agent1_understand_query",
-    route_retrieval,
+    route_after_agent1,
     {
+        "request_context": "request_context",
         "retrieve_cohort_data": "retrieve_cohort_data",
         "retrieve_amendment_data": "retrieve_amendment_data",
         "retrieve_data": "retrieve_data",
     },
 )
 
-# COHORT path: results → rerank, 0 results → fallback to GENERAL
+# After user provides context, re-route to the correct retrieval node
 builder.add_conditional_edges(
-    "retrieve_cohort_data",
-    route_after_cohort,
+    "request_context",
+    route_after_agent1,
     {
-        "rerank_data": "rerank_data",
+        "request_context": "request_context",
+        "retrieve_cohort_data": "retrieve_cohort_data",
+        "retrieve_amendment_data": "retrieve_amendment_data",
         "retrieve_data": "retrieve_data",
     },
 )
 
-# AMENDMENT path: results → rerank, no ref / 0 results → fallback to GENERAL
+# COHORT path: results → enrich → filter → rerank, 0 results → fallback to GENERAL
+builder.add_conditional_edges(
+    "retrieve_cohort_data",
+    route_after_cohort,
+    {
+        "enrich_with_temporal_metadata": "enrich_with_temporal_metadata",
+        "retrieve_data": "retrieve_data",
+    },
+)
+
+# AMENDMENT path: results → enrich → filter → rerank, no ref / 0 results → fallback to GENERAL
 builder.add_conditional_edges(
     "retrieve_amendment_data",
     route_after_amendment,
     {
-        "rerank_data": "rerank_data",
+        "enrich_with_temporal_metadata": "enrich_with_temporal_metadata",
         "retrieve_data": "retrieve_data",
     },
 )
@@ -576,7 +671,6 @@ builder.add_edge("retrieve_data", "enrich_with_temporal_metadata")
 builder.add_edge("enrich_with_temporal_metadata", "filter_by_metadata")
 builder.add_edge("filter_by_metadata", "rerank_data")
 
-# Common tail: rerank → answer → format → end
 builder.add_edge("rerank_data", "agent3_generate_response")
 builder.add_edge("agent3_generate_response", "format_final_answer")
 builder.add_edge("format_final_answer", END)

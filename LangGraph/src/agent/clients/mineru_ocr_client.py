@@ -8,7 +8,7 @@ from PIL import Image
 
 from agent.config import settings
 
-DEFAULT_TIMEOUT = 600  # 10 minutes for a full PDF
+DEFAULT_TIMEOUT = 1200  # 20 minutes for large PDFs
 
 class MinerUOCRClientError(RuntimeError):
     pass
@@ -42,7 +42,9 @@ class MinerUOCRClient:
         """Normalize Vietnamese Unicode diacritics to reduce OCR tone-mark errors."""
         try:
             from underthesea import text_normalize
-            return text_normalize(text)
+            lines = text.split('\n')
+            normalized = [text_normalize(line) if line.strip() else line for line in lines]
+            return '\n'.join(normalized)
         except Exception:
             return text
 
@@ -51,19 +53,27 @@ class MinerUOCRClient:
         import httpx
         endpoint = api_url.rstrip("/") + "/file_parse"
         print(f"[MinerU OCR] Uploading to {endpoint}")
+        vlm_server_url = settings.mineru_ocr.vlm_server_url
+        extra_data: dict = {}
+        if vlm_server_url:
+            extra_data["backend"] = "vlm-http-client"
+            extra_data["server_url"] = vlm_server_url
+        else:
+            extra_data["backend"] = "hybrid-auto-engine"
+
         with open(file_path, "rb") as f:
             resp = httpx.post(
                 endpoint,
                 files={"files": (Path(file_path).name, f, "application/pdf")},
                 data={
-                    "backend": "hybrid-auto-engine",
-                    "lang_list": "latin",   # Vietnamese is in the Latin OCR group
+                    **extra_data,
                     "parse_method": "auto",
+                    "lang_list": "latin",
                     "return_md": "true",
                     "table_enable": "true",
                     "formula_enable": "false",
                 },
-                timeout=600,
+                timeout=self.timeout,
             )
         resp.raise_for_status()
         result = resp.json()

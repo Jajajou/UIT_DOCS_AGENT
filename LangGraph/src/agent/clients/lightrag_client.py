@@ -1,13 +1,45 @@
 import requests
 import os
+import threading
 import typing as t
 import json
 import psycopg2
+import psycopg2.pool
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from agent.config import PROJECT_ROOT
 DEFAULT_TIMEOUT = 300  # seconds
+
+_pg_pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
+_pg_pool_lock = threading.Lock()
+
+
+class _PooledConn:
+    """Proxies a psycopg2 connection; .close() returns it to the pool."""
+    __slots__ = ("_pool", "_conn")
+
+    def __init__(self, pool: psycopg2.pool.ThreadedConnectionPool, conn) -> None:
+        object.__setattr__(self, "_pool", pool)
+        object.__setattr__(self, "_conn", conn)
+
+    def __getattr__(self, name: str):
+        return getattr(object.__getattribute__(self, "_conn"), name)
+
+    def __setattr__(self, name: str, value) -> None:
+        setattr(object.__getattribute__(self, "_conn"), name, value)
+
+    def __enter__(self):
+        object.__getattribute__(self, "_conn").__enter__()
+        return self
+
+    def __exit__(self, *args):
+        return object.__getattribute__(self, "_conn").__exit__(*args)
+
+    def close(self) -> None:
+        pool = object.__getattribute__(self, "_pool")
+        conn = object.__getattribute__(self, "_conn")
+        pool.putconn(conn)
 
 
 class LightRAGAPIError(RuntimeError):
@@ -378,21 +410,14 @@ class LightRAGAPIClient:
     # ------------------------------ temporal metadata management ------------------------------
 
     def _get_pg_connection(self):
-        """
-        Get PostgreSQL connection for direct metadata management.
-
-        LightRAG stores documents in PostgreSQL when using PGKVStorage.
-        This allows us to update document metadata directly.
-        """
         load_dotenv(f"{PROJECT_ROOT}/.env.lightrag")
-
         return psycopg2.connect(
-                host="localhost",
-                port=5433,
-                user=os.getenv("POSTGRES_USER"),
-                password=os.getenv("POSTGRES_PASSWORD"),
-                database=os.getenv("POSTGRES_DATABASE", "lightrag")
-            )
+            host="localhost",
+            port=5433,
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            database=os.getenv("POSTGRES_DATABASE", "lightrag"),
+        )
 
     def update_document_metadata_by_track_id(
         self,
@@ -466,7 +491,7 @@ class LightRAGAPIClient:
     def save_temporal_metadata(
         self,
         track_id: str,
-        doc_id: str,
+        doc_id: str | None,
         metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -507,6 +532,7 @@ class LightRAGAPIClient:
             student_cohorts = metadata.get("student_cohorts")
             amends_documents = metadata.get("amends_documents")
             amended_clauses = metadata.get("amended_clauses")
+            education_system = metadata.get("education_system")
             extraction_method = metadata.get("extraction_method")
             extraction_confidence = metadata.get("extraction_confidence")
 
@@ -514,7 +540,7 @@ class LightRAGAPIClient:
             known_fields = {
                 "document_number", "document_type", "valid_from", "valid_until",
                 "cohort_years", "cohort_scope", "student_cohorts", "amends_documents",
-                "amended_clauses",
+                "amended_clauses", "education_system",
                 "extraction_method", "extraction_confidence"
             }
             additional_metadata = {
@@ -531,6 +557,7 @@ class LightRAGAPIClient:
                         cohort_years, cohort_scope, student_cohorts,
                         amends_documents,
                         amended_clauses,
+                        education_system,
                         extraction_method, extraction_confidence,
                         extraction_timestamp,
                         additional_metadata
@@ -541,12 +568,13 @@ class LightRAGAPIClient:
                         %s, %s, %s,
                         %s,
                         %s,
+                        %s,
                         %s, %s,
                         CURRENT_TIMESTAMP,
                         %s
                     )
-                    ON CONFLICT (doc_id) DO UPDATE SET
-                        track_id = EXCLUDED.track_id,
+                    ON CONFLICT (workspace, track_id) WHERE track_id IS NOT NULL DO UPDATE SET
+                        doc_id = COALESCE(EXCLUDED.doc_id, temporal_metadata.doc_id),
                         workspace = EXCLUDED.workspace,
                         document_number = EXCLUDED.document_number,
                         document_type = EXCLUDED.document_type,
@@ -557,6 +585,7 @@ class LightRAGAPIClient:
                         student_cohorts = EXCLUDED.student_cohorts,
                         amends_documents = EXCLUDED.amends_documents,
                         amended_clauses = EXCLUDED.amended_clauses,
+                        education_system = EXCLUDED.education_system,
                         extraction_method = EXCLUDED.extraction_method,
                         extraction_confidence = EXCLUDED.extraction_confidence,
                         extraction_timestamp = CURRENT_TIMESTAMP,
@@ -572,6 +601,7 @@ class LightRAGAPIClient:
                     json.dumps(student_cohorts) if student_cohorts else None,
                     json.dumps(amends_documents) if amends_documents else None,
                     json.dumps(amended_clauses) if amended_clauses else None,
+                    education_system,
                     extraction_method, extraction_confidence,
                     json.dumps(additional_metadata) if additional_metadata else None
                 ))
@@ -1298,6 +1328,35 @@ class LightRAGAPIClient:
             print(f"[LightRAG Client] Error fetching chunks by doc_numbers: {e}")
             return []
 
+    def get_doc_ids_by_doc_numbers(
+        self,
+        doc_numbers: List[str]
+    ) -> List[str]:
+        """Fetch doc_ids for a list of document numbers."""
+        if not doc_numbers:
+            return []
+            
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+            
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT doc_id 
+                    FROM temporal_metadata 
+                    WHERE workspace = %s 
+                      AND document_number = ANY(%s)
+                    """,
+                    (workspace, list(doc_numbers))
+                )
+                rows = cur.fetchall()
+            conn.close()
+            return [r[0] for r in rows if r[0]]
+        except Exception as e:
+            print(f"[LightRAG Client] Error in get_doc_ids_by_doc_numbers: {e}")
+            return []
+
     def get_chunks_by_doc_ids(
         self,
         doc_ids: List[str]
@@ -1450,6 +1509,74 @@ class LightRAGAPIClient:
         except Exception as e:
             print(f"[LightRAG Client] Error fetching temporal metadata by file_sources: {e}")
             return {}
+
+    def get_forward_amendments(
+        self,
+        doc_numbers: List[str],
+    ) -> List[Dict[str, Any]]:
+        """
+        Find documents that declare they amend any of the given doc_numbers.
+
+        Uses amends_documents JSONB array to do a forward lookup:
+        given original doc numbers, return amendment doc metadata + file_path.
+        Returns [] on error (graceful fallback).
+        """
+        if not doc_numbers:
+            return []
+
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT DISTINCT tm.doc_id, tm.document_number, lds.file_path,
+                           tm.amends_documents, tm.amended_by_documents,
+                           tm.valid_from::text, tm.valid_until::text,
+                           tm.cohort_years, tm.is_archived, tm.extraction_confidence
+                    FROM temporal_metadata tm
+                    JOIN lightrag_doc_status lds ON tm.doc_id = lds.id,
+                    jsonb_array_elements_text(tm.amends_documents) AS amended_num
+                    WHERE tm.workspace = %s
+                      AND tm.amends_documents IS NOT NULL
+                      AND jsonb_array_length(tm.amends_documents) > 0
+                      AND amended_num = ANY(%s)
+                    """,
+                    (workspace, list(doc_numbers))
+                )
+                rows = cur.fetchall()
+            conn.close()
+
+            results = []
+            for row in rows:
+                doc_id, doc_num, file_path, amends_docs, amended_by_docs, valid_from, valid_until, cohort_years, is_archived, conf = row
+
+                def ensure_list(val):
+                    if isinstance(val, str):
+                        try:
+                            return json.loads(val)
+                        except Exception:
+                            return []
+                    return val or []
+
+                results.append({
+                    "doc_id": doc_id,
+                    "document_number": doc_num,
+                    "file_path": file_path,
+                    "amends_documents": ensure_list(amends_docs),
+                    "amended_by": ensure_list(amended_by_docs),
+                    "valid_from": valid_from,
+                    "valid_until": valid_until,
+                    "cohort_years": ensure_list(cohort_years),
+                    "is_archived": bool(is_archived),
+                    "extraction_confidence": conf,
+                })
+            return results
+
+        except Exception as e:
+            print(f"[LightRAG Client] Error in get_forward_amendments: {e}")
+            return []
 
     def get_doc_id_by_track_id(
         self,

@@ -5,7 +5,7 @@ from contextvars import ContextVar
 from dotenv import load_dotenv
 
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,9 +28,10 @@ with open(_config_yaml_path, 'r', encoding='utf-8') as f:
 class MinerUOCRConfig(BaseModel):
     model_name: str
     skip_repeat: bool = True
-    # Remote OCR service URL (e.g. https://xxx.ngrok-free.app). When set,
-    # mineru_ocr_client sends pages over HTTP instead of running MLX locally.
+    # Remote OCR service URL (mineru-api). When set, sends PDFs via HTTP.
     api_url: Optional[str] = None
+    # VLM inference server URL (simple_vllm_server). Required when api_url set.
+    vlm_server_url: Optional[str] = None
 
 class QueryThresholdsConfig(BaseModel):
     query_confidence_threshold: float
@@ -78,8 +79,9 @@ class Config(BaseModel):
     # Environment variables
     openai_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
     openai_base_url: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_BASE_URL"))
-    llm_model: str = Field(default_factory=lambda: os.getenv("LLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"))
-    indexing_llm_model: str = Field(default_factory=lambda: os.getenv("INDEXING_LLM_MODEL", os.getenv("LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")))
+    llm_model: str = Field(default_factory=lambda: os.getenv("LLM_MODEL", "Qwen/Qwen3.5-9B"))
+    agent3_llm_model: Optional[str] = Field(default_factory=lambda: os.getenv("AGENT3_LLM_MODEL") or os.getenv("LLM_MODEL") or "Qwen/Qwen3.5-9B")
+    indexing_llm_model: str = Field(default_factory=lambda: os.getenv("INDEXING_LLM_MODEL", os.getenv("LLM_MODEL", "Qwen/Qwen3.5-9B")))
     agent1_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT1_TEMPERATURE", "0.1")))
     agent3_temperature: float = Field(default_factory=lambda: float(os.getenv("AGENT3_TEMPERATURE", "0.3")))
     lightrag_url: Optional[str] = Field(default_factory=lambda: os.getenv("LIGHTRAG_URL"))

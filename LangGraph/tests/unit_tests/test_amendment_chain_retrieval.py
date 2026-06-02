@@ -160,13 +160,13 @@ class TestRouteAfterAmendment:
         state: QueryState = {"messages": [], "logs": [], "amendment_fallback": True}
         assert route_after_amendment(state) == "retrieve_data"
 
-    def test_fallback_false_routes_to_rerank(self):
+    def test_fallback_false_routes_to_enrich(self):
         state: QueryState = {"messages": [], "logs": [], "amendment_fallback": False}
-        assert route_after_amendment(state) == "rerank_data"
+        assert route_after_amendment(state) == "enrich_with_temporal_metadata"
 
-    def test_missing_fallback_defaults_to_rerank(self):
+    def test_missing_fallback_defaults_to_enrich(self):
         state: QueryState = {"messages": [], "logs": []}
-        assert route_after_amendment(state) == "rerank_data"
+        assert route_after_amendment(state) == "enrich_with_temporal_metadata"
 
 
 # ============================================================================

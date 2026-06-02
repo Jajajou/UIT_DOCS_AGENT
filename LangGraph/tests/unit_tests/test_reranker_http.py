@@ -28,7 +28,10 @@ class TestComputeScoresHTTP:
         """HTTP mode: response data list is parsed into float scores."""
         fake_response = MagicMock()
         fake_response.json.return_value = {
-            "data": [{"score": 0.9}, {"score": 0.3}]
+            "results": [
+                {"index": 0, "relevance_score": 0.9},
+                {"index": 1, "relevance_score": 0.3}
+            ]
         }
         with patch("agent.clients.reranker.settings") as mock_settings:
             mock_settings.reranker_base_url = "http://fake-reranker:8001"

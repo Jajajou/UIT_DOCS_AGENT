@@ -1,6 +1,6 @@
 import re
-from typing import List, Dict, Any, Union, Optional
-from lightrag.utils import Tokenizer, logger
+from typing import List, Dict, Any, Optional
+from lightrag.utils import Tokenizer
 from lightrag.operate import chunking_by_token_size
 
 # Pattern for Vietnamese legal clauses: "Điều 1:", "Điều 2.", etc.

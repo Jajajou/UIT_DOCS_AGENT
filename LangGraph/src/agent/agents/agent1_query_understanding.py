@@ -37,7 +37,8 @@ llm = init_chat_model(
     model=settings.llm_model,
     streaming=False,
     temperature=settings.agent1_temperature,
-    model_kwargs={"tool_choice": "none"}
+    max_tokens=2048,
+    extra_body={"chat_template_kwargs": {"enable_thinking": False}},
 )
 
 
@@ -131,13 +132,15 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_confidence = get_attr_safe(understanding,"confidence")
         query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
         query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
+        query_academic_year = get_attr_safe(understanding,"query_academic_year")
         query_authority_scope = get_attr_safe(understanding,"query_authority_scope")
         query_type = get_attr_safe(understanding,"query_type", "GENERAL")
         query_document_ref = get_attr_safe(understanding,"query_document_ref")
         query_is_historical = bool(get_attr_safe(understanding, "query_is_historical", False))
         if query_is_historical:
             print(f"[AGENT 1] Historical query detected (LLM): {query[:60]}")
-        education_system = get_attr_safe(understanding, "education_system", "chinh_quy")
+        education_system = get_attr_safe(understanding, "education_system")
+        needs_student_context = bool(get_attr_safe(understanding, "needs_student_context", False))
 
         # Retrieval parameters
         suggested_mode = get_attr_safe(understanding,"suggested_mode")
@@ -171,11 +174,13 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_confidence": query_confidence,
             "query_confidence_reason": query_confidence_reason,
             "query_cohort_year": query_cohort_year,
+            "query_academic_year": query_academic_year,
             "query_authority_scope": query_authority_scope,
             "query_type": query_type,
             "query_document_ref": query_document_ref,
             "query_is_historical": query_is_historical,
             "education_system": education_system,
+            "needs_student_context": needs_student_context,
             "retrieval_mode": suggested_mode,
             "top_k": suggested_top_k,
             "chunk_top_k": suggested_chunk_top_k,
@@ -207,12 +212,41 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
 # Decision Function
 # ============================================================================
 
-def decide_after_agent1(state: QueryState) -> str:
+def route_after_agent1(state: QueryState) -> str:
     """
-    Decide next step after Agent 1.
-    Always retrieves — clarification gating removed.
-    Temporal reranking handles result quality downstream.
+    Consolidated routing after Agent 1.
+    
+    1. Context Guard: If query requires specific student info (needs_student_context=True)
+       but it's missing, route to request_context (HITL).
+    2. Retrieval Router: Otherwise, route to specific retrieval paths.
     """
+    import os
+    query_type = state.get("query_type", "GENERAL")
+    cohort_year = state.get("query_cohort_year")
+    needs_context = state.get("needs_student_context", False)
+    query_is_historical = state.get("query_is_historical", False)
+    
+    # 1. Context Guard (Only if LLM determines context is needed and cohort unknown)
+    # Gate on cohort_year only — edu_system is optional enrichment, not required for routing
+    # Skip HITL in eval mode to prevent blocking
+    eval_mode = os.getenv("EVAL_MODE", "false").lower() == "true"
+    if needs_context and cohort_year is None and not eval_mode:
+        print(f"[AGENT 1] Context needed but cohort missing. Routing to request_context.")
+        return "request_context"
+
+    # 2. Standard Retrieval Routing
+    if os.getenv("USE_METADATA_ROUTING", "true").lower() == "false":
+        return "retrieve_data"
+        
+    # If historical, always use GENERAL path to allow old documents to surface
+    if query_is_historical:
+        return "retrieve_data"
+
+    if query_type == "COHORT" or cohort_year is not None:
+        return "retrieve_cohort_data"
+    if query_type == "AMENDMENT":
+        return "retrieve_amendment_data"
+        
     return "retrieve_data"
 
 
@@ -222,5 +256,5 @@ def decide_after_agent1(state: QueryState) -> str:
 
 __all__ = [
     "agent1_understand_query",
-    "decide_after_agent1",
+    "route_after_agent1",
 ]

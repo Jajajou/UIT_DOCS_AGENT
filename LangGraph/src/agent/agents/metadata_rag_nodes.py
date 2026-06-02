@@ -3,7 +3,7 @@ import uuid
 import logging
 import json
 import re
-from typing import List, Dict, Any, Tuple, Union, Literal
+from typing import List, Dict, Any, Literal
 from datetime import datetime
 
 # LangGraph
@@ -21,8 +21,8 @@ from ..states.metadata_rag_state import MetadataRAGState
 from ..core.prompts import METADATA_PROMPTS
 from .header_extraction import extract_from_header
 from langchain.chat_models import init_chat_model
-from agent.config import get_attr_safe, settings
-from agent.utils import strip_think_tags
+from agent.config import settings
+from agent.utils import strip_think_tags, normalize_docnum
 from pydantic import BaseModel, Field, field_validator, ValidationInfo
 
 llm = init_chat_model(
@@ -33,7 +33,9 @@ llm = init_chat_model(
     streaming=False,
     temperature=0,
     model_kwargs={
-        "tool_choice": "none"
+        "tool_choice": "none",
+        "extra_body": {"enable_thinking": False},
+        "max_tokens": 1024,
     }
 )
 
@@ -54,6 +56,18 @@ except Exception as e:
     logger.error(f"Error loading vector DB: {e}")
     print(f"Error loading vector DB: {e}")
     raise e
+
+
+
+
+# Cache for static query embeddings — same queries used for every doc
+_QUERY_EMBEDDING_CACHE: Dict[str, List[float]] = {}
+
+
+def get_cached_query_embedding(query: str) -> List[float]:
+    if query not in _QUERY_EMBEDDING_CACHE:
+        _QUERY_EMBEDDING_CACHE[query] = get_embeddings_from_vllm([query])[0]
+    return _QUERY_EMBEDDING_CACHE[query]
 
 
 # --- RERANKER HTTP CLIENT ---
@@ -136,7 +150,7 @@ def extract_header_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
         file_source = state["file_source"]
         
         logger.info(f"Extracting header metadata for {file_source}")
-        header_result = extract_from_header(doc_text, file_source)
+        header_result = extract_from_header(doc_text, file_source, fast=True)
         
         # Simple regex for Type and Authority from the top 500 chars
         header_chunk = doc_text[:500].upper()
@@ -231,12 +245,12 @@ def index_to_vector_db_node(state: MetadataRAGState) -> Dict[str, Any]:
         print(f"Error indexing: {e}")
         return {"error": str(e), "success": False}
 
-def _rag_retrieve_and_rerank(collection_name: str, query: str, top_k_retrieve=50, top_k_rerank=5) -> List[str]:
+def _rag_retrieve_and_rerank(collection_name: str, query: str, top_k_retrieve=10, top_k_rerank=5) -> List[str]:
     """Helper function: Retrieve (Bi-encoder) -> Rerank (Cross-encoder)."""
     collection = CHROMA_CLIENT.get_collection(collection_name)
 
-    # 1. Bi-encoder Retrieval (using vLLM API)
-    query_vec = get_embeddings_from_vllm([query])[0]
+    # 1. Bi-encoder Retrieval — use cached embedding for static queries
+    query_vec = get_cached_query_embedding(query)
     results = collection.query(
         query_embeddings=[query_vec],
         n_results=top_k_retrieve
@@ -280,99 +294,67 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
 
         updates: Dict[str, Any] = {}
 
-        # NOTE: document_number and amends_documents are extracted by
-        # header_extraction.py (positional, first 2000 chars) BEFORE this
-        # subgraph is invoked. RAG is kept only for cohort_years and valid_dates
-        # which are legitimately scattered throughout curriculum documents.
+        # NOTE: document_number, amends_documents, document_type are extracted by
+        # header_extraction.py (positional, first 2000 chars) BEFORE this subgraph.
+        # RAG is only needed for cohort_years and valid_dates which are scattered
+        # throughout curriculum documents. Both fields are extracted in ONE LLM call.
 
-        # --- 1. Valid Dates (Temporal Aware) ---
-        q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
-        docs_date = _rag_retrieve_and_rerank(col_name, q_date)
-        updates["valid_from_chunks"] = docs_date
-        
         current_date = datetime.now().strftime("%Y-%m-%d")
-        prompt_date = METADATA_PROMPTS['valid_dates'].format(
-            current_date=current_date,
-            filename=filename,
-            context="\n---\n".join(docs_date)
+
+        # Retrieve relevant chunks for dates and cohorts (2 embed calls, both cached)
+        q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
+        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng?"
+        docs_date = _rag_retrieve_and_rerank(col_name, q_date)
+        docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
+
+        updates["valid_from_chunks"] = docs_date
+        updates["cohort_years_chunks"] = docs_cohort
+
+        # Single combined LLM call for both dates and cohorts
+        combined_context = (
+            "<dates_context>\n" + "\n---\n".join(docs_date) + "\n</dates_context>\n\n"
+            "<cohorts_context>\n" + "\n---\n".join(docs_cohort) + "\n</cohorts_context>"
         )
-
+        combined_prompt = (
+            f"Tài liệu: {filename}\nNgày hiện tại: {current_date}\n\n"
+            f"{combined_context}\n\n"
+            "Trích xuất thông tin và trả về JSON duy nhất:\n"
+            "- valid_from: ngày hiệu lực/ban hành (YYYY-MM-DD hoặc null)\n"
+            "- valid_until: ngày hết hiệu lực (YYYY-MM-DD hoặc null, chỉ điền nếu văn bản nêu rõ ngày kết thúc)\n"
+            "- cohort_years: \n"
+            "  * Nếu văn bản là QUY ĐỊNH/QUY CHẾ/THÔNG TƯ/QUYẾT ĐỊNH áp dụng CHUNG (không đề cập khóa cụ thể) → [\"*\"]\n"
+            "  * Nếu đề cập khóa cụ thể (K2022, nhập học năm 2024, MSSV 20XX...) → [năm_nhập_học, ...]\n"
+            "  * Chỉ dùng [] khi tài liệu KHÔNG phải văn bản quy định học thuật (VD: biên bản họp, thư mời)\n"
+            "- cohort_scope: \"universal\" nếu [\"*\"], \"explicit\" nếu năm cụ thể, \"unspecified\" nếu []\n"
+            "- academic_year: năm học áp dụng (format YYYY-YYYY, VD \"2024-2025\", hoặc null nếu không đề cập)\n\n"
+            "LƯU Ý: Phần lớn văn bản quy định/quy chế đại học áp dụng cho TẤT CẢ sinh viên → dùng [\"*\"].\n"
+            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\", \"academic_year\": \"YYYY-YYYY hoặc null\"}"
+        )
         if feedback_instruction:
-            prompt_date += feedback_instruction
+            combined_prompt += feedback_instruction
 
-        res_date = llm.invoke(prompt_date)
-        content_date = res_date.content if hasattr(res_date, 'content') else str(res_date)
+        res = llm.invoke(combined_prompt)
+        content = res.content if hasattr(res, "content") else str(res)
+        content = strip_think_tags(content) if isinstance(content, str) else str(content)
 
-        # Ensure content_date is a string
-        if not isinstance(content_date, str):
-            content_date = str(content_date)
-
-        # Try to parse JSON from response
         try:
-            json_match = re.search(r'\{.*?"valid_from".*?\}', content_date, re.DOTALL)
+            json_match = re.search(r'\{[^{}]*"valid_from"[^{}]*\}', content, re.DOTALL)
             if json_match:
-                date_data = json.loads(json_match.group())
-                updates["valid_from"] = date_data.get("valid_from")
-                updates["valid_until"] = date_data.get("valid_until")
+                combined_data = json.loads(json_match.group())
+                updates["valid_from"] = combined_data.get("valid_from")
+                updates["valid_until"] = combined_data.get("valid_until")
+                updates["cohort_years"] = combined_data.get("cohort_years", [])
+                updates["cohort_scope"] = combined_data.get("cohort_scope", "unspecified")
+                updates["academic_year"] = combined_data.get("academic_year")
             else:
                 updates["valid_from"] = None
                 updates["valid_until"] = None
-        except Exception as e:
-            logger.warning(f"Error parsing date JSON: {e}")
-            print(f"Error parsing date JSON: {e}")
-            updates["valid_from"] = None
-            updates["valid_until"] = None
-        
-        # --- 2. Document Type ---
-        q_type = "Loại văn bản: Quyết định, Thông báo, Quy định, Quy chế, Hướng dẫn?"
-        docs_type = _rag_retrieve_and_rerank(col_name, q_type)
-        
-        prompt_type = f"Phân tích các đoạn văn bản sau và xác định loại văn bản (document_type). Ví dụ: 'Quyết định', 'Thông báo', 'Quy định', 'Hướng dẫn'.\n\nContext:\n{chr(10).join(docs_type)}\n\nTrả về JSON: {{\"document_type\": \"...\"}}"
-        if feedback_instruction:
-            prompt_type += feedback_instruction
-            
-        res_type = llm.invoke(prompt_type)
-        try:
-            type_data = json.loads(strip_think_tags(res_type.content if hasattr(res_type, 'content') else str(res_type)))
-            updates["document_type"] = type_data.get("document_type")
-        except:
-            pass
-
-        # --- 3. Cohorts ---
-        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng? Khóa 1 khóa 2 khóa 3?"
-        docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
-        updates["cohort_years_chunks"] = docs_cohort
-
-        # Use current_date for temporal awareness (already defined above)
-        prompt_cohort = METADATA_PROMPTS['cohorts'].format(
-            current_date=current_date,
-            filename=filename,
-            context="\n---\n".join(docs_cohort)
-        )
-
-        if feedback_instruction:
-            prompt_cohort += feedback_instruction
-
-        res_cohort = llm.invoke(prompt_cohort)
-        content_cohort = res_cohort.content if hasattr(res_cohort, 'content') else str(res_cohort)
-
-        # Ensure content is string
-        if not isinstance(content_cohort, str):
-            content_cohort = str(content_cohort)
-
-        # Try to parse JSON from response
-        try:
-            json_match = re.search(r'\{.*?"cohort_years".*?\}', content_cohort, re.DOTALL)
-            if json_match:
-                cohort_data = json.loads(json_match.group())
-                updates["cohort_years"] = cohort_data.get("cohort_years", [])
-                updates["cohort_scope"] = cohort_data.get("cohort_scope", "unspecified")
-            else:
                 updates["cohort_years"] = []
                 updates["cohort_scope"] = "unspecified"
         except Exception as e:
-            logger.warning(f"Error parsing cohort JSON: {e}")
-            print(f"Error parsing cohort JSON: {e}")
+            logger.warning(f"Error parsing combined metadata JSON: {e}")
+            updates["valid_from"] = None
+            updates["valid_until"] = None
             updates["cohort_years"] = []
             updates["cohort_scope"] = "unspecified"
         
@@ -530,10 +512,17 @@ class DocumentMetadata(BaseModel):
     issuing_authority: str | None = None # "Hiệu trưởng", "Phòng Đào tạo"
     valid_from: str | None = None
     valid_until: str | None = None
+    academic_year: str | None = None
     cohort_years: List[int | str] = Field(default_factory=list)
     cohort_scope: str = "unspecified"  # "universal", "explicit", "unspecified"
     amends_documents: List[str] = Field(default_factory=list)
     extraction_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+
+    @field_validator("document_number", mode="before")
+    @classmethod
+    def normalize_document_number(cls, v):
+        """Normalize to canonical form: NUM/[YEAR/]TYPE-ISSUER (uppercase, diacritics preserved/restored)."""
+        return normalize_docnum(v)
 
     @field_validator("valid_from", "valid_until")
     @classmethod
@@ -610,6 +599,7 @@ class MetadataReviewAction(BaseModel):
     issuing_authority: str | None = None
     valid_from: str | None = None
     valid_until: str | None = None
+    academic_year: str | None = None
     cohort_years: List[int | str] | None = None
     amends_documents: List[str] | None = None
 
@@ -624,6 +614,7 @@ def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
             issuing_authority=state.get("issuing_authority"),
             valid_from=state.get("valid_from"),
             valid_until=state.get("valid_until"),
+            academic_year=state.get("academic_year"),
             cohort_years=state.get("cohort_years", []),
             cohort_scope=state.get("cohort_scope", "unspecified"),
             amends_documents=state.get("amends_documents", []),
@@ -674,6 +665,7 @@ def review_metadata_node(state: MetadataRAGState) -> Command:
         "issuing_authority": state.get("issuing_authority"),
         "valid_from": state.get("valid_from"),
         "valid_until": state.get("valid_until"),
+        "academic_year": state.get("academic_year"),
         "cohort_years": state.get("cohort_years", []),
         "amends_documents": state.get("amends_documents", [])
     }
@@ -711,6 +703,7 @@ def review_metadata_node(state: MetadataRAGState) -> Command:
     if decision.issuing_authority is not None: updates["issuing_authority"] = decision.issuing_authority
     if decision.valid_from is not None: updates["valid_from"] = decision.valid_from
     if decision.valid_until is not None: updates["valid_until"] = decision.valid_until
+    if decision.academic_year is not None: updates["academic_year"] = decision.academic_year
     if decision.cohort_years is not None: updates["cohort_years"] = decision.cohort_years
     if decision.amends_documents is not None: updates["amends_documents"] = decision.amends_documents
 

@@ -591,7 +591,7 @@ def main():
     with open(pairs_path) as f:
         data = json.load(f)
 
-    pairs = data["pairs"]
+    pairs = data["pairs"] if isinstance(data, dict) else data
 
     # Initialize runner
     runner = TemporalEvaluationRunner(args.config, args.verbose, mock_mode=args.mock)
@@ -642,6 +642,7 @@ def main():
                 return _found(r, e) or _norm_sep(r) == _norm_sep(e)
 
             retrieved_docs = extract_retrieved_doc_numbers(state, db_conn=runner.db_conn)
+            mrr3 = mrr_at_k(retrieved_docs, expected_doc_numbers, k=3)
             response = ""
             if args.retrieval_only:
                 acc1 = 1.0 if any(any(_docnum_match(r, e) for e in expected_doc_numbers) for r in retrieved_docs) else 0.0
@@ -659,6 +660,7 @@ def main():
                 "query": pair.get("query"),
                 "expected_doc_numbers": expected_doc_numbers,
                 "accuracy@1": acc1,
+                "mrr@3": mrr3,
                 **tdce_metrics
             }
             if args.retrieval_only:
@@ -678,6 +680,7 @@ def main():
                 "type": pair.get("type", "general"),
                 "config": args.config,
                 "accuracy@1": 0.0,
+                "mrr@3": 0.0,
                 "ap@3": 0.0,
                 "authority_score": 0.0,
                 "error": str(e)
@@ -702,7 +705,7 @@ def main():
     # Compute averages
     if all_results:
         avg_metrics = {metric: sum(r.get(metric, 0.0) for r in all_results) / len(all_results)
-                       for metric in ["accuracy@1", "ap@3", "authority_score"]}
+                       for metric in ["accuracy@1", "mrr@3", "ap@3", "authority_score"]}
     else:
         avg_metrics = {}
 
@@ -717,9 +720,10 @@ def main():
         subset = [r for r in all_results if r["type"] == type_name]
         if not subset: continue
         avg_acc = sum(r["accuracy@1"] for r in subset) / len(subset)
+        avg_mrr3 = sum(r.get("mrr@3", 0.0) for r in subset) / len(subset)
         avg_ap3 = sum(r.get("ap@3", 0.0) for r in subset) / len(subset)
         avg_auth = sum(r.get("authority_score", 0.0) for r in subset) / len(subset)
-        print(f"  {type_name:20s}: acc={avg_acc:.2f} ap@3={avg_ap3:.2f} auth={avg_auth:.2f} n={len(subset)}")
+        print(f"  {type_name:20s}: acc={avg_acc:.2f} mrr@3={avg_mrr3:.2f} ap@3={avg_ap3:.2f} auth={avg_auth:.2f} n={len(subset)}")
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:

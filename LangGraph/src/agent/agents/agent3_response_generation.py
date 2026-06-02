@@ -7,9 +7,8 @@ It creates a comprehensive answer with hyperlinked references.
 
 from __future__ import annotations
 
-import os
 import re
-import json
+import time as _t
 from typing import Any, Dict, List, Tuple
 from datetime import datetime
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
@@ -27,20 +26,93 @@ from agent.utils import strip_think_tags, get_url
 # Configuration
 # ============================================================================
 
-llm = init_chat_model(
+llm_thinker = init_chat_model(
     model_provider="openai",
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
-    model=settings.llm_model,
+    model=settings.agent3_llm_model,
     streaming=False,
     temperature=settings.agent3_temperature,
-    model_kwargs={"tool_choice": "none"}
+    max_tokens=6000,
+    extra_body={
+        "enable_thinking": True,
+        "thinking_token_budget": 1024,
+    },
 )
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
+_FALLBACK_KEYWORDS = [
+    "không tìm thấy thông tin", "không có thông tin", "xin lỗi, tôi không",
+    "không thể trả lời", "không có dữ liệu",
+]
+_PARTIAL_KEYWORDS = [
+    "không đủ thông tin", "thông tin chưa đầy đủ", "thông tin hạn chế",
+    "chỉ tìm thấy một phần", "chưa tìm thấy đầy đủ",
+]
+
+
+def _classify_response_type(text: str) -> str:
+    """Deterministic response_type classifier — no LLM needed."""
+    if not text.strip():
+        return "fallback"
+    lower = text.lower()
+    if any(k in lower for k in _FALLBACK_KEYWORDS):
+        return "fallback"
+    if any(k in lower for k in _PARTIAL_KEYWORDS):
+        return "partial_answer"
+    return "full_answer"
+
+
+def _check_citation_validity(
+    final_answer: str,
+    reranked_chunks: List[Tuple[Dict[str, Any], float]],
+    references_list: List[Dict[str, Any]],
+) -> str:
+    """Option A: Rule-based citation check — no LLM needed.
+
+    Detects two classes of phantom citations:
+    1. [Nguồn N] references where N > len(references_list)
+    2. Doc numbers (e.g. 108/QĐ-ĐHCNTT) mentioned in answer but absent from retrieved chunks
+    """
+    # Collect retrieved doc numbers (normalised: strip separators, uppercase)
+    def _norm(s: str) -> str:
+        return re.sub(r"[\s/_\-]", "", s).upper()
+
+    retrieved_norms: set[str] = set()
+    for chunk, _ in reranked_chunks:
+        dn = chunk.get("metadata", {}).get("document_number", "")
+        if dn:
+            retrieved_norms.add(_norm(dn))
+
+    warnings: List[str] = []
+
+    # Check [Nguồn N] numbered refs exceed available sources
+    cited_nums = {int(m) for m in re.findall(r"\[Nguồn\s+(\d+)\]", final_answer)}
+    max_valid = len(references_list)
+    phantom_nums = sorted(n for n in cited_nums if n > max_valid)
+    if phantom_nums:
+        nums_str = ", ".join(str(n) for n in phantom_nums)
+        warnings.append(f"[Nguồn {nums_str}] không tồn tại trong kết quả tìm kiếm.")
+
+    # Check explicit doc numbers mentioned in answer
+    # Pattern: digits/UPPERCASE-UPPERCASE (e.g. 108/QĐ-ĐHCNTT)
+    mentioned = re.findall(r"\b\d+/[A-ZĐQTBCN][A-ZĐQTBCN\-]+", final_answer)
+    phantom_docs = sorted({d for d in mentioned if _norm(d) not in retrieved_norms})
+    if phantom_docs:
+        docs_str = ", ".join(phantom_docs)
+        warnings.append(f"Văn bản {docs_str} không có trong dữ liệu truy xuất.")
+
+    if warnings:
+        print(f"[AGENT 3] Citation check: {len(warnings)} issue(s) found")
+        return "\n\n> **Cảnh báo trích dẫn:** " + " ".join(warnings)
+
+    print("[AGENT 3] Citation check: OK")
+    return ""
+
 
 def _generate_expiration_warnings(
     reranked_chunks: List[Tuple[Dict[str, Any], float]],
@@ -206,7 +278,7 @@ def _format_reranked_data(
             lines.append(f"{i}. (score: {score:.2f})")
             if doc_num:
                 lines.append(f"   Document: {doc_num}")
-            lines.append(f"   Content: {content[:300]}...")
+            lines.append(f"   Content: {content[:800]}...")
             if file_source:
                 resolved = get_url(file_source)
                 lines.append(f"   Source: {resolved or file_source}")
@@ -270,8 +342,10 @@ def _generate_confidence_transparency(state: QueryState) -> str:
     warnings = []
     
     # 1. Low overall confidence warning
-    if confidence < 0.8:
-        warnings.append(f"Thông tin này được tổng hợp với độ tin cậy thấp ({confidence:.1%}).")
+    # ViRanker outputs raw logits; HTTP server applies sigmoid → ~0-1 range.
+    # sigmoid(-0.85) ≈ 0.3 is genuinely low relevance for this model.
+    if confidence < 0.3:
+        warnings.append("Thông tin này có thể chưa đầy đủ. Vui lòng xác nhận lại với Phòng Đào tạo.")
         
     # 2. Temporal ambiguity check (multiple conflicting amendments or old docs)
     unique_docs = set()
@@ -341,34 +415,57 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
     print("=" * 80)
 
     try:
-        # Format reranked data
+        # Format reranked data — chunks only (entities/rels are noise for regulatory RAG)
         reranked_data_formatted = _format_reranked_data(
-            reranked_entities,
-            reranked_relationships,
+            [],
+            [],
             reranked_chunks,
             top_n=10
         )
 
         # Prepare prompt
-        prompt_text = PROMPTS["response_generation_prompt"].format(
+        cohort_year = state.get("query_cohort_year")
+        academic_year = state.get("query_academic_year")
+        education_system = state.get("education_system")
+        student_context_note = ""
+        
+        context_parts = []
+        if cohort_year:
+            context_parts.append(f"Khóa: {cohort_year}")
+        if academic_year:
+            context_parts.append(f"Năm học: {academic_year}")
+        if education_system:
+            context_parts.append(f"Hệ đào tạo: {education_system}")
+            
+        if context_parts:
+            student_context_note = "<student_context>\n" + ", ".join(context_parts) + "\nƯu tiên thông tin áp dụng cho ngữ cảnh này.\n</student_context>"
+
+        thinking_prompt = PROMPTS["response_generation_thinking_prompt"].format(
             parsed_intention=parsed_intention,
             reranked_data_formatted=reranked_data_formatted,
+            student_context_note=student_context_note,
         )
-        
-        # Call LLM directly, strip think tags, parse manually
-        llm_json = llm.bind(response_format={"type": "json_object"})
 
-        msgs = [
-            SystemMessage(content=prompt_text),
-            HumanMessage(content=f"{parsed_intention}\n\nGenerate JSON response.")
+        human_content = parsed_intention
+
+        # Call 1: thinking pass — free text answer with CoT
+        thinking_msgs = [
+            SystemMessage(content=thinking_prompt),
+            HumanMessage(content=human_content)
         ]
-        raw_response = llm_json.invoke(input=msgs)
-        content = raw_response.content if hasattr(raw_response, "content") else str(raw_response)
+        _t1 = _t.perf_counter()
+        raw_thinking = llm_thinker.invoke(input=thinking_msgs)
+        print(f"[TIMING] agent3_call1_thinking: {_t.perf_counter() - _t1:.2f}s")
+        thinking_content = raw_thinking.content if hasattr(raw_thinking, "content") else str(raw_thinking)
+        response_text = strip_think_tags(thinking_content).strip()
+        print(f"[AGENT 3] Call 1 done, response length: {len(response_text)} chars")
 
-        content = strip_think_tags(content)
-
-        data = json.loads(content)
-        response_gen = ResponseGeneration(**data)
+        # Classify response_type deterministically — no LLM Call 2 needed
+        response_type_classified = _classify_response_type(response_text)
+        response_gen = ResponseGeneration(
+            response_type=response_type_classified,
+            response_text=response_text,
+        )
 
         if not response_gen:
             raise ValueError("LLM did not return structured output")
@@ -401,10 +498,15 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
                 final_answer += "\n"
             final_answer += transparency_notes
 
+        # Option A: rule-based citation validity check
+        citation_warning = _check_citation_validity(final_answer, reranked_chunks, references_list)
+        if citation_warning:
+            final_answer += citation_warning
+
         # Add partial answer suffix if needed
         if response_type == "partial_answer":
             final_answer += PROMPTS["partial_answer_suffix"]
-        
+
         # Log results
         print(f"[AGENT 3] ✓ Response generated")
         print(f"[AGENT 3] Response type: {response_type}")
