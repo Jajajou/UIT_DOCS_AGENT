@@ -342,7 +342,9 @@ def _generate_confidence_transparency(state: QueryState) -> str:
     warnings = []
     
     # 1. Low overall confidence warning
-    if confidence < 0.8:
+    # ViRanker outputs raw logits; HTTP server applies sigmoid → ~0-1 range.
+    # sigmoid(-0.85) ≈ 0.3 is genuinely low relevance for this model.
+    if confidence < 0.3:
         warnings.append("Thông tin này có thể chưa đầy đủ. Vui lòng xác nhận lại với Phòng Đào tạo.")
         
     # 2. Temporal ambiguity check (multiple conflicting amendments or old docs)
@@ -423,15 +425,20 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
 
         # Prepare prompt
         cohort_year = state.get("query_cohort_year")
+        academic_year = state.get("query_academic_year")
         education_system = state.get("education_system")
         student_context_note = ""
-        if cohort_year and education_system:
-            student_context_note = PROMPTS["student_context_note_template"].format(
-                cohort_year=cohort_year,
-                education_system=education_system
-            )
-        elif cohort_year:
-            student_context_note = f"<student_context>\nSinh viên khóa {cohort_year}.\n</student_context>"
+        
+        context_parts = []
+        if cohort_year:
+            context_parts.append(f"Khóa: {cohort_year}")
+        if academic_year:
+            context_parts.append(f"Năm học: {academic_year}")
+        if education_system:
+            context_parts.append(f"Hệ đào tạo: {education_system}")
+            
+        if context_parts:
+            student_context_note = "<student_context>\n" + ", ".join(context_parts) + "\nƯu tiên thông tin áp dụng cho ngữ cảnh này.\n</student_context>"
 
         thinking_prompt = PROMPTS["response_generation_thinking_prompt"].format(
             parsed_intention=parsed_intention,

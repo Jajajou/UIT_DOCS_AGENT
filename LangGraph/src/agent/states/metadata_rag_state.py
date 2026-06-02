@@ -36,6 +36,7 @@ class MetadataRAGState(TypedDict):
     
     valid_from: NotRequired[Optional[str]]
     valid_until: NotRequired[Optional[str]]
+    academic_year: NotRequired[Optional[str]]
     
     cohort_years: NotRequired[List[Union[int, str]]] # [2024, 2025] hoặc ["*"]
     cohort_scope: NotRequired[str]                   # "universal", "explicit", "unspecified"
@@ -52,5 +53,6 @@ class MetadataRAGState(TypedDict):
     # --- OUTPUT (Trả về Parent Graph) ---
     final_metadata: NotRequired[Dict[str, Any]]      # Dict hoàn chỉnh để save vào DB
     document_metadata: NotRequired[Dict[str, Any]]   # Shared key with IndexingState for subgraph→parent merge
+    temporal_extraction_complete: NotRequired[bool]
     success: bool
     error: NotRequired[str]

@@ -1328,6 +1328,35 @@ class LightRAGAPIClient:
             print(f"[LightRAG Client] Error fetching chunks by doc_numbers: {e}")
             return []
 
+    def get_doc_ids_by_doc_numbers(
+        self,
+        doc_numbers: List[str]
+    ) -> List[str]:
+        """Fetch doc_ids for a list of document numbers."""
+        if not doc_numbers:
+            return []
+            
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+            
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT doc_id 
+                    FROM temporal_metadata 
+                    WHERE workspace = %s 
+                      AND document_number = ANY(%s)
+                    """,
+                    (workspace, list(doc_numbers))
+                )
+                rows = cur.fetchall()
+            conn.close()
+            return [r[0] for r in rows if r[0]]
+        except Exception as e:
+            print(f"[LightRAG Client] Error in get_doc_ids_by_doc_numbers: {e}")
+            return []
+
     def get_chunks_by_doc_ids(
         self,
         doc_ids: List[str]

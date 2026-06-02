@@ -132,6 +132,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_confidence = get_attr_safe(understanding,"confidence")
         query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
         query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
+        query_academic_year = get_attr_safe(understanding,"query_academic_year")
         query_authority_scope = get_attr_safe(understanding,"query_authority_scope")
         query_type = get_attr_safe(understanding,"query_type", "GENERAL")
         query_document_ref = get_attr_safe(understanding,"query_document_ref")
@@ -173,6 +174,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "query_confidence": query_confidence,
             "query_confidence_reason": query_confidence_reason,
             "query_cohort_year": query_cohort_year,
+            "query_academic_year": query_academic_year,
             "query_authority_scope": query_authority_scope,
             "query_type": query_type,
             "query_document_ref": query_document_ref,
@@ -222,6 +224,7 @@ def route_after_agent1(state: QueryState) -> str:
     query_type = state.get("query_type", "GENERAL")
     cohort_year = state.get("query_cohort_year")
     needs_context = state.get("needs_student_context", False)
+    query_is_historical = state.get("query_is_historical", False)
     
     # 1. Context Guard (Only if LLM determines context is needed and cohort unknown)
     # Gate on cohort_year only — edu_system is optional enrichment, not required for routing
@@ -235,6 +238,10 @@ def route_after_agent1(state: QueryState) -> str:
     if os.getenv("USE_METADATA_ROUTING", "true").lower() == "false":
         return "retrieve_data"
         
+    # If historical, always use GENERAL path to allow old documents to surface
+    if query_is_historical:
+        return "retrieve_data"
+
     if query_type == "COHORT" or cohort_year is not None:
         return "retrieve_cohort_data"
     if query_type == "AMENDMENT":

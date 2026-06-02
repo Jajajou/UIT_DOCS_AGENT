@@ -295,37 +295,41 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
     except Exception as e:
         print(f"[ENRICH] Error during forward amendment injection: {e}")
 
-    # Backward sibling enrichment for AMENDMENT queries (original amended_by approach).
-    if query_type == "AMENDMENT":
+    # Backward sibling enrichment for AMENDMENT queries (original amended_by approach)
+    # AND for historical queries (where semantic search might only find the new doc, but we need the old doc it replaced).
+    if query_type == "AMENDMENT" or state.get("query_is_historical", False):
         try:
-            sibling_doc_ids = set()
+            sibling_doc_nums = set()
             for fp, meta in temporal_map.items():
                 amended_by = meta.get("amended_by")
                 if isinstance(amended_by, list):
-                    for doc_id in amended_by:
-                        if not str(doc_id).startswith("error-"):
-                            sibling_doc_ids.add(str(doc_id))
+                    for doc_num in amended_by:
+                        if not str(doc_num).startswith("error-"):
+                            sibling_doc_nums.add(str(doc_num))
 
-            existing_doc_ids_now = {
-                c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
-                for c in enriched_chunks
-            }
-            missing_siblings = sibling_doc_ids - existing_doc_ids_now
+            if sibling_doc_nums:
+                sibling_doc_ids = set(api_client.get_doc_ids_by_doc_numbers(list(sibling_doc_nums)))
+                
+                existing_doc_ids_now = {
+                    c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+                    for c in enriched_chunks
+                }
+                missing_siblings = sibling_doc_ids - existing_doc_ids_now
 
-            if missing_siblings:
-                print(f"[ENRICH] Backward sibling: {len(missing_siblings)} docs. Fetching from DB...")
-                sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
-                real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
+                if missing_siblings:
+                    print(f"[ENRICH] Backward sibling: {len(missing_siblings)} docs missing. Fetching from DB...")
+                    sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
+                    real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
 
-                for chunk in real_chunks:
-                    s_doc_id = chunk.get("doc_id")
-                    if s_doc_id in sibling_metadata:
-                        chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
-                    if chunk.get("content") and len(chunk["content"]) > 2000:
-                        chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
-                    enriched_chunks.append(chunk)
+                    for chunk in real_chunks:
+                        s_doc_id = chunk.get("doc_id")
+                        if s_doc_id in sibling_metadata:
+                            chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
+                        if chunk.get("content") and len(chunk["content"]) > 2000:
+                            chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
+                        enriched_chunks.append(chunk)
 
-                print(f"[ENRICH] Added {len(real_chunks)} backward sibling chunks.")
+                    print(f"[ENRICH] Added {len(real_chunks)} backward sibling chunks.")
         except Exception as e:
             print(f"[ENRICH] Error during backward sibling enrichment: {e}")
 
@@ -476,6 +480,7 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             top_k_chunks=None,
             use_temporal_boost=settings.use_temporal_scoring,
             query_cohort_year=state.get("query_cohort_year"),
+            query_academic_year=state.get("query_academic_year"),
             query_authority_scope=state.get("query_authority_scope"),
             query_is_historical=query_is_historical,
             query_type=state.get("query_type", "GENERAL")

@@ -68,6 +68,7 @@ class MinerUOCRClient:
                 data={
                     **extra_data,
                     "parse_method": "auto",
+                    "lang_list": "latin",
                     "return_md": "true",
                     "table_enable": "true",
                     "formula_enable": "false",

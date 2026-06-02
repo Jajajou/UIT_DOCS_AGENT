@@ -318,12 +318,17 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
         combined_prompt = (
             f"Tài liệu: {filename}\nNgày hiện tại: {current_date}\n\n"
             f"{combined_context}\n\n"
-            "Trích xuất thông tin sau từ văn bản và trả về JSON duy nhất:\n"
+            "Trích xuất thông tin và trả về JSON duy nhất:\n"
             "- valid_from: ngày hiệu lực/ban hành (YYYY-MM-DD hoặc null)\n"
-            "- valid_until: ngày hết hiệu lực (YYYY-MM-DD hoặc null)\n"
-            "- cohort_years: danh sách năm khóa sinh viên áp dụng (list[int], [] nếu không có, [\"*\"] nếu tất cả)\n"
-            "- cohort_scope: \"explicit\" nếu có khóa cụ thể, \"universal\" nếu tất cả, \"unspecified\" nếu không rõ\n\n"
-            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\"}"
+            "- valid_until: ngày hết hiệu lực (YYYY-MM-DD hoặc null, chỉ điền nếu văn bản nêu rõ ngày kết thúc)\n"
+            "- cohort_years: \n"
+            "  * Nếu văn bản là QUY ĐỊNH/QUY CHẾ/THÔNG TƯ/QUYẾT ĐỊNH áp dụng CHUNG (không đề cập khóa cụ thể) → [\"*\"]\n"
+            "  * Nếu đề cập khóa cụ thể (K2022, nhập học năm 2024, MSSV 20XX...) → [năm_nhập_học, ...]\n"
+            "  * Chỉ dùng [] khi tài liệu KHÔNG phải văn bản quy định học thuật (VD: biên bản họp, thư mời)\n"
+            "- cohort_scope: \"universal\" nếu [\"*\"], \"explicit\" nếu năm cụ thể, \"unspecified\" nếu []\n"
+            "- academic_year: năm học áp dụng (format YYYY-YYYY, VD \"2024-2025\", hoặc null nếu không đề cập)\n\n"
+            "LƯU Ý: Phần lớn văn bản quy định/quy chế đại học áp dụng cho TẤT CẢ sinh viên → dùng [\"*\"].\n"
+            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\", \"academic_year\": \"YYYY-YYYY hoặc null\"}"
         )
         if feedback_instruction:
             combined_prompt += feedback_instruction
@@ -340,6 +345,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
                 updates["valid_until"] = combined_data.get("valid_until")
                 updates["cohort_years"] = combined_data.get("cohort_years", [])
                 updates["cohort_scope"] = combined_data.get("cohort_scope", "unspecified")
+                updates["academic_year"] = combined_data.get("academic_year")
             else:
                 updates["valid_from"] = None
                 updates["valid_until"] = None
@@ -506,6 +512,7 @@ class DocumentMetadata(BaseModel):
     issuing_authority: str | None = None # "Hiệu trưởng", "Phòng Đào tạo"
     valid_from: str | None = None
     valid_until: str | None = None
+    academic_year: str | None = None
     cohort_years: List[int | str] = Field(default_factory=list)
     cohort_scope: str = "unspecified"  # "universal", "explicit", "unspecified"
     amends_documents: List[str] = Field(default_factory=list)
@@ -592,6 +599,7 @@ class MetadataReviewAction(BaseModel):
     issuing_authority: str | None = None
     valid_from: str | None = None
     valid_until: str | None = None
+    academic_year: str | None = None
     cohort_years: List[int | str] | None = None
     amends_documents: List[str] | None = None
 
@@ -606,6 +614,7 @@ def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
             issuing_authority=state.get("issuing_authority"),
             valid_from=state.get("valid_from"),
             valid_until=state.get("valid_until"),
+            academic_year=state.get("academic_year"),
             cohort_years=state.get("cohort_years", []),
             cohort_scope=state.get("cohort_scope", "unspecified"),
             amends_documents=state.get("amends_documents", []),
@@ -656,6 +665,7 @@ def review_metadata_node(state: MetadataRAGState) -> Command:
         "issuing_authority": state.get("issuing_authority"),
         "valid_from": state.get("valid_from"),
         "valid_until": state.get("valid_until"),
+        "academic_year": state.get("academic_year"),
         "cohort_years": state.get("cohort_years", []),
         "amends_documents": state.get("amends_documents", [])
     }
@@ -693,6 +703,7 @@ def review_metadata_node(state: MetadataRAGState) -> Command:
     if decision.issuing_authority is not None: updates["issuing_authority"] = decision.issuing_authority
     if decision.valid_from is not None: updates["valid_from"] = decision.valid_from
     if decision.valid_until is not None: updates["valid_until"] = decision.valid_until
+    if decision.academic_year is not None: updates["academic_year"] = decision.academic_year
     if decision.cohort_years is not None: updates["cohort_years"] = decision.cohort_years
     if decision.amends_documents is not None: updates["amends_documents"] = decision.amends_documents
 
