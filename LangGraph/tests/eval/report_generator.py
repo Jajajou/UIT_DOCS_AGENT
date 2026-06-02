@@ -47,7 +47,7 @@ def _compute_overall_metrics(results: List[Dict[str, Any]]) -> Dict[str, float]:
 
     # Define all TDCE metrics
     tdce_metrics = [
-        "accuracy@1", "ap@3", "cascade_hit_rate", "authority_score",
+        "accuracy@1", "mrr@3", "ap@3", "authority_score",
         "cohort_coverage", "ar@3", "displacement_rate"
     ]
 
