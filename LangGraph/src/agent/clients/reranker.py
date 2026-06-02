@@ -78,13 +78,28 @@ class Reranker:
         if settings.reranker_base_url:
             import requests
             url = f"{settings.reranker_base_url}/v2/rerank"
+            # Truncate to model's actual limit: 2048 tokens for passage, 256 for query
+            # Vietnamese_Reranker max sequence = 2304 (https://huggingface.co/AITeamVN/Vietnamese_Reranker)
+            # ~3 chars/token for Vietnamese → 2048 tokens ≈ 6000 chars
+            _MAX_DOC_CHARS = 6000
+            texts = [t[:_MAX_DOC_CHARS] if len(t) > _MAX_DOC_CHARS else t for t in texts]
             payload = {
                 "model": self.config.default_model,
                 "query": query,
                 "documents": texts,
             }
-            response = requests.post(url, json=payload, timeout=60)
-            response.raise_for_status()
+            print(f"[RERANKER] HTTP rerank: {len(texts)} docs, query_len={len(query)}, model={self.config.default_model}")
+            last_err = None
+            for _attempt in range(3):
+                response = requests.post(url, json=payload, timeout=60)
+                if response.ok:
+                    break
+                last_err = f"Reranker {response.status_code}: {response.text[:300]} | docs={len(texts)} query_len={len(query)}"
+                if response.status_code < 500:
+                    break  # 4xx won't fix itself on retry
+                print(f"[RERANKER] Attempt {_attempt+1} failed ({response.status_code}), retrying...")
+            if not response.ok:
+                raise RuntimeError(last_err)
             data = response.json()
             # Cohere /v2/rerank returns results sorted by relevance_score with original index
             scored = sorted(data["results"], key=lambda x: x["index"])
@@ -211,7 +226,8 @@ class Reranker:
         current_date: Optional[str] = None,
         query_is_historical: Optional[bool] = False,
         query_cohort_year: Optional[int] = None,
-        query_academic_year: Optional[str] = None
+        query_academic_year: Optional[str] = None,
+        query_date: Optional[str] = None
     ) -> float:
         """
         Calculate temporal relevance score for an item based on its metadata.
@@ -222,6 +238,7 @@ class Reranker:
             item: Item dict (entity, relationship, or chunk)
             current_date: ISO date string for comparison. Defaults to today.
             query_is_historical: If True, do not penalize amended/old docs.
+            query_date: ISO date string for historical point-in-time penalty.
 
         Returns:
             Temporal score (0.0-1.0)
@@ -245,17 +262,31 @@ class Reranker:
         if metadata.get("is_canonical_pointer", False):
             return 1.1  # Bonus score for explicitly resolved canonical docs
 
+        # NEW: Point-in-time penalty (Future Docs)
+        # If query_date is set, penalize docs that were born AFTER that date
+        future_penalty = 1.0
+        if query_date:
+            doc_valid_from = metadata.get("valid_from")
+            if doc_valid_from:
+                try:
+                    # Simple string comparison works for ISO dates YYYY-MM-DD
+                    if str(doc_valid_from) > query_date:
+                        future_penalty = 0.2
+                        print(f"[TEMPORAL] ⚠️ Penalizing future doc {metadata.get('document_number')}: valid_from={doc_valid_from} > query_date={query_date}")
+                except (ValueError, TypeError):
+                    pass
+
         # Chunk-level: specific clause confirmed superseded by amendment_resolver
         if item.get("is_superseded", False):
             # If historical query, we might want the superseded one!
-            return 0.1 if not query_is_historical else 0.9
+            return (0.1 if not query_is_historical else 0.9) * future_penalty
 
         # Doc-level: whole doc has been amended (blunt signal)
         amended_by = metadata.get("amended_by", [])
         if isinstance(amended_by, list) and len(amended_by) > 0:
             # Bypass penalty if historical or if this doc specifically matches the cohort
             if query_is_historical:
-                return 0.9
+                return 0.9 * future_penalty
 
             # Check if this document is a primary authority for the student's cohort
             # If it is, don't penalize it for being amended later.
@@ -266,7 +297,7 @@ class Reranker:
                     is_cohort_match = True
 
             if is_cohort_match:
-                return 0.85  # cohort-matched: no penalty even if later amended
+                return 0.85 * future_penalty # cohort-matched: no penalty even if later amended
 
             # Temporal exemption: if query anchors to a year and this doc was
             # valid at that time, don't penalize — the amending docs came later.
@@ -281,11 +312,11 @@ class Reranker:
                     try:
                         vf_date = datetime.fromisoformat(str(doc_valid_from))
                         if vf_date.year <= anchor_year:
-                            return 0.85  # was active in queried year, amendments came later
+                            return 0.85 * future_penalty # was active in queried year, amendments came later
                     except (ValueError, TypeError):
                         pass
 
-            return 0.3  # superseded docs deprioritized
+            return 0.3 * future_penalty # superseded docs deprioritized
 
         # Check if superseded: doc has amended_by → newer version exists
         amended_by = metadata.get("amended_by", [])
@@ -299,7 +330,7 @@ class Reranker:
 
         # If no temporal info, assume always valid but not prioritized
         if not valid_from and not valid_until and not indexed_at:
-            return 0.5  # no temporal info → neutral score
+            return 0.5 * future_penalty # no temporal info → neutral score
 
         # --- TIME TRAVEL LOGIC FOR HISTORICAL QUERIES ---
         if query_is_historical:
@@ -314,14 +345,14 @@ class Reranker:
                     vf_date = datetime.fromisoformat(str(valid_from))
                     # DRASTIC PENALTY for documents from the FUTURE relative to query
                     if vf_date.year > anchor_year:
-                        return 0.1
+                        return 0.1 * future_penalty
                     # BONUS for documents in that specific era
                     if vf_date.year == anchor_year:
-                        return 1.0
+                        return 1.0 * future_penalty
                     if vf_date.year == anchor_year - 1:
-                        return 0.95
+                        return 0.95 * future_penalty
                 except: pass
-            return 0.8 # Default good score for valid past docs
+            return 0.8 * future_penalty # Default good score for valid past docs
 
         # Check if currently valid
         is_valid = True
@@ -340,16 +371,16 @@ class Reranker:
                     # Expired document
                     days_expired = (current - until_date).days
                     if days_expired > 365:
-                        return 0.1  # Very old, heavily penalized
+                        return 0.1 * future_penalty # Very old, heavily penalized
                     else:
                         # Gradual decay: 0.5 at expiry, 0.1 at 1 year
-                        return max(0.1, 0.5 - (days_expired / 365) * 0.4)
+                        return max(0.1, 0.5 - (days_expired / 365) * 0.4) * future_penalty
             except (ValueError, TypeError):
                 pass
 
         # If not valid yet
         if not is_valid:
-            return 0.3  # Not yet valid
+            return 0.3 * future_penalty # Not yet valid
 
         # Document is currently valid - score based on recency
         if indexed_at:
@@ -360,19 +391,19 @@ class Reranker:
                 # Recency scoring with diminishing returns
                 # 1.0 for today, 0.9 for 30 days, 0.7 for 365 days, 0.5 for 2+ years
                 if days_old <= 30:
-                    return 1.0
+                    return 1.0 * future_penalty
                 elif days_old <= 365:
-                    return 0.9 - (days_old - 30) / 365 * 0.2  # Linear decay to 0.7
+                    return (0.9 - (days_old - 30) / 365 * 0.2) * future_penalty # Linear decay to 0.7
                 elif days_old <= 730:
-                    return 0.7 - (days_old - 365) / 365 * 0.2  # Decay to 0.5
+                    return (0.7 - (days_old - 365) / 365 * 0.2) * future_penalty # Decay to 0.5
                 else:
-                    return max(0.5, 0.7 - (days_old - 365) / 365 * 0.2)  # Floor at 0.5
+                    return max(0.5, 0.7 - (days_old - 365) / 365 * 0.2) * future_penalty # Floor at 0.5
 
             except (ValueError, TypeError):
                 pass
 
         # Default: valid but no recency info
-        return 0.8
+        return 0.8 * future_penalty
 
     def _compute_cohort_score(self, item: Dict[str, Any], query_cohort_year: Optional[int]) -> float:
         """
@@ -472,7 +503,8 @@ class Reranker:
         query_academic_year: Optional[str] = None,
         query_authority_scope: Optional[str] = None,
         query_is_historical: Optional[bool] = None,
-        query_type: Optional[str] = None
+        query_type: Optional[str] = None,
+        query_date: Optional[str] = None
     ) -> List[Tuple[Dict[str, Any], float]]:
         """
         Rerank items with temporal boosting.
@@ -490,6 +522,7 @@ class Reranker:
             query_cohort_year: Optional cohort year
             query_academic_year: Optional academic year
             query_is_historical: Optional flag for historical queries
+            query_date: ISO date string for point-in-time filtering
 
         Returns:
             List of (item, combined_score) tuples, sorted by score (highest first)
@@ -514,7 +547,8 @@ class Reranker:
                 item, current_date=current_date, 
                 query_is_historical=query_is_historical,
                 query_cohort_year=query_cohort_year,
-                query_academic_year=query_academic_year
+                query_academic_year=query_academic_year,
+                query_date=query_date
             ) 
             for item in items
         ]
@@ -715,7 +749,8 @@ class MultiSourceReranker:
         query_academic_year: Optional[str] = None,
         query_authority_scope: Optional[str] = None,
         query_is_historical: Optional[bool] = None,
-        query_type: Optional[str] = None
+        query_type: Optional[str] = None,
+        query_date: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Rerank all sources and calculate overall confidence.
@@ -732,6 +767,7 @@ class MultiSourceReranker:
             query_cohort_year: Optional cohort year
             query_academic_year: Optional academic year
             query_is_historical: Optional flag for historical queries
+            query_date: ISO date string for point-in-time filtering
 
         Returns:
             Dict containing:
@@ -750,6 +786,8 @@ class MultiSourceReranker:
             print(f"[RERANKER] 📅 Temporal boosting: ENABLED")
             if query_is_historical:
                 print(f"[RERANKER] ⏳ Historical query mode: ON (suppressing amendment override)")
+            if query_date:
+                print(f"[RERANKER] 🕒 Point-in-time: {query_date}")
         print("=" * 80)
 
         # Choose reranking method based on temporal boost setting
@@ -761,7 +799,8 @@ class MultiSourceReranker:
                     query_academic_year=query_academic_year,
                     query_authority_scope=query_authority_scope,
                     query_is_historical=query_is_historical,
-                    query_type=query_type
+                    query_type=query_type,
+                    query_date=query_date
                 )
         else:
             rerank_func = self.reranker.rerank_items  # type: ignore

@@ -513,7 +513,8 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
             query_academic_year=state.get("query_academic_year"),
             query_authority_scope=state.get("query_authority_scope"),
             query_is_historical=query_is_historical,
-            query_type=state.get("query_type", "GENERAL")
+            query_type=state.get("query_type", "GENERAL"),
+            query_date=state.get("target_time")
         )
         
         return {
