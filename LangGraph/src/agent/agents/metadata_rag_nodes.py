@@ -299,36 +299,54 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
         # RAG is only needed for cohort_years and valid_dates which are scattered
         # throughout curriculum documents. Both fields are extracted in ONE LLM call.
 
+        # Define Canonical Concepts for mapping
+        canonical_concepts_list = [
+            {"id": "GRADUATION_REQUIREMENTS", "desc": "Điều kiện xét tốt nghiệp (GPA, chứng chỉ, nợ môn)"},
+            {"id": "SCHOLARSHIP_CRITERIA", "desc": "Tiêu chuẩn xét học bổng KKHT (điểm học tập, rèn luyện)"},
+            {"id": "TUITION_POLICY", "desc": "Quy định học phí, thời hạn đóng, miễn giảm"},
+            {"id": "COURSE_REGISTRATION", "desc": "Đăng ký môn học (tín chỉ tối đa/tối thiểu, thời hạn)"},
+            {"id": "EXAM_REGULATIONS", "desc": "Quy chế thi cử, hoãn thi, phúc khảo"},
+            {"id": "DISCIPLINARY_RULES", "desc": "Kỷ luật sinh viên, vi phạm nội quy"},
+            {"id": "ENGLISH_OUTPUT_STANDARD", "desc": "Chuẩn đầu ra Tiếng Anh (TOEIC, IELTS, VSTEP)"},
+            {"id": "RESEARCH_SUPPORT", "desc": "Nghiên cứu khoa học, hỗ trợ/khen thưởng NCKH"},
+            {"id": "INTERNSHIP_GRAD_THESIS", "desc": "Điều kiện thực tập, làm khóa luận tốt nghiệp"},
+            {"id": "STUDENT_COHORT_SCOPE", "desc": "Đối tượng áp dụng theo khóa sinh viên"}
+        ]
+        concepts_str = "\n".join([f"- {c['id']}: {c['desc']}" for c in canonical_concepts_list])
+
         current_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Retrieve relevant chunks for dates and cohorts (2 embed calls, both cached)
+        # Retrieve relevant chunks for dates, cohorts, and concepts
         q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
         q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng?"
+        q_concept = f"Văn bản này nói về chủ đề gì trong các chủ đề sau: {', '.join([c['id'] for c in canonical_concepts_list])}"
+        
         docs_date = _rag_retrieve_and_rerank(col_name, q_date)
         docs_cohort = _rag_retrieve_and_rerank(col_name, q_cohort)
+        docs_concept = _rag_retrieve_and_rerank(col_name, q_concept)
 
         updates["valid_from_chunks"] = docs_date
         updates["cohort_years_chunks"] = docs_cohort
+        updates["concept_chunks"] = docs_concept
 
-        # Single combined LLM call for both dates and cohorts
+        # Single combined LLM call
         combined_context = (
             "<dates_context>\n" + "\n---\n".join(docs_date) + "\n</dates_context>\n\n"
-            "<cohorts_context>\n" + "\n---\n".join(docs_cohort) + "\n</cohorts_context>"
+            "<cohorts_context>\n" + "\n---\n".join(docs_cohort) + "\n</cohorts_context>\n\n"
+            "<content_context>\n" + "\n---\n".join(docs_concept) + "\n</content_context>"
         )
         combined_prompt = (
             f"Tài liệu: {filename}\nNgày hiện tại: {current_date}\n\n"
             f"{combined_context}\n\n"
             "Trích xuất thông tin và trả về JSON duy nhất:\n"
             "- valid_from: ngày hiệu lực/ban hành (YYYY-MM-DD hoặc null)\n"
-            "- valid_until: ngày hết hiệu lực (YYYY-MM-DD hoặc null, chỉ điền nếu văn bản nêu rõ ngày kết thúc)\n"
-            "- cohort_years: \n"
-            "  * Nếu văn bản là QUY ĐỊNH/QUY CHẾ/THÔNG TƯ/QUYẾT ĐỊNH áp dụng CHUNG (không đề cập khóa cụ thể) → [\"*\"]\n"
-            "  * Nếu đề cập khóa cụ thể (K2022, nhập học năm 2024, MSSV 20XX...) → [năm_nhập_học, ...]\n"
-            "  * Chỉ dùng [] khi tài liệu KHÔNG phải văn bản quy định học thuật (VD: biên bản họp, thư mời)\n"
-            "- cohort_scope: \"universal\" nếu [\"*\"], \"explicit\" nếu năm cụ thể, \"unspecified\" nếu []\n"
-            "- academic_year: năm học áp dụng (format YYYY-YYYY, VD \"2024-2025\", hoặc null nếu không đề cập)\n\n"
-            "LƯU Ý: Phần lớn văn bản quy định/quy chế đại học áp dụng cho TẤT CẢ sinh viên → dùng [\"*\"].\n"
-            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\", \"academic_year\": \"YYYY-YYYY hoặc null\"}"
+            "- valid_until: ngày hết hiệu lực (YYYY-MM-DD hoặc null)\n"
+            "- cohort_years: [\"*\"] nếu áp dụng chung, hoặc [năm_nhập_học, ...] nếu cụ thể\n"
+            "- cohort_scope: \"universal\", \"explicit\", hoặc \"unspecified\"\n"
+            "- academic_year: năm học áp dụng (YYYY-YYYY hoặc null)\n"
+            "- concept_id: Chọn ID phù hợp nhất từ danh sách sau (hoặc null nếu không khớp):\n"
+            f"{concepts_str}\n\n"
+            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\", \"academic_year\": ..., \"concept_id\": ...}"
         )
         if feedback_instruction:
             combined_prompt += feedback_instruction
@@ -346,17 +364,20 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
                 updates["cohort_years"] = combined_data.get("cohort_years", [])
                 updates["cohort_scope"] = combined_data.get("cohort_scope", "unspecified")
                 updates["academic_year"] = combined_data.get("academic_year")
+                updates["concept_id"] = combined_data.get("concept_id")
             else:
                 updates["valid_from"] = None
                 updates["valid_until"] = None
                 updates["cohort_years"] = []
                 updates["cohort_scope"] = "unspecified"
+                updates["concept_id"] = None
         except Exception as e:
             logger.warning(f"Error parsing combined metadata JSON: {e}")
             updates["valid_from"] = None
             updates["valid_until"] = None
             updates["cohort_years"] = []
             updates["cohort_scope"] = "unspecified"
+            updates["concept_id"] = None
         
         # NOTE: amends_documents extracted by header_extraction.py (not RAG).
         # Do NOT overwrite it here — the indexing_graph merges header results

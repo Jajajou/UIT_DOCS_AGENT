@@ -5,6 +5,7 @@ import typing as t
 import json
 import psycopg2
 import psycopg2.pool
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
@@ -1221,9 +1222,13 @@ class LightRAGAPIClient:
                       tm.archived_at::text,
                       tm.archive_reason,
                       tm.extraction_confidence,
-                      tm.extraction_timestamp::text AS indexed_at
+                      tm.extraction_timestamp::text AS indexed_at,
+                      ctc.concept_id,
+                      cc.authority_level
                     FROM lightrag_doc_status lds
                     LEFT JOIN temporal_metadata tm ON tm.doc_id = lds.id
+                    LEFT JOIN clause_to_concept_map ctc ON (ctc.doc_number = tm.document_number AND ctc.workspace = lds.workspace)
+                    LEFT JOIN canonical_concepts cc ON cc.concept_id = ctc.concept_id
                     WHERE lds.workspace = %s
                       AND lds.id = ANY(%s)
                     """,
@@ -1457,9 +1462,13 @@ class LightRAGAPIClient:
                       tm.archived_at::text,
                       tm.archive_reason,
                       tm.extraction_confidence,
-                      tm.extraction_timestamp::text AS indexed_at
+                      tm.extraction_timestamp::text AS indexed_at,
+                      ctc.concept_id,
+                      cc.authority_level
                     FROM lightrag_doc_status lds
                     LEFT JOIN temporal_metadata tm ON tm.doc_id = lds.id
+                    LEFT JOIN clause_to_concept_map ctc ON (ctc.doc_number = tm.document_number AND ctc.workspace = lds.workspace)
+                    LEFT JOIN canonical_concepts cc ON cc.concept_id = ctc.concept_id
                     WHERE lds.workspace = %s
                       AND lds.file_path = ANY(%s)
                     ORDER BY lds.file_path, tm.extraction_confidence DESC NULLS LAST
@@ -1475,7 +1484,8 @@ class LightRAGAPIClient:
                     file_source, doc_id, document_number, document_type,
                     valid_from, valid_until, cohort_years, cohort_scope,
                     amends_documents, amended_by_documents, is_archived,
-                    archived_at, archive_reason, extraction_confidence, indexed_at
+                    archived_at, archive_reason, extraction_confidence, indexed_at,
+                    concept_id, authority_level
                 ) = row
                 
                 # Ensure jsonb columns are parsed correctly if they come back as strings
@@ -1498,12 +1508,15 @@ class LightRAGAPIClient:
                         "cohort_scope": cohort_scope,
                         "amends_documents": ensure_list(amends_documents),
                         "amended_by": ensure_list(amended_by_documents),
-                        "is_archived": bool(is_archived),
+                        "is_archived": is_archived,
                         "archived_at": archived_at,
                         "archive_reason": archive_reason,
-                        "extraction_confidence": extraction_confidence,
+                        "extraction_confidence": extraction_confidence or 0.0,
                         "indexed_at": indexed_at,
-                    }
+                        "concept_id": concept_id,
+                        "authority_level": authority_level or 1
+                        }
+
             return result
 
         except Exception as e:
@@ -1673,6 +1686,48 @@ class LightRAGAPIClient:
             print(f"[LightRAG Client] Error searching DB for track_id {track_id}: {e}")
 
         return None
+
+    def get_canonical_doc_for_concept(
+        self,
+        concept_id: str,
+        target_time: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Find the canonical document for a concept at a specific time.
+        Implements the 'Temporal Canonical Pointer' logic to fix amendment boundaries.
+        """
+        if not concept_id:
+            return None
+
+        try:
+            conn = self._get_pg_connection()
+            workspace = os.getenv("WORKSPACE", "default")
+            # Default to current date if not provided
+            t = target_time or datetime.now().strftime("%Y-%m-%d")
+
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                query = """
+                    SELECT tm.doc_id, tm.document_number, lds.file_path, cc.authority_level
+                    FROM clause_to_concept_map ctc
+                    JOIN temporal_metadata tm ON (ctc.doc_number = tm.document_number AND ctc.workspace = tm.workspace)
+                    JOIN lightrag_doc_status lds ON tm.doc_id = lds.id
+                    JOIN canonical_concepts cc ON ctc.concept_id = cc.concept_id
+                    WHERE ctc.concept_id = %s
+                      AND ctc.workspace = %s
+                      AND tm.valid_from <= %s
+                      AND (tm.valid_until IS NULL OR tm.valid_until >= %s)
+                      AND tm.is_archived = FALSE
+                    ORDER BY cc.authority_level DESC, tm.valid_from DESC
+                    LIMIT 1
+                """
+                cur.execute(query, (concept_id, workspace, t, t))
+                row = cur.fetchone()
+                
+            conn.close()
+            return dict(row) if row else None
+        except Exception as e:
+            print(f"[LightRAG Client] Error fetching canonical doc for {concept_id}: {e}")
+            return None
 
 # if __name__ == "__main__":
 #     load_dotenv("LangGraph/.env")

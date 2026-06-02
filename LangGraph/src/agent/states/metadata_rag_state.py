@@ -28,11 +28,14 @@ class MetadataRAGState(TypedDict):
     valid_until_chunks: NotRequired[List[str]]
     cohort_years_chunks: NotRequired[List[str]]
     amends_documents_chunks: NotRequired[List[str]]
+    concept_chunks: NotRequired[List[str]]
     
     # --- EXTRACTED METADATA (Final Output) ---
     document_number: NotRequired[Optional[str]]
     document_type: NotRequired[Optional[str]]        # "Quyết định", "Thông báo", etc.
     issuing_authority: NotRequired[Optional[str]]    # "Hiệu trưởng", "Phòng Đào tạo"
+    
+    concept_id: NotRequired[Optional[str]]           # For Canonical Registry Mapping
     
     valid_from: NotRequired[Optional[str]]
     valid_until: NotRequired[Optional[str]]

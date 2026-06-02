@@ -81,10 +81,21 @@ class QueryUnderstanding(BaseModel):
         )
     )
     # Document number reference extracted for AMENDMENT queries
-    # e.g. '108/QD-DHCNTT' from 'Quyet dinh 108 co bi sua doi chua?'
     query_document_ref: Optional[str] = Field(
         default=None,
         description="Document number extracted from query for AMENDMENT path. None if not applicable."
+    )
+
+    # NEW: Canonical Concept ID mapping
+    concept_id: Optional[str] = Field(
+        default=None,
+        description="ID của concept gốc tương ứng (ví dụ: GRADUATION_REQUIREMENTS, SCHOLARSHIP_CRITERIA). Null nếu không khớp."
+    )
+
+    # NEW: Target time for point-in-time retrieval
+    target_time: Optional[str] = Field(
+        default=None,
+        description="Thời điểm cụ thể mà câu hỏi hướng tới (format YYYY-MM-DD). Mặc định null (hiện tại)."
     )
 
     # NEW: Historical query detection
@@ -204,6 +215,8 @@ class QueryState(TypedDict):
     query_authority_scope: NotRequired[Optional[Literal["system", "local"]]]
     query_type: NotRequired[Optional[Literal["COHORT", "AMENDMENT", "GENERAL"]]]
     query_document_ref: NotRequired[Optional[str]]  # e.g. '108/QD-DHCNTT' for AMENDMENT path
+    concept_id: NotRequired[Optional[str]]  # Canonical Concept ID
+    target_time: NotRequired[Optional[str]]  # Target ISO date for PIT retrieval
     query_is_historical: NotRequired[Optional[bool]]  # True if historical query detected
     education_system: NotRequired[Optional[Literal["chinh_quy", "tu_xa", "tien_tien", "song_nganh"]]]
     cohort_fallback: NotRequired[bool]  # True if COHORT path returned 0 results

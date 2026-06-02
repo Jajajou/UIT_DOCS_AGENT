@@ -628,10 +628,10 @@ def main():
             else:
                 # Simulate pipeline call
                 if args.retrieval_only:
-                    state = call_pipeline_retrieval_only(pair["query"], pair.get("query_cohort_year"), 
+                    state = call_pipeline_retrieval_only(pair["query"], pair.get("query_cohort_year"),
                                                           config_overrides=config_overrides)
                 else:
-                    state = call_pipeline(pair["query"], pair.get("query_cohort_year"), 
+                    state = call_pipeline(pair["query"], pair.get("query_cohort_year"),
                                            config_overrides=config_overrides)
 
             # Compute standard metrics

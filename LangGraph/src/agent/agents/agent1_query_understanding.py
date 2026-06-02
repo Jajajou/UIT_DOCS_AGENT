@@ -129,6 +129,8 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         parsed_intention = get_attr_safe(understanding,"parsed_intention")
         extracted_entities = get_attr_safe(understanding,"extracted_entities")
         extracted_topics = get_attr_safe(understanding,"extracted_topics")
+        concept_id = get_attr_safe(understanding, "concept_id")
+        target_time = get_attr_safe(understanding, "target_time")
         query_confidence = get_attr_safe(understanding,"confidence")
         query_confidence_reason = get_attr_safe(understanding,"confidence_reason")
         query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
@@ -171,6 +173,8 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "parsed_intention": parsed_intention,
             "extracted_entities": extracted_entities,
             "extracted_topics": extracted_topics,
+            "concept_id": concept_id,
+            "target_time": target_time,
             "query_confidence": query_confidence,
             "query_confidence_reason": query_confidence_reason,
             "query_cohort_year": query_cohort_year,
@@ -238,8 +242,9 @@ def route_after_agent1(state: QueryState) -> str:
     if os.getenv("USE_METADATA_ROUTING", "true").lower() == "false":
         return "retrieve_data"
         
-    # If historical, always use GENERAL path to allow old documents to surface
-    if query_is_historical:
+    # If historical, use GENERAL path — but not when query is explicitly COHORT-typed
+    # (K-year queries asking about "my cohort's rules" are COHORT, not historical)
+    if query_is_historical and query_type != "COHORT" and cohort_year is None:
         return "retrieve_data"
 
     if query_type == "COHORT" or cohort_year is not None:

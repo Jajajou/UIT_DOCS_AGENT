@@ -129,6 +129,30 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
     print("=" * 80)
     
     try:
+        # 0. Canonical Concept Lookup (Point-in-time canonical pointer)
+        concept_id = state.get("concept_id")
+        target_time = state.get("target_time")
+        query_type = state.get("query_type", "GENERAL")
+        query_is_historical = state.get("query_is_historical", False)
+        
+        canonical_chunks = []
+        # Only use canonical pointer logic for HISTORICAL or AMENDMENT queries
+        # to avoid biasing GENERAL queries toward a single doc (Option C)
+        if concept_id and (query_is_historical or query_type == "AMENDMENT"):
+            print(f"[RETRIEVE] Concept detected: {concept_id}, target_time: {target_time or 'now'}")
+            canonical_doc = api_client.get_canonical_doc_for_concept(concept_id, target_time)
+            if canonical_doc:
+                doc_id = canonical_doc.get("doc_id")
+                doc_num = canonical_doc.get("document_number")
+                print(f"[RETRIEVE] Canonical Doc for {concept_id} is {doc_num} (ID: {doc_id})")
+                
+                canonical_chunks = api_client.get_chunks_by_doc_ids([doc_id])
+                if canonical_chunks:
+                    for c in canonical_chunks:
+                        if "metadata" not in c: c["metadata"] = {}
+                        c["metadata"]["is_canonical_pointer"] = True
+                    print(f"[RETRIEVE] Injected {len(canonical_chunks)} chunks from canonical doc.")
+
         # 1. Direct Lookup by Document Number (Bypass semantic failure)
         direct_chunks = []
         doc_num_matches = re.findall(r'\b(\d{1,4}(?:/\d{4})?/(?:QĐ|TT|TB|NQ|HD|KL|VBHN)(?:-[A-ZĐ]+)+)\b', query, re.IGNORECASE)
@@ -169,13 +193,19 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
         relationships = result["data"]["relationships"]
         chunks = result["data"]["chunks"]
         
-        # Inject direct lookup chunks
-        if direct_chunks:
+        # Inject direct lookup chunks and canonical chunks
+        all_injected = direct_chunks + canonical_chunks
+        if all_injected:
             # Avoid duplicates based on file_path or doc_id
-            existing_paths = {c.get("file_path") for c in chunks}
-            for dc in direct_chunks:
-                if dc.get("file_path") not in existing_paths:
-                    chunks.append(dc)
+            existing_doc_ids = {
+                c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id") 
+                for c in chunks
+            }
+            for ic in all_injected:
+                ic_doc_id = ic.get("doc_id") or ic.get("id") or ic.get("metadata", {}).get("doc_id")
+                if ic_doc_id not in existing_doc_ids:
+                    chunks.append(ic)
+                    if ic_doc_id: existing_doc_ids.add(ic_doc_id)
 
         metadata = result["metadata"]
         

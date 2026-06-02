@@ -241,6 +241,10 @@ class Reranker:
         if metadata.get("is_archived", False):
             return 0.0
 
+        # NEW: Canonical Pointer Boost
+        if metadata.get("is_canonical_pointer", False):
+            return 1.1  # Bonus score for explicitly resolved canonical docs
+
         # Chunk-level: specific clause confirmed superseded by amendment_resolver
         if item.get("is_superseded", False):
             # If historical query, we might want the superseded one!
@@ -386,8 +390,9 @@ class Reranker:
             return 0.5  # neutral — no cohort metadata or empty list
 
         # 1. Check for Universal marker ("*") - partial boost, not exact match
+        # Lower than exact match (1.0) so cohort-specific docs win over universal ones
         if "*" in cohort_years or "*" in [str(y) for y in cohort_years]:
-            return 0.75
+            return 0.55
 
         # 2. Check for explicit year match
         try:
@@ -800,13 +805,16 @@ class MultiSourceReranker:
         print(f"[RERANKER] ✓ Overall confidence: {overall_confidence:.4f}")
         print("=" * 80)
         
+        # --- Canonical Conflict Resolution (Option B) ---
+        reranked_chunks = self.resolve_canonical_conflicts(reranked_chunks)
+        
         return {
             "reranked_entities": reranked_entities,
             "reranked_relationships": reranked_relationships,
             "reranked_chunks": reranked_chunks,
             "entity_scores": entity_scores,
             "relationship_scores": relationship_scores,
-            "chunk_scores": chunk_scores,
+            "chunk_scores": [s for _, s in reranked_chunks],
             "overall_confidence": overall_confidence,
             "metadata": {
                 "total_items_reranked": len(all_scores),
@@ -816,6 +824,68 @@ class MultiSourceReranker:
                 "model_name": self.reranker.config.default_model
             }
         }
+
+    def resolve_canonical_conflicts(self, reranked_chunks: List[Tuple[Dict[str, Any], float]]) -> List[Tuple[Dict[str, Any], float]]:
+        """
+        Prioritize documents with higher authority_level when multiple documents
+        talk about the same concept_id.
+        """
+        if not reranked_chunks:
+            return []
+
+        # 1. Group by concept_id
+        concept_groups: Dict[str, List[int]] = {}
+        for i, (item, _) in enumerate(reranked_chunks):
+            concept_id = item.get("metadata", {}).get("concept_id")
+            if concept_id:
+                if concept_id not in concept_groups:
+                    concept_groups[concept_id] = []
+                concept_groups[concept_id].append(i)
+
+        if not concept_groups:
+            return reranked_chunks
+
+        # 2. For each concept, find the max authority_level
+        new_reranked = list(reranked_chunks)
+        for cid, indices in concept_groups.items():
+            if len(indices) <= 1:
+                continue
+            
+            # Get max authority in this group
+            max_auth = max([reranked_chunks[idx][0].get("metadata", {}).get("authority_level", 1) for idx in indices])
+            
+            # Apply penalty to those with lower authority
+            for idx in indices:
+                item, score = reranked_chunks[idx]
+                auth = item.get("metadata", {}).get("authority_level", 1)
+                
+                if auth < max_auth:
+                    # Confidence Guard: If the lower authority item is significantly more 
+                    # relevant semantically, do not penalize it.
+                    # Also, if it's a LOCAL doc vs a SYSTEM doc, local implementations 
+                    # are often more relevant for the user.
+                    
+                    doc_num = str(item.get("metadata", {}).get("document_number", "")).upper()
+                    is_local = any(k in doc_num for k in ["ĐHCNTT", "UIT"])
+                    
+                    # If this is a local doc and the max_auth is from a system doc (5), 
+                    # skip the penalty.
+                    if is_local and max_auth == 5:
+                        print(f"[RERANKER] ℹ️ Local implementation preserved: {doc_num} vs System Auth {max_auth}")
+                        continue
+
+                    # Otherwise apply penalty but only if semantic score isn't dominant
+                    # (score here is the already combined score from rerank_with_temporal_boost)
+                    penalty = 0.5 
+                    new_score = score * penalty
+                    new_reranked[idx] = (item, new_score)
+                    print(f"[RERANKER] ⚠️ Canonical Conflict: Concept '{cid}' found in multiple docs. "
+                          f"Penalized {item.get('metadata', {}).get('document_number')} "
+                          f"(Auth {auth} < Max {max_auth})")
+        
+        # Sort again by the new scores
+        new_reranked.sort(key=lambda x: x[1], reverse=True)
+        return new_reranked
 
 
 # ============================================================================
