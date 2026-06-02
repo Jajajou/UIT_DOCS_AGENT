@@ -74,8 +74,8 @@ class TestRouteAfterAgent1:
         )
         assert route_after_agent1(state) == "request_context"
 
-    def test_cohort_missing_edu_system_triggers_hitl(self):
-        """COHORT + needs_student_context + missing education_system → request_context."""
+    def test_cohort_missing_edu_system_does_not_trigger_hitl(self):
+        """COHORT + needs_student_context + has cohort_year but missing education_system → retrieve_cohort_data (optional enrichment)."""
         state = _state(
             query_type="COHORT",
             query_cohort_year=2022,
@@ -83,7 +83,7 @@ class TestRouteAfterAgent1:
             needs_student_context=True,
             extracted_topics=[],
         )
-        assert route_after_agent1(state) == "request_context"
+        assert route_after_agent1(state) == "retrieve_cohort_data"
 
     def test_cohort_missing_both_triggers_hitl(self):
         """COHORT + needs_student_context + missing both → request_context."""

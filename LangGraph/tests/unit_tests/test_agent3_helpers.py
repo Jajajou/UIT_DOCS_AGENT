@@ -182,9 +182,9 @@ class TestGenerateConfidenceTransparency:
         assert result == "" or "thấp" not in result
 
     def test_low_confidence_generates_warning(self):
-        state = self._make_state(confidence=0.5)
+        state = self._make_state(confidence=0.2)  # below 0.3 threshold (ViRanker sigmoid range)
         result = _generate_confidence_transparency(state)
-        assert "thấp" in result or "tin cậy" in result
+        assert "Phòng Đào tạo" in result or "chưa đầy đủ" in result
 
     def test_multiple_amended_docs_generates_warning(self):
         chunks = [

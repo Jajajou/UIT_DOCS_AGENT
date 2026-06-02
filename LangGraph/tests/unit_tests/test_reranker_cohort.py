@@ -109,7 +109,7 @@ class TestCohortBoostDisabledRegression:
             r = Reranker()
 
         r.compute_scores = MagicMock(return_value=[0.8, 0.6])
-        r.calculate_temporal_score = MagicMock(side_effect=lambda item, _date: 0.5)
+        r.calculate_temporal_score = MagicMock(side_effect=lambda item, **kwargs: 0.5)
         return r
 
     def test_cohort_year_ignored_when_boost_disabled(self, reranker_with_fake_scores):

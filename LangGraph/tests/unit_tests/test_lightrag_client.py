@@ -8,16 +8,16 @@ class TestLightRAGClientAuth:
     """Test authentication header generation."""
 
     def test_headers_with_api_key(self):
-        """API key should use Authorization Bearer header."""
+        """API key should use X-API-Key header."""
         client = LightRAGAPIClient(
             base_url="http://localhost:9622",
             api_key="test_api_key_123"
         )
         headers = client._headers()
 
-        assert "Authorization" in headers
-        assert headers["Authorization"] == "Bearer test_api_key_123"
-        assert "X-API-Key" not in headers
+        assert "X-API-Key" in headers
+        assert headers["X-API-Key"] == "test_api_key_123"
+        assert "Authorization" not in headers
 
     @patch.dict("os.environ", {"LIGHTRAG_API_KEY": "", "LIGHTRAG_ACCESS_TOKEN": ""}, clear=True)
     def test_headers_with_access_token(self):
@@ -40,15 +40,22 @@ class TestLightRAGClientAuth:
         )
         headers = client._headers()
 
-        assert headers["Authorization"] == "Bearer api_key_123"
+        assert headers["X-API-Key"] == "api_key_123"
+        assert "Authorization" not in headers
 
-    @patch.dict("os.environ", {"LIGHTRAG_API_KEY": "", "LIGHTRAG_ACCESS_TOKEN": ""}, clear=True)
+    @patch.dict("os.environ", {
+        "LIGHTRAG_API_KEY": "",
+        "LIGHTRAG_ACCESS_TOKEN": "",
+        "LIGHTRAG_USERNAME": "",
+        "LIGHTRAG_PASSWORD": ""
+    }, clear=True)
     def test_headers_without_auth(self):
         """Headers should work without authentication."""
         client = LightRAGAPIClient(base_url="http://localhost:9622")
         headers = client._headers()
 
         assert "Authorization" not in headers
+        assert "X-API-Key" not in headers
         assert "Accept" in headers
 
     def test_headers_with_extra(self):
@@ -59,7 +66,7 @@ class TestLightRAGClientAuth:
         )
         headers = client._headers(extra={"X-Custom": "value"})
 
-        assert headers["Authorization"] == "Bearer test_key"
+        assert headers["X-API-Key"] == "test_key"
         assert headers["X-Custom"] == "value"
 
     @patch.dict("os.environ", {"LIGHTRAG_API_KEY": "env_api_key"})
@@ -68,7 +75,7 @@ class TestLightRAGClientAuth:
         client = LightRAGAPIClient(base_url="http://localhost:9622")
         headers = client._headers()
 
-        assert headers["Authorization"] == "Bearer env_api_key"
+        assert headers["X-API-Key"] == "env_api_key"
 
 
 class TestLightRAGClientInit:
