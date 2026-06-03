@@ -91,6 +91,7 @@ def prepare_input(state: QueryState) -> Dict[str, Any]:
     
     return {
         "query": query,
+        "query_authority_scope": "local",
         "error": None,
         "logs": [f"Prepared query: {query}"]
     }
