@@ -42,17 +42,19 @@ class TestComputeScoresHTTP:
         assert scores == [0.9, 0.3]
 
     def test_http_mode_raises_on_http_error(self, reranker):
-        """HTTP mode: non-2xx response raises an exception."""
+        """HTTP mode: non-2xx response raises RuntimeError."""
         import requests
 
         fake_response = MagicMock()
-        fake_response.raise_for_status.side_effect = requests.HTTPError("500 Server Error")
+        fake_response.status_code = 500
+        fake_response.text = "Internal Server Error"
+        fake_response.ok = False
 
         with patch("agent.clients.reranker.settings") as mock_settings:
             mock_settings.reranker_base_url = "http://fake-reranker:8001"
             mock_settings.reranker.default_model = "fake-model"
             with patch("requests.post", return_value=fake_response):
-                with pytest.raises(requests.HTTPError):
+                with pytest.raises(RuntimeError):
                     reranker.compute_scores("query", ["doc1"])
 
     def test_empty_texts_raises_before_http_call(self, reranker):

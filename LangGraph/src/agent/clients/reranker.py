@@ -392,16 +392,18 @@ class Reranker:
                 recency_date = datetime.fromisoformat(clean_date)
                 days_old = (current - recency_date).days
 
-                # Legal Recency: Slower decay than indexing recency
-                # 1.0 for < 30 days, 0.9 for 1 year, 0.7 for 3 years, 0.5 floor
+                # Legal Recency: Very slow decay — UIT docs valid for years
+                # 1.0 for < 30 days, 0.97 for 1 year, 0.85 for 3 years, 0.75 for 5 years, 0.6 floor
                 if days_old <= 30:
                     score = 1.0
                 elif days_old <= 365:
-                    score = 0.95 - (days_old / 365) * 0.05  # 0.95 -> 0.9
+                    score = 0.98 - (days_old / 365) * 0.01  # 0.98 -> 0.97
                 elif days_old <= 1095: # 3 years
-                    score = 0.9 - ((days_old - 365) / 730) * 0.2 # 0.9 -> 0.7
+                    score = 0.97 - ((days_old - 365) / 730) * 0.12 # 0.97 -> 0.85
+                elif days_old <= 1825: # 5 years
+                    score = 0.85 - ((days_old - 1095) / 730) * 0.10 # 0.85 -> 0.75
                 else:
-                    score = max(0.5, 0.7 - ((days_old - 1095) / 1095) * 0.2) # floor at 0.5
+                    score = max(0.5, 0.75 - ((days_old - 1825) / 1825) * 0.15) # floor at 0.5
 
                 # ADD: Confirmed Latest Boost (Grounding with system)
                 # If this doc is explicitly confirmed NOT amended, give it a small boost

@@ -56,7 +56,7 @@ class TestCalculateTemporalScore:
         assert score == 0.5
 
     def test_valid_current_doc_returns_high(self, reranker):
-        item = _item({"valid_from": "2020-01-01", "valid_until": "2099-12-31"})
+        item = _item({"valid_from": "2020-01-01", "valid_until": "2099-12-31", "amended_by": []})
         score = reranker.calculate_temporal_score(item, "2026-05-26")
         assert score >= 0.75
 
