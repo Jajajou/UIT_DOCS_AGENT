@@ -383,21 +383,33 @@ class Reranker:
             return 0.3 * future_penalty # Not yet valid
 
         # Document is currently valid - score based on recency
-        if indexed_at:
+        # PRIORITIZE valid_from for legal recency, fallback to indexed_at
+        recency_date_str = valid_from or indexed_at
+        if recency_date_str:
             try:
-                index_date = datetime.fromisoformat(indexed_at)
-                days_old = (current - index_date).days
+                # Handle space in timestamp (from indexed_at)
+                clean_date = str(recency_date_str).split(' ')[0]
+                recency_date = datetime.fromisoformat(clean_date)
+                days_old = (current - recency_date).days
 
-                # Recency scoring with diminishing returns
-                # 1.0 for today, 0.9 for 30 days, 0.7 for 365 days, 0.5 for 2+ years
+                # Legal Recency: Slower decay than indexing recency
+                # 1.0 for < 30 days, 0.9 for 1 year, 0.7 for 3 years, 0.5 floor
                 if days_old <= 30:
-                    return 1.0 * future_penalty
+                    score = 1.0
                 elif days_old <= 365:
-                    return (0.9 - (days_old - 30) / 365 * 0.2) * future_penalty # Linear decay to 0.7
-                elif days_old <= 730:
-                    return (0.7 - (days_old - 365) / 365 * 0.2) * future_penalty # Decay to 0.5
+                    score = 0.95 - (days_old / 365) * 0.05  # 0.95 -> 0.9
+                elif days_old <= 1095: # 3 years
+                    score = 0.9 - ((days_old - 365) / 730) * 0.2 # 0.9 -> 0.7
                 else:
-                    return max(0.5, 0.7 - (days_old - 365) / 365 * 0.2) * future_penalty # Floor at 0.5
+                    score = max(0.5, 0.7 - ((days_old - 1095) / 1095) * 0.2) # floor at 0.5
+
+                # ADD: Confirmed Latest Boost (Grounding with system)
+                # If this doc is explicitly confirmed NOT amended, give it a small boost
+                # to win over older siblings in the same retrieval set.
+                if not query_is_historical and amended_by == []:
+                    score = min(1.0, score + 0.05)
+
+                return score * future_penalty
 
             except (ValueError, TypeError):
                 pass
