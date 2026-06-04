@@ -1,0 +1,368 @@
+diff --git a/LangGraph/src/agent/clients/lightrag_client.py b/LangGraph/src/agent/clients/lightrag_client.py
+index 017b559..10872aa 100644
+--- a/LangGraph/src/agent/clients/lightrag_client.py
++++ b/LangGraph/src/agent/clients/lightrag_client.py
+@@ -1328,6 +1328,35 @@ class LightRAGAPIClient:
+             print(f"[LightRAG Client] Error fetching chunks by doc_numbers: {e}")
+             return []
+ 
++    def get_doc_ids_by_doc_numbers(
++        self,
++        doc_numbers: List[str]
++    ) -> List[str]:
++        """Fetch doc_ids for a list of document numbers."""
++        if not doc_numbers:
++            return []
++            
++        try:
++            conn = self._get_pg_connection()
++            workspace = os.getenv("WORKSPACE", "default")
++            
++            with conn.cursor() as cur:
++                cur.execute(
++                    """
++                    SELECT doc_id 
++                    FROM temporal_metadata 
++                    WHERE workspace = %s 
++                      AND document_number = ANY(%s)
++                    """,
++                    (workspace, list(doc_numbers))
++                )
++                rows = cur.fetchall()
++            conn.close()
++            return [r[0] for r in rows if r[0]]
++        except Exception as e:
++            print(f"[LightRAG Client] Error in get_doc_ids_by_doc_numbers: {e}")
++            return []
++
+     def get_chunks_by_doc_ids(
+         self,
+         doc_ids: List[str]
+diff --git a/LangGraph/src/agent/clients/reranker.py b/LangGraph/src/agent/clients/reranker.py
+index 33e03bc..b30d478 100644
+--- a/LangGraph/src/agent/clients/reranker.py
++++ b/LangGraph/src/agent/clients/reranker.py
+@@ -9,6 +9,7 @@ from __future__ import annotations
+ 
+ from concurrent.futures import ThreadPoolExecutor, as_completed
+ from datetime import datetime
++import re
+ from typing import List, Dict, Any, Tuple, Optional
+ import numpy as np
+ from agent.config import settings
+@@ -207,7 +208,10 @@ class Reranker:
+     def calculate_temporal_score(
+         self,
+         item: Dict[str, Any],
+-        current_date: Optional[str] = None
++        current_date: Optional[str] = None,
++        query_is_historical: Optional[bool] = False,
++        query_cohort_year: Optional[int] = None,
++        query_academic_year: Optional[str] = None
+     ) -> float:
+         """
+         Calculate temporal relevance score for an item based on its metadata.
+@@ -217,6 +221,7 @@ class Reranker:
+         Args:
+             item: Item dict (entity, relationship, or chunk)
+             current_date: ISO date string for comparison. Defaults to today.
++            query_is_historical: If True, do not penalize amended/old docs.
+ 
+         Returns:
+             Temporal score (0.0-1.0)
+@@ -234,12 +239,34 @@ class Reranker:
+ 
+         # Check if archived
+         if metadata.get("is_archived", False):
+-            return 0.0  # Archived documents get zero temporal score
++            return 0.0
+ 
+-        # Check if superseded: doc has amended_by → newer version exists
++        # Chunk-level: specific clause confirmed superseded by amendment_resolver
++        if item.get("is_superseded", False):
++            # If historical query, we might want the superseded one!
++            return 0.1 if not query_is_historical else 0.9
++
++        # Doc-level: whole doc has been amended (blunt signal)
+         amended_by = metadata.get("amended_by", [])
+         if isinstance(amended_by, list) and len(amended_by) > 0:
+-            return 0.3  # Superseded docs deprioritized regardless of validity dates
++            # Bypass penalty if historical or if this doc specifically matches the cohort
++            if query_is_historical:
++                return 0.9
++            
++            # Check if this document is a primary authority for the student's cohort
++            # If it is, don't penalize it for being amended later.
++            is_cohort_match = False
++            if query_cohort_year is not None:
++                cohorts = metadata.get("cohort_years", [])
++                if "*" in cohorts or "*" in [str(c) for c in cohorts] or query_cohort_year in cohorts or str(query_cohort_year) in [str(c) for c in cohorts]:
++                    is_cohort_match = True
++            
++            if not is_cohort_match:
++                # Moderate penalty for non-matching or general queries
++                return 0.6
++            else:
++                # No penalty for the "right" document for the cohort
++                return 0.85 
+ 
+         # Get validity dates
+         valid_from = metadata.get("valid_from")
+@@ -248,7 +275,29 @@ class Reranker:
+ 
+         # If no temporal info, assume always valid but not prioritized
+         if not valid_from and not valid_until and not indexed_at:
+-            return 0.5  # Neutral score
++            return 0.1  # UNKNOWN DATE = UNTRUSTED
++
++        # --- TIME TRAVEL LOGIC FOR HISTORICAL QUERIES ---
++        if query_is_historical:
++            # Try to extract anchor year from query_academic_year or intention
++            anchor_year = None
++            if query_academic_year:
++                m = re.search(r"(\d{4})", str(query_academic_year))
++                if m: anchor_year = int(m.group(1))
++            
++            if anchor_year and valid_from:
++                try:
++                    vf_date = datetime.fromisoformat(str(valid_from))
++                    # DRASTIC PENALTY for documents from the FUTURE relative to query
++                    if vf_date.year > anchor_year:
++                        return 0.1
++                    # BONUS for documents in that specific era
++                    if vf_date.year == anchor_year:
++                        return 1.0
++                    if vf_date.year == anchor_year - 1:
++                        return 0.95
++                except: pass
++            return 0.8 # Default good score for valid past docs
+ 
+         # Check if currently valid
+         is_valid = True
+@@ -337,6 +386,27 @@ class Reranker:
+         # never penalizes.
+         return 0.5
+ 
++    def _compute_academic_year_score(self, item: Dict[str, Any], query_academic_year: Optional[str]) -> float:
++        """
++        Compute academic year match score for an item.
++
++        Returns:
++            1.0 if item's academic_year matches query_academic_year
++            0.5 (neutral) if no academic year in query or metadata, or mismatch
++        """
++        if not query_academic_year:
++            return 0.5
++
++        doc_academic_year = item.get("metadata", {}).get("academic_year")
++        if not doc_academic_year:
++            return 0.5
++
++        # Exact match (e.g., "2024-2025" == "2024-2025")
++        if str(doc_academic_year).strip() == str(query_academic_year).strip():
++            return 1.0
++
++        return 0.5
++
+     def _compute_authority_score(self, item: Dict[str, Any], query_authority_scope: Optional[str]) -> float:
+         """
+         Compute authority match score (system vs local).
+@@ -374,6 +444,7 @@ class Reranker:
+         temporal_weight: Optional[float] = None,
+         current_date: Optional[str] = None,
+         query_cohort_year: Optional[int] = None,
++        query_academic_year: Optional[str] = None,
+         query_authority_scope: Optional[str] = None,
+         query_is_historical: Optional[bool] = None,
+         query_type: Optional[str] = None
+@@ -392,6 +463,7 @@ class Reranker:
+                            If None, uses config.temporal.recency_weight
+             current_date: ISO date for temporal comparison. Defaults to today.
+             query_cohort_year: Optional cohort year
++            query_academic_year: Optional academic year
+             query_is_historical: Optional flag for historical queries
+ 
+         Returns:
+@@ -411,9 +483,14 @@ class Reranker:
+         # Compute semantic scores
+         semantic_scores = self.compute_scores(query, texts)
+ 
+-        # Compute temporal scores
++        # 1. Compute Temporal Scores
+         temporal_scores = [
+-            self.calculate_temporal_score(item, current_date)
++            self.calculate_temporal_score(
++                item, current_date=current_date, 
++                query_is_historical=query_is_historical,
++                query_cohort_year=query_cohort_year,
++                query_academic_year=query_academic_year
++            ) 
+             for item in items
+         ]
+ 
+@@ -458,7 +535,11 @@ class Reranker:
+                     # the query targets the original doc — skip override.
+                     if semantic_scores[amender_idx] >= semantic_scores[idx]:
+                         new_temporal_scores[idx] = override_score
+-                        overridden.append(item.get("metadata", {}).get("file_path", "unknown"))
++                        overridden.append(
++                            item.get("metadata", {}).get("document_number")
++                            or item.get("metadata", {}).get("file_path")
++                            or item.get("doc_id", "unknown")
++                        )
+                         break
+             if overridden:
+                 print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
+@@ -505,7 +586,7 @@ class Reranker:
+                         temporal_scores[idx] = 0.7
+         # --- End of Modification ---
+ 
+-        if use_cohort and (query_cohort_year is not None or query_authority_scope is not None):
++        if use_cohort and (query_cohort_year is not None or query_authority_scope is not None or query_academic_year is not None):
+             s_w = getattr(temporal_config, 'semantic_weight_cohort', 0.55)
+             t_w = getattr(temporal_config, 'temporal_weight_cohort', 0.20)
+             boost_w = getattr(temporal_config, 'cohort_weight', 0.25)
+@@ -513,17 +594,31 @@ class Reranker:
+             # Compute raw boost scores
+             raw_cohort_scores = [self._compute_cohort_score(item, query_cohort_year) for item in items]
+             raw_authority_scores = [self._compute_authority_score(item, query_authority_scope) for item in items]
++            raw_academic_scores = [self._compute_academic_year_score(item, query_academic_year) for item in items]
+             
+-            # Combine cohort and authority into final c_w component
++            # Combine cohort, authority, and academic year into final c_w component
+             cohort_scores = []
+-            for c, a in zip(raw_cohort_scores, raw_authority_scores):
+-                if query_cohort_year is not None and query_authority_scope is not None:
+-                    # Both present: weighted average (60/40)
+-                    cohort_scores.append(0.6 * c + 0.4 * a)
+-                elif query_cohort_year is not None:
+-                    cohort_scores.append(c)
++            for c, a, ac in zip(raw_cohort_scores, raw_authority_scores, raw_academic_scores):
++                components = []
++                weights = []
++                
++                if query_cohort_year is not None:
++                    components.append(c)
++                    weights.append(0.5)
++                if query_authority_scope is not None:
++                    components.append(a)
++                    weights.append(0.3)
++                if query_academic_year is not None:
++                    components.append(ac)
++                    weights.append(0.2)
++                
++                if not components:
++                    cohort_scores.append(0.5)
+                 else:
+-                    cohort_scores.append(a)
++                    # Normalize weights
++                    total_w = sum(weights)
++                    weighted_score = sum(comp * (w / total_w) for comp, w in zip(components, weights))
++                    cohort_scores.append(weighted_score)
+             
+             c_w = boost_w
+         else:
+@@ -592,6 +687,7 @@ class MultiSourceReranker:
+         top_k_chunks: Optional[int] = None,
+         use_temporal_boost: bool = True,
+         query_cohort_year: Optional[int] = None,
++        query_academic_year: Optional[str] = None,
+         query_authority_scope: Optional[str] = None,
+         query_is_historical: Optional[bool] = None,
+         query_type: Optional[str] = None
+@@ -609,6 +705,7 @@ class MultiSourceReranker:
+             top_k_chunks: Keep top K chunks
+             use_temporal_boost: If True, apply temporal boosting (default: True)
+             query_cohort_year: Optional cohort year
++            query_academic_year: Optional academic year
+             query_is_historical: Optional flag for historical queries
+ 
+         Returns:
+@@ -636,6 +733,7 @@ class MultiSourceReranker:
+                 return self.reranker.rerank_with_temporal_boost(
+                     q, items, text_field=text_field, top_k=top_k,
+                     query_cohort_year=query_cohort_year,
++                    query_academic_year=query_academic_year,
+                     query_authority_scope=query_authority_scope,
+                     query_is_historical=query_is_historical,
+                     query_type=query_type
+diff --git a/LangGraph/src/agent/graphs/query_graph.py b/LangGraph/src/agent/graphs/query_graph.py
+index 96a78fa..fc40a15 100644
+--- a/LangGraph/src/agent/graphs/query_graph.py
++++ b/LangGraph/src/agent/graphs/query_graph.py
+@@ -295,37 +295,41 @@ def enrich_with_temporal_metadata(state: QueryState) -> Dict[str, Any]:
+     except Exception as e:
+         print(f"[ENRICH] Error during forward amendment injection: {e}")
+ 
+-    # Backward sibling enrichment for AMENDMENT queries (original amended_by approach).
+-    if query_type == "AMENDMENT":
++    # Backward sibling enrichment for AMENDMENT queries (original amended_by approach)
++    # AND for historical queries (where semantic search might only find the new doc, but we need the old doc it replaced).
++    if query_type == "AMENDMENT" or state.get("query_is_historical", False):
+         try:
+-            sibling_doc_ids = set()
++            sibling_doc_nums = set()
+             for fp, meta in temporal_map.items():
+                 amended_by = meta.get("amended_by")
+                 if isinstance(amended_by, list):
+-                    for doc_id in amended_by:
+-                        if not str(doc_id).startswith("error-"):
+-                            sibling_doc_ids.add(str(doc_id))
+-
+-            existing_doc_ids_now = {
+-                c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+-                for c in enriched_chunks
+-            }
+-            missing_siblings = sibling_doc_ids - existing_doc_ids_now
+-
+-            if missing_siblings:
+-                print(f"[ENRICH] Backward sibling: {len(missing_siblings)} docs. Fetching from DB...")
+-                sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
+-                real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
+-
+-                for chunk in real_chunks:
+-                    s_doc_id = chunk.get("doc_id")
+-                    if s_doc_id in sibling_metadata:
+-                        chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
+-                    if chunk.get("content") and len(chunk["content"]) > 2000:
+-                        chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
+-                    enriched_chunks.append(chunk)
++                    for doc_num in amended_by:
++                        if not str(doc_num).startswith("error-"):
++                            sibling_doc_nums.add(str(doc_num))
+ 
+-                print(f"[ENRICH] Added {len(real_chunks)} backward sibling chunks.")
++            if sibling_doc_nums:
++                sibling_doc_ids = set(api_client.get_doc_ids_by_doc_numbers(list(sibling_doc_nums)))
++                
++                existing_doc_ids_now = {
++                    c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
++                    for c in enriched_chunks
++                }
++                missing_siblings = sibling_doc_ids - existing_doc_ids_now
++
++                if missing_siblings:
++                    print(f"[ENRICH] Backward sibling: {len(missing_siblings)} docs missing. Fetching from DB...")
++                    sibling_metadata = api_client.get_temporal_metadata_by_doc_ids(list(missing_siblings))
++                    real_chunks = api_client.get_chunks_by_doc_ids(list(missing_siblings))
++
++                    for chunk in real_chunks:
++                        s_doc_id = chunk.get("doc_id")
++                        if s_doc_id in sibling_metadata:
++                            chunk["metadata"] = {**chunk.get("metadata", {}), **sibling_metadata[s_doc_id]}
++                        if chunk.get("content") and len(chunk["content"]) > 2000:
++                            chunk["content"] = chunk["content"][:2000] + " ... [TRUNCATED]"
++                        enriched_chunks.append(chunk)
++
++                    print(f"[ENRICH] Added {len(real_chunks)} backward sibling chunks.")
+         except Exception as e:
+             print(f"[ENRICH] Error during backward sibling enrichment: {e}")
+ 
+@@ -476,6 +480,7 @@ def rerank_data(state: QueryState) -> Dict[str, Any]:
+             top_k_chunks=None,
+             use_temporal_boost=settings.use_temporal_scoring,
+             query_cohort_year=state.get("query_cohort_year"),
++            query_academic_year=state.get("query_academic_year"),
+             query_authority_scope=state.get("query_authority_scope"),
+             query_is_historical=query_is_historical,
+             query_type=state.get("query_type", "GENERAL")

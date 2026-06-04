@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0.0] - 2026-06-04
+
+### Added
+- **Milestone: Achieved 80% accuracy** on the temporal evaluation dataset (Run 4).
+- Canonical Document Registry: Synchronized Qdrant payloads with PostgreSQL to ensure 100% metadata parity.
+- Education System Routing: Added `education_system` detection (chinh_quy, tu_xa, etc.) to Agent 1 and retrieval filtering.
+- Automated Qdrant Backfill: Created high-performance script to sync missing document metadata across the vector database.
+- Enhanced Temporal Scoring: Improved reranker logic for historical "point-in-time" queries using `valid_from` anchors.
+
+### Fixed
+- Resolved document number normalization issues (e.g., 707/QĐ-ĐHQG23).
+- Fixed a critical cohort filtering bug where missing education_system tags caused retrieval misses.
+- Corrected amendment chain traversal for superseded documents in historical contexts.
+
 ## [0.4.2.0] - 2026-05-09
 
 ### Added
