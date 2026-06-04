@@ -36,6 +36,7 @@ def retrieve_cohort_data(state: QueryState) -> Dict[str, Any]:
     """
     query = state.get("parsed_intention") or state.get("query", "")
     cohort_year = state.get("query_cohort_year")
+    edu_system = state.get("education_system")
     chunk_top_k = state.get("chunk_top_k", settings.retrieval.default_chunk_top_k)
 
     if not query:
@@ -51,13 +52,14 @@ def retrieve_cohort_data(state: QueryState) -> Dict[str, Any]:
 
     print("=" * 80)
     print(f"[COHORT] Query: {query}")
-    print(f"[COHORT] Cohort year: {cohort_year}, top_k: {chunk_top_k}")
+    print(f"[COHORT] Cohort year: {cohort_year}, edu_system: {edu_system}, top_k: {chunk_top_k}")
     print("=" * 80)
 
     try:
         chunks = _cohort_client.retrieve(
             query_text=query,
             cohort_year=int(cohort_year),
+            education_system=edu_system,
             top_k=int(chunk_top_k),
         )
     except QdrantCohortError as exc:

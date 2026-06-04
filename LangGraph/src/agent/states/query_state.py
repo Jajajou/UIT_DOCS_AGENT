@@ -15,7 +15,7 @@ from typing_extensions import TypedDict, Literal, Optional, List, Dict, Any, Ann
 from langgraph.graph.message import add_messages
 from langchain_core.messages import AnyMessage
 from typing_extensions import NotRequired
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from ..config import settings
 
 
@@ -80,6 +80,13 @@ class QueryUnderstanding(BaseModel):
             "GENERAL: everything else."
         )
     )
+    @field_validator("query_type", mode="before")
+    @classmethod
+    def coerce_query_type(cls, v: str) -> str:
+        if v not in ("COHORT", "AMENDMENT", "GENERAL"):
+            return "GENERAL"
+        return v
+
     # Document number reference extracted for AMENDMENT queries
     query_document_ref: Optional[str] = Field(
         default=None,

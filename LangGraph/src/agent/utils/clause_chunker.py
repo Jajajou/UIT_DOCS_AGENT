@@ -16,6 +16,47 @@ def clause_aware_chunking_func(
     max_tokens: int = 1200
 ) -> List[Dict[str, Any]]:
     """
+    Split content into logical chunks.
+    First, try to split by "Phụ lục" sections (e.g., "Phụ lục 23").
+    If fewer than 2 sections, fall back to clause splitting.
+    If still fewer than 2 clauses, use default LightRAG chunking.
+    """
+    # Section split (Phụ lục)
+    SECTION_PATTERN = re.compile(r'^(#?\s*Phụ lục\s*\d+)', re.MULTILINE | re.IGNORECASE)
+    sec_matches = list(SECTION_PATTERN.finditer(content))
+    if len(sec_matches) >= 2:
+        # Split by sections, each becomes a chunk
+        sec_chunks: List[Dict[str, Any]] = []
+        for i in range(len(sec_matches)):
+            start = sec_matches[i].start()
+            end = sec_matches[i+1].start() if i+1 < len(sec_matches) else len(content)
+            sec_content = content[start:end].strip()
+            sec_tokens = tokenizer.encode(sec_content)
+            sec_chunks.append({
+                "content": sec_content,
+                "tokens": len(sec_tokens),
+                "chunk_order_index": len(sec_chunks),
+                "section_id": sec_matches[i].group(1).strip(),
+                "clause_id": None,
+                "clause_number": None,
+            })
+        return sec_chunks
+    # If not enough sections, fallback to clause logic (original)
+    # Find all clause markers and their positions
+    matches = list(DIEU_PATTERN.finditer(content))
+    if len(matches) < 2:
+        # Fallback to default chunking
+        return chunking_by_token_size(
+            tokenizer=tokenizer,
+            content=content,
+            split_by_character=split_by_character,
+            split_by_character_only=split_by_character_only,
+            chunk_overlap_token_size=overlap_tokens,
+            chunk_token_size=max_tokens
+        )
+    # Existing clause chunking logic follows unchanged
+
+    """
     Splits content into chunks based on legal clauses (Điều).
     
     If fewer than 2 clauses are found, falls back to default LightRAG chunking.

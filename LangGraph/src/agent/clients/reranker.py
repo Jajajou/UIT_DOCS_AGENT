@@ -437,7 +437,7 @@ class Reranker:
         # 1. Check for Universal marker ("*") - partial boost, not exact match
         # Lower than exact match (1.0) so cohort-specific docs win over universal ones
         if "*" in cohort_years or "*" in [str(y) for y in cohort_years]:
-            return 0.55
+            return 0.35
 
         # 2. Check for explicit year match
         try:
@@ -544,6 +544,13 @@ class Reranker:
         if not items:
             return []
 
+        # Fallback historical detection: LLM may miss "trước khi/bản cũ" phrasing
+        _HISTORICAL_KW = ("trước khi", "bản cũ", "lúc đó", "trước đây", "khi đó",
+                          "trước năm", "thời điểm đó", "hồi đó", "trước khi có")
+        if not query_is_historical and any(kw in query.lower() for kw in _HISTORICAL_KW):
+            query_is_historical = True
+            print(f"[RERANKER] Historical override via keyword: {query[:80]}")
+
         # Extract texts for semantic scoring
         texts = []
         for item in items:
@@ -607,12 +614,23 @@ class Reranker:
                     # at least as relevant. If amender has lower semantic score,
                     # the query targets the original doc — skip override.
                     if semantic_scores[amender_idx] >= semantic_scores[idx]:
-                        new_temporal_scores[idx] = override_score
-                        overridden.append(
-                            item.get("metadata", {}).get("document_number")
-                            or item.get("metadata", {}).get("file_path")
-                            or item.get("doc_id", "unknown")
-                        )
+                        # F1: Protect cohort-specific authorities from being overridden by generic newer docs
+                        is_cohort_protected = False
+                        if query_cohort_year is not None:
+                            item_cohorts = item.get("metadata", {}).get("cohort_years", [])
+                            # Only protect if doc has EXPLICIT cohort matching query (not universal *)
+                            if str(query_cohort_year) in [str(c) for c in item_cohorts]:
+                                is_cohort_protected = True
+                        
+                        if not is_cohort_protected:
+                            new_temporal_scores[idx] = override_score
+                            overridden.append(
+                                item.get("metadata", {}).get("document_number")
+                                or item.get("metadata", {}).get("file_path")
+                                or item.get("doc_id", "unknown")
+                            )
+                        else:
+                            print(f"[RERANKER] 🛡️ Shielding {item.get('metadata', {}).get('document_number')} from amendment override due to cohort match ({query_cohort_year})")
                         break
             if overridden:
                 print(f"[RERANKER] Amendment override applied to {len(overridden)} item(s): {overridden[:3]}")
@@ -707,6 +725,14 @@ class Reranker:
         for i, (s, t, c) in enumerate(zip(semantic_scores, temporal_scores, cohort_scores)):
             score = s_w * s + t_w * t + c_w * c
             
+            # Cohort Scope Boost (+0.15) - prioritize docs EXPLICITLY for this cohort
+            # Only if c == 1.0 (exact match) and scope is explicit
+            if c >= 1.0:
+                metadata = items[i].get("metadata", {})
+                if metadata.get("cohort_scope") == "explicit":
+                    score += 0.15
+                    # print(f"[RERANKER] 🚀 Explicit cohort boost for {metadata.get('document_number')}")
+
             # VBHN Boost (+0.1) - prioritize consolidated documents
             if items[i].get("metadata", {}).get("is_vbhn", False):
                 score += 0.1
@@ -714,6 +740,11 @@ class Reranker:
             # Article Priority Boost (+0.15) - matches specific articles mentioned in query
             if items[i].get("metadata", {}).get("article_priority_boost", False):
                 score += 0.15
+            
+            # Procedure Boost (+0.1) - prioritize procedures for procedural queries
+            if query_type == "PROCEDURE":
+                if items[i].get("metadata", {}).get("document_type") == "procedure":
+                    score += 0.1
             
             # Clamp to 1.0
             score = min(1.0, max(0.0, score))

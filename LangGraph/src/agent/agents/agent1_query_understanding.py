@@ -37,7 +37,7 @@ llm = init_chat_model(
     model=settings.llm_model,
     streaming=False,
     temperature=settings.agent1_temperature,
-    max_tokens=2048,
+    max_tokens=4096,
     extra_body={"chat_template_kwargs": {"enable_thinking": False}},
 )
 
@@ -136,6 +136,9 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         query_cohort_year = get_attr_safe(understanding,"query_cohort_year")
         query_academic_year = get_attr_safe(understanding,"query_academic_year")
         query_authority_scope = get_attr_safe(understanding,"query_authority_scope")
+        # Force local authority for all queries if not set
+        if not query_authority_scope:
+            query_authority_scope = "local"
         query_type = get_attr_safe(understanding,"query_type", "GENERAL")
         query_document_ref = get_attr_safe(understanding,"query_document_ref")
         query_is_historical = bool(get_attr_safe(understanding, "query_is_historical", False))

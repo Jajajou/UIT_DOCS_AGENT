@@ -13,6 +13,7 @@ Responsibilities:
 from __future__ import annotations
 
 import logging
+import time
 import requests
 from typing import Any
 
@@ -82,15 +83,21 @@ class QdrantCohortClient:
             "model": settings.embedding_model,
             "input": text,
         }
-        try:
-            resp = self._session.post(url, headers=headers, json=body, timeout=self.timeout)
-            resp.raise_for_status()
-            data = resp.json()
-            return data["data"][0]["embedding"]
-        except requests.RequestException as exc:
-            raise QdrantCohortError(f"embed_query failed: {exc}") from exc
-        except (KeyError, IndexError) as exc:
-            raise QdrantCohortError(f"embed_query: unexpected response shape: {exc}") from exc
+        last_exc: Exception | None = None
+        for attempt in range(3):
+            if attempt:
+                time.sleep(0.5 * attempt)
+            try:
+                resp = self._session.post(url, headers=headers, json=body, timeout=self.timeout)
+                resp.raise_for_status()
+                data = resp.json()
+                return data["data"][0]["embedding"]
+            except requests.RequestException as exc:
+                last_exc = exc
+                logger.warning("embed_query attempt %d/3 failed: %s", attempt + 1, exc)
+            except (KeyError, IndexError) as exc:
+                raise QdrantCohortError(f"embed_query: unexpected response shape: {exc}") from exc
+        raise QdrantCohortError(f"embed_query failed after 3 attempts: {last_exc}") from last_exc
 
     # ------------------------------------------------------------------
     # Qdrant search
@@ -100,31 +107,39 @@ class QdrantCohortClient:
         self,
         query_embedding: list[float],
         cohort_year: int,
+        education_system: str | None = None,
         top_k: int = DEFAULT_TOP_K,
     ) -> list[dict[str, Any]]:
         """
-        Vector search on lightrag_vdb_chunks filtered by cohort_year.
+        Vector search on lightrag_vdb_chunks filtered by cohort_year and optional education_system.
 
         Filter logic:
         - cohort_years contains `cohort_year` (int) OR "*" (universal marker)
         - is_archived is NOT true (missing field is treated as not-archived)
+        - education_system (if provided) matches FieldCondition
 
         Returns a list of `qdrant_point_to_chunk` dicts, ordered by score desc.
         """
         url = f"{self.qdrant_base_url}/collections/{self.collection}/points/search"
+        
+        must_filters = [
+            {
+                "should": [
+                    {"key": "cohort_years", "match": {"value": cohort_year}},
+                    {"key": "cohort_years", "match": {"value": "*"}},
+                ]
+            }
+        ]
+        
+        if education_system:
+            must_filters.append({"key": "education_system", "match": {"value": education_system}})
+
         body = {
             "vector": query_embedding,
             "limit": top_k,
             "with_payload": True,
             "filter": {
-                "must": [
-                    {
-                        "should": [
-                            {"key": "cohort_years", "match": {"value": cohort_year}},
-                            {"key": "cohort_years", "match": {"value": "*"}},
-                        ]
-                    }
-                ],
+                "must": must_filters,
                 "must_not": [
                     {"key": "is_archived", "match": {"value": True}}
                 ],
@@ -152,6 +167,7 @@ class QdrantCohortClient:
         self,
         query_text: str,
         cohort_year: int,
+        education_system: str | None = None,
         top_k: int = DEFAULT_TOP_K,
     ) -> list[dict[str, Any]]:
         """
@@ -160,6 +176,7 @@ class QdrantCohortClient:
         Args:
             query_text: The user query (or parsed intention from Agent 1).
             cohort_year: Integer cohort year extracted by Agent 1 (e.g. 2022).
+            education_system: Optional education system filter (e.g. 'chinh_quy').
             top_k: Max number of chunks to return.
 
         Returns:
@@ -167,7 +184,7 @@ class QdrantCohortClient:
             Empty list if no matching chunks.
         """
         embedding = self.embed_query(query_text)
-        return self.search_by_cohort(embedding, cohort_year, top_k)
+        return self.search_by_cohort(embedding, cohort_year, education_system, top_k)
 
     # ------------------------------------------------------------------
     # Internal helpers

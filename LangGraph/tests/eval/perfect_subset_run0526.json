@@ -1,0 +1,4105 @@
+{
+  "pairs": [
+    {
+      "id": 3,
+      "type": "cohort_boundary",
+      "query": "Mình vào UIT năm 2018. Nếu giờ xét tốt nghiệp thì phần ngoại ngữ của mình đang tính theo chuẩn nào?",
+      "query_cohort_year": 2018,
+      "expected_doc_ids": [
+        "doc-70ee4e32645ddc776cc9f8c46ed06839"
+      ],
+      "expected_doc_numbers": [
+        "141/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-ec0ecdde90113ff61eaa1027b5c47c90"
+      ],
+      "confounding_doc_numbers": [
+        "108/QD-DHCNTT",
+        "547/QD-DHCNTT"
+      ],
+      "confound_reason": "K2018 sits between the 2015-2017 amended lane and the 2019-only foreign-language regime.",
+      "expected_keywords": [
+        "khóa 2018",
+        "ngoại ngữ",
+        "141"
+      ],
+      "ablation_sensitive": true,
+      "note": "This case forces the ranker to land in the narrow middle regime.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 5,
+      "type": "cohort_boundary",
+      "query": "Mình K2022 hệ chính quy. Nếu kiểm tra chuẩn ngoại ngữ của khóa mình thì đang bám theo chuẩn nào?",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "828/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "141/QD-DHCNTT"
+      ],
+      "confound_reason": "The retriever has to resist older but semantically stronger foreign-language regulations and pick the cohort-specific 2022 regime.",
+      "expected_keywords": [
+        "khóa 2022",
+        "ngoại ngữ",
+        "828"
+      ],
+      "ablation_sensitive": true,
+      "note": "This is the clean K2022 boundary test.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 6,
+      "type": "notice_override",
+      "query": "Trong thời gian dịch, trường có cho dùng kết quả VPET để xét chuẩn đầu ra tốt nghiệp không?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "119/TB-DHCNTT"
+      ],
+      "confound_reason": "The base regime is 547, but the correct answer for the pandemic exception window is the temporary VPET notice, not the later stop-notice.",
+      "expected_keywords": [
+        "VPET",
+        "giãn cách",
+        "chuẩn đầu ra",
+        "101"
+      ],
+      "ablation_sensitive": true,
+      "note": "This pair tests temporary exception retrieval, not just regulation retrieval.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 7,
+      "type": "notice_override",
+      "query": "Bây giờ VPET, TOEIC Bách khoa hoặc phôi văn bằng cũ còn nộp để xét chuẩn ngoại ngữ được không?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "547/QD-DHCNTT"
+      ],
+      "confound_reason": "The user is really asking for the policy reversal, not the earlier temporary allowance and not the base foreign-language regime.",
+      "expected_keywords": [
+        "ngừng sử dụng",
+        "VPET",
+        "TOEIC Bách khoa",
+        "119"
+      ],
+      "ablation_sensitive": true,
+      "note": "This is a notice-over-notice temporal reversal.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 8,
+      "type": "notice_override",
+      "query": "IELTS Indicator với TOEFL iBT Home Edition còn được dùng để xét chuẩn ngoại ngữ không?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "101/TB-DHCNTT",
+        "119/TB-DHCNTT"
+      ],
+      "confound_reason": "The query is about a very specific stop-condition around remote exam formats, not the general foreign-language regulation.",
+      "expected_keywords": [
+        "IELTS Indicator",
+        "TOEFL iBT Home Edition",
+        "ngừng sử dụng",
+        "153"
+      ],
+      "ablation_sensitive": true,
+      "note": "This pair is designed to punish keyword-only retrieval on IELTS/TOEFL.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 9,
+      "type": "notice_override",
+      "query": "CTCLC định hướng Nhật có được dùng NAT-TEST để xét chuẩn quá trình không?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "141/QD-DHCNTT"
+      ],
+      "confound_reason": "The lexical field overlaps with foreign-language training, but the correct answer is the Japanese NAT-TEST notice, not the English-heavy regime docs.",
+      "expected_keywords": [
+        "NAT-TEST",
+        "chuẩn quá trình",
+        "tiếng Nhật",
+        "35"
+      ],
+      "ablation_sensitive": true,
+      "note": "A classic exception notice hidden inside a much larger foreign-language document family.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 10,
+      "type": "amendment_boundary",
+      "query": "Cuối năm 2022, sinh viên hệ chính quy ở UIT học theo quy chế tín chỉ nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-53113380283d1db95a51774b7af5d563"
+      ],
+      "expected_doc_numbers": [
+        "790/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1393/QD-DHCNTT"
+      ],
+      "confound_reason": "The answer changes solely because the query anchors itself before the 2023 update.",
+      "expected_keywords": [
+        "học chế tín chỉ",
+        "quý 4/2022",
+        "790"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-amendment snapshot for UIT credit regulation.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 12,
+      "type": "amendment_boundary",
+      "query": "Trước đợt đổi cuối 2023, các kỳ thi tập trung ở UIT được tổ chức theo quy chế nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1139/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1376/QD-DHCNTT"
+      ],
+      "confound_reason": "The user asks for the earlier exam-organization regime, not the post-update version.",
+      "expected_keywords": [
+        "tổ chức thi",
+        "trước cập nhật cuối 2023",
+        "1139"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-update exam operations rule.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 13,
+      "type": "amendment_boundary",
+      "query": "Nếu đang chuẩn bị một kỳ thi tập trung bây giờ thì UIT đang áp quy chế nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1376/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1139/QD-DHCNTT"
+      ],
+      "confound_reason": "Same subject, same institution, different date regime.",
+      "expected_keywords": [
+        "tổ chức thi",
+        "hiện hành",
+        "1376"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current exam operations rule.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 14,
+      "type": "amendment_boundary",
+      "query": "Trước đợt thay đổi năm 2025, sinh viên chương trình tài năng ở UIT học theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "confound_reason": "The query is deliberately time-anchored before the 2025 replacement, so the 2022 rule should win.",
+      "expected_keywords": [
+        "chương trình tài năng",
+        "trước 2025",
+        "131"
+      ],
+      "ablation_sensitive": true,
+      "note": "Original UIT talent-program regulation.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 15,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ chương trình tài năng ở UIT đang chạy theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "confound_reason": "Temporal currentness is the only thing separating the two talent-program docs.",
+      "expected_keywords": [
+        "chương trình tài năng",
+        "hiện hành",
+        "2025",
+        "1032"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current UIT talent-program regulation.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 16,
+      "type": "amendment_boundary",
+      "query": "Trước bản ban hành năm 2025, chương trình tiên tiến ở UIT đang học theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "434/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1451/QD-DHCNTT"
+      ],
+      "confound_reason": "This is a clean before/after regime boundary for the tiên tiến program.",
+      "expected_keywords": [
+        "chương trình tiên tiến",
+        "trước 2025",
+        "434"
+      ],
+      "ablation_sensitive": true,
+      "note": "Original tiên tiến regulation.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 17,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ chương trình tiên tiến ở UIT đang học theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1451/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "434/QD-DHCNTT"
+      ],
+      "confound_reason": "Again, same topic, same institution, only the amendment boundary determines the correct answer.",
+      "expected_keywords": [
+        "chương trình tiên tiến",
+        "hiện hành",
+        "1451"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current tiên tiến regulation.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 18,
+      "type": "amendment_boundary",
+      "query": "Nếu trường đang chuẩn bị hồ sơ mở ngành lúc này thì điều kiện của Bộ phải đối chiếu theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-b53bf3c03cf255dcf9e93abea4613352"
+      ],
+      "expected_doc_numbers": [
+        "16/2024/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [
+        "doc-4401adba766625ddce0f1eb38c8e1e8c"
+      ],
+      "confounding_doc_numbers": [
+        "02/2022/TT-BGDDT"
+      ],
+      "confound_reason": "Program-opening queries often land on the original 2022 circular unless the retriever explicitly favors the amended 2024 version.",
+      "expected_keywords": [
+        "mở ngành",
+        "hiện hành",
+        "sửa đổi 2024",
+        "16/2024"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current national opening-program regulation.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 19,
+      "type": "amendment_boundary",
+      "query": "Giữa năm 2024, nếu làm hồ sơ mở ngành thì phải đối chiếu theo mốc nào của Bộ?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-4401adba766625ddce0f1eb38c8e1e8c"
+      ],
+      "expected_doc_numbers": [
+        "02/2022/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [
+        "doc-b53bf3c03cf255dcf9e93abea4613352"
+      ],
+      "confounding_doc_numbers": [
+        "16/2024/TT-BGDDT"
+      ],
+      "confound_reason": "This is the mirror case of id=18, now the older document must win because the query explicitly lives before the amendment.",
+      "expected_keywords": [
+        "mở ngành",
+        "giữa 2024",
+        "trước sửa đổi",
+        "02/2022"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-amendment national opening-program regulation.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 20,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, việc mở ngành hiện đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "15/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "540/QD-DHQG"
+      ],
+      "confound_reason": "The query lives at the DHQG layer, not the Bộ layer, and asks for the current post-amendment document.",
+      "expected_keywords": [
+        "ĐHQG-HCM",
+        "mở ngành",
+        "sửa đổi 2025",
+        "15"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current DHQG-HCM opening-program rule.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 21,
+      "type": "authority_collision",
+      "query": "Trước khi ĐHQG-HCM sửa quy định đầu 2025, việc mở ngành đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "540/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "15/QD-DHQG"
+      ],
+      "confound_reason": "Same authority, same topic, different time slice.",
+      "expected_keywords": [
+        "ĐHQG-HCM",
+        "mở ngành",
+        "trước 2025",
+        "540"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-amendment DHQG-HCM opening-program rule.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 22,
+      "type": "amendment_boundary",
+      "query": "Bộ đang dùng chuẩn nào cho CTĐT vi mạch bán dẫn ở thời điểm này?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-49efd8d5eef0667317b2ee058015bfa9"
+      ],
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [
+        "doc-74b44aaf6954cc8cfc83560bb28552eb"
+      ],
+      "confounding_doc_numbers": [
+        "1314/QD-BGDDT"
+      ],
+      "confound_reason": "Both documents are recent and about the same specialized field. Only amendment awareness separates them.",
+      "expected_keywords": [
+        "vi mạch bán dẫn",
+        "hiện hành",
+        "sửa đổi",
+        "2101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current semiconductor curriculum standard.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 23,
+      "type": "amendment_boundary",
+      "query": "Lúc Bộ vừa ban hành chuẩn CTĐT vi mạch bán dẫn, trước khi có bản sửa sau đó, thì phải bám mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-74b44aaf6954cc8cfc83560bb28552eb"
+      ],
+      "expected_doc_numbers": [
+        "1314/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [
+        "doc-49efd8d5eef0667317b2ee058015bfa9"
+      ],
+      "confounding_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "confound_reason": "Mirror case of id=22, but anchored inside the short window before the amendment lands.",
+      "expected_keywords": [
+        "vi mạch bán dẫn",
+        "ban hành lần đầu",
+        "1314"
+      ],
+      "ablation_sensitive": true,
+      "note": "Original semiconductor curriculum standard.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 24,
+      "type": "authority_collision",
+      "query": "Ở UIT có quy định riêng nào cho chuyện học song ngành hệ chính quy không?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "112/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-052ae6299edb78694ba69cf307f084d8"
+      ],
+      "confounding_doc_numbers": [
+        "1195/QD-DHQG",
+        "1681/QD-DHQG"
+      ],
+      "confound_reason": "This is a three-level collision: DHQG framework, DHQG approval for one specific program, and UIT-local operational rule.",
+      "expected_keywords": [
+        "song ngành",
+        "UIT",
+        "nội bộ hiện hành",
+        "112"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT-local song-ngành rule.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 25,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, song ngành hiện đang đi theo khung chung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1195/QD-DHQG"
+      ],
+      "confounding_doc_ids": [
+        "doc-052ae6299edb78694ba69cf307f084d8"
+      ],
+      "confounding_doc_numbers": [
+        "112/QD-DHCNTT",
+        "1681/QD-DHQG"
+      ],
+      "confound_reason": "The user asks for the system-level framework, not the school-local implementation and not the approval for the TMĐT variant.",
+      "expected_keywords": [
+        "song ngành",
+        "khung ĐHQG-HCM",
+        "1195"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG-HCM song-ngành framework.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 26,
+      "type": "authority_collision",
+      "query": "Song ngành Thương mại điện tử ở UIT được ĐHQG phê duyệt bằng quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-052ae6299edb78694ba69cf307f084d8"
+      ],
+      "expected_doc_numbers": [
+        "1681/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1195/QD-DHQG",
+        "112/QD-DHCNTT"
+      ],
+      "confound_reason": "This asks for the approval document of one specific song-ngành program, not the framework or the local UIT implementation rule.",
+      "expected_keywords": [
+        "song ngành",
+        "Thương mại điện tử",
+        "phê duyệt",
+        "1681"
+      ],
+      "ablation_sensitive": true,
+      "note": "Approval-specific song-ngành document.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 27,
+      "type": "local_vs_system",
+      "query": "Sinh viên hệ đào tạo từ xa của UIT hiện đang học theo quy chế nào của trường?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-68fe5ca21232e110a2ea6c72f624e28d"
+      ],
+      "expected_doc_numbers": [
+        "507/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "28/2023/TT-BGDDT",
+        "10/2017/TT-BGDDT"
+      ],
+      "confound_reason": "The broad national regulations are relevant, but the user is explicitly asking for the UIT-local rule that applies directly to UIT distance-learning students.",
+      "expected_keywords": [
+        "đào tạo từ xa",
+        "UIT",
+        "nội bộ",
+        "507"
+      ],
+      "ablation_sensitive": true,
+      "note": "Local-vs-system collision on distance learning.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 28,
+      "type": "local_vs_system",
+      "query": "Nếu lớp học tổ chức theo kiểu online hoặc hybrid thì UIT đang quản lý theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "196/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-ed600bb2c49e17558bff4f7fb37be746"
+      ],
+      "confounding_doc_numbers": [
+        "30/2023/TT-BGDDT",
+        "1141/QD-DHCNTT"
+      ],
+      "confound_reason": "This pair forces the retriever to separate teaching/blended-learning governance from both the national IT-in-online-learning circular and the UIT online-assessment rule.",
+      "expected_keywords": [
+        "trực tuyến",
+        "kết hợp",
+        "dạy và học",
+        "196"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT local rule for online/blended teaching.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 29,
+      "type": "local_vs_system",
+      "query": "Riêng phần đánh giá kết quả học tập khi học trực tuyến ở UIT thì đang áp khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1141/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-ed600bb2c49e17558bff4f7fb37be746"
+      ],
+      "confounding_doc_numbers": [
+        "196/QD-DHCNTT",
+        "30/2023/TT-BGDDT"
+      ],
+      "confound_reason": "The lexical overlap with online teaching is high, but the user asks specifically about online assessment, which is a separate UIT-local document.",
+      "expected_keywords": [
+        "đánh giá kết quả học tập",
+        "trực tuyến",
+        "1141"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT local rule for online assessment.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 30,
+      "type": "amendment_boundary",
+      "query": "Trước đợt đổi năm 2023, việc phân công cán bộ coi thi ở UIT đang làm theo quy trình nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "936/QD-DHCNTT"
+      ],
+      "confound_reason": "The topic is identical. Only the pre/post-2023 boundary distinguishes the older invigilator-assignment process from the amended one.",
+      "expected_keywords": [
+        "cán bộ coi thi",
+        "trước 2023",
+        "672"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-amendment invigilator assignment process.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 31,
+      "type": "amendment_boundary",
+      "query": "Nếu đang tổ chức thi tập trung lúc này thì việc phân công cán bộ coi thi ở UIT làm theo quy trình nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "936/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "confound_reason": "The retriever needs to favor the amended 2023 invigilator-assignment process, not the original 2020 version.",
+      "expected_keywords": [
+        "cán bộ coi thi",
+        "hiện giờ",
+        "936"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current invigilator assignment process.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 32,
+      "type": "local_vs_system",
+      "query": "Nếu tổ chức thi trên máy tính ở UIT bây giờ thì phải bám theo quy định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1376/QD-DHCNTT",
+        "1139/QD-DHCNTT"
+      ],
+      "confound_reason": "Generic exam-management documents exist, but the user is asking for the newer UIT-specific computer-based exam rule.",
+      "expected_keywords": [
+        "thi trên máy tính",
+        "135"
+      ],
+      "ablation_sensitive": true,
+      "note": "Computer-based exam regulation should outrank the broader exam rules.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 33,
+      "type": "local_vs_system",
+      "query": "UIT có quy định nội bộ riêng về mở ngành đào tạo không, hay chỉ đi theo khung của Bộ với ĐHQG?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1021/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "16/2024/TT-BGDDT",
+        "15/QD-DHQG",
+        "540/QD-DHQG"
+      ],
+      "confound_reason": "Opening-program queries are easy to drag upward to Bộ or ĐHQG documents. This one explicitly asks for the UIT-local layer.",
+      "expected_keywords": [
+        "mở ngành",
+        "nội bộ UIT",
+        "1021"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT-local opening-program rule.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 34,
+      "type": "local_vs_system",
+      "query": "Chuyện đào tạo trực tuyến ở cấp Bộ hiện đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-ed600bb2c49e17558bff4f7fb37be746"
+      ],
+      "expected_doc_numbers": [
+        "30/2023/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "196/QD-DHCNTT",
+        "1141/QD-DHCNTT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "The query asks for the Bộ-level document. UIT and DHQG also have highly similar online-learning and online-assessment documents.",
+      "expected_keywords": [
+        "Bộ",
+        "đào tạo trực tuyến",
+        "30/2023"
+      ],
+      "ablation_sensitive": true,
+      "note": "National online-training circular should beat local implementation docs.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 35,
+      "type": "authority_collision",
+      "query": "Nếu học trực tuyến ở ĐHQG thì phần đánh giá kết quả học tập hiện đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "809/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1141/QD-DHCNTT",
+        "196/QD-DHCNTT",
+        "30/2023/TT-BGDDT"
+      ],
+      "confound_reason": "Same topic family, different authority layers. The user asks for ĐHQG specifically, not UIT and not Bộ.",
+      "expected_keywords": [
+        "ĐHQG",
+        "đánh giá kết quả học tập",
+        "trực tuyến",
+        "809"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG-level online assessment rule.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 36,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, chuyện đào tạo trình độ đại học hiện đang vận hành theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1342/QD-DHQG"
+      ],
+      "confounding_doc_ids": [
+        "doc-53113380283d1db95a51774b7af5d563"
+      ],
+      "confounding_doc_numbers": [
+        "1393/QD-DHCNTT",
+        "790/QD-DHCNTT",
+        "08/2021/TT-BGDDT"
+      ],
+      "confound_reason": "The subject is broad enough that systems often return either the UIT-local credit regulation or the Bộ regulation instead of the DHQG layer.",
+      "expected_keywords": [
+        "ĐHQG-HCM",
+        "quy chế đào tạo",
+        "1342"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG-level higher-education training regulation.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 38,
+      "type": "authority_collision",
+      "query": "Ở UIT, chuyện văn bằng chứng chỉ theo quy định nội bộ hiện phải bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-f28486c912145309dc609799ae0735c8"
+      ],
+      "expected_doc_numbers": [
+        "172/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1372/QD-DHQG",
+        "1192/TB-DHCNTT",
+        "133/QD-DHCNTT"
+      ],
+      "confound_reason": "Diploma and certificate queries are noisy because UIT has the core regulation, a later notice, and a later update, while DHQG has its own framework.",
+      "expected_keywords": [
+        "văn bằng",
+        "chứng chỉ",
+        "UIT",
+        "172"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT-level diploma/certificate regulation.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 39,
+      "type": "notice_override",
+      "query": "Từ cuối 2024 thì trên phụ lục văn bằng, bảng điểm hay giấy xác nhận ở UIT dùng cách ghi nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1192/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "172/QD-DHCNTT",
+        "1672/QD-DHQG"
+      ],
+      "confound_reason": "The question is about wording actually used after a notice, not the broader diploma regulation.",
+      "expected_keywords": [
+        "phụ lục văn bằng",
+        "bảng điểm",
+        "giấy xác nhận",
+        "1192"
+      ],
+      "ablation_sensitive": true,
+      "note": "Notice-level wording override for diploma-related outputs.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 40,
+      "type": "amendment_boundary",
+      "query": "Mẫu phụ lục văn bằng tốt nghiệp UIT dùng từ 2025 đang bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "133/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1192/TB-DHCNTT",
+        "172/QD-DHCNTT"
+      ],
+      "confound_reason": "This is the 2025 update in the diploma chain, sitting after the core regulation and after the 2024 wording notice.",
+      "expected_keywords": [
+        "mẫu phụ lục văn bằng",
+        "2025",
+        "133"
+      ],
+      "ablation_sensitive": true,
+      "note": "2025 diploma supplement update.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 42,
+      "type": "authority_collision",
+      "query": "Mẫu chứng chỉ ngoại ngữ theo khung 6 bậc của ĐHQG hiện phải bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1224/QD-DHQG"
+      ],
+      "confounding_doc_ids": [
+        "doc-d5c28078cae9a583c85fffaa7743633c"
+      ],
+      "confounding_doc_numbers": [
+        "170/QD-DHQG"
+      ],
+      "confound_reason": "This is the mirror case of id=41. Now the template document should win, not the recognition rule.",
+      "expected_keywords": [
+        "mẫu chứng chỉ ngoại ngữ",
+        "khung 6 bậc",
+        "1224"
+      ],
+      "ablation_sensitive": true,
+      "note": "Foreign-language certificate template document.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 43,
+      "type": "amendment_boundary",
+      "query": "Trước khi có quy chế đào tạo từ xa mới năm 2023 thì ở cấp Bộ đang áp khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "10/2017/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "28/2023/TT-BGDDT",
+        "507/QD-DHCNTT"
+      ],
+      "confound_reason": "Distance-learning queries frequently collapse to the current documents. This one explicitly asks for the pre-2023 Ministry regime.",
+      "expected_keywords": [
+        "đào tạo từ xa",
+        "trước 2023",
+        "10/2017"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-2023 national distance-learning regulation.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 44,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ ở cấp Bộ, đào tạo từ xa đang chạy theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "28/2023/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "10/2017/TT-BGDDT",
+        "507/QD-DHCNTT"
+      ],
+      "confound_reason": "The answer should stay at the Ministry layer and prefer the post-2023 regulation, not the UIT-local implementation.",
+      "expected_keywords": [
+        "đào tạo từ xa",
+        "Bộ",
+        "hiện giờ",
+        "28/2023"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current national distance-learning regulation.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 45,
+      "type": "local_vs_system",
+      "query": "Mình muốn xin công nhận tín chỉ ở UIT thì bây giờ phải đi theo quy trình nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "412/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1537/QD-DHQG",
+        "2062/QD-DHQG"
+      ],
+      "confound_reason": "This asks for the UIT-local process, not the DHQG rules for MOOC or credit-transfer blocks.",
+      "expected_keywords": [
+        "công nhận tín chỉ",
+        "UIT",
+        "412"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT local credit-recognition process.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 46,
+      "type": "authority_collision",
+      "query": "Nếu học MOOC rồi muốn xin công nhận ở cấp ĐHQG thì hiện đang xử lý theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1537/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "412/QD-DHCNTT",
+        "2062/QD-DHQG"
+      ],
+      "confound_reason": "The query is MOOC-specific and at the DHQG layer. The UIT local process and the broader credit-transfer-block document are tempting but wrong.",
+      "expected_keywords": [
+        "MOOC",
+        "ĐHQG",
+        "công nhận tín chỉ",
+        "1537"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG MOOC credit-recognition rule.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 47,
+      "type": "authority_collision",
+      "query": "Riêng chuyện công nhận hoặc chuyển đổi tín chỉ ở cấp ĐHQG thì đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2062/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1537/QD-DHQG",
+        "412/QD-DHCNTT",
+        "2130/QD-DHQG"
+      ],
+      "confound_reason": "This is about the recognized/converted credit blocks, not MOOC rules, not UIT local process, and not high-school credit recognition.",
+      "expected_keywords": [
+        "chuyển đổi tín chỉ",
+        "khối học phần",
+        "2062"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG credit-conversion block rule.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 48,
+      "type": "authority_collision",
+      "query": "Nếu học từ bậc THPT mà muốn được công nhận tín chỉ ở ĐHQG thì hiện đang theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2130/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "2062/QD-DHQG",
+        "412/QD-DHCNTT"
+      ],
+      "confound_reason": "The wording overlaps with general credit-recognition documents, but this case is specifically about credits from the THPT stage.",
+      "expected_keywords": [
+        "tín chỉ cấp THPT",
+        "ĐHQG",
+        "2130"
+      ],
+      "ablation_sensitive": true,
+      "note": "High-school credit recognition at the DHQG layer.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 49,
+      "type": "authority_collision",
+      "query": "Ở ĐHQG, cách in nội dung trên văn bằng chứng chỉ hiện phải bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1672/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1372/QD-DHQG",
+        "172/QD-DHCNTT",
+        "1192/TB-DHCNTT"
+      ],
+      "confound_reason": "Diploma queries often land on the broader regulation. This one is narrowly about printed content at the DHQG level.",
+      "expected_keywords": [
+        "in nội dung",
+        "văn bằng chứng chỉ",
+        "ĐHQG",
+        "1672"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG printed-content regulation for diplomas/certificates.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 52,
+      "type": "workflow_boundary",
+      "query": "Khóa luận tốt nghiệp của sinh viên hệ chính quy hiện đang bám theo khung chung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "confound_reason": "Both documents live in the same KLTN workflow. One is the general regulation, the other is only about post-defense submission, so the system must separate stage from umbrella policy.",
+      "expected_keywords": [
+        "khóa luận tốt nghiệp",
+        "hệ chính quy",
+        "159"
+      ],
+      "ablation_sensitive": true,
+      "note": "General KLTN regulation should beat the narrower post-defense submission procedure.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 53,
+      "type": "workflow_boundary",
+      "query": "Mình cần làm bước nộp khóa luận sau khi đã bảo vệ xong. Trường hợp này phải đi đúng theo quy trình nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "confound_reason": "The wording overlaps heavily with the broader thesis regulation, but the user is asking for the post-defense submission step specifically.",
+      "expected_keywords": [
+        "nộp khóa luận",
+        "sau khi bảo vệ",
+        "583"
+      ],
+      "ablation_sensitive": true,
+      "note": "Post-defense KLTN submission workflow.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 55,
+      "type": "admissions_boundary",
+      "query": "Từ sau 2022, ở cấp ĐHQG-HCM tuyển sinh đại học đang theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "707/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "836/QD-DHQG",
+        "354/QD-DHCNTT",
+        "06/2026/TT-BGDDT"
+      ],
+      "confound_reason": "This is a clean pre/post amendment boundary at the DHQG layer. The system must pick the 2022 regulation instead of the older 2021 regime or a local UIT admissions rule.",
+      "expected_keywords": [
+        "ĐHQG",
+        "tuyển sinh",
+        "sau 2022",
+        "707"
+      ],
+      "ablation_sensitive": true,
+      "note": "Post-2022 DHQG admissions regulation.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 56,
+      "type": "admissions_boundary",
+      "query": "Trước khi ĐHQG ban hành quy chế tuyển sinh 2022 thì tuyển sinh đại học đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "836/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "707/QD-DHQG",
+        "354/QD-DHCNTT"
+      ],
+      "confound_reason": "The question explicitly asks for the regime before the 2022 DHQG admissions regulation. Newer admissions policies are tempting but wrong.",
+      "expected_keywords": [
+        "trước 2022",
+        "quy chế tuyển sinh",
+        "836"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-2022 DHQG admissions regulation.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 57,
+      "type": "authority_collision",
+      "query": "Năm 2025 UIT đã chốt mở đào tạo ngành Truyền thông đa phương tiện chưa? Nếu rồi thì quyết định nào xác nhận việc đó?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "491/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1021/QD-DHCNTT",
+        "15/QD-DHQG",
+        "540/QD-DHQG"
+      ],
+      "confound_reason": "Opening-program queries can collapse to the generic UIT opening rule or the DHQG system regulations. This one is asking for the concrete 2025 decision for a specific new major.",
+      "expected_keywords": [
+        "Truyền thông đa phương tiện",
+        "mở đào tạo",
+        "2025",
+        "491"
+      ],
+      "ablation_sensitive": true,
+      "note": "Specific opening decision for the multimedia major, not the generic opening framework.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 59,
+      "type": "notice_override",
+      "query": "Nếu đơn vị vẫn đang dùng mẫu văn bằng từ 2017 thì cách ghi nội dung trên văn bằng phải bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "842/DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1672/QD-DHQG",
+        "1192/TB-DHCNTT",
+        "133/QD-DHCNTT",
+        "1372/QD-DHQG"
+      ],
+      "confound_reason": "Printed-content questions tend to land on the broader regulation or UIT-local wording notices. This one is narrower: guidance for using the old 2017 diploma template.",
+      "expected_keywords": [
+        "mẫu 2017",
+        "hướng dẫn in nội dung",
+        "842"
+      ],
+      "ablation_sensitive": true,
+      "note": "Guidance document for old diploma templates should outrank the broader diploma regulations.",
+      "baseline_bucket": "Baseline-T"
+    },
+    {
+      "id": 60,
+      "type": "authority_collision",
+      "query": "Nếu học một môn theo MOOC rồi muốn xin công nhận ở cấp ĐHQG thì phải đi theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2217/DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1537/QD-DHQG",
+        "2062/QD-DHQG",
+        "412/QD-DHCNTT"
+      ],
+      "confound_reason": "MOOC-related recognition now spans a DHQG rule, a later MOOC-credit regulation, a broader credit-transfer-block rule, and a UIT-local procedure. The query is about course-level recognition at the DHQG layer.",
+      "expected_keywords": [
+        "MOOC",
+        "công nhận môn học",
+        "ĐHQG",
+        "2217"
+      ],
+      "ablation_sensitive": true,
+      "note": "Specific DHQG MOOC course-recognition guidance.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 61,
+      "type": "local_vs_system",
+      "query": "Nếu UIT mở chương trình liên kết đào tạo với nước ngoài ở bậc đại học thì đang quản lý theo quy định nội bộ nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "451/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1758/QD-DHQG",
+        "07/BGD",
+        "124/CP"
+      ],
+      "confound_reason": "Foreign-linkage queries often float upward to the DHQG or Government layer. This one explicitly asks for the UIT-internal operating rule for these programs.",
+      "expected_keywords": [
+        "liên kết đào tạo",
+        "nước ngoài",
+        "UIT",
+        "451"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT-local operating rule for foreign-linked undergraduate programs.",
+      "baseline_bucket": "System"
+    },
+    {
+      "id": 62,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, liên kết đào tạo với nước ngoài cho bậc đại học, thạc sĩ, tiến sĩ hiện đang theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1758/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "451/QD-DHCNTT",
+        "07/BGD",
+        "124/CP"
+      ],
+      "confound_reason": "The system must stay at the DHQG layer and avoid drifting down to UIT implementation rules or up to broader national regulations.",
+      "expected_keywords": [
+        "ĐHQG",
+        "liên kết đào tạo",
+        "nước ngoài",
+        "1758"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG foreign-linkage regulation across undergraduate and graduate levels.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 64,
+      "type": "admissions_boundary",
+      "query": "Cách xác định chỉ tiêu tuyển sinh đại học ở cấp Bộ hiện phải bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "03/2022/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "06/2026/TT-BGDDT",
+        "707/QD-DHQG",
+        "354/QD-DHCNTT"
+      ],
+      "confound_reason": "Admissions retrieval can confuse quota-setting with the admissions regulation itself, or with local/system admissions rules. This case is specifically about determining quota.",
+      "expected_keywords": [
+        "chỉ tiêu tuyển sinh",
+        "Bộ",
+        "03/2022"
+      ],
+      "ablation_sensitive": true,
+      "note": "Ministry document for admissions quota determination.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 65,
+      "type": "admissions_boundary",
+      "query": "Năm 2026, tuyển sinh đại học ở cấp Bộ đang theo khung nào?",
+      "query_cohort_year": 2026,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "06/2026/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "707/QD-DHQG",
+        "836/QD-DHQG",
+        "354/QD-DHCNTT",
+        "03/2022/TT-BGDDT"
+      ],
+      "confound_reason": "The phrase 'tuyển sinh' strongly overlaps with older DHQG and UIT regulations, while quota-setting language can also interfere. This case asks for the latest Ministry admissions regulation for 2026.",
+      "expected_keywords": [
+        "tuyển sinh",
+        "Bộ",
+        "2026",
+        "06/2026"
+      ],
+      "ablation_sensitive": true,
+      "note": "Latest Ministry admissions regulation for the 2026 cycle.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 66,
+      "type": "catalog_boundary",
+      "query": "Danh mục thống kê ngành đào tạo đang dùng hiện nay bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "24/2017/TT-BGDDT",
+        "02/2022/TT-BGDDT"
+      ],
+      "confound_reason": "The catalog of training fields collides with both the older level-IV education taxonomy and the regulation on opening majors. This query wants the current statistical training-field catalog.",
+      "expected_keywords": [
+        "danh mục thống kê ngành đào tạo",
+        "hiện nay",
+        "09/2022"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current statistical catalog of training fields.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 68,
+      "type": "authority_collision",
+      "query": "Chuẩn chương trình đào tạo chung ở cấp Bộ cho bậc đại học hiện bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "17/2021/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "16/2024/TT-BGDDT",
+        "2627/QD-BGDDT",
+        "1314/QD-BGDDT"
+      ],
+      "confound_reason": "Curriculum-standard queries can drift to opening-program rules or specialized standard sets. This case asks for the general Ministry-level curriculum standard for undergraduate programs.",
+      "expected_keywords": [
+        "chuẩn chương trình đào tạo",
+        "trình độ đại học",
+        "17/2021"
+      ],
+      "ablation_sensitive": true,
+      "note": "General Ministry curriculum-standard regulation.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 69,
+      "type": "authority_collision",
+      "query": "Với chương trình kỹ sư hoặc thạc sĩ tài năng lĩnh vực STEM thì chuẩn mới nhất đang là mốc nào?",
+      "query_cohort_year": 2026,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2627/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "17/2021/TT-BGDDT",
+        "1032/QD-DHCNTT",
+        "1314/QD-BGDDT",
+        "2101/QD-BGDDT"
+      ],
+      "confound_reason": "This query is deliberately close to several specialized and general standards. The system must avoid generic curriculum standards, the local talent-program rule, and semiconductor-specific standards.",
+      "expected_keywords": [
+        "kỹ sư tài năng",
+        "thạc sĩ tài năng",
+        "STEM",
+        "2627"
+      ],
+      "ablation_sensitive": true,
+      "note": "Latest Ministry standard for talent engineer/master programs in STEM.",
+      "baseline_bucket": "System+Amend"
+    },
+    {
+      "id": 70,
+      "type": "amendment_boundary",
+      "baseline_bucket": "Baseline-S",
+      "query": "Nếu rà lại việc phân công cán bộ coi thi ở giai đoạn trước đợt đổi cuối 2023 thì lúc đó UIT làm theo quy trình nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "936/QD-DHCNTT"
+      ],
+      "confound_reason": "The topic is nearly identical. Only the temporal cue pointing to the pre-update window separates the older process from the current one.",
+      "expected_keywords": [
+        "trước cập nhật cuối 2023",
+        "phân công cán bộ coi thi",
+        "672"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pure temporal test: the older invigilator-assignment process should beat the current one."
+    },
+    {
+      "id": 71,
+      "type": "amendment_boundary",
+      "baseline_bucket": "Baseline-S",
+      "query": "Nếu đang chuẩn bị một đợt thi tập trung bây giờ thì việc phân công cán bộ coi thi ở UIT phải làm theo quy trình nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "936/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "confound_reason": "The lexical signal is the same as the old process. The only decisive clue is the current-time phrasing.",
+      "expected_keywords": [
+        "hiện nay",
+        "phân công cán bộ coi thi",
+        "936"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pure temporal test for the current invigilator-assignment process."
+    },
+    {
+      "id": 72,
+      "type": "admissions_boundary",
+      "baseline_bucket": "Baseline-T",
+      "query": "Trước khi ĐHQG đổi sang quy chế tuyển sinh 2022 thì tuyển sinh đại học đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "836/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "707/QD-DHQG",
+        "354/QD-DHCNTT",
+        "06/2026/TT-BGDDT"
+      ],
+      "confound_reason": "This is a clean pre/post temporal split at the same authority layer. Pure semantic retrieval tends to jump to the newer 2022 regulation.",
+      "expected_keywords": [
+        "trước 2022",
+        "ĐHQG",
+        "tuyển sinh",
+        "836"
+      ],
+      "ablation_sensitive": true,
+      "note": "Temporal-only admissions boundary at the DHQG layer."
+    },
+    {
+      "id": 73,
+      "type": "admissions_boundary",
+      "baseline_bucket": "Baseline-T",
+      "query": "Sau đợt thay đổi năm 2022, tuyển sinh đại học ở ĐHQG đang bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "707/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "836/QD-DHQG",
+        "354/QD-DHCNTT",
+        "06/2026/TT-BGDDT"
+      ],
+      "confound_reason": "The topic and authority are the same as the older document. The question is resolved only by the post-2022 time cue.",
+      "expected_keywords": [
+        "sau 2022",
+        "ĐHQG",
+        "tuyển sinh",
+        "707"
+      ],
+      "ablation_sensitive": true,
+      "note": "Temporal-only admissions boundary for the newer DHQG regulation."
+    },
+    {
+      "id": 78,
+      "type": "cohort_boundary",
+      "baseline_bucket": "Baseline-T",
+      "query": "Mình K2019 hệ chính quy. Nếu xét đúng phần ngoại ngữ của khóa mình chứ không lẫn với khóa cũ thì đang theo chuẩn nào?",
+      "query_cohort_year": 2019,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "547/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "141/QD-DHCNTT",
+        "108/QD-DHCNTT",
+        "828/QD-DHCNTT"
+      ],
+      "confound_reason": "The wording is semantically close to all foreign-language regulations. Only the cohort signal picks out the 2019 policy lane.",
+      "expected_keywords": [
+        "K2019",
+        "hệ chính quy",
+        "547"
+      ],
+      "ablation_sensitive": true,
+      "note": "Cohort-specific 2019 regulation."
+    },
+    {
+      "id": 79,
+      "type": "cohort_boundary",
+      "baseline_bucket": "Baseline-T",
+      "query": "Mình K2022 hệ chính quy. Nếu kiểm tra đúng chuẩn ngoại ngữ của khóa này thì đang theo chuẩn nào?",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "828/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "560/QD-DHCNTT",
+        "364/QD-DHCNTT"
+      ],
+      "confound_reason": "Temporal cues and newer amendments are attractive, but the expected answer is the cohort-specific K2022 rule.",
+      "expected_keywords": [
+        "K2022",
+        "chuẩn ngoại ngữ",
+        "828"
+      ],
+      "ablation_sensitive": true,
+      "note": "Cohort-boundary case for the K2022 intake."
+    },
+    {
+      "id": 81,
+      "type": "amendment_boundary",
+      "baseline_bucket": "System",
+      "query": "Sau đợt cập nhật cuối 2023, các kỳ thi tập trung ở UIT đang tổ chức theo quy trình nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1376/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1139/QD-DHCNTT",
+        "135/QD-DHCNTT"
+      ],
+      "confound_reason": "The pipeline must choose the amended current exam-organization rule instead of the previous rule or the separate computer-based-exam regulation.",
+      "expected_keywords": [
+        "tổ chức thi tập trung",
+        "cuối 2023",
+        "1376"
+      ],
+      "ablation_sensitive": true,
+      "note": "Amendment-selection case for current UIT exam organization."
+    },
+    {
+      "id": 82,
+      "type": "amendment_boundary",
+      "baseline_bucket": "System",
+      "query": "Nếu đang học chương trình tài năng ở UIT bây giờ thì phải bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "131/QD-DHCNTT",
+        "2627/QD-BGDDT"
+      ],
+      "confound_reason": "The correct answer is the updated UIT amendment, not the older local rule and not the Ministry standard for talent programs in STEM.",
+      "expected_keywords": [
+        "chương trình tài năng",
+        "hiện còn hiệu lực",
+        "1032"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current UIT talent-program regulation after amendment."
+    },
+    {
+      "id": 83,
+      "type": "amendment_boundary",
+      "baseline_bucket": "System+Amend",
+      "query": "Nếu đang học chương trình tiên tiến ở UIT bây giờ thì phải bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1451/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "434/QD-DHCNTT"
+      ],
+      "confound_reason": "This is an amendment-selection problem on a narrower program lane. The system must prefer the updated current document instead of the older advanced-program rule.",
+      "expected_keywords": [
+        "chương trình tiên tiến",
+        "hiện nay",
+        "1451"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current advanced-program regulation after the 2025 update."
+    },
+    {
+      "id": 84,
+      "type": "amendment_boundary",
+      "baseline_bucket": "System+Amend",
+      "query": "Sau đợt sửa đổi gần nhất của Bộ, chuẩn CTĐT vi mạch bán dẫn đang tính theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1314/QD-BGDDT",
+        "17/2021/TT-BGDDT",
+        "2627/QD-BGDDT"
+      ],
+      "confound_reason": "The query is easy to satisfy semantically with the original standard, but the right answer is the amended current one after the latest update.",
+      "expected_keywords": [
+        "vi mạch bán dẫn",
+        "sau sửa đổi gần nhất",
+        "2101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current amended semiconductor curriculum standard."
+    },
+    {
+      "id": 86,
+      "type": "authority_collision",
+      "baseline_bucket": "System+Amend",
+      "query": "Riêng phần đánh giá kết quả học tập khi học trực tuyến ở UIT hiện phải bám theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1141/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "196/QD-DHCNTT",
+        "809/QD-DHQG",
+        "30/2023/TT-BGDDT"
+      ],
+      "confound_reason": "The wording overlaps strongly with the local teaching policy, the DHQG online-assessment rule, and the Ministry-level online-training regulation. The system must pick the UIT local assessment document.",
+      "expected_keywords": [
+        "đánh giá kết quả học tập",
+        "trực tuyến",
+        "UIT",
+        "1141"
+      ],
+      "ablation_sensitive": true,
+      "note": "Ceiling test for separating local online-assessment policy from adjacent documents."
+    },
+    {
+      "id": 90,
+      "type": "amendment_boundary",
+      "baseline_bucket": "Baseline-S",
+      "query": "Nếu đang làm hồ sơ mở ngành theo khung của ĐHQG trước mốc sửa đầu 2025 thì lúc đó phải bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "540/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "15/QD-DHQG",
+        "1021/QD-DHCNTT"
+      ],
+      "confound_reason": "Opening-program queries at the DHQG layer split cleanly before and after the 2025 amendment. Semantic retrieval often drifts to the latest rule or the UIT-local implementation.",
+      "expected_keywords": [
+        "mở ngành",
+        "trước 2025",
+        "ĐHQG",
+        "540"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-2025 DHQG opening-program regulation."
+    },
+    {
+      "id": 91,
+      "type": "amendment_boundary",
+      "baseline_bucket": "Baseline-S",
+      "query": "Sau đợt sửa đầu 2025, hồ sơ mở ngành ở cấp ĐHQG đang phải bám theo mốc nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "15/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "540/QD-DHQG",
+        "1021/QD-DHCNTT"
+      ],
+      "confound_reason": "This mirrors id 90. The same topic now points to the post-2025 amended DHQG rule rather than the earlier framework or UIT-local rule.",
+      "expected_keywords": [
+        "mở ngành",
+        "sau 2025",
+        "ĐHQG",
+        "15"
+      ],
+      "ablation_sensitive": true,
+      "note": "Post-2025 DHQG opening-program regulation."
+    },
+    {
+      "id": 92,
+      "type": "notice_override",
+      "baseline_bucket": "Baseline-T",
+      "query": "Mình học CTCLC định hướng Nhật. Nếu xét chuẩn quá trình thì NAT-TEST có còn là căn cứ được chấp nhận không?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "119/TB-DHCNTT",
+        "153/TB-DHCNTT"
+      ],
+      "confound_reason": "The query contains both a special program context and an exception-style certificate rule. It is easy to fall back to the general foreign-language regulation or the later stopping notices.",
+      "expected_keywords": [
+        "CTCLC định hướng Nhật",
+        "NAT-TEST",
+        "chuẩn quá trình",
+        "35"
+      ],
+      "ablation_sensitive": true,
+      "note": "Program-specific NAT-TEST exception case."
+    },
+    {
+      "id": 93,
+      "type": "cohort_boundary",
+      "baseline_bucket": "Baseline-T",
+      "query": "Mình thuộc lứa vào trường sau khóa 2016 nhưng trước K2019. Nếu rà đúng chuẩn ngoại ngữ của nhóm này thì đang tính theo chuẩn nào?",
+      "query_cohort_year": 2018,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "141/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "128/QD-DHCNTT-DTDH",
+        "547/QD-DHCNTT",
+        "108/QD-DHCNTT"
+      ],
+      "confound_reason": "The cohort is described indirectly rather than explicitly. Systems that rely only on time or generic semantics may drift to the 2016 carve-out, the 2019 regulation, or the 2019 amendment.",
+      "expected_keywords": [
+        "sau khóa 2016",
+        "trước K2019",
+        "ngoại ngữ",
+        "141"
+      ],
+      "ablation_sensitive": true,
+      "note": "Indirectly phrased cohort-boundary case for the 2017-2018 lane."
+    },
+    {
+      "id": 94,
+      "type": "notice_override",
+      "baseline_bucket": "Baseline-T",
+      "query": "Trong giai đoạn dịch, sinh viên nộp VPET để xét chuẩn đầu ra thì trường chấp nhận theo ngoại lệ nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "119/TB-DHCNTT",
+        "547/QD-DHCNTT",
+        "153/TB-DHCNTT"
+      ],
+      "confound_reason": "The wording looks like a normal foreign-language query, but the right answer lives in a narrow exception window during the pandemic.",
+      "expected_keywords": [
+        "giai đoạn dịch",
+        "VPET",
+        "ngoại lệ",
+        "101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pandemic-era VPET exception case."
+    },
+    {
+      "id": 95,
+      "type": "notice_override",
+      "baseline_bucket": "Baseline-T",
+      "query": "Sau khi trường dừng các ngoại lệ cũ, VPET với TOEIC Bách khoa còn nộp chuẩn ngoại ngữ được không?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "547/QD-DHCNTT",
+        "153/TB-DHCNTT"
+      ],
+      "confound_reason": "This case looks close to both the temporary exception notice and the broader foreign-language regulation. The decisive signal is the later stopping notice.",
+      "expected_keywords": [
+        "hủy ngoại lệ",
+        "VPET",
+        "TOEIC Bách khoa",
+        "119"
+      ],
+      "ablation_sensitive": true,
+      "note": "Stopping notice for older certificate exceptions."
+    },
+    {
+      "id": 96,
+      "type": "notice_override",
+      "baseline_bucket": "Baseline-T",
+      "query": "Nếu nộp IELTS Indicator hoặc TOEFL iBT Home Edition sau cuối 2022 thì còn được chấp nhận nữa không?",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "119/TB-DHCNTT",
+        "547/QD-DHCNTT"
+      ],
+      "confound_reason": "The system must resolve a narrow exception-ending notice rather than the base regulation or earlier notices about other certificate types.",
+      "expected_keywords": [
+        "IELTS Indicator",
+        "TOEFL iBT Home Edition",
+        "sau 2022",
+        "153"
+      ],
+      "ablation_sensitive": true,
+      "note": "Late-2022 stop-use notice for online English test formats."
+    },
+    {
+      "id": 97,
+      "type": "authority_collision",
+      "baseline_bucket": "System",
+      "query": "Phần chương trình giáo dục quốc phòng - an ninh do Bộ ban hành hiện phải bám theo mốc nào, không phải quyết định của ĐHQG về môn thể chất?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "05/2020/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1476/QD-DHQG",
+        "17/2021/TT-BGDDT"
+      ],
+      "confound_reason": "These documents share education-program vocabulary but live at different scopes: national defense curriculum, physical-education subject approval, and general curriculum standards.",
+      "expected_keywords": [
+        "giáo dục quốc phòng an ninh",
+        "Bộ",
+        "05/2020"
+      ],
+      "ablation_sensitive": true,
+      "note": "Ministry-issued national defense and security curriculum document."
+    },
+    {
+      "id": 98,
+      "type": "authority_collision",
+      "baseline_bucket": "System",
+      "query": "Quyết định của ĐHQG phê duyệt chương trình môn học giáo dục thể chất hiện phải bám theo mốc nào, không phải chương trình GDQPAN của Bộ?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1476/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "05/2020/TT-BGDDT",
+        "17/2021/TT-BGDDT"
+      ],
+      "confound_reason": "The lexical overlap is strong, but the query is about a DHQG approval decision for physical-education subject content, not a Ministry defense curriculum or a general curriculum standard.",
+      "expected_keywords": [
+        "giáo dục thể chất",
+        "ĐHQG",
+        "1476"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG approval decision for the physical-education subject curriculum."
+    },
+    {
+      "id": 100,
+      "type": "cohort_boundary",
+      "query": "Mình thuộc khóa 2014, giờ mới rà lại điều kiện tiếng Anh để hoàn tất hồ sơ. Chuẩn đầu ra của nhóm 2006-2014 nằm ở mốc nào?",
+      "query_cohort_year": 2014,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "147/QD-DHCNTT-DTDH"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "125/QD-DHCNTT-DTDH",
+        "128/QD-DHCNTT-DTDH",
+        "141/QD-DHCNTT",
+        "108/QD-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi nằm sát biên khóa tuyển sinh nên tài liệu cùng chủ đề nhưng khác khóa rất dễ thắng sai.",
+      "expected_keywords": [
+        "chuẩn đầu ra tiếng Anh",
+        "2006-2014",
+        "147"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-2015 cohorts should not be pulled into K2015 or K2017+ foreign-language regimes.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 147-qd-dhcntt-dtdh_31-07-2013_quyet_dinh_ve_viec_ban_hanh_chuan_dau_ra_tieng_anh_cho_sv_he_cq_2006-2014"
+      ]
+    },
+    {
+      "id": 101,
+      "type": "cohort_boundary",
+      "query": "Một bạn K2015 hỏi lúc mới vào trường thì tiếng Anh được áp theo quy định tạm thời nào, không tính các bản sửa sau này.",
+      "query_cohort_year": 2015,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "125/QD-DHCNTT-DTDH"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "108/QD-DHCNTT",
+        "141/QD-DHCNTT",
+        "147/QD-DHCNTT-DTDH"
+      ],
+      "confound_reason": "Câu hỏi nằm sát biên khóa tuyển sinh nên tài liệu cùng chủ đề nhưng khác khóa rất dễ thắng sai.",
+      "expected_keywords": [
+        "khóa 2015",
+        "quy định tạm thời",
+        "125"
+      ],
+      "ablation_sensitive": true,
+      "note": "Admission-time wording should choose the original K2015 temporary rule.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 125-qd-dhcntt-dtdh_18-09-2015_quyet_dinh_ban_hanh_qui_dinh_tam_thoi_day_va_hoc_tieng_anh_khoa_2015"
+      ]
+    },
+    {
+      "id": 103,
+      "type": "cohort_boundary",
+      "query": "K2019 đang làm chuẩn tiếng Anh. Mình cần biết khung riêng của khóa này, không phải bản dùng chung cho K2017.",
+      "query_cohort_year": 2019,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "547/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "141/QD-DHCNTT",
+        "108/QD-DHCNTT",
+        "560/QD-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi nằm sát biên khóa tuyển sinh nên tài liệu cùng chủ đề nhưng khác khóa rất dễ thắng sai.",
+      "expected_keywords": [
+        "khóa 2019",
+        "ngoại ngữ",
+        "547"
+      ],
+      "ablation_sensitive": true,
+      "note": "Cohort-specific K2019 rule should beat older general and newer amendment documents.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 547-qd-dhcntt_30-8-2019_qui_dinh_dao_tao_ngoai_ngu_doi_voi_he_chinh_qui_khoa_2019"
+      ]
+    },
+    {
+      "id": 105,
+      "type": "amendment_boundary",
+      "query": "Khoảng sau ngày 22/04/2024 nhưng trước bản tháng 6, phần ngoại ngữ của UIT đang bám vào bản sửa nào?",
+      "query_cohort_year": 2024,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "364/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "560/QD-DHCNTT",
+        "141/QD-DHCNTT",
+        "108/QD-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi nằm ở ranh giới trước sau sửa đổi, tài liệu mới nhất không phải lúc nào cũng là tài liệu đúng.",
+      "expected_keywords": [
+        "22/04/2024",
+        "trước tháng 6",
+        "364"
+      ],
+      "ablation_sensitive": true,
+      "note": "The newest June document is wrong inside the April-to-June interval.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "metadata.jsonl contains 364-qd-dhcntt_22-04-2024_sua_doi_quy_dinh_dao_tao_ngoai_ngu"
+      ]
+    },
+    {
+      "id": 106,
+      "type": "notice_override",
+      "query": "Trong giai đoạn dịch, VPET có được dùng tạm cho chuẩn ngoại ngữ không? Mình cần mốc cho phép, chưa xét thông báo ngừng sau đó.",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "119/TB-DHCNTT",
+        "153/TB-DHCNTT",
+        "35/TB-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi có cửa sổ thông báo hoặc trạng thái ngoại lệ, vì vậy thông báo ngắn hạn phải thắng quy định nền gần nghĩa.",
+      "expected_keywords": [
+        "VPET",
+        "giai đoạn dịch",
+        "101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Permission-window question should not return the later stop notice.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 101-tb-dhcntt_29-12-2021_thong_bao_su_dung_ket_qua_thi_vpet"
+      ]
+    },
+    {
+      "id": 107,
+      "type": "notice_override",
+      "query": "Từ cuối 2022, IELTS Indicator và TOEFL iBT Home Edition còn được nhận cho ngoại ngữ ở UIT không?",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "119/TB-DHCNTT",
+        "35/TB-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi có cửa sổ thông báo hoặc trạng thái ngoại lệ, vì vậy thông báo ngắn hạn phải thắng quy định nền gần nghĩa.",
+      "expected_keywords": [
+        "IELTS Indicator",
+        "TOEFL iBT Home Edition",
+        "153"
+      ],
+      "ablation_sensitive": true,
+      "note": "The two online test variants have their own stop notice.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 153-tb-dhcntt13-12-2022_ngung_su_dung_ielts_indicator_va_toefl_ibt_home_edition"
+      ]
+    },
+    {
+      "id": 108,
+      "type": "notice_override",
+      "query": "NAT-TEST tiếng Nhật từng được UIT công nhận cho chuẩn quá trình ở thời điểm nào?",
+      "query_cohort_year": 2019,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "119/TB-DHCNTT",
+        "153/TB-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi có cửa sổ thông báo hoặc trạng thái ngoại lệ, vì vậy thông báo ngắn hạn phải thắng quy định nền gần nghĩa.",
+      "expected_keywords": [
+        "NAT-TEST",
+        "tiếng Nhật",
+        "chuẩn quá trình",
+        "35"
+      ],
+      "ablation_sensitive": true,
+      "note": "Exact certificate name should beat the general foreign-language notice cluster.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 35-tb-dhcntt_21-5-2019_cong_nhan_chung_chi_tieng_nhat_nat-test"
+      ]
+    },
+    {
+      "id": 109,
+      "type": "authority_collision",
+      "query": "Mẫu chứng chỉ ngoại ngữ theo khung năng lực 6 bậc của ĐHQG-HCM đang nằm ở quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1224/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1372/QD-DHQG",
+        "101/TB-DHCNTT",
+        "119/TB-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "mẫu chứng chỉ ngoại ngữ",
+        "khung năng lực 6 bậc",
+        "1224"
+      ],
+      "ablation_sensitive": true,
+      "note": "Certificate template is different from the broader diploma/certificate regulation.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 1224-qd-dhqg_30-8-2022_ban_hanh_mau_chung_chi_ngoai_ngu_theo_khung_nlnn_6_bac"
+      ]
+    },
+    {
+      "id": 110,
+      "type": "authority_collision",
+      "query": "Nếu câu hỏi xoay quanh quy chế văn bằng, chứng chỉ của ĐHQG-HCM nói chung thì không nên nhảy sang thông báo phôi văn bằng UIT nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1372/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "119/TB-DHCNTT",
+        "1224/QD-DHQG",
+        "43/2019/QH14"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "văn bằng chứng chỉ",
+        "ĐHQG-HCM",
+        "1372"
+      ],
+      "ablation_sensitive": true,
+      "note": "General diploma/certificate regulation should beat narrower local notices.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 1372-qd-dhqg_10-10-2022_quy_che_van_bang_chung_chi"
+      ]
+    },
+    {
+      "id": 111,
+      "type": "workflow_boundary",
+      "query": "Cần tổ chức thi trên máy tính ở UIT thì mình phải lấy quy định riêng về tổ chức thi, không phải quy trình phân công cán bộ coi thi.",
+      "query_cohort_year": 2026,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "672/QD-DHCNTT",
+        "936/QD-DHCNTT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "thi trên máy tính",
+        "tổ chức thi",
+        "135"
+      ],
+      "ablation_sensitive": true,
+      "note": "Computer-based exam organization is a separate exam workflow artifact.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 135-qd-dhcntt_10-02-2026_quy_dinh_ve_to_chuc_thi_tren_may_tinh"
+      ]
+    },
+    {
+      "id": 112,
+      "type": "workflow_boundary",
+      "query": "Sau khi bảo vệ khóa luận xong, sinh viên phải nộp KLTN theo quy trình nào? Đừng lấy nhầm quy định làm khóa luận ban đầu.",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "159/QD-DHCNTT",
+        "851/QD-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "nộp khóa luận",
+        "sau khi bảo vệ",
+        "583"
+      ],
+      "ablation_sensitive": true,
+      "note": "Post-defense submission should beat the base KLTN regulation.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 583-qd-dhcntt_12-6-2023_ban_hanh_quy_trinh_nop_kltn_sau_khi_bao_ve"
+      ]
+    },
+    {
+      "id": 113,
+      "type": "workflow_boundary",
+      "query": "Một khoa hỏi cách đánh giá và cập nhật CTĐT trình độ đại học, sau đại học. Văn bản nào là quy trình nội bộ của UIT cho việc đó?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "185/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "17/2021/TT-BGDDT",
+        "2627/QD-BGDDT",
+        "123/QD-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "đánh giá cập nhật CTĐT",
+        "ĐHSĐH",
+        "185"
+      ],
+      "ablation_sensitive": true,
+      "note": "Local CTDT update workflow should beat national standards.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 185-qd-dhcntt_30-3-2018_quyet_dinh_ve_viec_ban_hanh_quy_trinh_danh_gia_cap_nhat_ctdt"
+      ]
+    },
+    {
+      "id": 115,
+      "type": "local_vs_system",
+      "query": "Quy định về giảng viên và trợ giảng môn học ở UIT nằm ở đâu? Mình không hỏi quy chế đào tạo chung.",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "975/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1342/QD-DHQG",
+        "17/2021/TT-BGDDT",
+        "123/QD-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "giảng viên",
+        "trợ giảng",
+        "975"
+      ],
+      "ablation_sensitive": true,
+      "note": "Teaching role policy is local and narrow.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl page “Qui định về giảng viên và trợ giảng môn học” includes 975-QD-DHCNTT"
+      ]
+    },
+    {
+      "id": 117,
+      "type": "authority_collision",
+      "query": "Liên kết đào tạo với nước ngoài ở cấp ĐHQG-HCM thì xem khung chung nào, không phải quy định riêng UIT ban hành năm 2025?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1758/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "451/QD-DHCNTT",
+        "07/BGD",
+        "124/CP"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "liên kết đào tạo với nước ngoài",
+        "ĐHQG-HCM",
+        "1758"
+      ],
+      "ablation_sensitive": true,
+      "note": "System-level joint-training framework should beat UIT-local implementation.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 1758-qd-dhqg-29-12-2022_quy_dinh_lien_ket_dao_tao_voi_nuoc_ngoai"
+      ]
+    },
+    {
+      "id": 118,
+      "type": "local_vs_system",
+      "query": "UIT đã có quy định riêng năm 2025 cho việc tổ chức quản lý chương trình liên kết đào tạo với nước ngoài chưa?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "451/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1758/QD-DHQG",
+        "07/BGD",
+        "124/CP"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "UIT",
+        "liên kết đào tạo với nước ngoài",
+        "451"
+      ],
+      "ablation_sensitive": true,
+      "note": "Local 2025 implementation should beat higher-level frameworks.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 451-qd-dhcntt_10-04-2025 and the linked page about joint training management"
+      ]
+    },
+    {
+      "id": 120,
+      "type": "authority_collision",
+      "query": "Mốc phê duyệt thí điểm bộ phẩm chất năng lực sinh viên tốt nghiệp của ĐHQG-HCM là quyết định nào?",
+      "query_cohort_year": 2020,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1658/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "17/2021/TT-BGDDT",
+        "2627/QD-BGDDT",
+        "123/QD-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "phẩm chất năng lực",
+        "sinh viên tốt nghiệp",
+        "1658"
+      ],
+      "ablation_sensitive": true,
+      "note": "Graduate-competency pilot approval is not the same as national program standards.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 1658-qd-dhqg_24-12-2020_phe_duyet_thi_diem_bo_pcnl_svtn_dhqghcm"
+      ]
+    },
+    {
+      "id": 122,
+      "type": "authority_collision",
+      "query": "Đánh giá kết quả học tập theo hình thức trực tuyến trong hệ thống ĐHQG-HCM thì bám vào quy định nào?",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "809/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1342/QD-DHQG",
+        "30/2023/TT-BGDDT",
+        "135/QD-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "đánh giá kết quả học tập",
+        "trực tuyến",
+        "809"
+      ],
+      "ablation_sensitive": true,
+      "note": "Online assessment should not be confused with computer-based exam organization.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 809-qd-dhqg_3-7-2023_quy_dinh_dgkqht_theo_hinh_thuc_tt"
+      ]
+    },
+    {
+      "id": 123,
+      "type": "amendment_boundary",
+      "query": "Hồ sơ tài liệu trong lĩnh vực giáo dục đào tạo phải lưu theo thời hạn mới năm 2025 thì văn bản nào đang là mốc cần bám?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "08/2025/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "2016/TT-BGDDT",
+        "2025/ND-CP",
+        "1342/QD-DHQG"
+      ],
+      "confound_reason": "Câu hỏi nằm ở ranh giới trước sau sửa đổi, tài liệu mới nhất không phải lúc nào cũng là tài liệu đúng.",
+      "expected_keywords": [
+        "thời hạn lưu trữ",
+        "hồ sơ tài liệu",
+        "08/2025"
+      ],
+      "ablation_sensitive": true,
+      "note": "OCR-derived legal document with noisy scanned text.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "metadata.jsonl contains 08.2025-tt-bgddt_quy_dinh_thoi_han_luu_tru_ho_so_tai_lieu_thuoc_linh_vuc_gddt.pdf"
+      ]
+    },
+    {
+      "id": 124,
+      "type": "local_vs_system",
+      "query": "Sinh viên muốn xin công nhận tín chỉ ở UIT thì có quy trình nội bộ nào của trường, khác với quy định MOOC của ĐHQG-HCM?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "412/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1537/QD-DHQG",
+        "2217/DHQG",
+        "1342/QD-DHQG"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "công nhận tín chỉ",
+        "UIT",
+        "412"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT credit-recognition workflow should beat MOOC-specific rules.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 412-qd-dhcntt_27-03-2025_quy_trinh_cong_nhan_tin_chi_trong_dao_tao_dai_hoc"
+      ]
+    },
+    {
+      "id": 126,
+      "type": "workflow_boundary",
+      "query": "Mình chỉ cần văn bản về công nhận môn học theo hình thức MOOC, không phải toàn bộ quy định đào tạo MOOC.",
+      "query_cohort_year": 2024,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2217/DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1537/QD-DHQG",
+        "412/QD-DHCNTT",
+        "1342/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "công nhận môn học",
+        "MOOC",
+        "2217"
+      ],
+      "ablation_sensitive": true,
+      "note": "Specific course recognition should beat the broader MOOC policy.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 2217_dhqg_dt_cong_nhan_mon_hoc_theo_hinh_thuc_mooc"
+      ]
+    },
+    {
+      "id": 127,
+      "type": "admissions_boundary",
+      "query": "Ngành Truyền thông đa phương tiện của UIT đã được mở đào tạo bằng quyết định nào năm 2025?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "491/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "540/QD-DHCNTT",
+        "15/QD-DHQG",
+        "354/QD-DHCNTT"
+      ],
+      "confound_reason": "Các văn bản tuyển sinh va nhau theo năm và tầng thẩm quyền, cần chọn đúng mốc áp dụng.",
+      "expected_keywords": [
+        "Truyền thông đa phương tiện",
+        "mở đào tạo",
+        "491"
+      ],
+      "ablation_sensitive": true,
+      "note": "Program-opening title collision.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "metadata.jsonl contains 491-qd-dhcntt_21-04-2025_mo_dao_tao_nganh_truyen_thong_da_phuong_tien"
+      ]
+    },
+    {
+      "id": 129,
+      "type": "admissions_boundary",
+      "query": "Đề án mở ngành Thương mại điện tử đang được phê duyệt bởi mốc ĐHQG nào, không phải song ngành thương mại điện tử sau này.",
+      "query_cohort_year": 2018,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "15/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1681/QD-DHQG",
+        "1195/QD-DHQG",
+        "491/QD-DHCNTT"
+      ],
+      "confound_reason": "Các văn bản tuyển sinh va nhau theo năm và tầng thẩm quyền, cần chọn đúng mốc áp dụng.",
+      "expected_keywords": [
+        "mở ngành Thương mại điện tử",
+        "15",
+        "ĐHQG"
+      ],
+      "ablation_sensitive": true,
+      "note": "Original program opening should beat later dual-major documents.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "metadata.jsonl page “Đề án mở ngành Thương mại điện tử” includes 15-QD-DHQG08-01-2018"
+      ]
+    },
+    {
+      "id": 130,
+      "type": "authority_collision",
+      "query": "Song ngành Thương mại điện tử tại Trường ĐH CNTT được ĐHQG-HCM phê duyệt riêng bằng quyết định nào?",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1681/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1195/QD-DHQG",
+        "15/QD-DHQG",
+        "112/QD-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "song ngành",
+        "Thương mại điện tử",
+        "1681"
+      ],
+      "ablation_sensitive": true,
+      "note": "Specific approval beats general dual-major framework.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 1681-qd-dhqg30-11-2023_phe_duyet_song_nganh_tmdt_dh_cntt"
+      ]
+    },
+    {
+      "id": 131,
+      "type": "authority_collision",
+      "query": "Quy định đào tạo song ngành cấp ĐHQG-HCM nói chung thì không phải quyết định phê duyệt riêng ngành TMĐT đúng không?",
+      "query_cohort_year": 2019,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1195/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1681/QD-DHQG",
+        "112/QD-DHCNTT",
+        "15/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "đào tạo song ngành",
+        "ĐHQG-HCM",
+        "1195"
+      ],
+      "ablation_sensitive": true,
+      "note": "General framework should beat specific approval.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 1195-qd-dhqg_27-9-2019_quy_dinh_dao_tao_song_nganh_dhqg"
+      ]
+    },
+    {
+      "id": 132,
+      "type": "local_vs_system",
+      "query": "Quy định mới về chương trình tài năng của UIT năm 2025 là bản nào, không phải bản cũ trước đó?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "131/QD-DHCNTT",
+        "1342/QD-DHQG",
+        "17/2021/TT-BGDDT"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "chương trình tài năng",
+        "2025",
+        "1032"
+      ],
+      "ablation_sensitive": true,
+      "note": "New local special-program rule should beat the older talent rule.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 1032-qd-dhcntt_3-9-2025_quy_dinh_dao_tao_chuong_trinh_tai_nang"
+      ]
+    },
+    {
+      "id": 133,
+      "type": "local_vs_system",
+      "query": "Trước khi có bản chương trình tài năng 2025, UIT đang dùng quy định tài năng nào?",
+      "query_cohort_year": 2024,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1032/QD-DHCNTT",
+        "1342/QD-DHQG",
+        "17/2021/TT-BGDDT"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "trước 2025",
+        "chương trình tài năng",
+        "131"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-2025 query should not choose the 2025 update.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 131/QD-DHCNTT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 134,
+      "type": "workflow_boundary",
+      "query": "Bài toán là phân công cán bộ coi thi cho đợt thi tập trung hệ chính quy, không phải tổ chức thi trên máy. Mình nên dẫn quy trình nào?",
+      "query_cohort_year": 2020,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "135/QD-DHCNTT",
+        "936/QD-DHCNTT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "phân công cán bộ coi thi",
+        "đợt thi tập trung",
+        "672"
+      ],
+      "ablation_sensitive": true,
+      "note": "Invigilator assignment and computer-based exam organization are adjacent workflows.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 672-qd-dhcntt_15-10-2020_quy_trinh_phan_cong_cbct"
+      ]
+    },
+    {
+      "id": 135,
+      "type": "local_vs_system",
+      "query": "Khi sinh viên hỏi điều kiện làm khóa luận tốt nghiệp hệ chính quy, mình cần quy định KLTN chứ không phải quy trình nộp sau bảo vệ.",
+      "query_cohort_year": 2024,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "583/QD-DHCNTT",
+        "851/QD-DHCNTT",
+        "1342/QD-DHQG"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "khóa luận tốt nghiệp",
+        "quy định",
+        "159"
+      ],
+      "ablation_sensitive": true,
+      "note": "Base KLTN regulation should beat post-defense submission workflow.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 159-qd-dhcntt_05-03-2024_ban_hanh_quy_dinh_kltn"
+      ]
+    },
+    {
+      "id": 136,
+      "type": "catalog_boundary",
+      "query": "Cần phân loại danh mục ngành đào tạo trình độ đại học theo hệ thống mới của Bộ thì dùng văn bản 2022 nào?",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "24/2017/TT-BGDDT",
+        "17/2021/TT-BGDDT",
+        "2627/QD-BGDDT"
+      ],
+      "confound_reason": "Câu hỏi nằm ở tầng phân loại danh mục, nơi văn bản cũ và mới có nhiều thuật ngữ giống nhau.",
+      "expected_keywords": [
+        "danh mục ngành",
+        "2022",
+        "09/2022"
+      ],
+      "ablation_sensitive": true,
+      "note": "New 2022 catalog should beat old 2017 taxonomy.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 09/2022/TT-BGDDT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 138,
+      "type": "amendment_boundary",
+      "query": "Chuẩn chương trình đào tạo chung của Bộ trước khi có các chuẩn đặc thù như vi mạch bán dẫn thì nằm ở thông tư nào?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "17/2021/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "2627/QD-BGDDT",
+        "1314/QD-BGDDT",
+        "2101/QD-BGDDT"
+      ],
+      "confound_reason": "Câu hỏi nằm ở ranh giới trước sau sửa đổi, tài liệu mới nhất không phải lúc nào cũng là tài liệu đúng.",
+      "expected_keywords": [
+        "chuẩn chương trình đào tạo",
+        "chung",
+        "17/2021"
+      ],
+      "ablation_sensitive": true,
+      "note": "General standard should beat specific semiconductor standards.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 17/2021/TT-BGDDT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 139,
+      "type": "amendment_boundary",
+      "query": "Chuẩn CTĐT vi mạch bán dẫn bản sau khi Bộ ban hành chuẩn mới nhất thì đang là mốc nào?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1314/QD-BGDDT",
+        "2627/QD-BGDDT",
+        "17/2021/TT-BGDDT"
+      ],
+      "confound_reason": "Câu hỏi nằm ở ranh giới trước sau sửa đổi, tài liệu mới nhất không phải lúc nào cũng là tài liệu đúng.",
+      "expected_keywords": [
+        "vi mạch bán dẫn",
+        "chuẩn mới nhất",
+        "2101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Newest semiconductor standard should beat earlier semiconductor standard.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 2101/QD-BGDDT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 140,
+      "type": "admissions_boundary",
+      "query": "Tuyển sinh 2026 đã có thông tư mới của Bộ thì đừng lấy nhầm quy chế tuyển sinh 2022. Mốc nào nên được ưu tiên?",
+      "query_cohort_year": 2026,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "06/2026/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "03/2022/TT-BGDDT",
+        "707/QD-DHQG",
+        "836/QD-DHQG"
+      ],
+      "confound_reason": "Các văn bản tuyển sinh va nhau theo năm và tầng thẩm quyền, cần chọn đúng mốc áp dụng.",
+      "expected_keywords": [
+        "tuyển sinh 2026",
+        "thông tư mới",
+        "06/2026"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current/future admissions regime should beat older admission circular.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 06/2026/TT-BGDDT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 142,
+      "type": "local_vs_system",
+      "query": "Nội dung cập nhật phụ lục văn bằng, bảng điểm, giấy xác nhận cuối 2024 ở UIT nằm ở thông báo nào?",
+      "query_cohort_year": 2024,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1192/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1372/QD-DHQG",
+        "119/TB-DHCNTT",
+        "1224/QD-DHQG"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "phụ lục văn bằng",
+        "bảng điểm",
+        "1192"
+      ],
+      "ablation_sensitive": true,
+      "note": "Local wording update should beat broader diploma/certificate rules.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 1192/TB-DHCNTT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 143,
+      "type": "notice_override",
+      "query": "Sinh viên hỏi về thông báo ngừng VPET và TOEIC Bách khoa thì cần lấy đúng thông báo ngừng, không phải mốc cho phép VPET lúc dịch.",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "153/TB-DHCNTT",
+        "35/TB-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi có cửa sổ thông báo hoặc trạng thái ngoại lệ, vì vậy thông báo ngắn hạn phải thắng quy định nền gần nghĩa.",
+      "expected_keywords": [
+        "ngừng sử dụng",
+        "VPET",
+        "TOEIC Bách khoa",
+        "119"
+      ],
+      "ablation_sensitive": true,
+      "note": "Same acronym, opposite policy state.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 119-tb-dhcntt_19-9-2022_thong_bao_ngung_su_dung_chung_chi_vpet_toeic_bach_khoa"
+      ]
+    },
+    {
+      "id": 145,
+      "type": "authority_collision",
+      "query": "Bộ quy định về ứng dụng công nghệ thông tin trong đào tạo trực tuyến năm 2023 bằng thông tư nào?",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "30/2023/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "10/2017/TT-BGDDT",
+        "28/2023/TT-BGDDT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu cùng chủ đề nhưng khác tầng thẩm quyền, cần chọn đúng phạm vi Bộ, ĐHQG-HCM hoặc UIT.",
+      "expected_keywords": [
+        "đào tạo trực tuyến",
+        "ứng dụng công nghệ thông tin",
+        "30/2023"
+      ],
+      "ablation_sensitive": true,
+      "note": "Bộ-level online training circular should beat old distance-learning and ĐHQG online-assessment documents.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 30/2023/TT-BGDDT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 146,
+      "type": "amendment_boundary",
+      "query": "Trước khi có quy định trực tuyến mới năm 2023, đào tạo từ xa ở bậc đại học đang chịu khung cũ nào của Bộ?",
+      "query_cohort_year": 2017,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "10/2017/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "28/2023/TT-BGDDT",
+        "30/2023/TT-BGDDT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "Câu hỏi nằm ở ranh giới trước sau sửa đổi, tài liệu mới nhất không phải lúc nào cũng là tài liệu đúng.",
+      "expected_keywords": [
+        "đào tạo từ xa",
+        "trước 2023",
+        "10/2017"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-2023 online/distance-learning query should choose the older circular.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 10/2017/TT-BGDDT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 147,
+      "type": "amendment_boundary",
+      "query": "Sau đợt sửa đổi 2023, phần đào tạo từ xa không còn chỉ nhìn bản 2017 nữa. Bản sửa nào cần được ưu tiên?",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "28/2023/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "10/2017/TT-BGDDT",
+        "30/2023/TT-BGDDT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "Câu hỏi nằm ở ranh giới trước sau sửa đổi, tài liệu mới nhất không phải lúc nào cũng là tài liệu đúng.",
+      "expected_keywords": [
+        "sửa đổi 2023",
+        "đào tạo từ xa",
+        "28/2023"
+      ],
+      "ablation_sensitive": true,
+      "note": "Amendment should beat base 2017 distance-learning rule.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 28/2023/TT-BGDDT as a crawled expected document"
+      ]
+    },
+    {
+      "id": 149,
+      "type": "notice_override",
+      "query": "Từ sau 19/09/2022, câu hỏi về VPET, TOEIC Bách khoa và phôi văn bằng mới nên rơi vào thông báo nào?",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "153/TB-DHCNTT",
+        "1224/QD-DHQG"
+      ],
+      "confound_reason": "Câu hỏi có cửa sổ thông báo hoặc trạng thái ngoại lệ, vì vậy thông báo ngắn hạn phải thắng quy định nền gần nghĩa.",
+      "expected_keywords": [
+        "19/09/2022",
+        "VPET",
+        "TOEIC Bách khoa",
+        "119"
+      ],
+      "ablation_sensitive": true,
+      "note": "Post-stop window should choose the 119 notice.",
+      "baseline_bucket": "Baseline-T",
+      "source_grounding": [
+        "metadata.jsonl contains 119-tb-dhcntt_19-9-2022_thong_bao_ngung_su_dung_chung_chi_vpet_toeic_bach_khoa_va_phoi_van_bang_moi"
+      ]
+    },
+    {
+      "id": 151,
+      "type": "cohort_boundary",
+      "query": "Em nhập học năm 2016 và đang rà lại điều kiện ngoại ngữ để xét tốt nghiệp. Khóa em đang theo quyết định nào?",
+      "query_cohort_year": 2016,
+      "expected_doc_ids": [
+        "doc-7b6a5ff2ac70a663f3446904ac0be430"
+      ],
+      "expected_doc_numbers": [
+        "128/QD-DHCNTT-DTDH"
+      ],
+      "confounding_doc_ids": [
+        "doc-ec0ecdde90113ff61eaa1027b5c47c90",
+        "doc-70ee4e32645ddc776cc9f8c46ed06839"
+      ],
+      "confounding_doc_numbers": [
+        "108/QD-DHCNTT",
+        "141/QD-DHCNTT"
+      ],
+      "confound_reason": "K2016 is easily pulled into the later 2018/2019 foreign-language chain unless the retriever respects the older cohort-specific document.",
+      "expected_keywords": [
+        "ngoại ngữ",
+        "khóa 2016",
+        "văn bản riêng",
+        "128"
+      ],
+      "ablation_sensitive": true,
+      "note": "Forces the retriever to preserve the K2016 carve-out.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 1,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 1; keeps the same grounded document cluster."
+    },
+    {
+      "id": 153,
+      "type": "cohort_boundary",
+      "query": "Một bạn vào trường năm 2018 hỏi điều kiện tiếng Anh để chốt tốt nghiệp hôm nay. Mốc nào đúng cho cohort nằm giữa nhóm 2017 và K2019?",
+      "query_cohort_year": 2018,
+      "expected_doc_ids": [
+        "doc-70ee4e32645ddc776cc9f8c46ed06839"
+      ],
+      "expected_doc_numbers": [
+        "141/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-ec0ecdde90113ff61eaa1027b5c47c90"
+      ],
+      "confounding_doc_numbers": [
+        "108/QD-DHCNTT",
+        "547/QD-DHCNTT"
+      ],
+      "confound_reason": "K2018 sits between the 2015-2017 amended lane and the 2019-only foreign-language regime.",
+      "expected_keywords": [
+        "khóa 2018",
+        "ngoại ngữ",
+        "141"
+      ],
+      "ablation_sensitive": true,
+      "note": "Targets the narrow middle regime for the 2018 cohort.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 3,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 3; keeps the same grounded document cluster."
+    },
+    {
+      "id": 155,
+      "type": "cohort_boundary",
+      "query": "Mình là K2022 hệ chính quy, hỏi đúng chuẩn tiếng Anh của intake này chứ không hỏi bản dùng chung cho 2019-2021. Trả về mốc nào mới đúng?",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "828/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "141/QD-DHCNTT"
+      ],
+      "confound_reason": "The retriever has to resist older but semantically stronger foreign-language regulations and pick the cohort-specific 2022 regime.",
+      "expected_keywords": [
+        "khóa 2022",
+        "ngoại ngữ",
+        "828"
+      ],
+      "ablation_sensitive": true,
+      "note": "Rephrased K2022 cohort-boundary case.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 5,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 5; keeps the same grounded document cluster."
+    },
+    {
+      "id": 156,
+      "type": "notice_override",
+      "query": "Trong giai đoạn dịch, nếu sinh viên nộp VPET để hoàn tất chuẩn đầu ra thì UIT đã mở ngoại lệ theo thông báo nào?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "119/TB-DHCNTT"
+      ],
+      "confound_reason": "The base regime is 547, but the correct answer for the pandemic exception window is the temporary VPET notice, not the later stop-notice.",
+      "expected_keywords": [
+        "VPET",
+        "giãn cách",
+        "chuẩn đầu ra",
+        "101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Exception-window wording for the pandemic VPET allowance.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 6,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 6; keeps the same grounded document cluster."
+    },
+    {
+      "id": 157,
+      "type": "notice_override",
+      "query": "Hiện nay UIT còn chấp nhận chứng chỉ VPET hoặc TOEIC Bách khoa để xét chuẩn đầu ra không? Nếu không thì theo thông báo nào?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "101/TB-DHCNTT",
+        "547/QD-DHCNTT"
+      ],
+      "confound_reason": "The user is really asking for the policy reversal, not the earlier temporary allowance and not the base foreign-language regime.",
+      "expected_keywords": [
+        "ngừng sử dụng",
+        "VPET",
+        "TOEIC Bách khoa",
+        "119"
+      ],
+      "ablation_sensitive": true,
+      "note": "Notice-over-notice reversal on the same certificate cluster.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 7,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 7; keeps the same grounded document cluster."
+    },
+    {
+      "id": 158,
+      "type": "notice_override",
+      "query": "UIT còn chấp nhận IELTS Indicator hoặc TOEFL iBT Home Edition để xét chuẩn ngoại ngữ không?",
+      "query_cohort_year": 2021,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "101/TB-DHCNTT",
+        "119/TB-DHCNTT"
+      ],
+      "confound_reason": "The query is about a very specific stop-condition around remote exam formats, not the general foreign-language regulation.",
+      "expected_keywords": [
+        "IELTS Indicator",
+        "TOEFL iBT Home Edition",
+        "ngừng sử dụng",
+        "153"
+      ],
+      "ablation_sensitive": true,
+      "note": "Explicitly stresses the stop-use notice for online test variants.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 8,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 8; keeps the same grounded document cluster."
+    },
+    {
+      "id": 159,
+      "type": "notice_override",
+      "query": "Sinh viên CTCLC định hướng Nhật hỏi riêng về NAT-TEST cho chuẩn quá trình. Đây là ngoại lệ chương trình nào chứ không phải quy định tiếng Anh diện rộng?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "141/QD-DHCNTT"
+      ],
+      "confound_reason": "The lexical field overlaps with foreign-language training, but the correct answer is the Japanese NAT-TEST notice, not the English-heavy regime docs.",
+      "expected_keywords": [
+        "NAT-TEST",
+        "chuẩn quá trình",
+        "tiếng Nhật",
+        "35"
+      ],
+      "ablation_sensitive": true,
+      "note": "Program-specific Japanese certificate exception.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 9,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 9; keeps the same grounded document cluster."
+    },
+    {
+      "id": 160,
+      "type": "notice_override",
+      "query": "Từ cuối năm 2024, phụ lục văn bằng và giấy xác nhận của UIT phải ghi theo thông báo nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1192/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "172/QD-DHCNTT",
+        "1672/QD-DHQG"
+      ],
+      "confound_reason": "The question is about wording actually used after a notice, not the broader diploma regulation.",
+      "expected_keywords": [
+        "phụ lục văn bằng",
+        "bảng điểm",
+        "giấy xác nhận",
+        "1192"
+      ],
+      "ablation_sensitive": true,
+      "note": "Document-output wording override at the notice level.",
+      "baseline_bucket": "Baseline-T",
+      "derived_from_case_id": 39,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 39; keeps the same grounded document cluster."
+    },
+    {
+      "id": 162,
+      "type": "notice_override",
+      "baseline_bucket": "Baseline-T",
+      "query": "Sinh viên CTCLC định hướng Nhật muốn dùng NAT-TEST để đáp ứng chuẩn quá trình thì phải xem thông báo nào của UIT?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "547/QD-DHCNTT",
+        "119/TB-DHCNTT",
+        "153/TB-DHCNTT"
+      ],
+      "confound_reason": "The query contains both a special program context and an exception-style certificate rule. It is easy to fall back to the general foreign-language regulation or the later stopping notices.",
+      "expected_keywords": [
+        "CTCLC định hướng Nhật",
+        "NAT-TEST",
+        "chuẩn quá trình",
+        "35"
+      ],
+      "ablation_sensitive": true,
+      "note": "High-precision program-bound notice retrieval.",
+      "derived_from_case_id": 92,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 92; keeps the same grounded document cluster."
+    },
+    {
+      "id": 165,
+      "type": "amendment_boundary",
+      "query": "Nếu cần tra chuẩn ngoại ngữ áp dụng vào khoảng tháng 5/2024 cho hệ chính quy ở UIT thì xem quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "364/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "560/QD-DHCNTT",
+        "547/QD-DHCNTT"
+      ],
+      "confound_reason": "This sits in a short window after the April 2024 amendment but before the June 2024 amendment. Systems tend to jump to either the older 2019 regime or the latest 2024 revision.",
+      "expected_keywords": [
+        "ngoại ngữ",
+        "tháng 5/2024",
+        "364"
+      ],
+      "ablation_sensitive": true,
+      "note": "Mid-window amendment boundary for May 2024.",
+      "baseline_bucket": "Baseline-S",
+      "derived_from_case_id": 50,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 50; keeps the same grounded document cluster."
+    },
+    {
+      "id": 166,
+      "type": "amendment_boundary",
+      "query": "Sau đợt cập nhật tháng 6/2024, chuẩn ngoại ngữ mới nhất cho hệ chính quy ở UIT nằm ở quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "560/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "364/QD-DHCNTT",
+        "547/QD-DHCNTT"
+      ],
+      "confound_reason": "Foreign-language retrieval is full of nearby amendments. This query explicitly asks for the post-June 2024 state and should not fall back to the April update or the 2019 rule.",
+      "expected_keywords": [
+        "ngoại ngữ",
+        "mới nhất",
+        "tháng 6/2024",
+        "560"
+      ],
+      "ablation_sensitive": true,
+      "note": "Latest post-June-2024 amendment state.",
+      "baseline_bucket": "Baseline-S",
+      "derived_from_case_id": 51,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 51; keeps the same grounded document cluster."
+    },
+    {
+      "id": 168,
+      "type": "admissions_boundary",
+      "query": "Sau khi ĐHQG-HCM đổi quy chế tuyển sinh năm 2022, các trường thành viên đang áp dụng quyết định nào ở cấp ĐHQG?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "707/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "836/QD-DHQG",
+        "354/QD-DHCNTT",
+        "06/2026/TT-BGDDT"
+      ],
+      "confound_reason": "This is a clean pre/post amendment boundary at the DHQG layer. The system must pick the 2022 regulation instead of the older 2021 regime or a local UIT admissions rule.",
+      "expected_keywords": [
+        "ĐHQG",
+        "tuyển sinh",
+        "sau 2022",
+        "707"
+      ],
+      "ablation_sensitive": true,
+      "note": "DHQG-level admissions after the 2022 change.",
+      "baseline_bucket": "Baseline-S",
+      "derived_from_case_id": 55,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 55; keeps the same grounded document cluster."
+    },
+    {
+      "id": 169,
+      "type": "admissions_boundary",
+      "query": "Trước khi ĐHQG-HCM đổi quy chế tuyển sinh năm 2022 thì áp dụng quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "836/QD-DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "707/QD-DHQG",
+        "354/QD-DHCNTT"
+      ],
+      "confound_reason": "The question explicitly asks for the regime before the 2022 DHQG admissions regulation. Newer admissions policies are tempting but wrong.",
+      "expected_keywords": [
+        "trước 2022",
+        "quy chế tuyển sinh",
+        "836"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-2022 DHQG admissions state.",
+      "baseline_bucket": "Baseline-S",
+      "derived_from_case_id": 56,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 56; keeps the same grounded document cluster."
+    },
+    {
+      "id": 170,
+      "type": "admissions_boundary",
+      "query": "Trước chu kỳ tuyển sinh 2026, việc xác định chỉ tiêu tuyển sinh ở cấp Bộ được hướng dẫn theo thông tư nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "03/2022/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "06/2026/TT-BGDDT",
+        "707/QD-DHQG",
+        "354/QD-DHCNTT"
+      ],
+      "confound_reason": "Admissions retrieval can confuse quota-setting with the admissions regulation itself, or with local/system admissions rules. This case is specifically about determining quota.",
+      "expected_keywords": [
+        "chỉ tiêu tuyển sinh",
+        "Bộ",
+        "03/2022"
+      ],
+      "ablation_sensitive": true,
+      "note": "Older Ministry admissions framework before the 2026 cycle.",
+      "baseline_bucket": "Baseline-S",
+      "derived_from_case_id": 64,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 64; keeps the same grounded document cluster."
+    },
+    {
+      "id": 171,
+      "type": "admissions_boundary",
+      "query": "Tuyển sinh đại học năm 2026 ở cấp Bộ đang áp dụng thông tư nào mới nhất?",
+      "query_cohort_year": 2026,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "06/2026/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "707/QD-DHQG",
+        "836/QD-DHQG",
+        "354/QD-DHCNTT",
+        "03/2022/TT-BGDDT"
+      ],
+      "confound_reason": "The phrase 'tuyển sinh' strongly overlaps with older DHQG and UIT regulations, while quota-setting language can also interfere. This case asks for the latest Ministry admissions regulation for 2026.",
+      "expected_keywords": [
+        "tuyển sinh",
+        "Bộ",
+        "2026",
+        "06/2026"
+      ],
+      "ablation_sensitive": true,
+      "note": "Latest Ministry admissions regime for the 2026 cycle.",
+      "baseline_bucket": "Baseline-S",
+      "derived_from_case_id": 65,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 65; keeps the same grounded document cluster."
+    },
+    {
+      "id": 172,
+      "type": "admissions_boundary",
+      "query": "Ngành Truyền thông đa phương tiện của UIT được phép mở đào tạo theo quyết định nào năm 2025?",
+      "query_cohort_year": 2025,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "491/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "540/QD-DHCNTT",
+        "15/QD-DHQG",
+        "354/QD-DHCNTT"
+      ],
+      "confound_reason": "Các văn bản tuyển sinh va nhau theo năm và tầng thẩm quyền, cần chọn đúng mốc áp dụng.",
+      "expected_keywords": [
+        "Truyền thông đa phương tiện",
+        "mở đào tạo",
+        "491"
+      ],
+      "ablation_sensitive": true,
+      "note": "Program-opening collision for the 2025 multimedia program.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "metadata.jsonl contains 491-qd-dhcntt_21-04-2025_mo_dao_tao_nganh_truyen_thong_da_phuong_tien"
+      ],
+      "derived_from_case_id": 127,
+      "difficulty_tier": "hard"
+    },
+    {
+      "id": 174,
+      "type": "local_vs_system",
+      "query": "Trước khi UIT ban hành bản chương trình tài năng năm 2025, chương trình tài năng của trường đang theo quyết định nào?",
+      "query_cohort_year": 2024,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1032/QD-DHCNTT",
+        "1342/QD-DHQG",
+        "17/2021/TT-BGDDT"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "trước 2025",
+        "chương trình tài năng",
+        "131"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-update local-vs-local boundary on UIT talent-program rules.",
+      "baseline_bucket": "Baseline-S",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 131/QD-DHCNTT as a crawled expected document"
+      ],
+      "derived_from_case_id": 133,
+      "difficulty_tier": "hard"
+    },
+    {
+      "id": 175,
+      "type": "amendment_boundary",
+      "query": "Hiện nay chuẩn chương trình đào tạo vi mạch bán dẫn ở cấp Bộ đang theo quyết định sửa đổi nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-49efd8d5eef0667317b2ee058015bfa9"
+      ],
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [
+        "doc-74b44aaf6954cc8cfc83560bb28552eb"
+      ],
+      "confounding_doc_numbers": [
+        "1314/QD-BGDDT"
+      ],
+      "confound_reason": "Both documents are recent and about the same specialized field. Only amendment awareness separates them.",
+      "expected_keywords": [
+        "vi mạch bán dẫn",
+        "hiện hành",
+        "sửa đổi",
+        "2101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current semiconductor curriculum state after amendment.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 22,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 22; keeps the same grounded document cluster."
+    },
+    {
+      "id": 176,
+      "type": "local_vs_system",
+      "query": "Sinh viên hệ đào tạo từ xa của UIT hiện đang học theo quy chế nào của trường?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [
+        "doc-68fe5ca21232e110a2ea6c72f624e28d"
+      ],
+      "expected_doc_numbers": [
+        "507/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "28/2023/TT-BGDDT",
+        "10/2017/TT-BGDDT"
+      ],
+      "confound_reason": "The broad national regulations are relevant, but the user is explicitly asking for the UIT-local rule that applies directly to UIT distance-learning students.",
+      "expected_keywords": [
+        "đào tạo từ xa",
+        "UIT",
+        "nội bộ",
+        "507"
+      ],
+      "ablation_sensitive": true,
+      "note": "Local distance-learning rule should outrank national frameworks.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 27,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 27; keeps the same grounded document cluster."
+    },
+    {
+      "id": 177,
+      "type": "local_vs_system",
+      "query": "Nếu hỏi chung về việc tổ chức dạy và học trực tuyến hoặc blended learning ở UIT thì nên xem quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "196/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-ed600bb2c49e17558bff4f7fb37be746"
+      ],
+      "confounding_doc_numbers": [
+        "30/2023/TT-BGDDT",
+        "1141/QD-DHCNTT"
+      ],
+      "confound_reason": "This pair forces the retriever to separate teaching/blended-learning governance from both the national IT-in-online-learning circular and the UIT online-assessment rule.",
+      "expected_keywords": [
+        "trực tuyến",
+        "kết hợp",
+        "dạy và học",
+        "196"
+      ],
+      "ablation_sensitive": true,
+      "note": "Separates general online/blended teaching from online assessment.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 28,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 28; keeps the same grounded document cluster."
+    },
+    {
+      "id": 178,
+      "type": "local_vs_system",
+      "query": "Riêng việc đánh giá kết quả học tập theo hình thức trực tuyến ở UIT thì áp dụng quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1141/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-ed600bb2c49e17558bff4f7fb37be746"
+      ],
+      "confounding_doc_numbers": [
+        "196/QD-DHCNTT",
+        "30/2023/TT-BGDDT"
+      ],
+      "confound_reason": "The lexical overlap with online teaching is high, but the user asks specifically about online assessment, which is a separate UIT-local document.",
+      "expected_keywords": [
+        "đánh giá kết quả học tập",
+        "trực tuyến",
+        "1141"
+      ],
+      "ablation_sensitive": true,
+      "note": "Online assessment is narrower than the broader teaching-policy rule.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 29,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 29; keeps the same grounded document cluster."
+    },
+    {
+      "id": 179,
+      "type": "local_vs_system",
+      "query": "UIT hiện tổ chức thi trên máy tính theo quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1376/QD-DHCNTT",
+        "1139/QD-DHCNTT"
+      ],
+      "confound_reason": "Generic exam-management documents exist, but the user is asking for the newer UIT-specific computer-based exam rule.",
+      "expected_keywords": [
+        "thi trên máy tính",
+        "135"
+      ],
+      "ablation_sensitive": true,
+      "note": "Dedicated computer-based exam regulation vs broader exam workflow.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 32,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 32; keeps the same grounded document cluster."
+    },
+    {
+      "id": 180,
+      "type": "local_vs_system",
+      "query": "UIT có quy định nội bộ nào về mở ngành đào tạo?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1021/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "16/2024/TT-BGDDT",
+        "15/QD-DHQG",
+        "540/QD-DHQG"
+      ],
+      "confound_reason": "Opening-program queries are easy to drag upward to Bộ or ĐHQG documents. This one explicitly asks for the UIT-local layer.",
+      "expected_keywords": [
+        "mở ngành",
+        "nội bộ UIT",
+        "1021"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT-local program-opening management rule.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 33,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 33; keeps the same grounded document cluster."
+    },
+    {
+      "id": 181,
+      "type": "local_vs_system",
+      "query": "Sinh viên xin công nhận tín chỉ tại UIT cần quy trình nội bộ của trường chứ không hỏi chính sách MOOC cấp trên. Mốc nào mới đúng?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "412/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1537/QD-DHQG",
+        "2062/QD-DHQG"
+      ],
+      "confound_reason": "This asks for the UIT-local process, not the DHQG rules for MOOC or credit-transfer blocks.",
+      "expected_keywords": [
+        "công nhận tín chỉ",
+        "UIT",
+        "412"
+      ],
+      "ablation_sensitive": true,
+      "note": "Local credit-recognition workflow should beat adjacent MOOC rules.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 45,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 45; keeps the same grounded document cluster."
+    },
+    {
+      "id": 182,
+      "type": "local_vs_system",
+      "query": "Quản lý chương trình liên kết đào tạo với nước ngoài bậc đại học ở UIT hiện phải bám theo quy định nội bộ nào của trường?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "451/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1758/QD-DHQG",
+        "07/BGD",
+        "124/CP"
+      ],
+      "confound_reason": "Foreign-linkage queries often float upward to the DHQG or Government layer. This one explicitly asks for the UIT-internal operating rule for these programs.",
+      "expected_keywords": [
+        "liên kết đào tạo",
+        "nước ngoài",
+        "UIT",
+        "451"
+      ],
+      "ablation_sensitive": true,
+      "note": "UIT-local foreign-linked program management.",
+      "baseline_bucket": "System",
+      "derived_from_case_id": 61,
+      "difficulty_tier": "hard",
+      "source_grounding": "Derived from existing case 61; keeps the same grounded document cluster."
+    },
+    {
+      "id": 183,
+      "type": "workflow_boundary",
+      "query": "Một khoa muốn làm quy trình đánh giá và cập nhật CTĐT ở UIT thì phải xem quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "185/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "17/2021/TT-BGDDT",
+        "2627/QD-BGDDT",
+        "123/QD-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "đánh giá cập nhật CTĐT",
+        "ĐHSĐH",
+        "185"
+      ],
+      "ablation_sensitive": true,
+      "note": "Workflow-specific local CTDT update procedure.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 185-qd-dhcntt_30-3-2018_quyet_dinh_ve_viec_ban_hanh_quy_trinh_danh_gia_cap_nhat_ctdt"
+      ],
+      "derived_from_case_id": 113,
+      "difficulty_tier": "hard"
+    },
+    {
+      "id": 185,
+      "type": "local_vs_system",
+      "query": "UIT hiện áp dụng quyết định nào về liêm chính học thuật?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "851/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1342/QD-DHQG",
+        "159/QD-DHCNTT",
+        "123/QD-DHCNTT"
+      ],
+      "confound_reason": "Câu hỏi cần văn bản triển khai tại UIT, trong khi tài liệu cấp hệ thống có nhiều từ khóa trùng.",
+      "expected_keywords": [
+        "liêm chính học thuật",
+        "UIT",
+        "851"
+      ],
+      "ablation_sensitive": true,
+      "note": "Dedicated academic-integrity policy retrieval.",
+      "baseline_bucket": "System",
+      "source_grounding": [
+        "metadata.jsonl contains 851-qd-dhcntt-14-08-2024-scan and page “Quy định về Liêm chính học thuật”"
+      ],
+      "derived_from_case_id": 116,
+      "difficulty_tier": "hard"
+    },
+    {
+      "id": 188,
+      "type": "workflow_boundary",
+      "query": "Sau khi đã bảo vệ xong, câu hỏi về bước nộp khóa luận phải đổ vào quy trình riêng nào chứ không quay lại quy định làm khóa luận ban đầu?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "confound_reason": "The wording overlaps heavily with the broader thesis regulation, but the user is asking for the post-defense submission step specifically.",
+      "expected_keywords": [
+        "nộp khóa luận",
+        "sau khi bảo vệ",
+        "583"
+      ],
+      "ablation_sensitive": true,
+      "note": "Post-defense submission workflow.",
+      "baseline_bucket": "System+Amend",
+      "derived_from_case_id": 53,
+      "difficulty_tier": "ceiling",
+      "source_grounding": "Derived from existing case 53; keeps the same grounded document cluster."
+    },
+    {
+      "id": 189,
+      "type": "catalog_boundary",
+      "query": "Danh mục thống kê ngành đào tạo hiện hành của Bộ được ban hành theo thông tư nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "24/2017/TT-BGDDT",
+        "02/2022/TT-BGDDT"
+      ],
+      "confound_reason": "The catalog of training fields collides with both the older level-IV education taxonomy and the regulation on opening majors. This query wants the current statistical training-field catalog.",
+      "expected_keywords": [
+        "danh mục thống kê ngành đào tạo",
+        "hiện nay",
+        "09/2022"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current training-field catalog.",
+      "baseline_bucket": "System+Amend",
+      "derived_from_case_id": 66,
+      "difficulty_tier": "ceiling",
+      "source_grounding": "Derived from existing case 66; keeps the same grounded document cluster."
+    },
+    {
+      "id": 191,
+      "type": "authority_collision",
+      "query": "Chuẩn chương trình đào tạo trình độ đại học chung ở cấp Bộ hiện nằm ở thông tư nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "17/2021/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "16/2024/TT-BGDDT",
+        "2627/QD-BGDDT",
+        "1314/QD-BGDDT"
+      ],
+      "confound_reason": "Curriculum-standard queries can drift to opening-program rules or specialized standard sets. This case asks for the general Ministry-level curriculum standard for undergraduate programs.",
+      "expected_keywords": [
+        "chuẩn chương trình đào tạo",
+        "trình độ đại học",
+        "17/2021"
+      ],
+      "ablation_sensitive": true,
+      "note": "General national CTDT standard vs specialized overlays.",
+      "baseline_bucket": "System+Amend",
+      "derived_from_case_id": 68,
+      "difficulty_tier": "ceiling",
+      "source_grounding": "Derived from existing case 68; keeps the same grounded document cluster."
+    },
+    {
+      "id": 192,
+      "type": "authority_collision",
+      "query": "Chuẩn riêng cho chương trình kỹ sư tài năng hoặc thạc sĩ tài năng lĩnh vực STEM được ban hành theo quyết định nào?",
+      "query_cohort_year": 2026,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2627/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "17/2021/TT-BGDDT",
+        "1032/QD-DHCNTT",
+        "1314/QD-BGDDT",
+        "2101/QD-BGDDT"
+      ],
+      "confound_reason": "This query is deliberately close to several specialized and general standards. The system must avoid generic curriculum standards, the local talent-program rule, and semiconductor-specific standards.",
+      "expected_keywords": [
+        "kỹ sư tài năng",
+        "thạc sĩ tài năng",
+        "STEM",
+        "2627"
+      ],
+      "ablation_sensitive": true,
+      "note": "Specialized Ministry standard for talent STEM programs.",
+      "baseline_bucket": "System+Amend",
+      "derived_from_case_id": 69,
+      "difficulty_tier": "ceiling",
+      "source_grounding": "Derived from existing case 69; keeps the same grounded document cluster."
+    },
+    {
+      "id": 193,
+      "type": "amendment_boundary",
+      "baseline_bucket": "System+Amend",
+      "query": "Sau lần sửa đổi gần nhất, chuẩn CTĐT vi mạch bán dẫn hiện hành ở cấp Bộ là quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1314/QD-BGDDT",
+        "17/2021/TT-BGDDT",
+        "2627/QD-BGDDT"
+      ],
+      "confound_reason": "The query is easy to satisfy semantically with the original standard, but the right answer is the amended current one after the latest update.",
+      "expected_keywords": [
+        "vi mạch bán dẫn",
+        "sau sửa đổi gần nhất",
+        "2101"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current amended semiconductor standard.",
+      "derived_from_case_id": 84,
+      "difficulty_tier": "ceiling",
+      "source_grounding": "Derived from existing case 84; keeps the same grounded document cluster."
+    },
+    {
+      "id": 194,
+      "type": "local_vs_system",
+      "baseline_bucket": "System+Amend",
+      "query": "Nếu hỏi về tổ chức dạy và học trực tuyến hoặc blended learning ở UIT, chưa tính phần đánh giá kết quả học tập, thì xem quyết định nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "196/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1141/QD-DHCNTT",
+        "809/QD-DHQG",
+        "30/2023/TT-BGDDT"
+      ],
+      "confound_reason": "All four documents share dense online-learning vocabulary. The full system must separate UIT teaching-and-learning operations from online assessment and broader system/national rules.",
+      "expected_keywords": [
+        "UIT",
+        "dạy và học trực tuyến",
+        "kết hợp",
+        "196"
+      ],
+      "ablation_sensitive": true,
+      "note": "Ceiling case for online-teaching vs online-assessment scoping.",
+      "derived_from_case_id": 85,
+      "difficulty_tier": "ceiling",
+      "source_grounding": "Derived from existing case 85; keeps the same grounded document cluster."
+    },
+    {
+      "id": 195,
+      "type": "workflow_boundary",
+      "query": "UIT hiện tổ chức thi trên máy tính theo quyết định nào?",
+      "query_cohort_year": 2026,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "672/QD-DHCNTT",
+        "936/QD-DHCNTT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "thi trên máy tính",
+        "tổ chức thi",
+        "135"
+      ],
+      "ablation_sensitive": true,
+      "note": "Workflow-boundary stress test on exam operations.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 135-qd-dhcntt_10-02-2026_quy_dinh_ve_to_chuc_thi_tren_may_tinh"
+      ],
+      "derived_from_case_id": 111,
+      "difficulty_tier": "ceiling"
+    },
+    {
+      "id": 196,
+      "type": "workflow_boundary",
+      "query": "Sau khi đã bảo vệ khóa luận xong, sinh viên phải theo quy trình nào để nộp khóa luận?",
+      "query_cohort_year": 2023,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "159/QD-DHCNTT",
+        "851/QD-DHCNTT"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "nộp khóa luận",
+        "sau khi bảo vệ",
+        "583"
+      ],
+      "ablation_sensitive": true,
+      "note": "State-conditioned thesis workflow routing.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 583-qd-dhcntt_12-6-2023_ban_hanh_quy_trinh_nop_kltn_sau_khi_bao_ve"
+      ],
+      "derived_from_case_id": 112,
+      "difficulty_tier": "ceiling"
+    },
+    {
+      "id": 197,
+      "type": "workflow_boundary",
+      "query": "Nếu cần hỏi riêng về việc công nhận môn học theo hình thức MOOC thì nên xem quyết định nào?",
+      "query_cohort_year": 2024,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "2217/DHQG"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1537/QD-DHQG",
+        "412/QD-DHCNTT",
+        "1342/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "công nhận môn học",
+        "MOOC",
+        "2217"
+      ],
+      "ablation_sensitive": true,
+      "note": "Specific course-recognition workflow within the MOOC stack.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 2217_dhqg_dt_cong_nhan_mon_hoc_theo_hinh_thuc_mooc"
+      ],
+      "derived_from_case_id": 126,
+      "difficulty_tier": "ceiling"
+    },
+    {
+      "id": 198,
+      "type": "workflow_boundary",
+      "query": "Việc phân công cán bộ coi thi cho đợt thi tập trung ở UIT được thực hiện theo quyết định nào?",
+      "query_cohort_year": 2020,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "135/QD-DHCNTT",
+        "936/QD-DHCNTT",
+        "809/QD-DHQG"
+      ],
+      "confound_reason": "Các tài liệu thuộc cùng quy trình nhưng khác bước thao tác, cần chọn đúng bước người dùng đang hỏi.",
+      "expected_keywords": [
+        "phân công cán bộ coi thi",
+        "đợt thi tập trung",
+        "672"
+      ],
+      "ablation_sensitive": true,
+      "note": "Adjacent exam workflows with strong lexical overlap.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "metadata.jsonl contains 672-qd-dhcntt_15-10-2020_quy_trinh_phan_cong_cbct"
+      ],
+      "derived_from_case_id": 134,
+      "difficulty_tier": "ceiling"
+    },
+    {
+      "id": 199,
+      "type": "catalog_boundary",
+      "query": "Sau năm 2022, nếu cần phân loại ngành đào tạo theo hệ danh mục mới của Bộ thì xem thông tư nào?",
+      "query_cohort_year": 2022,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "24/2017/TT-BGDDT",
+        "17/2021/TT-BGDDT",
+        "2627/QD-BGDDT"
+      ],
+      "confound_reason": "Câu hỏi nằm ở tầng phân loại danh mục, nơi văn bản cũ và mới có nhiều thuật ngữ giống nhau.",
+      "expected_keywords": [
+        "danh mục ngành",
+        "2022",
+        "09/2022"
+      ],
+      "ablation_sensitive": true,
+      "note": "Modern catalog document should outrank nearby curriculum standards.",
+      "baseline_bucket": "System+Amend",
+      "source_grounding": [
+        "temporal_test_pairs_100.json uses 09/2022/TT-BGDDT as a crawled expected document"
+      ],
+      "derived_from_case_id": 136,
+      "difficulty_tier": "ceiling"
+    }
+  ]
+}
