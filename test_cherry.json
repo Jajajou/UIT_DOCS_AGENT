@@ -1,0 +1,76 @@
+{
+  "pairs": [
+    {
+      "id": 11,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ sinh viên hệ chính quy ở UIT đang học theo quy chế tín chỉ nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1393/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [
+        "doc-53113380283d1db95a51774b7af5d563"
+      ],
+      "confounding_doc_numbers": [
+        "790/QD-DHCNTT"
+      ],
+      "confound_reason": "The semantic topic is identical, only the update boundary distinguishes the current regulation from its immediately previous version.",
+      "expected_keywords": [
+        "học chế tín chỉ",
+        "hiện hành",
+        "cập nhật cuối 2023",
+        "1393"
+      ],
+      "ablation_sensitive": true,
+      "note": "Current UIT credit regulation should beat the 2022 version.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 12,
+      "type": "amendment_boundary",
+      "query": "Trước đợt đổi cuối 2023, các kỳ thi tập trung ở UIT được tổ chức theo quy chế nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "1139/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1376/QD-DHCNTT"
+      ],
+      "confound_reason": "The user asks for the earlier exam-organization regime, not the post-update version.",
+      "expected_keywords": [
+        "tổ chức thi",
+        "trước cập nhật cuối 2023",
+        "1139"
+      ],
+      "ablation_sensitive": true,
+      "note": "Pre-update exam operations rule.",
+      "baseline_bucket": "Baseline-S"
+    },
+    {
+      "id": 14,
+      "type": "amendment_boundary",
+      "query": "Trước đợt thay đổi năm 2025, sinh viên chương trình tài năng ở UIT học theo khung nào?",
+      "query_cohort_year": null,
+      "expected_doc_ids": [],
+      "expected_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "confounding_doc_ids": [],
+      "confounding_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "confound_reason": "The query is deliberately time-anchored before the 2025 replacement, so the 2022 rule should win.",
+      "expected_keywords": [
+        "chương trình tài năng",
+        "trước 2025",
+        "131"
+      ],
+      "ablation_sensitive": true,
+      "note": "Original UIT talent-program regulation.",
+      "baseline_bucket": "System"
+    }
+  ]
+}

@@ -43,6 +43,7 @@ class MetadataRAGState(TypedDict):
     
     cohort_years: NotRequired[List[Union[int, str]]] # [2024, 2025] hoặc ["*"]
     cohort_scope: NotRequired[str]                   # "universal", "explicit", "unspecified"
+    education_system: NotRequired[Optional[str]]     # "chinh_quy", "tu_xa", etc.
     
     amends_documents: NotRequired[List[str]]
     

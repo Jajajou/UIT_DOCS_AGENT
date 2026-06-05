@@ -318,7 +318,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
 
         # Retrieve relevant chunks for dates, cohorts, and concepts
         q_date = "Ngày hiệu lực, ngày ký, ngày ban hành, ngày hết hạn"
-        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng?"
+        q_cohort = "Áp dụng cho khóa sinh viên nào? Khóa đào tạo, khóa tuyển sinh năm bao nhiêu? Đối tượng áp dụng? Hệ đào tạo nào?"
         q_concept = f"Văn bản này nói về chủ đề gì trong các chủ đề sau: {', '.join([c['id'] for c in canonical_concepts_list])}"
         
         docs_date = _rag_retrieve_and_rerank(col_name, q_date)
@@ -343,10 +343,11 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             "- valid_until: ngày hết hiệu lực (YYYY-MM-DD hoặc null)\n"
             "- cohort_years: [\"*\"] nếu áp dụng chung, hoặc [năm_nhập_học, ...] nếu cụ thể\n"
             "- cohort_scope: \"universal\", \"explicit\", hoặc \"unspecified\"\n"
+            "- education_system: \"chinh_quy\" (mặc định), \"tu_xa\", \"tien_tien\", \"song_nganh\", hoặc \"universal\"\n"
             "- academic_year: năm học áp dụng (YYYY-YYYY hoặc null)\n"
             "- concept_id: Chọn ID phù hợp nhất từ danh sách sau (hoặc null nếu không khớp):\n"
             f"{concepts_str}\n\n"
-            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\", \"academic_year\": ..., \"concept_id\": ...}"
+            "Trả về JSON: {\"valid_from\": ..., \"valid_until\": ..., \"cohort_years\": [...], \"cohort_scope\": \"...\", \"education_system\": \"...\", \"academic_year\": ..., \"concept_id\": ...}"
         )
         if feedback_instruction:
             combined_prompt += feedback_instruction
@@ -363,6 +364,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
                 updates["valid_until"] = combined_data.get("valid_until")
                 updates["cohort_years"] = combined_data.get("cohort_years", [])
                 updates["cohort_scope"] = combined_data.get("cohort_scope", "unspecified")
+                updates["education_system"] = combined_data.get("education_system")
                 updates["academic_year"] = combined_data.get("academic_year")
                 updates["concept_id"] = combined_data.get("concept_id")
             else:
@@ -370,6 +372,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
                 updates["valid_until"] = None
                 updates["cohort_years"] = []
                 updates["cohort_scope"] = "unspecified"
+                updates["education_system"] = None
                 updates["concept_id"] = None
         except Exception as e:
             logger.warning(f"Error parsing combined metadata JSON: {e}")
@@ -377,6 +380,7 @@ def query_metadata_fields_node(state: MetadataRAGState) -> Dict[str, Any]:
             updates["valid_until"] = None
             updates["cohort_years"] = []
             updates["cohort_scope"] = "unspecified"
+            updates["education_system"] = None
             updates["concept_id"] = None
         
         # NOTE: amends_documents extracted by header_extraction.py (not RAG).
@@ -536,8 +540,26 @@ class DocumentMetadata(BaseModel):
     academic_year: str | None = None
     cohort_years: List[int | str] = Field(default_factory=list)
     cohort_scope: str = "unspecified"  # "universal", "explicit", "unspecified"
+    education_system: str | None = "chinh_quy" # Default to chinh_quy
     amends_documents: List[str] = Field(default_factory=list)
     extraction_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+
+    @field_validator("education_system", mode="before")
+    @classmethod
+    def normalize_education_system(cls, v):
+        """Normalize to canonical keys: chinh_quy, tu_xa, tien_tien, song_nganh, universal."""
+        if not v or v == "NULL":
+            return "chinh_quy"
+        v = v.lower()
+        if "từ xa" in v or "tu xa" in v or "vlvh" in v or "vừa làm vừa học" in v:
+            return "tu_xa"
+        if "tiên tiến" in v or "tien tien" in v:
+            return "tien_tien"
+        if "song ngành" in v or "song nganh" in v:
+            return "song_nganh"
+        if "chung" in v or "toàn trường" in v or "universal" in v:
+            return "universal"
+        return "chinh_quy"
 
     @field_validator("document_number", mode="before")
     @classmethod
@@ -622,6 +644,7 @@ class MetadataReviewAction(BaseModel):
     valid_until: str | None = None
     academic_year: str | None = None
     cohort_years: List[int | str] | None = None
+    education_system: str | None = None
     amends_documents: List[str] | None = None
 
 
@@ -638,6 +661,7 @@ def format_metadata_node(state: MetadataRAGState) -> Dict[str, Any]:
             academic_year=state.get("academic_year"),
             cohort_years=state.get("cohort_years", []),
             cohort_scope=state.get("cohort_scope", "unspecified"),
+            education_system=state.get("education_system", "chinh_quy"),
             amends_documents=state.get("amends_documents", []),
             extraction_confidence=state.get("extraction_confidence", 0.0)
         )
@@ -688,6 +712,7 @@ def review_metadata_node(state: MetadataRAGState) -> Command:
         "valid_until": state.get("valid_until"),
         "academic_year": state.get("academic_year"),
         "cohort_years": state.get("cohort_years", []),
+        "education_system": state.get("education_system", "chinh_quy"),
         "amends_documents": state.get("amends_documents", [])
     }
     
@@ -726,6 +751,7 @@ def review_metadata_node(state: MetadataRAGState) -> Command:
     if decision.valid_until is not None: updates["valid_until"] = decision.valid_until
     if decision.academic_year is not None: updates["academic_year"] = decision.academic_year
     if decision.cohort_years is not None: updates["cohort_years"] = decision.cohort_years
+    if decision.education_system is not None: updates["education_system"] = decision.education_system
     if decision.amends_documents is not None: updates["amends_documents"] = decision.amends_documents
 
     logger.info(f"Resume from review with action: {decision.action}")

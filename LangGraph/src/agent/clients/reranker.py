@@ -334,23 +334,39 @@ class Reranker:
 
         # --- TIME TRAVEL LOGIC FOR HISTORICAL QUERIES ---
         if query_is_historical:
-            # Try to extract anchor year from query_academic_year or intention
+            # Try to extract anchor date/year
+            anchor_date = None
+            if query_date:
+                try:
+                    anchor_date = datetime.fromisoformat(query_date)
+                except: pass
+            
             anchor_year = None
             if query_academic_year:
                 m = re.search(r"(\d{4})", str(query_academic_year))
                 if m: anchor_year = int(m.group(1))
+            elif anchor_date:
+                anchor_year = anchor_date.year
             
-            if anchor_year and valid_from:
+            if (anchor_date or anchor_year) and (valid_from or valid_until):
                 try:
-                    vf_date = datetime.fromisoformat(str(valid_from))
-                    # DRASTIC PENALTY for documents from the FUTURE relative to query
-                    if vf_date.year > anchor_year:
-                        return 0.1 * future_penalty
-                    # BONUS for documents in that specific era
-                    if vf_date.year == anchor_year:
-                        return 1.0 * future_penalty
-                    if vf_date.year == anchor_year - 1:
-                        return 0.95 * future_penalty
+                    vf = datetime.fromisoformat(str(valid_from)) if valid_from else datetime.min
+                    vu = datetime.fromisoformat(str(valid_until)) if valid_until else datetime.max
+                    
+                    # Target date check (precise)
+                    if anchor_date:
+                        if vf <= anchor_date <= vu:
+                            return 1.1 * future_penalty # Perfect match: active at that exact time
+                        if vf > anchor_date:
+                            return 0.1 * future_penalty # Future doc
+                    
+                    # Year-based fallback (blunt)
+                    if anchor_year:
+                        if vf.year <= anchor_year <= vu.year:
+                            return 1.0 * future_penalty # Active in that year
+                        if vf.year > anchor_year:
+                            return 0.1 * future_penalty # Future doc
+                            
                 except: pass
             return 0.8 * future_penalty # Default good score for valid past docs
 
@@ -483,7 +499,7 @@ class Reranker:
         Returns:
             1.0 if authority matches query scope
             0.5 (neutral) if no scope in query
-            0.3 if authority mismatches query scope (gentle penalty)
+            0.2 if authority mismatches query scope (definitive penalty)
         """
         if query_authority_scope is None:
             return 0.5
@@ -495,13 +511,17 @@ class Reranker:
         if not doc_num:
             doc_num = str(item.get("metadata", {}).get("file_source", "")).upper()
             
-        is_system = any(k in doc_num for k in ["ĐHQG", "BGDĐT", "BGDDT", "DHQG", "BỘ"])
-        is_local = any(k in doc_num for k in ["ĐHCNTT", "UIT"])
+        # Expanded keywords for system-level authority
+        system_keywords = ["ĐHQG", "BGDĐT", "BGDDT", "DHQG", "BỘ", "CHÍNH PHỦ", "THỦ TƯỚNG", "ND-CP", "TT-BGD"]
+        local_keywords = ["ĐHCNTT", "UIT"]
+        
+        is_system = any(k in doc_num for k in system_keywords)
+        is_local = any(k in doc_num for k in local_keywords)
         
         if query_authority_scope == "system":
-            return 1.0 if is_system else 0.3
+            return 1.0 if is_system else 0.2
         if query_authority_scope == "local":
-            return 1.0 if is_local else 0.3
+            return 1.0 if is_local else 0.2
             
         return 0.5
 
@@ -695,13 +715,13 @@ class Reranker:
                 
                 if query_cohort_year is not None:
                     components.append(c)
-                    weights.append(0.5)
+                    weights.append(0.4) # Adjusted from 0.5
                 if query_authority_scope is not None:
                     components.append(a)
-                    weights.append(0.3)
+                    weights.append(0.5) # Increased from 0.3
                 if query_academic_year is not None:
                     components.append(ac)
-                    weights.append(0.2)
+                    weights.append(0.1) # Reduced from 0.2
                 
                 if not components:
                     cohort_scores.append(0.5)
