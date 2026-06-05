@@ -1,0 +1,2053 @@
+{
+  "summary": {
+    "accuracy@1": 0.29,
+    "model": "lightrag-naive",
+    "n_pairs": 200,
+    "correct": 58,
+    "elapsed_s": 1085.8225429058075
+  },
+  "by_type": {
+    "cohort_boundary": {
+      "accuracy": 0.3181818181818182,
+      "n": 22,
+      "correct": 7
+    },
+    "notice_override": {
+      "accuracy": 0.041666666666666664,
+      "n": 24,
+      "correct": 1
+    },
+    "amendment_boundary": {
+      "accuracy": 0.3333333333333333,
+      "n": 42,
+      "correct": 14
+    },
+    "authority_collision": {
+      "accuracy": 0.2857142857142857,
+      "n": 42,
+      "correct": 12
+    },
+    "local_vs_system": {
+      "accuracy": 0.2,
+      "n": 30,
+      "correct": 6
+    },
+    "workflow_boundary": {
+      "accuracy": 0.7142857142857143,
+      "n": 14,
+      "correct": 10
+    },
+    "admissions_boundary": {
+      "accuracy": 0.05263157894736842,
+      "n": 19,
+      "correct": 1
+    },
+    "catalog_boundary": {
+      "accuracy": 1.0,
+      "n": 7,
+      "correct": 7
+    }
+  },
+  "results": [
+    {
+      "id": 0,
+      "type": "cohort_boundary",
+      "query": "Mình khóa 2015 và giờ mới làm hồ sơ tốt nghiệp. Chuẩn ngoại ngữ của mình còn tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "108/QD-DHCNTT"
+      ],
+      "response": "\n\ndựa vào thông tin từ các tài liệu được cung cấp, đây là thông tin trả lời cho liên hỏi:\n\n## **Ngữ cảnh áp dụng cho khóa 2015**\n\nSinh viên khóa 2015 được quy định thuộc đối tượng áp dụng thông qua **Quyết định số 125/QĐ-ĐHCNTT-ĐTĐH ngày 18/09/2015** do hiệu trưởng phê duyệt. Chuẩn ngoại ngữ cho các bạn sinh viên này **không thay đổi** theo các quy định ban hành sau năm 2016, vì:\n\n> *\"Quy định áp dụng cho sinh viên đại học chính quy từ khóa tuyển sinh năm 2016. Sinh viên các khóa tuyển trước năm",
+      "correct": false
+    },
+    {
+      "id": 1,
+      "type": "cohort_boundary",
+      "query": "Mình khóa 2016. Phần ngoại ngữ của khóa này có khung riêng không, hay nhập chung với các khóa sau?",
+      "expected_doc_numbers": [
+        "128/QD-DHCNTT-DTDH"
+      ],
+      "response": "\n\n### Câu trả lời\n\nKhoảng tuyển sinh năm 2016 thuộc nhóm các khóa **có khung quy định cụ thể riêng** và được coi là sinh viên trước năm 2017, đạo luật ngoại ngữ áp dụng cho họ có những điểm sau:\n\n- **Quy định 2016 có lực hiệu lực ban đầu áp dụng cho khóa 2016**: Quyết định ban hành ngày năm 2016 của Hiệu trưởng đã quy định rõ: \"Quy định này áp dụng với sinh viên đại học chính quy từ khóa tuyển sinh năm 2016\" [1] (Reference Document 4). Điều này cho thấy khóa 2016 có một khung quy định đang áp dụ",
+      "correct": false
+    },
+    {
+      "id": 2,
+      "type": "cohort_boundary",
+      "query": "Mình K2017, giờ mới rà điều kiện ra trường. Chuẩn ngoại ngữ của mình đang tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "108/QD-DHCNTT"
+      ],
+      "response": "\n\n### Chuẩn ngoại ngữ cho sinh viên K2017\n\nNgười dùng là sinh viên khóa 2017 (K2017), tức là khóa tuyển sinh năm 2017. Theo thông tin trong Quy định Đào tạo ngoại ngữ đối với hệ Đại học chính quy, sinh viên thuộc các khóa tuyển sinh từ năm 2017 trở đi phải tuân theo quy định cụ thể được ban hành.\n\nCụ thể, **Quyết định Đào tạo ngoại ngữ đối với hệ Đại học chính quy của Trường Đại học Công nghệ Thông tin** (Quyết định 128/QĐ-ĐHCNTT-ĐTĐH ngày 30 tháng 8 năm 2016) yêu cầu:\n*   Hiện quy định này **áp",
+      "correct": false
+    },
+    {
+      "id": 3,
+      "type": "cohort_boundary",
+      "query": "Mình vào UIT năm 2018. Nếu giờ xét tốt nghiệp thì phần ngoại ngữ của mình đang tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "141/QD-DHCNTT"
+      ],
+      "response": "\n\n# Hỏi về Chuẩn Ngoại Ngữ cho Sinh Viên GPAUIT 2018\n\nChào bạn,\n\nDựa trên các quy định hiện hành của Trường Đại học Công nghệ Thông tin (ĐHCNTT), tôi xin cung cấp thông tin như sau:\n\n## Thời gian áp dụng quy định\n\nBạn nhập học năm **2018** nên hội tụ hai quy định sau:\n\n| Thời điểm | Quy định liên quan |\n|-----------|-------------------|\n| Nhập học 2018 | Áp dụng Quyết định số **141/QĐ-ĐHCNTT** ngày 16/3/2018 cho việc học môn ngoại ngữ [3] |\n| Xét tốt nghiệp hiện nay | Áp dụng Quyết định số **547",
+      "correct": true
+    },
+    {
+      "id": 4,
+      "type": "cohort_boundary",
+      "query": "Mình K2019 hệ chính quy. Phần ngoại ngữ để ra trường của khóa mình đang tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "547/QD-DHCNTT"
+      ],
+      "response": "\n\n### Yêu Cầu Ngoại Ngữ Tốt Nghiệp Cho Sinh Viên K2019\n\nChào bạn, đối với sinh viên khóa 2019 (K2019) hệ chính quy tại Trường Đại học Công nghệ Thông tin, phần ngoại ngữ để ra trường đang tính theo **Quyết định số 547/QĐ-ĐHCNTT ngày 30/8/2019**. Lưu ý quan trọng: quy định này **bắt buộc áp dụng** cho các khóa tuyển sinh từ năm 2019 trở đi, không thể chọn quy định trước đó.\n\n### 1. Quy Trình Tốt Nghiệp\n\nĐể được xét tốt nghiệp, bạn cần đáp ứng **hai điều kiện đồng thời**:\n\n1. **Hoàn thành tất cả c",
+      "correct": true
+    },
+    {
+      "id": 5,
+      "type": "cohort_boundary",
+      "query": "Mình K2022 hệ chính quy. Nếu kiểm tra chuẩn ngoại ngữ của khóa mình thì đang bám theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "828/QD-DHCNTT"
+      ],
+      "response": "\n\n# Thông tin về Chuẩn ngoại ngữ cho Sinh viên Khóa K2022\n\n## 1. Quy định áp dụng\n\nSinh viên khóa K2022 thuộc **quy định ban hành ngày 04 tháng 10 năm 2022**. Điều này có nghĩa là bạn tuân theo quy định áp dụng cho các khóa tuyển sinh từ năm 2022 trở đi, không áp dụng các quy định của các khóa trước đó.\n\n## 2. Khung chuẩn ngoại ngữ\n\nChuẩn ngoại ngữ của quy định này được xây dựng dựa trên **Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam (KNLNNVN):**\n\n| Trình độ | Chuẩn ngoại ngữ |\n| --- | --- |",
+      "correct": false
+    },
+    {
+      "id": 6,
+      "type": "notice_override",
+      "query": "Trong thời gian dịch, trường có cho dùng kết quả VPET để xét chuẩn đầu ra tốt nghiệp không?",
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "response": "\n\n### Câu trả lời\n\n**Đầu tư, trong thời gian dịch bệnh:**\n\n*   **ĐƯỢC** cho phép sử dụng kết quả bài thi VPET để được công nhận chuẩn đầu ra ngoại ngữ trình Độ Đại học.\n*   Thông báo này được ban hành căn cứ theo công văn số 1868/ĐHQG-ĐT ngày 23-11-2021 của Giám đốc ĐHQG-HCM về việc công nhận chuẩn đầu ra ngoại ngữ trong thời gian dịch bệnh, giãn cách xã hội.\n*   Thời gian áp dụng là từ ngày ra thông báo cho đến khi có thông báo mới.\n\n**Hiện nay (sau khi dịch bệnh đã kết thúc):**\n\n*   **NGƯNG** ",
+      "correct": false
+    },
+    {
+      "id": 7,
+      "type": "notice_override",
+      "query": "Bây giờ VPET, TOEIC Bách khoa hoặc phôi văn bằng cũ còn nộp để xét chuẩn ngoại ngữ được không?",
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "response": "\n\n# Trả lời về VPET, TOEIC và Phôi Bằng\n\nDựa trên thông tin từ các văn bản của trường, dưới đây là tình trạng hiện hành về việc sử dụng các chứng chỉ và phôi bằng để xét chuẩn ngoại ngữ:\n\n## 📌 Về chứng chỉ VPET\n\nTheo thông báo số **255/TB-ĐHQG-HCM** và Quyết định của trường:\n\n| Nhóm sinh viên | Tình trạng sử dụng VPET |\n|----------------|------------------------|\n| Khóa tuyển từ 2019 trở về sau | **Không sử dụng** (đã ngừng từ thông báo ngày ký) [[5]](Reference 5) |\n| Phasesi khóa đã thi trước n",
+      "correct": false
+    },
+    {
+      "id": 8,
+      "type": "notice_override",
+      "query": "IELTS Indicator với TOEFL iBT Home Edition còn được dùng để xét chuẩn ngoại ngữ không?",
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "response": "\n\nTheo thông báo của Trường Đại học Công nghệ Thông tin (ĐHCNTT) - Đại học Quốc gia Thành phố Hồ Chí Minh, các loại kết quả thi ngoại ngữ quốc tế được tổ chức theo hình thức trực tuyến như **IELTS Indicator** và **TOEFL iBT Home Edition** đã **ngừng được phép sử dụng** để xét đạt chuẩn quá trình và xét công nhận chuẩn đầu ra tốt nghiệp trình độ đại học.\n\nQuyết định này có hiệu lực **kể từ ngày ban hành Thông báo** và được áp dụng cho các chương trình đào tạo đại học chính quy (bao gồm đại trà, c",
+      "correct": false
+    },
+    {
+      "id": 9,
+      "type": "notice_override",
+      "query": "CTCLC định hướng Nhật có được dùng NAT-TEST để xét chuẩn quá trình không?",
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "response": "\n\nDựa trên các quy định hiện hành của Trường Đại học Công nghệ Thông tin, chương trình Chào mừng sinh viên Công nghệ Thông tin Việt Nhật (Chương trình Chất lượng Cao định hướng Nhật Bản - CTCLC định hướng Nhật Bản) được phép sử dụng chứng chỉ NAT-TEST để xét công nhận đạt chuẩn ngoại ngữ quá trình.\n\nCụ thể, theo quy định về trình độ ngoại ngữ xét chuẩn quá trình dành cho sinh viên thuộc chương trình này, sinh viên phải đạt được một trong các điều kiện sau: hoàn thành môn Tiếng Nhật 2 (mã môn JAN",
+      "correct": false
+    },
+    {
+      "id": 10,
+      "type": "amendment_boundary",
+      "query": "Cuối năm 2022, sinh viên hệ chính quy ở UIT học theo quy chế tín chỉ nào?",
+      "expected_doc_numbers": [
+        "790/QD-DHCNTT"
+      ],
+      "response": "\n\n### Hệ thống học tập quy chế tín chỉ tại UIT\n\nDựa trên các thông tin được cung cấp, vào cuối năm 2022, sinh viên hệ chính quy tại Trường Đại học Công nghệ Thông tin (UIT) được đào tạo theo **Quy chế đào tạo theo học chế tín chỉ**. Khung pháp lý này là nền tảng chung cho chương trình đào tạo đại học chính quy, bao gồm cả các chương trình đặc biệt như chương trình Tài năng và Tiên tiến, đều nằm trong khuôn khổ quy chế này. Cụ thể, các quy định hiện hành tại thời điểm đó thường chỉ ra rằng các nộ",
+      "correct": false
+    },
+    {
+      "id": 11,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ sinh viên hệ chính quy ở UIT đang học theo quy chế tín chỉ nào?",
+      "expected_doc_numbers": [
+        "1393/QD-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời về Quy chế Tín chỉ của UIT\n\nDựa trên các tài liệu hiện có từ Trường Đại học Công nghệ Thông tin (UIT), trường đang áp dụng **học chế tín chỉ** cho các chương trình đào tạo đại học hệ chính quy. Cụ thể như sau:\n\n---\n\n**Hệ thống tín chỉ at UIT:**\n\nTrường UIT đang sử dụng **học chế tín chỉ (credit system)** cho hệ đào tạo chính quy. Các chương trình đào tạo được đo lường khối lượng học tập theo đơn vị **tín chỉ (TC)**. Một tín chỉ được quy định:\n- Tương đương **50 giờ học tập định mức",
+      "correct": false
+    },
+    {
+      "id": 12,
+      "type": "amendment_boundary",
+      "query": "Trước đợt đổi cuối 2023, các kỳ thi tập trung ở UIT được tổ chức theo quy chế nào?",
+      "expected_doc_numbers": [
+        "1139/QD-DHCNTT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nDựa trên thông tin trong các tài liệu, trước đợt đổi cuối năm 2023, các kỳ thi tập trung tại Đại học Công nghệ Thông tin (ĐHCNTT) được tổ chức theo **Quy định tổ chức thi các môn học hệ đại học chính quy của Trường Đại học Công nghệ Thông tin**, do Hiệu trưởng ký quyết định ngày **20 tháng 12 năm 2022** (Quyết định số 1139/QĐ-ĐHCNTT).\n\nĐây là quy định quy định việc tổ chức các đợt thi cho hệ đại học chính quy bao gồm:\n\n*   **Tổ chức thi:** Mỗi học kỳ, Trường tổ chức **01 lần t",
+      "correct": true
+    },
+    {
+      "id": 13,
+      "type": "amendment_boundary",
+      "query": "Nếu đang chuẩn bị một kỳ thi tập trung bây giờ thì UIT đang áp quy chế nào?",
+      "expected_doc_numbers": [
+        "1376/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy định Thi Tập Trung Tại UIT Hiện Hành\n\nDựa trên các tài liệu trong hệ thống, UIT đang áp dụng quy định thi tập trung như sau:\n\n---\n\n#### 1. Quy Định Tổ Chức Thi Tập Trung Hệ Đại Học Chính Quy\n\nUIT hiện đang áp dụng **Quy định tổ chức thi các môn học hệ đại học chính quy** được ban hành kèm theo **Quyết định số 1139 / QĐ-ĐHCNTT ngày 20 tháng 12 năm 2022**.\n\nTheo quy định này:\n- **Phạm vi điều chỉnh:** Mọi kỳ thi tập trung của Trường thuộc hệ đại học chính quy, bao gồm 01 lần thi lý thuyế",
+      "correct": false
+    },
+    {
+      "id": 14,
+      "type": "amendment_boundary",
+      "query": "Trước đợt thay đổi năm 2025, sinh viên chương trình tài năng ở UIT học theo khung nào?",
+      "expected_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "response": "\n\n## Khung Đào Tạo Chương Trình Tài Năng Trước Năm 2025\n\nTrước đợt thay đổi năm 2025, sinh viên chương trình tài năng (CTTN) tại Trường Đại học Công nghệ Thông tin (ĐHCNTT) thuộc ĐHQG-HCM học theo **Quy định đào tạo Chương trình Tài năng** được ban hành ngày **08 tháng 3 năm 2022** (Quyết định số 131/QĐ-ĐHCNTT) [2].\n\n### Thông tin về khung đào tạo cũ:\n\n#### 1. Chương loại sinh viên\nChương trình tài năng trước năm 2025 có 02 hình thức sinh viên [2]:\n- **Sinh viên chính thức**: đáp ứng các tiêu ch",
+      "correct": true
+    },
+    {
+      "id": 15,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ chương trình tài năng ở UIT đang chạy theo khung nào?",
+      "expected_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "response": "\n\n### Khung quy định đào tạo Chương trình Tài năng hiện hành tại UIT\n\nChương trình Tài năng (CTTN) tại **Đại học Công nghệ Thông tin (ĐHCNTT)** hiện đang được triển khai theo **Quy định đào tạo Chương trình Tài năng ban hành kèm Quyết định số 1032/QĐ-ĐHCNTT ngày 03/09/2025 của Hiệu trưởng Trường** [1]. Văn bản này quy định cụ thể các điều khoản quản lý, tổ chức đào tạo và chế độ chính sách dành cho sinhvinh thuộc CTTN tại ĐHCNTT thuộc Đại học Quốc gia Thành phố Hồ Chí Minh [1].\n\nNgoài ra, chương",
+      "correct": true
+    },
+    {
+      "id": 16,
+      "type": "amendment_boundary",
+      "query": "Trước bản ban hành năm 2025, chương trình tiên tiến ở UIT đang học theo khung nào?",
+      "expected_doc_numbers": [
+        "434/QD-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời về Khung Chương trình Trình tiên tiến UIT Trước Bản 2025\n\nDựa trên thông tin từ các văn bản trong hệ thống, trước khi bản quy định năm 2025 được ban hành, Chương trình tiên tiến (CTTT) tại UIT đang vận hành theo **Quy định đào tạo chương trình tiên tiến của Trường ĐHCNTT ban hành ngày 07/07/2021** (số QĐ-DH CNTT 07/07/2021).\n\n#### Khung quy định được áp dụng\n\n**Trước năm 2025**, chương trình tiên tiến được tổ chức đào tạo theo quy định quan trọng sau:\n\n**1. Thời gian hiệu lực**\n\n- ",
+      "correct": false
+    },
+    {
+      "id": 17,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ chương trình tiên tiến ở UIT đang học theo khung nào?",
+      "expected_doc_numbers": [
+        "1451/QD-DHCNTT"
+      ],
+      "response": "\n\n## Trả lời về Khung Chương trình Đào tạo Tiên tiến (CTTT)\n\nDựa trên các tài liệu có sẵn, tôi có thể cung cấp thông tin như sau:\n\n### 1. Đối tượng và Phạm vi Điều chỉnh\n\nChương trình Tiên tiến (CTTT) tại UIT được quy định trong **Quy định về đào tạo chương trình tiên tiến**, áp dụng bắt buộc cho các khóa tuyển sinh từ năm 2023 trở về sau. Quy định này áp dụng đối với giảng viên và sinh viên hệ chính quy đào tạo theo CTTT, thực hiện theo học chế tín chỉ.\n\n### 2. Khung Hội Câu của Chương trình\n\nC",
+      "correct": false
+    },
+    {
+      "id": 18,
+      "type": "amendment_boundary",
+      "query": "Nếu trường đang chuẩn bị hồ sơ mở ngành lúc này thì điều kiện của Bộ phải đối chiếu theo mốc nào?",
+      "expected_doc_numbers": [
+        "16/2024/TT-BGDDT"
+      ],
+      "response": "\n\n# Về Điều Khiển Áp Dụng Khi Chuẩn Bị Hồ Sơ Mở Ngành Đào Tạo\n\nNếu trường của bạn đang chuẩn bị hồ sơ mở ngành trong thời điểm hiện tại, việc xác định khung pháp lý áp dụng cần căn cứ vào thời điểm nộp hồ sơ và quy định hiện hành về thời điểm có hiệu lực của các văn bản pháp luật liên quan.\n\n## 1. Căn cứ thời điểm nộp hồ sơ\n\nTheo quy định tại **Luật Giáo dục đại học năm 2025**, có hai mốc thời gian quan trọng cần lưu ý:\n\n> \"Hồ sơ mở ngành đào tạo đã được nộp hợp lệ cho cơ quan hoặc người có thẩm",
+      "correct": false
+    },
+    {
+      "id": 19,
+      "type": "amendment_boundary",
+      "query": "Giữa năm 2024, nếu làm hồ sơ mở ngành thì phải đối chiếu theo mốc nào của Bộ?",
+      "expected_doc_numbers": [
+        "02/2022/TT-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nDựa trên các tài liệu liên quan, dưới đây là thông tin về mốc và quy định áp dụng khi làm hồ sơ mở ngành giữa năm 2024:\n\n## 1. Quy định áp dụng cho năm 2024\n\nTrong năm 2024, cơ sở đào tạo phải tuân thủ **Thông tư số 02/2022/TT-BGDĐT ngày 18 tháng 01 năm 2022** (đã được sửa đổi bổ sung bởi các văn bản liên quan sau đó) về điều kiện, trình tự, thủ tục mở ngành đào tạo và đình chỉ hoạt động của ngành đào tạo trình độ đại học, thạc sĩ, tiến sĩ. Thông tư này vốn có hiệu lực thi hàn",
+      "correct": true
+    },
+    {
+      "id": 20,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, việc mở ngành hiện đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "15/QD-DHQG"
+      ],
+      "response": "\n\n### Khung Quy Định Hiện Hành\n\nTại cấp Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM), việc mở ngành đào tạo hiện đang thực hiện theo khung quy định đã được **sửa đổi, bổ sung**. Cụ thể:\n\n## 1. Văn bản quy định chính\n\nCăn cứ nội quy và quy định hiện hành của trường:\n\n- **Quyết định số 540/QĐ-ĐHQG**: Đây là văn bản cơ bản quy định mở ngành đào tạo trình độ đại học, thạc sĩ, tiến sĩ.\n- **Quyết định số 1021/QĐ-ĐHNCTT**: Quyết định này thay thế cho Quyết định số 540/QĐ-ĐHQG ngày 03 tháng 7 năm 2",
+      "correct": false
+    },
+    {
+      "id": 21,
+      "type": "authority_collision",
+      "query": "Trước khi ĐHQG-HCM sửa quy định đầu 2025, việc mở ngành đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "540/QD-DHQG"
+      ],
+      "response": "\n\nTrước khi Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) ban hành quy định sửa đổi vào đầu năm 2025, việc mở ngành đào tạo trong hệ thống đã tìm giờ bám theo khung quy định là **Quyết định số 540/QĐ-ĐHQG**.\n\nCụ thể, văn bản sửa đổi, bổ sung mới được ban hành vào tháng 01 năm 2025 có nội dung là \"Sửa đổi, bổ sung một số điều của **Quyết định số 540/QĐ-ΔHQG** quy định mở ngành đào tạo trình độ đại học, thạc sĩ, tiến sĩ\". Điều này xác nhận rằng trước thời điểm sửa đổi, thể chế quản lý và vận h",
+      "correct": true
+    },
+    {
+      "id": 22,
+      "type": "amendment_boundary",
+      "query": "Bộ đang dùng chuẩn nào cho CTĐT vi mạch bán dẫn ở thời điểm này?",
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "response": "\n\n## Quy định về Chuẩn chương trình đào tạo Vi mạch bán dẫn\n\nChuẩn chương trình đào tạo hiện hành cho ngành vi mạch bán dẫn được quy định theo Quyết định của Bộ Giáo dục và Đào tạo. Dưới đây là thông tin chi tiết:\n\n### Tiêu Bang Chuẩn hiện hành\n\nChuẩn chương trình đào tạo về vi mạch bán dẫn trình độ đại học, thạc sĩ đang được áp dụng là **Ban hành kèm theo Quyết định số 1314/QĐ-BGDDT ngày 13 tháng 5 năm 2025 của Bộ trưởng Bộ Giáo dục và Đào tạo**. Đây là văn bản chính thức quy định về chuẩn CTĐT",
+      "correct": false
+    },
+    {
+      "id": 23,
+      "type": "amendment_boundary",
+      "query": "Lúc Bộ vừa ban hành chuẩn CTĐT vi mạch bán dẫn, trước khi có bản sửa sau đó, thì phải bám mốc nào?",
+      "expected_doc_numbers": [
+        "1314/QD-BGDDT"
+      ],
+      "response": "\n\n### Mốc基准 cho Chuẩn CTĐT Vi mạch bán dẫn Trước khi Sửa Đổi\n\nKhi Bộ Giáo dục và Đào tạo vừa ban hành Chuẩn chương trình đào tạo về vi mạch bán dẫn trước khi có bản sửa đổi, thì phải bám vào các mốc sau đây:\n\n#### **Quản lý Tài liệu Tham chiếu Chính**\n\nTheo tài liệu kiểm tra thì việc thực hiện Chuẩn CTĐT ban đầu phải dựa trên **Quyết định số 1314/QĐ-BGDDT ngày 13 tháng 5 năm 2025 của Bộ trưởng Bộ Giáo dục và Đào tạo ban hành Chuẩn chương trình đào tạo về vi mạch bán dẫn trình độ đại học, thạc sĩ",
+      "correct": true
+    },
+    {
+      "id": 24,
+      "type": "authority_collision",
+      "query": "Ở UIT có quy định riêng nào cho chuyện học song ngành hệ chính quy không?",
+      "expected_doc_numbers": [
+        "112/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy định về Đào tạo Song Ngành Hệ Chính Quy tại UIT\n\nC có quy định riêng và chi tiết về đào tạo song ngành hệ chính quy tại Trường Đại học Công nghệ Thông tin (UIT). Đây được ban hành thành văn bản quy phạm pháp lý nội bộ.\n\n## 1. Cơ sở pháp lý và phạm vi áp dụng\n\nUIT đã ban hành **\"Quy định đào tạo song ngành trình độ đại học hệ chính quy của Trường Đại học Công nghệ Thông Tin\"** kèm theo Quyết định số: **M2/QĐ-ĐHCNTT**, ngày **01 tháng 02 năm 2024** của Hiệu trưởng.\n\n**Phạm vi áp dụng bao g",
+      "correct": false
+    },
+    {
+      "id": 25,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, song ngành hiện đang đi theo khung chung nào?",
+      "expected_doc_numbers": [
+        "1195/QD-DHQG"
+      ],
+      "response": "\n\n### Khung quy định cho đào tạo song ngành cấp ĐHQG-HCM\n\nTại cấp Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM), đào tạo song ngành hiện đang đi theo khung quy định chính sau:\n\n## 📋 **Văn bản pháp lý chính**\n\n**Quy định đào tạo song ngành trình độ đại học hệ chính quy của ĐHQG-HCM** (Ban hành kèm theo Quyết định số ...../ĐHQG-ĐH ngày ..... tháng ..... năm 2019 của ĐHQG-HCM).\n\n### 🏛️ **Cơ cấu khung pháp lý bao gồm:**\n*   Tại **ĐHQG-HCM**, quy định được cấp Chuẩn mực từ Bộ GD&ĐT thông qua **Qu",
+      "correct": false
+    },
+    {
+      "id": 26,
+      "type": "authority_collision",
+      "query": "Song ngành Thương mại điện tử ở UIT được ĐHQG phê duyệt bằng quyết định nào?",
+      "expected_doc_numbers": [
+        "1681/QD-DHQG"
+      ],
+      "response": "\n\n### Câu trả lời\n\nDựa trên các tài liệu có sẵn, chương trình **đào tạo song ngành ngành Thương mại điện tử** tại Trường Đại học Công nghệ thông tin (UIT) đã được phê duyệt với **mã ngành 7340122** trong trình độ đại học.\n\n**Thông tin phê duyệt:**\n\n- Chương trình đào tạo song ngành ngành Thương mại điện tử đã được phê duyệt và chỉ tiêu tuyển sinh hàng năm thuộc tổng chỉ tiêu tuyển sinh đại học chính quy được ĐHQG-HCM thông báo để Trường được thực hiện.\n- Hồ sơ đăng ký đào tạo song ngành được ĐHQ",
+      "correct": false
+    },
+    {
+      "id": 27,
+      "type": "local_vs_system",
+      "query": "Sinh viên hệ đào tạo từ xa của UIT hiện đang học theo quy chế nào của trường?",
+      "expected_doc_numbers": [
+        "507/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy chế áp dụng cho sinh viên Hệ đào tạo từ xa UIT\n\nSinh viên hệ đào tạo từ xa (ĐTTX) của **Trường Đại học Công nghệ Thông tin (ĐHCNTT)** thuộc **Đại học Quốc gia TP. HCM** hiện đang học theo quy chế đào tạo từ xa trình độ đại học do chính trường ban hành.\n\n#### 1. Cơ sở quy định\nQuy chế này được xây dựng dựa trên cơ sở pháp lý của quy chế đào tạo đại học hiện hành để điều chỉnh, quản lý các hoạt động đào tạo từ xa tại ĐHCNTT. Theo đó, quy định này quy định về:\n\n*   Những quy định chung\n* ",
+      "correct": false
+    },
+    {
+      "id": 28,
+      "type": "local_vs_system",
+      "query": "Nếu lớp học tổ chức theo kiểu online hoặc hybrid thì UIT đang quản lý theo khung nào?",
+      "expected_doc_numbers": [
+        "196/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy định và Khung Quản lý Lớp học Online và Hybrid tại UIT\n\nTại Trường Đại học Công nghệ Thông tin (UIT), việc tổ chức lớp học theo phương thức trực tuyến (Dạy học trực tuyến - DHTT) hoặc kết hợp trực tiếp trực tuyến (Dạy học trực tiếp kết hợp - DHKH) được quản lý theo các quy định và khung chuẩn mực sau:\n\n#### 1. Quy định về Phương thức Giáo dục\n\nUIT áp dụng hai phương thức giảng dạy chính cho các lớp học online và hybrid:\n\n- **Phương thức Dạy học Trực tuyến (DHTT):** Áp dụng khi môn học ",
+      "correct": false
+    },
+    {
+      "id": 29,
+      "type": "local_vs_system",
+      "query": "Riêng phần đánh giá kết quả học tập khi học trực tuyến ở UIT thì đang áp khung nào?",
+      "expected_doc_numbers": [
+        "1141/QD-DHCNTT"
+      ],
+      "response": "\n\n### Khung đánh giá kết quả học tập trực tuyến tại UIT\n\nDựa trên các quy định hiện hành, việc đánh giá kết quả học tập theo hình thức trực tuyến tại Trường Đại học Công nghệ Thông tin (ĐHĐT UIT) được tổ chức dựa trên khổ định trong **Quy định tổ chức đánh giá kết quả học tập theo hình thức trực tuyến**, kèm theo Quyết định số: MWh / DHCNTT-DTDH, ngày 0O tháng M năm 2023.\n\n---\n\n## Các thành phần chính của khung đánh giá trực tuyến\n\n### 1. Phạm vi áp dụng\nKhết đánh giá trực tuyến áp dụng cho:\n- *",
+      "correct": false
+    },
+    {
+      "id": 30,
+      "type": "amendment_boundary",
+      "query": "Trước đợt đổi năm 2023, việc phân công cán bộ coi thi ở UIT đang làm theo quy trình nào?",
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "response": "\n\n## Quy trình phân công cán bộ coi thi trước năm 2023\n\nDựa trên các tài liệu quy định hiện có, trước đợt đổi năm 2023, việc phân công cán bộ coi thi tại Trường Đại học Công nghệ Thông tin (UIT) được thực hiện theo **Quyết định số 672/QĐ-ĐHCNTT ngày 15 tháng 10 năm 2020** về Quy trình phân công cán bộ coi thi cho các đợt thi tập trung hệ đại học chính quy.\n\n### Nội dung của quy trình\n\nQuy trình này bao gồm **3 giai đoạn** tương ứng với **3 quy trình thành phần**:\n\n### 1. Quy trình đăng ký coi th",
+      "correct": true
+    },
+    {
+      "id": 31,
+      "type": "amendment_boundary",
+      "query": "Nếu đang tổ chức thi tập trung lúc này thì việc phân công cán bộ coi thi ở UIT làm theo quy trình nào?",
+      "expected_doc_numbers": [
+        "936/QD-DHCNTT"
+      ],
+      "response": "\n\n## Quy trình Phân công Cán bộ Coi Thi Tập trung tại UIT\n\nDựa trên các tài liệu hiện có, đây là quy trình chi tiết cho việc phân công cán bộ coi thi đối với các đợt thi tập trung hệ đại học chính quy tại Trường Đại học Công nghệ Thông tin (UIT):\n\n### 1. Tổng quan về quy trình\n\nQuy trình phân công cán bộ coi thi bao gồm **3 giai đoạn** tương ứng với 3 quy trình thành phần:\n- Đăng ký coi thi\n- Phân công cán bộ coi thi\n- Tổng kết coi thi\n\nQuy trình này được ban hành kèm theo Quyết định số **672/QĐ",
+      "correct": false
+    },
+    {
+      "id": 32,
+      "type": "local_vs_system",
+      "query": "Nếu tổ chức thi trên máy tính ở UIT bây giờ thì phải bám theo quy định nào?",
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "response": "\n\n***STOP, tôi cần dừng lại và xác suất cao đây là vấn đề tôi đã xem qua. Tôi đang thiết kế một hành trình cho các sĩ quan và sinh viên tham khảo tất cả các quy định hiện hành. Hãy để tôi:\n\n## Quy định Tổ chức Thi trên Máy tính tại UIT\n\nDựa trên các văn bản hiện hành, để tổ chức thi trên máy tính tại Trường Đại học Công nghệ Thông tin (UIT), bạn cần tuân thủ **HAI QUY ĐỊNH CHÍNH** sau:\n\n---\n\n### **1.** Quy định về tổ chức thi trên máy tính của Trường Đại học Công nghệ Thông tin\n\nĐây là văn bản *",
+      "correct": false
+    },
+    {
+      "id": 33,
+      "type": "local_vs_system",
+      "query": "UIT có quy định nội bộ riêng về mở ngành đào tạo không, hay chỉ đi theo khung của Bộ với ĐHQG?",
+      "expected_doc_numbers": [
+        "1021/QD-DHCNTT"
+      ],
+      "response": "\n\n### UIT Có Quy Định Nội Bộ Riêng Về Mở Ngành Đào Tạo Không?\n\nTrường Đại học Công nghệ Thông tin (UIT) **có quy định nội bộ riêng** về việc mở ngành đào tạo, nhưng hoạt động trong khuôn khổ và không trái với các quy định của Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) và Bộ Giáo dục và Đào tạo (Bộ GD&ĐT).\n\n#### 1. Quy Định Nội Bộ Của UIT\nUIT đã ban hành **Quyết định số 1021/QĐ-ĐHNCTT ngày 04 tháng 10 năm 2023** của Hiệu trưởng Trường Đại học Công nghệ Thông tin về quy định mở ngành đào tạ",
+      "correct": false
+    },
+    {
+      "id": 34,
+      "type": "local_vs_system",
+      "query": "Chuyện đào tạo trực tuyến ở cấp Bộ hiện đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "30/2023/TT-BGDDT"
+      ],
+      "response": "\n\n# Khung Pháp lý cho Đào tạo Trực tuyến của Bộ Giáo dục và Đào tạo\n\nHiện nay, Bộ Giáo dục và Đào tạo đang áp dụng hệ thống khung pháp lý chính gồm hai văn bản quy định trọng tâm cho đào tạo trực tuyến:\n\n## 1. Hệ thống văn bản pháp lý hiện hành\n\nCăn cứ theo [Quy định về liên kết đào tạo giữa cơ sở giáo dục đại học Việt Nam và cơ sở giáo dục đại học nước ngoài](https://daa.uit.edu.vn/sites/daa/files/07-bgd-signed-1_quy_dinh_lien_ket_dao_tao_giua_co_so_gdvn_va_co_so_gdnn-6304d2c7.pdf) (Thông tư/20",
+      "correct": false
+    },
+    {
+      "id": 35,
+      "type": "authority_collision",
+      "query": "Nếu học trực tuyến ở ĐHQG thì phần đánh giá kết quả học tập hiện đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "809/QD-DHQG"
+      ],
+      "response": "\n\n<div style=\"text-align: justify;\">\n\n## Khung Đánh Giá Kết Quả Học Tập Đối Với Học Trực Tuyến Tại ĐHQG-HCM\n\n### 1. Cơ Sở Pháp Lý\n\nĐánh giá kết quả học tập theo hình thức trực tuyến tại Đại học Quốc gia Thành phố Hồ Chí Minh hiện đang được triển khai theo **Quy định Tổ chức đánh giá kết quả học tập theo hình thức trực tuyến tại ĐHQG-HCM**, kèm theo Quyết định số 809/QĐ-ĐHQG ngày 03 tháng 7 năm 2023 của Giám đốc ĐHQG-HCM [1].\n\n> *\"Căn cứ vào chương trình đào tạo và điều kiện thực tế, CSĐT lựa chọ",
+      "correct": true
+    },
+    {
+      "id": 36,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, chuyện đào tạo trình độ đại học hiện đang vận hành theo khung nào?",
+      "expected_doc_numbers": [
+        "1342/QD-DHQG"
+      ],
+      "response": "\n\n### Khung quản lý và vận hành đào tạo trình độ đại học tại ĐHQG-HCM\n\nỞ cấp Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM), công tác đào tạo trình độ đại học hiện đang được vận hành chủ yếu dựa trên **Quy chế đào tạo đại học** do Ban Giám đốc ban hành. Quy chế này quy định chi tiết về cấu trúc chương trình đào tạo, bao gồm các khối kiến thức giáo dục đại cương và giáo dục chuyên nghiệp, cùng với quy định về thời gian đào tạo (thường từ 3 đến 5 năm) và số lượng tín chỉ (tối thiểu là 120 tín c",
+      "correct": false
+    },
+    {
+      "id": 37,
+      "type": "authority_collision",
+      "query": "Đào tạo trình độ đại học ở cấp Bộ hiện đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "08/2021/TT-BGDDT"
+      ],
+      "response": "\n\n#的回答: Quy định hiện đang áp dụng cho đào tạo trình độ đại học\n\n## 1. Khung tham chiếu hiện hành\n\nTheo quy định hiện hành của Bộ Giáo dục và Đào tạo, đào tạo trình độ đại học hiện đang bám theo **Khung trình độ quốc gia Việt Nam**.\n\nCụ thể, tại **Quyết định số 99/2019/QĐ-TTg về việc phê duyệt Kế hoạch thực hiện Khung trình độ quốc gia Việt Nam 2020-2025** đã quy định rõ trách nhiệm xây dựng và ban hành hệ thống văn bản để triển khai Khung trình độ quốc gia Việt Nam này.\n\n## 2. Yêu cầu về việc t",
+      "correct": false
+    },
+    {
+      "id": 38,
+      "type": "authority_collision",
+      "query": "Ở UIT, chuyện văn bằng chứng chỉ theo quy định nội bộ hiện phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "172/QD-DHCNTT"
+      ],
+      "response": "\n\n## Thông tin về Quy định Văn bằng Chứng chỉ tại UIT\n\nChào bạn, dựa trên thông tin từ các tài liệu, việc sử dụng mẫu phụ lục văn bằng, văn bằng và các giấy xác nhận tại Trường Đại học Công nghệ Thông tin (UIT) hiện phải tuân theo:\n\n### Mốc gốc pháp lý\n\n**Quyết định số 172/QĐ-ĐHCNTT ngày 08 tháng 03 năm 2023** của Hiệu trưởng Trường Đại học Công nghệ Thông tin về việc ban hành **Quy chế Văn bằng Chứng chỉ** của Trường Đại học Công nghệ Thông tin.\n\n### Các văn bản liên quan\n\nNgoài Quyết định gốc,",
+      "correct": true
+    },
+    {
+      "id": 39,
+      "type": "notice_override",
+      "query": "Từ cuối 2024 thì trên phụ lục văn bằng, bảng điểm hay giấy xác nhận ở UIT dùng cách ghi nào?",
+      "expected_doc_numbers": [
+        "1192/TB-DHCNTT"
+      ],
+      "response": "\n\n### Quy định về cách ghi trên các văn bản hành chính UIT (Từ đầu năm 2024)\n\nDựa vào các tài liệu cung cấp, việc thống nhất từ ngữ in trên **phụ lục văn bằng**, **bằng điểm** và các loại **giấy xác nhận** đối với hệ đại học tại trường Đại học Công nghệ Thông tin (UIT) được quy định trong văn bản **Thông báo về việc từ ngữ sử dụng in trên phụ lục văn bằng...** được đăng tải vào ngày **25 tháng 10 năm 2024** (tương ứng với Ref 6 trong danh mục tài liệu).\n\nMặc dù văn bản nội dung trích dẫn Quyết đ",
+      "correct": false
+    },
+    {
+      "id": 40,
+      "type": "amendment_boundary",
+      "query": "Mẫu phụ lục văn bằng tốt nghiệp UIT dùng từ 2025 đang bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "133/QD-DHCNTT"
+      ],
+      "response": "\n\n# Trả lời về Mẫu Phụ Lục Văn Bằng Tốt Nghiệp UIT (2025)\n\n## Là quan điểm hiện tại của mẫu\n\nDựa trên các tài liệu đã nghiên cứu, tôi có thể cung cấp thông tin sau về mẫu phụ lục văn bằng tốt nghiệp củaTrường Đại học Công nghệ Thông tin (UIT):\n\nThời\n```\n[Thông tin hiện có trong tài liệu không trực tiếp chỉ ra mẫu 2025 cụ thể nào]\n```\n\nTrong các tài liệu được cung cấp, mẫu phụ lục văn bằng tốt nghiệp của UIT đang được ban hành theo **Quyết định số 172/QĐ-ĐHCNTT ngày 08 tháng 3 năm 2023** của Hiệu",
+      "correct": false
+    },
+    {
+      "id": 41,
+      "type": "authority_collision",
+      "query": "ĐHQG hiện công nhận chứng chỉ ngoại ngữ theo khung nào?",
+      "expected_doc_numbers": [
+        "170/QD-DHQG"
+      ],
+      "response": "\n\n### Khung năng lực ngoại ngữ được sử dụng\n\nĐại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) hiện sử dụng **Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam (KNLNNVN)** làm cơ sở tham chiếu để công nhận chứng chỉ ngoại ngữ, tổ chức giảng dạy và đánh giá trình độ ngoại ngữ của người học. Khung này được ban hành kèm theo Thông tư của Bộ Giáo dục và Đào tạo, trong đó xác định làm cơ sở để ĐHQG-HCM quản lý và công nhận các chuẩn trình độ ngoại ngữ.\n\nCụ thể, Khung năng lực ngoại ngữ 6 bậc dùng cho ",
+      "correct": false
+    },
+    {
+      "id": 42,
+      "type": "authority_collision",
+      "query": "Mẫu chứng chỉ ngoại ngữ theo khung 6 bậc của ĐHQG hiện phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "1224/QD-DHQG"
+      ],
+      "response": "\n\n### Mẫu chứng chỉ ngoại ngữ theo Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam\n\nMẫu chứng chỉ ngoại ngữ theo Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam (KNLNNNVN) tại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) hiện được ban hành và áp dụng dựa trên quy định của **Quyết định số 1342/QĐ-ĐHQG ngày 30 tháng 09 năm 2022 của Giám đốc ĐHQG-HCM**. Đây là cơ sở tham chiếu chính đề xây dựng nội dung khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam, kèm theo mẫu chứng chỉ ngoại ngữ. Ngoài",
+      "correct": false
+    },
+    {
+      "id": 43,
+      "type": "amendment_boundary",
+      "query": "Trước khi có quy chế đào tạo từ xa mới năm 2023 thì ở cấp Bộ đang áp khung nào?",
+      "expected_doc_numbers": [
+        "10/2017/TT-BGDDT"
+      ],
+      "response": "\n\n### Phân tích Câu hỏi\n\nCâu hỏi của bạn liên quan đến khung tiêu chuẩn/định trước khi có **Quy định số 28/2023/TT-BGDĐT** về đào tạo từ xa trong giáo dục đại học. Để trả lời câu hỏi này một cách chính xác, tôi cần xác định quy định cũ đang hiệu lực trước năm 2023.\n\n### Thông tin về Quy định Đào tạo Từ xa\n\nDựa trên thông tin có sẵn trong các tài liệu, tại thời điểm hiện tại:\n\n#### Quy định hiện hành (Năm 2023 trở đi)\n- **Thông tư số 28/2023/TT-BGDĐT** (Quy định về Quy chế đào tạo từ xa) có hiệu ",
+      "correct": false
+    },
+    {
+      "id": 44,
+      "type": "amendment_boundary",
+      "query": "Hiện giờ ở cấp Bộ, đào tạo từ xa đang chạy theo khung nào?",
+      "expected_doc_numbers": [
+        "28/2023/TT-BGDDT"
+      ],
+      "response": "\n\n# Khung Đào tạo Từ xa Hiện hành ở Cấp Bộ\n\nHiện giờ, đào tạo từ xa trình độ đại học ở cấp Bộ Giáo dục và Đào tạo đang chạy theo **Thông tư số 28/2023/TT-BGDĐT** về Quy chế đào tạo từ xa tại các cơ sở giáo dục đại học.\n\n## Quy định chính\n\n### 1. Cơ sở pháp lý\n- Quy chế được kèm theo **Thông tư số 28/2023/TT-BGDĐT ngày 28 tháng [?] năm 2023** của Bộ trưởng Bộ Giáo dục và Đào tạo\n- Đây là văn bản quy định main về tổ chức và quản lý đào tạo từ xa trình độ đại học\n\n### 2. Các nội dung cốt lõi trong ",
+      "correct": true
+    },
+    {
+      "id": 45,
+      "type": "local_vs_system",
+      "query": "Mình muốn xin công nhận tín chỉ ở UIT thì bây giờ phải đi theo quy trình nào?",
+      "expected_doc_numbers": [
+        "412/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy trình công nhận tín chỉ tại Trường Đại học Công nghệ Thông tin (UIT)\n\n## Tổng quan về Quy trình\n\nTrường Đại học Công nghệ Thông tin thực hiện quy trình công nhận tín chỉ theo **Quyết định đã ban hành \"Quy trình công nhận tín chỉ trong đào tạo đại học của Trường Đại học Công nghệ Thông tin\"** [1] [3]. Quy trình này được áp dụng để xét công nhận, chuyển đổi kết quả học tập của môn học/học phần hoặc vi học phần đã tích lũy từ chương trình đào tạo khác sang tín chỉ của môn học thuộc chương t",
+      "correct": false
+    },
+    {
+      "id": 46,
+      "type": "authority_collision",
+      "query": "Nếu học MOOC rồi muốn xin công nhận ở cấp ĐHQG thì hiện đang xử lý theo khung nào?",
+      "expected_doc_numbers": [
+        "1537/QD-DHQG"
+      ],
+      "response": "\n\n# Xử lý công nhận tín chỉ MOOC tại ĐHQG-HCM\n\nDựa trên các tài liệu hiện có, việc công nhận tín chỉ từ khóa học MOOC tại ĐHQG-HCM tuân theo các quy định sau đây:\n\n## Khung pháp lý áp dụng\n\nTheo Quy định thí điểm công nhận, chuyển đổi tín chỉ các môn học/học phần giảng dạy theo hình thức MOOC, **ĐHQG-HCM quy định rõ khung pháp lý cho việc công nhận tín chỉ** khi học MOOC:\n\n### 1. Việc công nhận tín chỉ được thực hiện tại Cơ sở đào tạo\n- Công nhận và chuyển đổi tín chỉ được thực hiện bởi **cơ sở ",
+      "correct": false
+    },
+    {
+      "id": 47,
+      "type": "authority_collision",
+      "query": "Riêng chuyện công nhận hoặc chuyển đổi tín chỉ ở cấp ĐHQG thì đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "2062/QD-DHQG"
+      ],
+      "response": "\n\n# Khung Công Nhận và Chuyển Đổi Tín Chỉ ở Cấp ĐHQG-HCM\n\nDựa trên các tài liệu giáo dục đang được cấp phát, tôi sẽ cung cấp thông tin về khung công nhận và chuyển đổi tín chỉ tại cấp Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM).\n\n## 1. Cơ chế công nhận tín chỉ trong hệ thống ĐHQG-HCM\n\nĐHQG-HCM đang áp dụng **Quy định công nhận, chuyển đổi tín chỉ trong đào tạo đại học** bao gồm các nguyên tắc:\n\n- **Đối sánh và tổng hợp các môn học/học phần** có nội dung kiến thức tương đồng (theo mẫu tại P",
+      "correct": false
+    },
+    {
+      "id": 48,
+      "type": "authority_collision",
+      "query": "Nếu học từ bậc THPT mà muốn được công nhận tín chỉ ở ĐHQG thì hiện đang theo khung nào?",
+      "expected_doc_numbers": [
+        "2130/QD-DHQG"
+      ],
+      "response": "\n\n# Khung chính sách công nhận tín chỉ cho học sinh tốt nghiệp THPT tại ĐHQG-HCM\n\n## Cơ sở pháp lý hiện hành\n\nTheo **Quy định về công nhận, chuyển đổi tín chỉ trong chương trình đào tạo trình độ đại học tại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM)**, khung chính sách công nhận tín chỉ cho người học đã học trước ở cấp trung học phổ thông được quy định chi tiết như sau[^1]:\n\n### Phạm vi điều chỉnh\n- Quy định này **áp dụng đối với công nhận, chuyển đổi tín chỉ đối với người học đã học trướ",
+      "correct": false
+    },
+    {
+      "id": 49,
+      "type": "authority_collision",
+      "query": "Ở ĐHQG, cách in nội dung trên văn bằng chứng chỉ hiện phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "1672/QD-DHQG"
+      ],
+      "response": "\n\n### Câu trả lời\n\n**Cách in nội dung trên văn bằng chứng chỉ tại ĐHQG-HCM** hiện phải bám theo các tiêu chuẩn do **Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM)** ban hành thống nhất, đồng thời tuân thủ các quy định pháp luật của **Bộ Giáo dục và Đào tạo (Bộ GD&ĐT)**. Cụ thể:\n\n1. **Mốc quy định hiện hành:**\n   - Nội dung in trên văn bằng, chứng chỉ (VBCC) được quy định trong **Quyết định thay thế Quyết định số 1174/QĐ-ĐHQG ngày 19/10/2017** của Giám đốc ĐHQG-HCM (theo [Document Chunks](refe",
+      "correct": false
+    },
+    {
+      "id": 50,
+      "type": "amendment_boundary",
+      "query": "Nếu đối chiếu vào khoảng tháng 5/2024 thì quy định ngoại ngữ của UIT lúc đó đang theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "364/QD-DHCNTT"
+      ],
+      "response": "\n\nDựa trên các văn bản pháp lý có trong hồ sơ của Trường Đại học Công nghệ Thông tin - ĐHQG-HCM, tôi cung cấp thông tin về quy định ngoại ngữ tại UIT trong khoảng tháng 5/2024 như sau:\n\n## 1. Quy định hiệu lực tại thời điểm tháng 5/2024\n\nVào tháng 5/2024, **Quy định Đào tạo Ngoại ngữ đối với Hệ Đại học Chính quy của Trường Đại học Công nghệ Thông tin** ban hành kèm theo Quyết định số 547/QĐ-ĐHCNTT ngày 30/8/2019 đã tiếp tục được áp dụng. Quy định này có hiệu lực cho đến khi có văn bản thay thế m",
+      "correct": false
+    },
+    {
+      "id": 51,
+      "type": "amendment_boundary",
+      "query": "Sau đợt cập nhật tháng 6/2024, hệ chính quy ở UIT đang dùng chuẩn ngoại ngữ nào?",
+      "expected_doc_numbers": [
+        "560/QD-DHCNTT"
+      ],
+      "response": "\n\n### Thông tin về Chuẩn Ngoại Ngữ UIT (Cập nhật tháng 6/2024)\n\nDựa trên các tài liệu được cung cấp trong bản đề xuất, tôi không thể xác nhận thông tin cụ thể về đợt cập nhật chuẩn ngoại ngữ vào **tháng 6/2024**. Trong các văn bản quy định và thông báo có sẵn, các mốc thời gian cập nhật được nhắc đến chủ yếu là năm 2019, 2021, 2022 và 2026, nhưng không có tài liệu nào đề cập chi tiết đến chính sách cụ thể trong khoảng thời gian tháng 6 năm 2024.\n\nTuy nhiên, dựa trên các quy định ngoại ngữ hiện h",
+      "correct": false
+    },
+    {
+      "id": 52,
+      "type": "workflow_boundary",
+      "query": "Khóa luận tốt nghiệp của sinh viên hệ chính quy hiện đang bám theo khung chung nào?",
+      "expected_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "response": "\n\n## Khung Quy Định cho Khóa Luận Tốt Nghiệp Hệ Chính Quy\n\nDựa trên các tài liệu được cung cấp, tôi xin thông tin về khung chung quy định cho khóa luận tốt nghiệp (KLTN) của sinh viên hệ chính quy:\n\n### 1. Văn bản Quy định Chính\n\nHiện tại, khóa luận tốt nghiệp của sinh viên hệ chính quy đang được quản lý theo:\n\n**Quy định về khóa luận tốt nghiệp cho bậc đại học hệ chính quy**\n\n- **Ban hành theo Quyết định số 159/QĐ-ĐHCNTT**\n- **Ngày ban hành: 05 tháng 03 năm 2024**\n- **Áp dụng cho:** Sinh viên b",
+      "correct": true
+    },
+    {
+      "id": 53,
+      "type": "workflow_boundary",
+      "query": "Mình cần làm bước nộp khóa luận sau khi đã bảo vệ xong. Trường hợp này phải đi đúng theo quy trình nào?",
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy Trình Nộp Khóa Luận Tốt Nghiệp Sau Khi Bảo Vệ\n\nBased on the information from the school's official documents, here is the procedure for submitting your graduation thesis after defense:\n\n## 📋 Tổng Quan Quy Trình\n\nQuy trình nộp khóa luận tốt nghiệp (KLTN) được ban hành kèm theo Quyết định số **583/QĐ-ĐHCNTT**, ngày **12 tháng 6 năm 2023** của Hiệu trưởng Trường Đại học Công nghệ Thông tin ✅ [Reference 2](#references).\n\n### Bước 1: Sinh viên nộp báo cáo KLTN (t + 1 đến trước t + 14)\n\nSau kh",
+      "correct": true
+    },
+    {
+      "id": 54,
+      "type": "admissions_boundary",
+      "query": "Tuyển sinh đại học chính quy theo quy chế riêng của UIT hiện đang bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "354/QD-DHCNTT"
+      ],
+      "response": "\n\n## Trả lời về Tuyển sinh Đại học Chính quy theo Quy chế của UIT\n\n### Quy chế tuyển sinh của UIT\n\nTrường Đại học Công nghệ Thông tin (UIT) hiện áp dụng **3 phương thức tuyển sinh chính** cho hệ đại học chính quy:\n\n1. **Phương thức 1: UTXT theo quy định của Trường ĐHCNTT**\n   - Thí sinh được đăng ký tối đa **03 nguyện vọng** (có phân biệt thứ tự ưu tiên)\n   - Thí sinh thực hiện đăng ký theo thông báo tuyển sinh của Trường trong thời gian quy định cho đợt xét tuyển\n\n2. **Phương thức 2: Xét tuyển ",
+      "correct": false
+    },
+    {
+      "id": 55,
+      "type": "admissions_boundary",
+      "query": "Từ sau 2022, ở cấp ĐHQG-HCM tuyển sinh đại học đang theo khung nào?",
+      "expected_doc_numbers": [
+        "707/QD-DHQG"
+      ],
+      "response": "\n\n### Khung Tuyển Sinh Đại học tại ĐHQG-HCM (Từ năm 2022)\n\nTừ năm 2022 trở đi, công tác tuyển sinh đại học tại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) và các đơn vị thành viên nằm trong khuôn khổ quy định của hệ thống, được phân loại và tổ chức dựa trên các phương thức xét tuyển cụ thể nhằm đảm bảo chất lượng đầu vào. Các quy định hiện hành được đề cập trong các văn bản của trường và bộ máy quản lý cho thấy tuyển sinh được thực hiện theo **Quy chế tuyển sinh hiện hành của Bộ GD&ĐT và c",
+      "correct": false
+    },
+    {
+      "id": 56,
+      "type": "admissions_boundary",
+      "query": "Trước khi ĐHQG ban hành quy chế tuyển sinh 2022 thì tuyển sinh đại học đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "836/QD-DHQG"
+      ],
+      "response": "\n\n### Tóm tắt Trả lời\n\nDựa trên các tài liệu đã được cung cấp, trước khi ĐHQG ban hành quy chế tuyển sinh 2022, tuyển sinh đại học tại Đại học Công nghệ Thông tin (ĐHCNTT) đã tuân theo **Quy chế tuyển sinh hiện hành của Bộ Giáo dục và Đào tạo (Bộ GD&ĐT)** kết hợp với các quy định cụ thể của ĐHQG-HCM.\n\n### Quy chế và Cơ sở Tham chiếu之主 pharmacological\n\n#### 1. Quy chế của Bộ Giáo dục và Đào tạo\nCác phương thức tuyển sinh được quy định theo **Quy chế tuyển sinh hiện hành của Bộ GD&ĐT**, bao gồm:\n-",
+      "correct": false
+    },
+    {
+      "id": 57,
+      "type": "authority_collision",
+      "query": "Năm 2025 UIT đã chốt mở đào tạo ngành Truyền thông đa phương tiện chưa? Nếu rồi thì quyết định nào xác nhận việc đó?",
+      "expected_doc_numbers": [
+        "491/QD-DHCNTT"
+      ],
+      "response": "\n\n### Thông tin về việc mở ngành Truyền thông đa phương tiện tại UIT năm 2025\n\nDựa trên các tài liệu cung cấp, tôi xin cung cấp thông tin sau:\n\n## 1. Việc mở ngành đào tạo Truyền thông đa phương tiện tại UIT\n\nTheo Quyết định mở đào tạo, UIT đang mở đào tạo ngành **Truyền thông đa phương tiện** tại trường Đại học Công nghệ Thông tin với các thông tin sau:\n\n- **Tên ngành đào tạo:** Truyền thông đa phương tiện\n- **Trình độ đào tạo:** Đại học\n- **Mã ngành:** 7320104\n- **Loại văn bằng:** Cử nhân Truy",
+      "correct": false
+    },
+    {
+      "id": 58,
+      "type": "notice_override",
+      "query": "Từ 2022, nếu đem VNU-EPT ra đối sánh chuẩn ngoại ngữ thì ĐHQG có chấp nhận không?",
+      "expected_doc_numbers": [
+        "671/DHQG-DT"
+      ],
+      "response": "\n\n# Về Việc Đối Soạn Chứng Chỉ VNU-EPT Tại ĐHQG-HCM Từ Năm 2022\n\n## ✅ Có được ghi nhận, nhưng có điều kiện\n\nCăn cứ thông tin từ các văn bản của Đại học Quốc gia Thành phố Hồ Chí Minh, việc công nhận chứng chỉ VNU-EPT cho chuẩn ngoại ngữ từ năm 2022 có **thay đổi theo từng đối tượng** cụ thể như sau:\n\n### 1. Đối với sinh viên các khóa tuyển từ năm 2022 trở đi\n\n- **Từ năm 2022 trở đi**, ĐHQG-HCM **không còn chấp nhận** chứng chỉ VNU-EPT để công nhận chuẩn đầu vào/đầu ra trình độ tiếng Anh cho các ",
+      "correct": false
+    },
+    {
+      "id": 59,
+      "type": "notice_override",
+      "query": "Nếu đơn vị vẫn đang dùng mẫu văn bằng từ 2017 thì cách ghi nội dung trên văn bằng phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "842/DHQG-DT"
+      ],
+      "response": "\n\nDựa trên các tiêu chuẩn quy chế văn bằng hiện hành, tôi xin cung cấp thông tin về mốc thời gian áp dụng khi đơn vị vẫn dùng mẫu văn bằng từ 2017:\n\n### 📋 Hướng dẫn Cách ghi nội dung trên Văn bằng\n\n#### 1. Mốc thời gian phân biệt mẫu văn bằng\n\nTheo Quy chế hiện hành của Đại học Quốc gia Thành phố Hồ Chí Minh và Trường Đại học Công nghệ Thông tin, việc phân chia mẫu văn bằng dựa trên **ngân tuyển sinh ngày 01/7/2019**:\n\n| Nhóm sinh viên | Mẫu văn bằng áp dụng | Tài liệu tham vấn |\n| :--- | :--- |",
+      "correct": false
+    },
+    {
+      "id": 60,
+      "type": "authority_collision",
+      "query": "Nếu học một môn theo MOOC rồi muốn xin công nhận ở cấp ĐHQG thì phải đi theo khung nào?",
+      "expected_doc_numbers": [
+        "2217/DHQG-DT"
+      ],
+      "response": "\n\n# Quy trình xin công nhận môn học theo hình thức MOOC tại ĐHQG-HCM\n\nĐể xin công nhận môn học theo hình thức MOOC (Khóa học học tập mở theo hướng khối) tại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM), sinh viên cần tuân theo quy định và quy trình quy định tại các văn bản sau:\n\n## 1. Căn cứ pháp lý\nViệc công nhận tín chỉ môn học MOOC được thực hiện dựa trên:\n- **Quyết định số 1177/QĐ-ĐHQG** ngày 18/8/2022 của Giám đốc ĐHQG-HCM về việc phê duyệt Đề án tăng cường năng lực chuyển đổi số trong",
+      "correct": false
+    },
+    {
+      "id": 61,
+      "type": "local_vs_system",
+      "query": "Nếu UIT mở chương trình liên kết đào tạo với nước ngoài ở bậc đại học thì đang quản lý theo quy định nội bộ nào?",
+      "expected_doc_numbers": [
+        "451/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quản lý Pháp lý và Quy định Nội bộ cho Chương trình Liên kết\n\nĐại học Công nghệ Thông tin (UIT) quản lý các chương trình liên kết đào tạo với nước ngoài tại bậc đại học theo hệ thống quy định được xây dựng để tuân thủ các văn bản pháp lý cấp trên và áp dụng cụ thể vào điều kiện nội bộ của nhà trường. Quy trình này bao gồm sự tích hợp giữa các quy định quốc gia từ Bộ Giáo dục và Đào tạo và các văn bản lưu hành nội bộ của trường.\n\nTrước hết, trường tuân thủ theo các quy định khung về liên kế",
+      "correct": false
+    },
+    {
+      "id": 62,
+      "type": "authority_collision",
+      "query": "Ở cấp ĐHQG-HCM, liên kết đào tạo với nước ngoài cho bậc đại học, thạc sĩ, tiến sĩ hiện đang theo khung nào?",
+      "expected_doc_numbers": [
+        "1758/QD-DHQG"
+      ],
+      "response": "\n\n### Khung Quy định Liên kết Đào tạo tại ĐHQG-HCM\n\nTại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM), các hoạt động liên kết đào tạo với nước ngoài đối với bậc đại học, thạc sĩ và tiến sĩ hiện diện dựa trên **Quy định liên kết đào tạo với nước ngoài trình độ đại học, thạc sĩ, tiến sĩ tại Đại học quốc gia Thành phố Hồ Chí Minh**. Quy định này được ban hành trên cơ sở Quyết định số .... / QĐ-ĐHQG ngày ... tháng ... năm 2022 của Giám đốc Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM).\n\nTheo",
+      "correct": false
+    },
+    {
+      "id": 63,
+      "type": "authority_collision",
+      "query": "Liên kết đào tạo giữa trường ở Việt Nam và đối tác nước ngoài hiện đang bám theo khung nào của Bộ?",
+      "expected_doc_numbers": [
+        "07/2025/TT-BGDDT"
+      ],
+      "response": "\n\n# Khung thí hành Liên kết Đào tạo Quốc tế\n\nDựa trên các tài liệu có sẵn trong cơ sở dữ liệu, liên kết đào tạo giữa cơ sở giáo dục đại học Việt Nam và cơ sở giáo dục đại học nước ngoài hiện đang được thực hiện theo các quy định pháp luật sau:\n\n## 📋 Quy Định Hiện Hành\n\nThông tư mới nhất quy định về liên kết đào tạo đã được ban hành:\n\n### Thông tư số 4342aaf1c928ad79505069abb1e2c3245ae273d2164340d985f835552c3e235d.jpg\n- **Ngày ban hành:** 20 tháng 3 năm 2025\n- **Có hiệu lực:** 05 tháng 5 năm 2025",
+      "correct": false
+    },
+    {
+      "id": 64,
+      "type": "admissions_boundary",
+      "query": "Cách xác định chỉ tiêu tuyển sinh đại học ở cấp Bộ hiện phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "03/2022/TT-BGDDT"
+      ],
+      "response": "\n\n### Các tiêu chuẩn và nguyên tắc xác định chỉ tiêu tuyển sinh đại học ở cấp Bộ\n\nViệc xác định chỉ tiêu tuyển sinh đại học hiện nay được thực hiện dựa trên các quy định pháp lý mới nhất của Bộ Giáo dục và Đào tạo, với các nguyên tắc cốt lõi sau đây:\n\n## 1. Nguyên tắc cơ bản theo Thông tư về xác định chỉ tiêu tuyển sinh\n\nTheo quy định về việc xác định chỉ tiêu tuyển sinh đại học, thạc sĩ, tiến sĩ và chỉ tiêu tuyển sinh cao đẳng ngành Giáo dục Mầm non:\n\nXác định chỉ tiêu tuyển sinh đại học phải b",
+      "correct": false
+    },
+    {
+      "id": 65,
+      "type": "admissions_boundary",
+      "query": "Năm 2026, tuyển sinh đại học ở cấp Bộ đang theo khung nào?",
+      "expected_doc_numbers": [
+        "06/2026/TT-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nDựa trên các tài liệu đã có, thông tin về quy chế tuyển sinh đại học năm 2026 ở cấp Bộ được nêu sau:\n\n#### 1. Quy chế đang áp dụng hiện hành\n\nThông tư về đào tạo trình độ đại học ban hành kèm theo Thông tư số / 2021 / TT-BGDĐT ngày ... tháng ... năm 2021 của Bộ trưởng Bộ Giáo dục và Đào tạo [*Have to be identical to source name*] quy định chung về tổ chức và quản lý đào tạo trình độ đại học, bao gồm:\n- Chương trình đào tạo\n- Thời gian học tập\n- Hình thức và phương thức tổ chức",
+      "correct": false
+    },
+    {
+      "id": 66,
+      "type": "catalog_boundary",
+      "query": "Danh mục thống kê ngành đào tạo đang dùng hiện nay bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "response": "\n\n### Danh mục thống kê ngành đào tạo đang sử dụng hiện nay\n\nDanh mục thống kê ngành đào tạo tại Việt Nam hiện hành đang áp dụng theo **Thông tư số 09/2022/TT-BGDĐT ngày 06 tháng 6 năm 2022** của Bộ Giáo dục và Đào tạo. Các nội dung chính bao gồm:\n\n#### 1. **Mốc hiệu lực của danh mục**\n- **Ngày ban hành thông tư**: 06 tháng 6 năm 2022.\n- **Ngày có hiệu lực thi hành**: **22 tháng 7 năm 2022** (Theo Điều 10 của Thông tư).\n- Danh mục này thay thế các văn bản cũ như Thông tư số 24/2017/TT-BGDĐT (trì",
+      "correct": true
+    },
+    {
+      "id": 67,
+      "type": "catalog_boundary",
+      "query": "Nếu đối chiếu theo hệ danh mục cũ cho giáo dục, đào tạo cấp IV trình độ đại học thì phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "24/2017/TT-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nKhi đối chiếu hệ danh mục cũ với hệ danh mục mới cho giáo dục, đào tạo cấp IV trình độ đại học, bạn cần bám theo các mốc thời gian sau:\n\n### 1. Thông tư thay thế\n\nTheo quy định, văn bản mới đã thay thế quy định cũ như sau:\n\n> Thông tư số 09/2022/TT-BGDĐT ngày 06 tháng 6 năm 2022 **thay thế thông** Điều 10, khoản 2: \"Thông tư này thay thế Thông tư số 24/2017/TT-BGDĐT ngày 10 tháng 10 năm 2017 của Bộ trưởng Bộ Giáo dục và Đào tạo về việc ban hành Danh mục giáo dục, đào tạo cấp I",
+      "correct": true
+    },
+    {
+      "id": 68,
+      "type": "authority_collision",
+      "query": "Chuẩn chương trình đào tạo chung ở cấp Bộ cho bậc đại học hiện bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "17/2021/TT-BGDDT"
+      ],
+      "response": "\n\n### Mốc Thời gian Áp dụng Chuẩn Chương trình Đào Tạo\n\nChuẩn chương trình đào tạo chung của Bộ Giáo dục và Đào tạo (GDĐT) đối với bậc đại học hiện tùy theo các văn bản quy phạm pháp luật sau đây:\n\n### 1. Văn bản Chủ đạo: Thông tư số 17/2021/TT-BGDĐT\n\nĐây là văn bản cơ sở pháp lý chính quy định về chuẩn chương trình đào tạo:\n- **Số hiệu**: Thông tư số 17/2021/TT-BGDĐT\n- **Ngày ban hành**: 22 tháng 6 năm 2021\n- **Thời điểm có hiệu lực thi hành**: **07 tháng 8 năm 2021**\n\nTheo Điều 22 về Điều khoả",
+      "correct": true
+    },
+    {
+      "id": 69,
+      "type": "authority_collision",
+      "query": "Với chương trình kỹ sư hoặc thạc sĩ tài năng lĩnh vực STEM thì chuẩn mới nhất đang là mốc nào?",
+      "expected_doc_numbers": [
+        "2627/QD-BGDDT"
+      ],
+      "response": "\n\n### Cập nhật về Chuẩn Chương trình Đào tạo Tài năng Lĩnh vực STEM\n\nHiện nay, chuẩn chương trình đào tạo dành cho kỹ sư và thạc sĩ tài năng thuộc các lĩnh vực Khoa học, Công nghệ, Kỹ thuật và Toán (STEM) đang sử dụng bản được Bộ Giáo dục và Đào tạo ban hành kèm theo Quyết định số 2627 / QĐ-BGDDT ngày 17 tháng 9 năm 2025. Đây là khuôn khổ pháp lý mới nhất quy định các yêu cầu chung tối thiểu áp dụng cho các chương trình đào tạo kỹ sư bậc 7 (tương đương thạc sĩ) và thạc sĩ trong các lĩnh vực STEM",
+      "correct": true
+    },
+    {
+      "id": 70,
+      "type": "amendment_boundary",
+      "query": "Nếu rà lại việc phân công cán bộ coi thi ở giai đoạn trước đợt đổi cuối 2023 thì lúc đó UIT làm theo quy trình nào?",
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy trình Phân công Cán bộ Coi Thi tại UIT (Trước Đợt Thi Cuối 2023)\n\nDựa trên thông tin trong các tài liệu của Trường Đại học Công nghệ Thông tin, quy trình phân công cán bộ coi thi cho các đợt thi tập trung được áp dụng trước đợt thi cuối 2023 là **Quy trình phân công cán bộ coi thi cho các đợt thi tập trung hệ đại học chính quy**, được ban hành kèm theo **Quyết định số 672/QĐ-ĐHCNTT ngày 15 tháng 10 năm 2020** của Hiệu trưởng Trường.\n\n## ☀ Quy trình Đăng ký Coi Thi\n\n**Bước 1: Xây dựng kế ",
+      "correct": true
+    },
+    {
+      "id": 71,
+      "type": "amendment_boundary",
+      "query": "Nếu đang chuẩn bị một đợt thi tập trung bây giờ thì việc phân công cán bộ coi thi ở UIT phải làm theo quy trình nào?",
+      "expected_doc_numbers": [
+        "936/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy trình phân công cán bộ coi thi tại Trường Đại học Công nghệ Thông tin\n\nDựa trên các tài liệu quy định hiện hành của Trường, việc phân công cán bộ coi thi (CBCT) cho các đợt thi tập trung hệ đại học chính quy tại Trường Đại học Công nghệ Thông tin thực hiện theo **Quy trình phân công cán bộ coi thi cho các đợt thi tập trung hệ đại học chính quy** (Ban hành kèm theo Quyết định số 672/QĐ-ĐHCNTT ngày 15 tháng 10 năm 2020). Quy trình này bao gồm 3 giai đoạn chính: **Đăng ký coi thi**, **Phâ",
+      "correct": false
+    },
+    {
+      "id": 72,
+      "type": "admissions_boundary",
+      "query": "Trước khi ĐHQG đổi sang quy chế tuyển sinh 2022 thì tuyển sinh đại học đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "836/QD-DHQG"
+      ],
+      "response": "\n\n### Thông tin về Quy chế Tuyển sinh và Đổi mới Giáo dục\n\nTheo các tài liệu được cung cấp, thông tin cụ thể về \"khung\" quy chế tuyển sinh đại học áp dụng trước năm 2022 không được đề cập chi tiết. Tuy nhiên, các văn bản hiện hành cho thấy sự thay đổi và hiệu lực của các quy định về tuyển sinh và chuẩn chương trình đào tạo như sau:\n\n*   **Quy chế Tuyển sinh Hiện hành:** Theo **Quy định tuyển sinh hiện hành của Trường Đại học Công nghệ Thông tin** (được nêu trong tài liệu tham khảo), việc tuyển s",
+      "correct": false
+    },
+    {
+      "id": 73,
+      "type": "admissions_boundary",
+      "query": "Sau đợt thay đổi năm 2022, tuyển sinh đại học ở ĐHQG đang bám theo khung nào?",
+      "expected_doc_numbers": [
+        "707/QD-DHQG"
+      ],
+      "response": "\n\n### Khung quy chế tuyển sinh đại học sau năm 2022\n\nDựa trên các thông tin từ các tài liệu trong **Context**, tuyển sinh đại học tại ĐHQG-HCM và ĐHCNTT đang bám theo các quy định và khung pháp lý sau:\n\n- **Tuyến sinh các hệ đào tạo chính quy thực hiện theo Quy chế tuyển sinh hiện hành của Bộ GD&ĐT.** Theo quy định này:\n  - Phân phương thức tuyển sinh gồm: Tuyển thẳng, ưu tiên xét tuyển; xét tuyển dựa trên điểm thi tốt nghiệp THPT; xét tuyển dựa trên kết quả kỳ thi Đánh giá năng lực (ĐGNL) do ĐH",
+      "correct": false
+    },
+    {
+      "id": 74,
+      "type": "amendment_boundary",
+      "query": "Trong khoảng từ cuối tháng 4 đến trước đầu tháng 6/2024, quy định ngoại ngữ cho hệ chính quy ở UIT đang tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "364/QD-DHCNTT"
+      ],
+      "response": "\n\n### Thông tin về quy định ngoại ngữ UIFont UIT trong khoảng thời gian từ cuối tháng 4 đến trước đầu tháng 6/2024\n\nDựa trên các tài liệu có trong context, tôi cung cấp thông tin về quy định ngoại ngữ tại Trường Đại học Công nghệ Thông tin (UIT) - Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) trong khoảng thời gian bạn hỏi.\n\n#### Quy định hiện hành áp dụng\n\nTrong khoảng thời gian từ cuối tháng 4 đến trước đầu tháng 6/2024, UIT đang áp dụng Quyết định số **547/QĐ-ĐHCNTT**, ngày **04 tháng 10 ",
+      "correct": false
+    },
+    {
+      "id": 75,
+      "type": "cohort_boundary",
+      "query": "Mình vào trường từ khóa 2015 nhưng học kéo dài đến giờ mới xét tốt nghiệp. Phần ngoại ngữ của mình còn tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "108/QD-DHCNTT"
+      ],
+      "response": "\n\n# Ngôn ngữ sử dụng đối với sinh viên khóa 2015\n\nChào bạn, đây là vấn đề rất quan trọng liên quan đến quyền lợi học tập và công nhận tốt nghiệp. Để trả lời chính xác, tôi cần phân tích dựa trên quy định cụ thể.\n\n## 1. Đối tượng áp dụng theo quy định\n\nCăn cứ vào quy định hiện hành tại **Quyết định số 547/QĐ-ĐHCNTT** ngày 30/8/2019, quy định về đào tạo ngoại ngữ đối với hệ đại học chính quy có hiệu lực rồi:\n\n> \"Đề được xét tốt nghiệp sinh viên phải hoàn tất các môn học tiếng Anh trong chương trìn",
+      "correct": false
+    },
+    {
+      "id": 76,
+      "type": "cohort_boundary",
+      "query": "Mình khóa 2016, học chậm vài năm nên giờ mới hoàn tất thủ tục. Phần ngoại ngữ của mình còn theo bản riêng không?",
+      "expected_doc_numbers": [
+        "128/QD-DHCNTT-DTDH"
+      ],
+      "response": "\n\nBased on your situation as a 2016 cohort student who is completing your studies after a delay, here is the relevant information regarding your foreign language requirements.\n\n## Bạn是否有资格选择适用不同的规定\n\nTheo các quy định hiện hành, **khóa tuyển sinh năm 2016 có thể được miễn hoặc xếp lớp tiếng Anh theo nguyên tắc linh hoạt**, nhưng chế độ tư pháp áp dụng cụ thể là cần lưu ý:\n\n### Quy định áp dụng cho khóa 2016\n\nĐối với sinh viên chính quy từ **khóa tuyển sinh năm 2016**, quy định ngoại ngữ được áp d",
+      "correct": false
+    },
+    {
+      "id": 77,
+      "type": "cohort_boundary",
+      "query": "Mình nhập học năm 2017, giờ mới rà điều kiện ra trường. Phần ngoại ngữ của mình đang tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "108/QD-DHCNTT"
+      ],
+      "response": "\n\nChào bạn, dựa trên thông tin trong các quy định hiện có, mình sẽ giải thích chi tiết về chuẩn ngoại ngữ áp dụng cho trường hợp nhập học năm 2017.\n\n## 📌 Quy định áp dụng theo năm nhập học\n\nTheo các quy định tại trường:\n\n- Quy định **147/2013** quy định việc áp dụng **tùy theo khóa tuyển sinh**, cụ thể:\n  - Khóa từ khóa 01 đến khóa 06 (tương ứng nhập học 2013-2017): phải hoàn thành **04 môn Anh văn** với điểm từ 5.0 trở lên\n  - **Khóa từ khóa 07 trở đi (bắt đầu từ năm 2017+)**: được điều chỉnh l",
+      "correct": false
+    },
+    {
+      "id": 78,
+      "type": "cohort_boundary",
+      "query": "Mình K2019 hệ chính quy. Nếu xét đúng phần ngoại ngữ của khóa mình chứ không lẫn với khóa cũ thì đang theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "547/QD-DHCNTT"
+      ],
+      "response": "\n\n# Trả lời cho sinh viên K2019 hệ chính quy về chuẩn ngoại ngữ\n\nXin chào bạn là K2019 hệ chính quy tại Trường Đại học Công nghệ Thông tin. Dưới đây là thông tin về **chuẩn ngoại ngữ áp dụng cho khóa của bạn**:\n\n---\n\n## 📋 Trường áp dụng cho sinh viên K2019+\n\nVới sinh viên gia nhập khóa từ năm **2019 trở đi**, trường áp dụng **Quy định Đào tạo ngoại ngữ** mới, khác với khóa trước (2017). Cụ thể, khóa của bạn không được phép sử dụng kết quả bài thi **2 kỹ năng nói – viết** (VPET) để xét đạt chuẩn ",
+      "correct": false
+    },
+    {
+      "id": 79,
+      "type": "cohort_boundary",
+      "query": "Mình K2022 hệ chính quy. Nếu kiểm tra đúng chuẩn ngoại ngữ của khóa này thì đang theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "828/QD-DHCNTT"
+      ],
+      "response": "\n\n# Trả lời về Tiêu chuẩn Ngoại ngữ cho Sinh viên K2022\n\n## mức Chuẩn Áp Dụng\n\nDựa trên quy định về đào tạo ngoại ngữ hiện hành của Trường Đại học Công nghệ Thông tin, sinh viên của bạn thuộc **khóa tuyển sinh năm 2022** sẽ được áp dụng **Quyết định số 828/QĐ-ĐHCNTT ngày 04 tháng 10 năm 2022** về Đào tạo ngoại ngữ đối với hệ đại học chính quy của Trường. \n\nTheo quy định này:\n- Văn bản này **áp dụng bắt buộc cho các khóa tuyển sinh từ năm 2022**.\n- Các khóa tuyển sinh trước năm 2022 có thể lựa ch",
+      "correct": true
+    },
+    {
+      "id": 80,
+      "type": "amendment_boundary",
+      "query": "Sau đợt cập nhật 2023, sinh viên hệ chính quy UIT hiện học theo quy chế tín chỉ nào?",
+      "expected_doc_numbers": [
+        "1393/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy chế Tín chỉ Hiện hành cho Sinh viên Hệ Chính quy UIT\n\nDựa trên các tài liệu tìm được, sinh viên hệ chính quy tại Trường Đại học Công nghệ Thông tin hiện hiện đang học theo **học chế tín chỉ**.\n\n#### Thông tin chi tiết:\n\n**1. Phạm vi áp dụng:**\nTheo quy định hiện hành của Trường, học chế tín chỉ được áp dụng cho sinh viên hệ chính quy thực hiện các chương trình đào tạo sau:\n- Văn bằng 1 (Tổng quát)\n- Văn bằng 2 (Liên thông)\n- Chương trình liên thông, chương trình liên kết quốc tế\n\n**2. ",
+      "correct": false
+    },
+    {
+      "id": 81,
+      "type": "amendment_boundary",
+      "query": "Sau đợt cập nhật cuối 2023, các kỳ thi tập trung ở UIT đang tổ chức theo quy trình nào?",
+      "expected_doc_numbers": [
+        "1376/QD-DHCNTT"
+      ],
+      "response": "\n\nDựa trên các văn bản quy định hiện có trong ngữ cảnh, quy trình tổ chức các kỳ thi tập trung và đánh giá kết quả học tập tại UIT (trình độ đại học chính quy) hiện hành được chủ yếu quy định trong **Quyết định số 1139/QĐ-ĐHCNTT ngày 20 tháng 12 năm 2022** về tổ chức thi các môn học. Mặc dù có văn bản cập nhật quy định về đánh giá trực tuyến năm 2023, quy trình chung cho các kỳ thi tập trung vẫn dựa trên khung pháp lý này.\n\nVề **trách nhiệm và trình tự tổ chức**, quy trình quy định rằng mỗi học ",
+      "correct": false
+    },
+    {
+      "id": 82,
+      "type": "amendment_boundary",
+      "query": "Nếu đang học chương trình tài năng ở UIT bây giờ thì phải bám theo khung nào?",
+      "expected_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy Định Đào Tạo Chương trình Tài năng tại UIT\n\nCâu trả lời chi tiết về khung quy định mà sinh viên Chương trình Tài năng tại UIT cần tuân theo được tổng hợp như sau:\n\n## 1. Quy định_eff_cli**_{service}\n\nĐang học Chương trình Tài năng tại UIT, bạn cần tuân theo quy định đã ban hành được cập nhật từ **Quyết định số 1032/QĐ-ĐHCNTT ngày 03 tháng 09 năm 2025** của Hiệu trưởng Trường Đại học Công nghệ Thông tin:\n\n```\nQuy định này có hiệu lực thi hành từ học kỳ 1 năm học 2026 - 2027.\nCác quy định ",
+      "correct": true
+    },
+    {
+      "id": 83,
+      "type": "amendment_boundary",
+      "query": "Nếu đang học chương trình tiên tiến ở UIT bây giờ thì phải bám theo khung nào?",
+      "expected_doc_numbers": [
+        "1451/QD-DHCNTT"
+      ],
+      "response": "\n\n### Trả Lời\n\nNếu bạn đang học **Chương trình Tiên tiến (CTTT)** tại Đại học Công nghệ Thông tin (UIT), bạn cần bám theo **Quy định đào tạo Chương trình Tiên tiến** mới nhất. Dưới đây là thông tin chi tiết về khung quy định này:\n\n<details>\n<summary><strong>📋 Thông tin cơ bản về Quy định</strong></summary>\n\n| Nội dung | Chi tiết |\n|----------|----------|\n| **Tên Quyết định** | Quyết định số: 1451/QĐ-ĐHCNTT |\n| **Ngày ban hành** | 26/11/2025 |\n| **Trạng thái** | Mới nhất, đang áp dụng |\n| **Phạm ",
+      "correct": true
+    },
+    {
+      "id": 84,
+      "type": "amendment_boundary",
+      "query": "Sau đợt sửa đổi gần nhất của Bộ, chuẩn CTĐT vi mạch bán dẫn đang tính theo mốc nào?",
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nSau đợt sửa đổi gần nhất của Bộ Giáo dục và Đào tạo, **Chuẩn chương trình đào tạo về vi mạch bán dẫn trình độ đại học, thạc sĩ** đang được tính theo **mốc hiện hành đã được sửa đổi**, cụ thể như sau:\n\n#### 1. Tài liệu áp dụng hiện hành\nChuẩn CTĐT hiện hành áp dụng cho các cơ sở giáo dục đại học:\n- Văn bản gốc: **Quyết định số 1314/QĐ-BGDDT ngày 13 tháng 5 năm 2025** của Bộ trưởng Bộ Giáo dục và Đào tạo.\n- Văn bản sửa đổi: **Quyết định số 2101/QĐ-BGDDT ngày 25/10/2025** (hoặc t",
+      "correct": true
+    },
+    {
+      "id": 85,
+      "type": "local_vs_system",
+      "query": "Ở UIT, chuyện dạy và học theo phương thức trực tuyến hoặc kết hợp, không tính phần chấm điểm, hiện bám theo khung nào?",
+      "expected_doc_numbers": [
+        "196/QD-DHCNTT"
+      ],
+      "response": "\n\n# Học tập trực tuyến và kết hợp tại UIT\n\n## Khung quy định áp dụng\n\nTại UIT, việc dạy và học theo phương thức trực tuyến (DHTT) và dạy học kết hợp (DHKH) được thực hiện theo **Quy định về dạy và học theo phương thức dạy học trực tuyến và phương thức dạy học kết hợp** [4]. Đây là văn bản quy định toàn diện về phương thức giáo dục này.\n\n## Các tiêu chuẩn chính\n\n### 1. Điều kiện mở lớp\n- **Phương thức DHTT (Dạy học trực tuyến):** Môn học phải có đầy đủ học liệu điện tử cho toàn bộ nội dung môn họ",
+      "correct": false
+    },
+    {
+      "id": 86,
+      "type": "authority_collision",
+      "query": "Riêng phần đánh giá kết quả học tập khi học trực tuyến ở UIT hiện phải bám theo khung nào?",
+      "expected_doc_numbers": [
+        "1141/QD-DHCNTT"
+      ],
+      "response": "\n\n# Khung Đánh Giá Kết Quả Học Tập Hình Thức Trực tuyến tại UIT\n\nDựa trên các tài liệu điều hành đào tạo hiện hành, việc đánh giá kết quả học tập theo hình thức trực tuyến tại Trường Đại học Công nghệ Thông tin (UIT) phải tuân theo các khung quy định sau đây:\n\n## 1. Văn bản Quy định Chính\n\nViệc đánh giá kết quả học tập theo hình thức trực tuyến được tổ chức căn cứ vào **\"Quy định tổ chức đánh giá kết quả học tập theo hình thức trực tuyến tại Trường Đại học Công nghệ Thông tin\"** (Quyết định: MWh",
+      "correct": false
+    },
+    {
+      "id": 87,
+      "type": "authority_collision",
+      "query": "Ở cấp Chính phủ, chuyện hợp tác đầu tư với nước ngoài trong giáo dục hiện bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "124/2024/ND-CP"
+      ],
+      "response": "\n\n# Hợp tác đầu tư với nước ngoài trong lĩnh vực giáo dục\n\n## 1. Căn cứ pháp lý về chủ trương\n\nTheo quy định của **Luật Giáo dục** (Điều 107 và Điều 108), Nhà nước khuyến khích và tạo điều kiện cho việc **hợp tác với tổ chức, cá nhân nước ngoài** trong các hoạt động giảng dạy, học tập, nghiên cứu khoa học và trao đổi học thuật. Công dân Việt Nam cũng được khuyến khích ra nước ngoài giảng dạy, học tập, nghiên cứu khoa học với hình thức tự túc hoặc có kinh phí tài trợ.\n\nTiêu nữa, **Luật này** cũng",
+      "correct": false
+    },
+    {
+      "id": 88,
+      "type": "authority_collision",
+      "query": "Chuẩn cơ sở giáo dục đại học ở cấp Bộ, tách với chuẩn chương trình đào tạo, hiện bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "01/2024/TT-BGDDT"
+      ],
+      "response": "\n\n### Chuẩn Cơ Sở Giáo Dục Đại Học Và Chuẩn Chương Trình Đào Tạo\n\nDựa trên các tài liệu pháp lý hiện hành, đây là câu trả lời chi tiết về Chuẩn cơ sở giáo dục đại học và Chuẩn chương trình đào tạo:\n\n#### 1. Khái Niệm và Vai Trò\n\n**Chuẩn Cơ Sở Giáo Dục Đại Học:**\n*   Theo điều 9, Chuẩn cơ sở giáo dục đại học quy định các yêu cầu về **điều kiện bảo đảm chất lượng** và **chỉ số hoạt động** của cơ sở giáo dục đại học.\n*   Đây là căn cứ để quy hoạch mạng lưới, đầu tư phát triển, đánh giá chất lượng, ",
+      "correct": false
+    },
+    {
+      "id": 89,
+      "type": "authority_collision",
+      "query": "Nếu đọc phần nghị định sửa đổi, bổ sung Luật Giáo dục đại học thì nên bắt đầu từ mốc nào?",
+      "expected_doc_numbers": [
+        "99/2019/ND-CP"
+      ],
+      "response": "\n\n# Câu trả lời về Thời điểm Bắt đầu Áp dụng Nghị định Sửa đổi, Bổ sung Luật Giáo dục Đại học\n\n## Mốc thời gian chính thức hiệu lực\n\nDựa trên các văn bản quy định hiện hành, quy định bạn nên bắt đầu từ **ngày 01 tháng 01 năm 2026**. Đây là ngày pháp lý quan trọng khi Luật Giáo dục đại học mới có hiệu lực thi hành chính thức.\n\n## Chi tiết hiệu lực\n\nDưới đây là các mốc thời gian cụ thể cần lưu ý:\n\n| Mốc thời gian | Nội dung hiệu lực |\n| :--- | :--- |\n| **01/01/2026** | Luật Giáo dục đại học mới có",
+      "correct": false
+    },
+    {
+      "id": 90,
+      "type": "amendment_boundary",
+      "query": "Nếu đang làm hồ sơ mở ngành theo khung của ĐHQG trước mốc sửa đầu 2025 thì lúc đó phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "540/QD-DHQG"
+      ],
+      "response": "\n\n### Cảm ơn bạn đã đặt câu hỏi quan trọng về quy trình mở ngành đào tạo\n\nDựa trên các văn bản quy phạm pháp luật thu thập được, tôi xin giải thích về mốc thời gian áp dụng khi làm hồ sơ mở ngành như sau:\n\n## 📌 Thời điểm hiệu lực của các thông tư quy định mở ngành\n\n### 1. Thông tư số 16/2024/TT-BGDĐT (ban hành 20/11/2024, có hiệu lực từ 05/01/2025)\n\nThông tư này quy định điều kiện, trình tự, thủ tục mở ngành đào tạo đại học, thạc sĩ, tiến sĩ có hiệu lực thi hành từ ngày **05 tháng 01 năm 2025**.",
+      "correct": false
+    },
+    {
+      "id": 91,
+      "type": "amendment_boundary",
+      "query": "Sau đợt sửa đầu 2025, hồ sơ mở ngành ở cấp ĐHQG đang phải bám theo mốc nào?",
+      "expected_doc_numbers": [
+        "15/QD-DHQG"
+      ],
+      "response": "\n\nSau đợt sửa đổi quy định vào cuối năm 2024, cụ thể là **Thông tư số 16/2024/TT-BGDĐT** có hiệu lực thi hành từ ngày **05 tháng 01 năm 2025** (Thông tư này sửa đổi, bổ sung đối với Thông tư số 02/2022/TT-BGDĐT), hồ sơ mở ngành đào tạo tại các cơ sở đào tạo thuộc Đại học Quốc gia theo quy định mới của Nhà nước hiệu lực gần nhất cần bám theo các mốc thời gian quan trọng sau [4]:\n\n### 1. Mốc Có Hiệu Lực Thi Hành\nCông văn, quy định liên quan đến việc mở ngành mới bắt đầu có hiệu lực chính thức từ n",
+      "correct": false
+    },
+    {
+      "id": 92,
+      "type": "notice_override",
+      "query": "Mình học CTCLC định hướng Nhật. Nếu xét chuẩn quá trình thì NAT-TEST có còn là căn cứ được chấp nhận không?",
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "response": "\n\n# Trả lời về việc sử dụng chứng chỉ NAT-TEST cho chương trình CLC định hướng Nhật\n\nChào bạn, đây là câu hỏi liên quan đến quy định về chuẩn quá trình tiếng Nhật của chương trình CLC định hướng Nhật Bản. Dưới đây là thông tin chi tiết:\n\n## 📌 Quy định về xét chuẩn quá trình\n\n### Đối với sinh viên chương trình CLC định hướng Nhật Bản:\n\n**CÓ** - Chứng chỉ **NAT-TEST vẫn được chấp nhận** để xét chuẩn quá trình tiếng Nhật, theo quy định tại Quy định đào tạo ngoại ngữ:\n\n> *\"Sinh viên chương trình Côn",
+      "correct": false
+    },
+    {
+      "id": 93,
+      "type": "cohort_boundary",
+      "query": "Mình thuộc lứa vào trường sau khóa 2016 nhưng trước K2019. Nếu rà đúng chuẩn ngoại ngữ của nhóm này thì đang tính theo chuẩn nào?",
+      "expected_doc_numbers": [
+        "141/QD-DHCNTT"
+      ],
+      "response": "\n\n# Trả lời về Chuẩn Ngoại Ngữ\n\nXin chào bạn! Dựa trên thông tin từ các tài liệu, mình có thể giúp bạn xác định chính xác chuẩn ngoại ngữ áp dụng cho trường hợp của bạn.\n\n## Xác định Quy chế Áp dụng\n\n### 1.Phạm vi áp dụng theo khóa đào tạo\n\nĐầu tiên, để xác định chuẩn ngoại ngữ, cần xem bạn thuộc khóa tuyển sinh nào:\n\n| Khoản Điều | Nội dung quy định |\n| --- | --- |\n| Điều 14 [Quy định 2025] [15] | Quy định này áp dụng bắt buộc cho các khóa tuyển sinh từ **năm 2023**. Các khóa tuyển sinh **trước",
+      "correct": false
+    },
+    {
+      "id": 94,
+      "type": "notice_override",
+      "query": "Trong giai đoạn dịch, sinh viên nộp VPET để xét chuẩn đầu ra thì trường chấp nhận theo ngoại lệ nào?",
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "response": "\n\n## Chính sách sử dụng kết quả bậc độ thi VPET trong giai đoạn dịch bệnh\n\n### Thông báo chấp nhận VPET trong dịch\n\nTheo thông báo của Trường Đại học Công nghệ Thông tin, trong giai đoạn dịch bệnh và giãn cách xã hội, trường đã **cho phép sinh viên sử dụng kết quả bài thi Versant Professional English Test (VPET)** để được công nhận chuẩn đầu ra ngoại ngữ trình độ đại học. Đây là biện pháp ngoại lệ đã được áp dụng dựa trên ý kiến của Giám đốc Đại học Quốc gia Hà Nội.\n\n### Căn cứ pháp lý\n\nChính sá",
+      "correct": false
+    },
+    {
+      "id": 95,
+      "type": "notice_override",
+      "query": "Sau khi trường dừng các ngoại lệ cũ, VPET với TOEIC Bách khoa còn nộp chuẩn ngoại ngữ được không?",
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "response": "\n\n# Câu trả lời\n\n## Về việc sử dụng chứng chỉ VPET và TOEIC Bách Khoa để xét công nhận chuẩn ngoại ngữ\n\nDựa trên các văn bản quy định hiện hành của Trường Đại học Công nghệ Thông tin (ĐHCNTT), Trường có những thay đổi sau:\n\n### 1. Chứng chỉ VPET (Versant Professional English Test)\n\nTrường **đã ngừng** cho phép sinh viên sử dụng kết quả bài thi **VPET** để xét đạt chuẩn đầu ra ngoại ngữ trong suốt thời gian còn đang đào tạo.\n\n*   **Lý do:** Theo Công văn số 1868/ĐHQG-ĐT ngày 23-11-2021 của Giám đ",
+      "correct": false
+    },
+    {
+      "id": 96,
+      "type": "notice_override",
+      "query": "Nếu nộp IELTS Indicator hoặc TOEFL iBT Home Edition sau cuối 2022 thì còn được chấp nhận nữa không?",
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời\n\nHiện tại, việc nộp kết quả bài thi **IELTS Indicator** hoặc **TOEFL iBT Home Edition** sau cuối năm 2022 đã **không còn được chấp nhận**. Trường Đại học Công nghệ Thông tin - ĐHQG-HCM đã chính thức thể lệ mới về các hình thức thi trực tuyến này.\n\n#### 1. Ngừng chấp nhận các kỳ thi trực tuyến\nTheo thông báo mới, Trường đã ngừng cho phép sinh viên sử dụng kết quả các bài thi ngoại ngữ quốc tế tổ chức theo hình thức **trực tuyến** kể từ ngày ban hành Thông báo, bao gồm:\n*   **IELTS I",
+      "correct": false
+    },
+    {
+      "id": 97,
+      "type": "authority_collision",
+      "query": "Phần chương trình giáo dục quốc phòng - an ninh do Bộ ban hành hiện phải bám theo mốc nào, không phải quyết định của ĐHQG về môn thể chất?",
+      "expected_doc_numbers": [
+        "05/2020/TT-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nChương trình giáo dục quốc phòng - an ninh do Bộ Giáo dục và Đào tạo quy định phải nghiêm túc thực hiện theo **Tiêu chuẩn Khung trình độ quốc gia Việt Nam** (Vietnam National Qualification Framework), đây là mốc chuẩn hóa bắt buộc trên toàn quốc. Cụ thể như sau:\n\n1. **Cơ sở pháp lý**  \n   - Chương trình quốc phòng - an ninh thuộc nhóm **giáo dục đại cương** (Điều 8, Chương II, Thông tư 05/2021/TT-BGDĐT) và phải tuân thủ định mức tối thiểu 120 tín chỉ/tổng khối lượng đào tạo, t",
+      "correct": false
+    },
+    {
+      "id": 98,
+      "type": "authority_collision",
+      "query": "Quyết định của ĐHQG phê duyệt chương trình môn học giáo dục thể chất hiện phải bám theo mốc nào, không phải chương trình GDQPAN của Bộ?",
+      "expected_doc_numbers": [
+        "1476/QD-DHQG"
+      ],
+      "response": "\n\nDựa trên các tài liệu cung cấp, tôi xin trả lời câu hỏi của bạn về Quyết định của ĐHQG-HCM phê duyệt chương trình môn học Giáo dục thể chất:\n\n## Thông tin về Quyết định Phê duyệt Chương trình Giáo dục Thể chất\n\n### Quyết định 1476/QĐ-ĐHQG ngày 27/01/2012\n\nTheo tài liệu trong hồ sơ (Reference ID 5), ĐHQG-HCM đã ban hành Quyết định phê duyệt **Chương trình môn học Giáo dục thể chất** với các thông tin sau:\n\n| Tiêu chí | Thông tin |\n|----------|-----------|\n| **Tên chương trình** | Chương trình m",
+      "correct": true
+    },
+    {
+      "id": 99,
+      "type": "authority_collision",
+      "query": "Muốn bám trực tiếp vào cấp luật cho khung Giáo dục đại học, chứ không đi qua nghị định hay thông tư, thì nên bắt đầu từ mốc nào?",
+      "expected_doc_numbers": [
+        "43/2019/QH14"
+      ],
+      "response": "\n\nDựa trên thông tin từ các tài liệu có sẵn, tôi sẽ cung cấp thông tin về khung pháp lý Giáo dục đại học:\n\n## Khung Pháp Lý Giáo Dục Đại Học\n\n### 1. Cơ Sở Pháp Lý Cấp Cao Nhất\n\nVăn bản pháp lý cao nhất trong hệ thống quy định về giáo dục đại học là:\n\n| Văn Bản | Ngày Ban Hành | Nội Dung Chính |\n|---------|---------------|----------------|\n| **Luật Giáo dục đại học** | Ngày 18 tháng 6 năm 2012 | Luật gốc về giáo dục đại học |\n| **Luật sửa đổi, bổ sung một số điều của Luật Giáo dục đại học** | Ngà",
+      "correct": false
+    },
+    {
+      "id": 100,
+      "type": "cohort_boundary",
+      "query": "Mình thuộc khóa 2014, giờ mới rà lại điều kiện tiếng Anh để hoàn tất hồ sơ. Chuẩn đầu ra của nhóm 2006-2014 nằm ở mốc nào?",
+      "expected_doc_numbers": [
+        "147/QD-DHCNTT-DTDH"
+      ],
+      "response": "\n\n# Chuẩn đầu ra tiếng Anh cho khóa 2014\n\nXin chào! Xin cảm ơn bạn đã đặt câu hỏi về yêu cầu tiếng Anh để hoàn tất hồ sơ tốt nghiệp. Dưới đây là thông tin chi tiết dựa trên các quy định hiện có:\n\n## Quy định chuẩn đầu ra tiếng Anh\n\nĐối với sinh viên hệ đại học chính quy thuộc trường ĐHCNTT, quy định về chuẩn đầu ra tiếng Anh có phân loại theo số khóa học như sau (theo Quyết định 147/QĐ-ĐHCNTT-ĐTĐH 31/07/2013):\n\n- **Khóa học từ khóa 07 trở đi:** Sinh viên bắt buộc hoàn thành **03 môn Anh văn** (A",
+      "correct": true
+    },
+    {
+      "id": 101,
+      "type": "cohort_boundary",
+      "query": "Một bạn K2015 hỏi lúc mới vào trường thì tiếng Anh được áp theo quy định tạm thời nào, không tính các bản sửa sau này.",
+      "expected_doc_numbers": [
+        "125/QD-DHCNTT-DTDH"
+      ],
+      "response": "\n\n### Quy định tiếng Anh áp dụng cho sinh viên Khóa 2015\n\nChào bạn, đối với **sinh viênohon tuyển khóa 2015 (K2015)**, khi mới vào trường, tiếng Anh được áp dụng theo **Quy định tạm thời** ban hành do Hiệu trưởng Trường Đại học Công nghệ Thông tin ban hành:\n\n### 1. Tài liệu quy định áp dụng\n\nQuá trình áp dụng ban đầu được quy định trong:\n> **Quyết định số 125/QĐ-ĐHCNTT-ĐTĐH**, ngày 18 tháng 09 năm 2015 của Hiệu trưởng Trường Đại học Công nghệ Thông tin về: Quyết định tạm thời dạy và học tiếng An",
+      "correct": true
+    },
+    {
+      "id": 102,
+      "type": "cohort_boundary",
+      "query": "K2017 bị hỏi chuẩn ngoại ngữ thì có dùng quy định riêng K2016 không, hay đã chuyển sang khung áp dụng từ khóa 2017?",
+      "expected_doc_numbers": [
+        "141/QD-DHCNTT"
+      ],
+      "response": "\n\n### Nội dung câu trả lời\n\nDựa trên các văn bản quy định trong tài liệu, hệ thống quy định về ngoại ngữ tại UI được áp dụng theo từng nhóm khóa tuyển sinh cụ thể, không phải chuyển ứng liên tục theo từng năm.\n\n#### 1. Quy định áp dụng cho từng nhóm khóa\n\nTheo các văn bản hiện hành, quy định được chia theo năm khóa tuyển sinh:\n\n- **Thông báo dừng sử dụng VPET** (reference_id: 4): Chỉ từ khóa tuyển từ năm 2019 trở đi, trường không cho phép sinh viên sử dụng kết quả bài thi 2 kỹ năng nói-viết do T",
+      "correct": false
+    },
+    {
+      "id": 103,
+      "type": "cohort_boundary",
+      "query": "K2019 đang làm chuẩn tiếng Anh. Mình cần biết khung riêng của khóa này, không phải bản dùng chung cho K2017.",
+      "expected_doc_numbers": [
+        "547/QD-DHCNTT"
+      ],
+      "response": "\n\n### Khung Chuẩn Tiếng Anh Cho Khóa K2019\n\nKhóa K2019 của Trường Đại học Công nghệ Thông tin áp dụng **Quy định Đào tạo Ngoại ngữ đối với Hệ Đại học Chính Quy (Quyết định số: 547/QĐ-ĐHCNTT, ngày 30/8/2019)**. Quy định này thay thế khung chuẩn tiếng Anh trước đó (áp dụng cho khóa K2017 và trước) và có các nội dung riêng về đánh giá năng lực, miễn môn học và chuẩn đầu ra ngoại ngữ. Dưới đây là các điểm trọng tâm:\n\n#### 1. Căn cứ pháp lý và đối tượng áp dụng\n- Quy định này áp dụng bắt buộc cho sin",
+      "correct": true
+    },
+    {
+      "id": 104,
+      "type": "amendment_boundary",
+      "query": "Sau tháng 6/2024, quy định ngoại ngữ hệ chính quy của UIT đã đổi thêm lần nữa chưa? Mình cần bản đang nằm sau đợt sửa tháng 4.",
+      "expected_doc_numbers": [
+        "560/QD-DHCNTT"
+      ],
+      "response": "\n\n\\dựa trên các tài liệu hiện có trong hệ thống, tôi cần cung cấp thông tin về quy định ngoại ngữ cho sinh viên hệ chính quy của UIT (đặc biệt liên quan đến các quy định từ đầu năm 2024):\n\n## Tìm hiểu về Quy định Ngoại ngữ - UIT\n\n### Các Quy định Cơ Bản Hiện Hành\n\n**1. Quyết định Đào tạo ngoại ngữ cho hệ đại học chính quy**\n\nKhoản 3 Điều 2 của Quy định 547/QĐ-ĐHCNTT ngày 30/8/2019 nêu rõ:\n\n> \"Sinh viên chương trình đại trà, chương trình tài năng và chương trình chất lượng cao **được chọn một tro",
+      "correct": false
+    },
+    {
+      "id": 105,
+      "type": "amendment_boundary",
+      "query": "Khoảng sau ngày 22/04/2024 nhưng trước bản tháng 6, phần ngoại ngữ của UIT đang bám vào bản sửa nào?",
+      "expected_doc_numbers": [
+        "364/QD-DHCNTT"
+      ],
+      "response": "\n\nCảm ơn bạn đã đặt câu hỏi. Sau khi tra cứu các tài liệu liên quan, tôi cần thông báo với bạn rằng **không có đủ thông tin** để trả lời chính xác câu hỏi của bạn dựa trên các tài liệu hiện có.\n\n### Giải thích chi tiết:\n\n**1. Các tài liệu liên quan đến ngoại ngữ có sẵn:**\n\n| Tài liệu | Nội dung chính | Thời điểm |\n|----------|----------------|-----------|\n| Thông báo về VNU-EPT | Công nhận chứng chỉ tiếng Anh VNU-EPT | 18/4/2022 |\n| Thông báo ngừng sử dụng IELTS Indicator, TOEFL Home Edition | N",
+      "correct": false
+    },
+    {
+      "id": 106,
+      "type": "notice_override",
+      "query": "Trong giai đoạn dịch, VPET có được dùng tạm cho chuẩn ngoại ngữ không? Mình cần mốc cho phép, chưa xét thông báo ngừng sau đó.",
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "response": "\n\n# Trả lời về việc sử dụng VPET cho chuẩn ngoại ngữ\n\n## Thời gian được phép sử dụng VPET\n\nCăn cứ theo **Thông báo về việc sử dụng kết quả bài thi VPET để xét công nhận chuẩn đầu ra tốt nghiệp trình độ đại học trong thời gian dịch bệnh và giãn cách xã hội**, Trường Đại học Công nghệ Thông tin cho phép sinh viên sử dụng kết quả bài thi Versant Professional English Test (VPET) để được công nhận chuẩn đầu ra ngoại ngữ trình độ Đại học trong thời gian dịch bệnh và giãn cách xã hội.\n\nThời điểm thực h",
+      "correct": false
+    },
+    {
+      "id": 107,
+      "type": "notice_override",
+      "query": "Từ cuối 2022, IELTS Indicator và TOEFL iBT Home Edition còn được nhận cho ngoại ngữ ở UIT không?",
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời về IELTS Indicator và TOEFL iBT Home Edition tại UIT từ cuối 2022\n\n**Không, từ cuối năm 2022, UIT đã không còn cho phép sinh viên sử dụng kết quả từ IELTS Indicator và TOEFL iBT Home Edition để xét chuẩn quá trình, xét công nhận chuẩn đầu ra tốt nghiệp hoặc miễn các môn tiếng Anh trong tình hình dịch bệnh.**\n\nDựa trên thông báo của Trường Đại học Công nghệ Thông tin - ĐHQG-HCM, có những thay đổi quan trọng sau:\n\n#### ✅ Thay đổi từ Thông báo ngừng sử dụng\n\nTrường Đại học Công nghệ T",
+      "correct": false
+    },
+    {
+      "id": 108,
+      "type": "notice_override",
+      "query": "NAT-TEST tiếng Nhật từng được UIT công nhận cho chuẩn quá trình ở thời điểm nào?",
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "response": "\n\nDựa trên các tài liệu được cung cấp, quá trình công nhận chứng chỉ ngoại ngữ NAT-TEST cho kiểm tra chuẩn quá trình tiếng Nhật tại Đại học Công nghệ Thông tin (UIT) được thực hiện theo quy định cụ thể sau.\n\nTrường Đại học Công nghệ Thông tin thông báo về việc công nhận chứng chỉ ngoại ngữ NAT-TEST để xét chuẩn quá trình tiếng Nhật cho các sinh viên hệ chính quy bắt đầu từ học kỳ 2 năm học 2018 – 2019. Thời gian này được quy định rõ ràng trong thông báo của trường, thay thế các quy định trước đó",
+      "correct": false
+    },
+    {
+      "id": 109,
+      "type": "authority_collision",
+      "query": "Mẫu chứng chỉ ngoại ngữ theo khung năng lực 6 bậc của ĐHQG-HCM đang nằm ở quyết định nào?",
+      "expected_doc_numbers": [
+        "1224/QD-DHQG"
+      ],
+      "response": "\n\n### Quyết Định ban hành Mẫu chứng chỉ ngoại ngữ theo Khung năng lực 6 Bậc\n\nDựa trên các tài liệu liên quan, **mẫu chứng chỉ ngoại ngữ theo Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam** của Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) được ban hành kèm theo **Quyết Định số 1224 / QĐ-ĐHQG ngày 30 tháng 8 năm 2022**.\n\nChi tiết về mẫu chứng chỉ như sau:\n\n#### 1. Loại hình chứng chỉ\n\nChứng chỉ ngoại ngữ theo Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam thuộc nhóm **Chứng chỉ thực hành",
+      "correct": true
+    },
+    {
+      "id": 110,
+      "type": "authority_collision",
+      "query": "Nếu câu hỏi xoay quanh quy chế văn bằng, chứng chỉ của ĐHQG-HCM nói chung thì không nên nhảy sang thông báo phôi văn bằng UIT nào?",
+      "expected_doc_numbers": [
+        "1372/QD-DHQG"
+      ],
+      "response": "\n\n### Khuyến nghị về việc chọn quy chế\n\nKhi câu hỏi xoay quanh **quy chế văn bằng, chứng chỉ của ĐHQG-HCM nói chung**, bạn **KHÔNG NÊN** nhảy sang sử dụng các thông báo hoặc phụ lục cụ thể của **Trường ĐHCNTT (UIT)** khi nội dung thuộc thẩm quyền của **ĐHQG-HCM**.\n\nDưới đây là các trường hợp cụ thể mà bạn không nên dùng thông báo của UIT:\n\n---\n\n#### 1. Quy định về mẫu và phôi văn bằng đã được ĐHQG-HCM ban hành chung\n\nTheo quy định tại **Điều 9 của Quy chế văn bằng chứng chỉ ĐHQG-HCM**, mẫu từng ",
+      "correct": false
+    },
+    {
+      "id": 111,
+      "type": "workflow_boundary",
+      "query": "Cần tổ chức thi trên máy tính ở UIT thì mình phải lấy quy định riêng về tổ chức thi, không phải quy trình phân công cán bộ coi thi.",
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "response": "\n\n# Câu trả lời\n\nCụm **Quy chế thi trên máy tính** và **Quy trình phân công cán bộ coi thi** là hai văn bản quản lý thi khác nhau tại UIT, và bạn sử dụng đúng. Đây là sự khác biệt quan trọng cần lưu ý khi thực hiện thi trực tuyến:\n\n### 📋 Số báo của hai quy định\n\n| Nội dung | Tên tài liệu | Số Quyết định | Ngày ban hành | Phạm vi |\n|---------|----------|---------------|--------------|---------|\n| **Tổ chức thi trên máy tính** | Quy định về tổ chức thi trên máy tính | 135/QĐ-ĐHCNTT | 40 tháng 02 n",
+      "correct": true
+    },
+    {
+      "id": 112,
+      "type": "workflow_boundary",
+      "query": "Sau khi bảo vệ khóa luận xong, sinh viên phải nộp KLTN theo quy trình nào? Đừng lấy nhầm quy định làm khóa luận ban đầu.",
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy trình nộp báo cáo Khóa luận tốt nghiệp sau khi bảo vệ\n\nDựa trên quy định hiện hành của **Trường Đại học Công nghệ Thông tin**, quy trình nộp khóa luận tốt nghiệp sau khi bảo vệ được quy định như sau:\n\n## 📋 Các Bước Chính Trong Quy Trình\n\n### **Bước 1: Sinh viên nộp báo cáo KLTN (từ thời điểm t + 1)**\n\nSau khi bảo vệ, sinh viên thuộc trường hợp **Đạt** (bao gồm cả các trường hợp phải chỉnh sửa, hoàn tất báo cáo) phải thực hiện các thao tác sau trên trang web **Cổng thông tin đào tạo (http",
+      "correct": false
+    },
+    {
+      "id": 113,
+      "type": "workflow_boundary",
+      "query": "Một khoa hỏi cách đánh giá và cập nhật CTĐT trình độ đại học, sau đại học. Văn bản nào là quy trình nội bộ của UIT cho việc đó?",
+      "expected_doc_numbers": [
+        "185/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy trình Đánh giá và Cập nhật Chương trình Đào tạo tại UIT\n\nDựa trên các văn bản hiện hành, văn bản quy định chi tiết về quy trình đánh giá và cập nhật chương trình đào tạo trình độ Đại học và Sau đại học nội bộ của Trường Đại học Công nghệ Thông tin (ĐHCNTT) là:\n\n*   **Tên quy định:** QUY ĐỊNH VỀ Quy trình đánh giá , Cập nhật Chương trình đào tạo trình độ Đại học / Sau đại học\n*   **Số Quyết định:** Quyết định số 185 / QĐ-ĐHCNTT\n*   **Ngày ban hành:** Ngày 30 tháng 3 năm 2018\n*   **Trách",
+      "correct": true
+    },
+    {
+      "id": 114,
+      "type": "local_vs_system",
+      "query": "Khi viết chuẩn đầu ra môn học ở UIT theo mức nhận thức, kỹ năng, thái độ thì nên bám hướng dẫn phân loại nào của trường?",
+      "expected_doc_numbers": [
+        "123/QD-DHCNTT"
+      ],
+      "response": "\n\n# Hướng dẫn Phân loại Chuẩn đầu ra Môn học theo Mức Nhận thức, Kỹ năng và Thái độ\n\nDựa trên thông tin trong quy định của Trường Đại học Công nghệ Thông tin (UIT), sinh viên và cán bộ công tác giáo dục nên tham khảo các tài liệu sau khi viết chuẩn đầu ra môn học:\n\n## 📋 Tài liệu Hướng dẫn Phân loại\n\n**1. Hướng dẫn thang phân loại nhận thức, kỹ năng, thái độ**\nĐây là tài liệu trực tiếp cung cấp khung phân loại 5 cấp độ về thái độ và nhận thức cho việc thiết lập chuẩn đầu ra:\n- **Cấp độ 1 (Tiếp nh",
+      "correct": false
+    },
+    {
+      "id": 115,
+      "type": "local_vs_system",
+      "query": "Quy định về giảng viên và trợ giảng môn học ở UIT nằm ở đâu? Mình không hỏi quy chế đào tạo chung.",
+      "expected_doc_numbers": [
+        "975/QD-DHCNTT"
+      ],
+      "response": "\n\n## Quy định về Giảng viên và Trợ giảng môn học tại UIT\n\nDựa trên thông tin từ các tài liệu có sẵn, dưới đây là vị trí và nội dung chính của quy định liên quan đến giảng viên và trợ giảng môn học tại Trường Đại học Công nghệ Thông tin (UIT):\n\n### 📍 Vị trí Tài liệu\n\nQuy định về giảng viên và trợ giảng môn học được ban hành kèm theo **Quyết định số 915/QĐ-ĐHCNTT ngày 08 tháng 08 năm 2025** của Hiệu trưởng Trường Đại học Công nghệ Thông tin.\n\n### 📋 Nội dung chính của Quy định\n\nVăn bản này quy định",
+      "correct": false
+    },
+    {
+      "id": 116,
+      "type": "local_vs_system",
+      "query": "Nếu sinh viên hỏi về liêm chính học thuật ở UIT thì lấy quy định riêng của trường, không phải quy chế học vụ chung.",
+      "expected_doc_numbers": [
+        "851/QD-DHCNTT"
+      ],
+      "response": "\n\nDựa trên các văn bản quy định hiện hành tại Trường Đại học Công nghệ Thông tin (UIT), nhận định của bạn là đúng. Ở UIT, vấn đề **Liêm chính học thuật** và **Quy chế học vụ** được quy định trong hai văn bản pháp lý riêng biệt với phạm vi áp dụng và nội dung quản lý khác nhau. Dưới đây là chi tiết cụ thể về hai quy định này:\n\n**1. Quy định về Liêm chính học thuật**\nKhi sinh viên hỏi về hành vi đạo văn, gian lận, hoặc tuân thủ chuẩn mực đạo đức trong nghiên cứu, sinh viên cần căn cứ vào quy định ",
+      "correct": false
+    },
+    {
+      "id": 117,
+      "type": "authority_collision",
+      "query": "Liên kết đào tạo với nước ngoài ở cấp ĐHQG-HCM thì xem khung chung nào, không phải quy định riêng UIT ban hành năm 2025?",
+      "expected_doc_numbers": [
+        "1758/QD-DHQG"
+      ],
+      "response": "\n\n### Câu trả lời\n\nDựa trên các tài liệu trong hệ thống của **Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM)**, khung pháp lý chung được áp dụng cho công tác liên kết đào tạo với nước ngoài là:\n\n# **Quy định liên kết đào tạo với nước ngoài trình độ đại học, thạc sĩ, tiến sĩ tại ĐHQG-HCM (2022)**\n\nHiện tại, văn bản chính được trích dẫn trong hồ sơ và quy trình làm việc là **Quyết định số 540/QĐ-ĐHQG** (có thể soát lại số quyết định chính xác), ban hành ngày **tháng ... năm 2022** về việc quy đ",
+      "correct": false
+    },
+    {
+      "id": 118,
+      "type": "local_vs_system",
+      "query": "UIT đã có quy định riêng năm 2025 cho việc tổ chức quản lý chương trình liên kết đào tạo với nước ngoài chưa?",
+      "expected_doc_numbers": [
+        "451/QD-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời câu hỏi\n\n**Không**,UIT không ban hành quy định riêng nội bộ năm 2025 cho việc tổ chức quản lý chương trình liên kết đào tạo với nước ngoài. Tuy nhiên, hoạt động liên kết đào tạo cần tuân thủ **Thông tư của Bộ Giáo dục và Đào tạo về liên kết đào tạo với nước ngoài có hiệu lực từ 05/05/2025** thay thế quy định cũ (28/04/2025) ( ). Các chương trình đã được phê duyệt trước ngày hiệu lực của Thông tư tiếp tục áp dụng theo quy định cũ đến hết thời hạn ghi trong quyết định ( ).\n\nUIT chủ t",
+      "correct": false
+    },
+    {
+      "id": 119,
+      "type": "authority_collision",
+      "query": "Đào tạo liên thông từ đại học lên thạc sĩ trong phạm vi ĐHQG-HCM thì đang có quy định riêng nào?",
+      "expected_doc_numbers": [
+        "650/QD-DHQG"
+      ],
+      "response": "\n\n### Quy định về Đào tạo liên thông từ Đại học lên Thạc sĩ tại ĐHQG-HCM\n\nTại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM), việc đào tạo liên thông từ trình độ đại học lên thạc sĩ có các quy định riêng được ban hành như sau:\n\n## 1. Quy định Khung của ĐHQG-HCM\n\nTheo **Quy định về đào tạo liên thông từ trình độ đại học lên trình độ thạc sĩ** của ĐHQG-HCM, có các nội dung chính sau:\n\n- **Phạm vi điều chỉnh**: Văn bản này quy định về đào tạo liên thông từ trình độ đại học lên trình độ thạc sĩ (",
+      "correct": false
+    },
+    {
+      "id": 120,
+      "type": "authority_collision",
+      "query": "Mốc phê duyệt thí điểm bộ phẩm chất năng lực sinh viên tốt nghiệp của ĐHQG-HCM là quyết định nào?",
+      "expected_doc_numbers": [
+        "1658/QD-DHQG"
+      ],
+      "response": "\n\nDựa trên các thông tin từ văn bản đã cung cấp, mốc phê duyệt thí điểm bộ phẩm chất và năng lực sinh viên tốt nghiệp của Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) được quy định trong **Quyết định số 1658/QĐ-ĐHQG** có ngày ký là 24 tháng 12 năm 2020.\n\nQuyết định này là cơ sở pháp lý để phê duyệt việc thực hiện thí điểm bộ phẩm chất và năng lực sinh viên tốt nghiệp tại ĐHQG-HCM. Nội dung của quyết định bao gồm các điều khoản cụ thể về việc phê duyệt thí điểm, phạm vi áp dụng đối với các c",
+      "correct": true
+    },
+    {
+      "id": 121,
+      "type": "authority_collision",
+      "query": "Mình cần quy chế đào tạo đại học chung của ĐHQG-HCM, không phải quy định đánh giá trực tuyến hay công nhận tín chỉ.",
+      "expected_doc_numbers": [
+        "1342/QD-DHQG"
+      ],
+      "response": "\n\n# Quy chế đào tạo đại học của ĐHQG-HCM\n\nDựa trên tài liệu cung cấp, đây là thông tin về quy chế đào tạo đại học của Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM):\n\n## 1. Văn bản và Phạm vi điều chỉnh\n\nCăn cứ vào các quy định hiện hành của ĐHQG-HCM, **Quy chế đào tạo** cung cấp các quy định chung nhất về đào tạo đại học theo hình thức chính quy, áp dụng đối với các đơn vị, cá nhân liên quan. Văn bằng cấp được quản lý thống nhất theo **Quy chế văn bằng, chứng chỉ của ĐHQG-HCM**.\n\n## 2. Loại ",
+      "correct": false
+    },
+    {
+      "id": 122,
+      "type": "authority_collision",
+      "query": "Đánh giá kết quả học tập theo hình thức trực tuyến trong hệ thống ĐHQG-HCM thì bám vào quy định nào?",
+      "expected_doc_numbers": [
+        "809/QD-DHQG"
+      ],
+      "response": "\n\nDựa trên thông tin trong tài liệu được cung cấp, đánh giá kết quả học tập theo hình thức trực tuyến trong hệ thống ĐHQG-HCM được quy định chính theo quy định sau:\n\n## Quy định Tổ chức Đánh giá Kết quả Học tập theo Hình thức Trực tuyến\n\n### 1. Quy định Chính\n- **Quyết định số 809/QĐ-ĐHQG** ngày 03 tháng 7 năm 2023 của Giám đốc Đại học Quốc gia Thành phố Hồ Chí Minh ban hành **\"Quy định Tổ chức đánh giá kết quả học tập theo hình thức trực tuyến tại Đại học Quốc gia Thành phố Hồ Chí Minh\"** - đây",
+      "correct": true
+    },
+    {
+      "id": 123,
+      "type": "amendment_boundary",
+      "query": "Hồ sơ tài liệu trong lĩnh vực giáo dục đào tạo phải lưu theo thời hạn mới năm 2025 thì văn bản nào đang là mốc cần bám?",
+      "expected_doc_numbers": [
+        "08/2025/TT-BGDDT"
+      ],
+      "response": "\n\n### Trình bày Câu trả lời\n\nBạn muốn tìm hiểu về văn bản cơ sở để xác định thời hạn lưu trữ hồ sơ, tài liệu trong lĩnh vực giáo dục và đào tạo theo quy định mới năm 2025. Dưới đây là thông tin chi tiết để bạn tham khảo:\n\n---\n\n## Mốc Tài Liệu Dành Cho Lưu Trữ 2025\n\nDựa trên các tài liệu hiện có, **văn bản then chốt** để xem xét về việc quy định thời hạn lưu trữ hồ sơ, tài liệu thuộc lĩnh vực giáo dục và đào tạo là:\n\n### `Thông tư quy định thời hạn lưu trữ hồ sơ tài liệu thuộc lĩnh vực GĐ&ĐT`\n*  ",
+      "correct": false
+    },
+    {
+      "id": 124,
+      "type": "local_vs_system",
+      "query": "Sinh viên muốn xin công nhận tín chỉ ở UIT thì có quy trình nội bộ nào của trường, khác với quy định MOOC của ĐHQG-HCM?",
+      "expected_doc_numbers": [
+        "412/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy trình công nhận tín chỉ nội bộ tại UIT\n\nTrường Đại học Công nghệ Thông tin áp dụng quy trình công nhận tín chỉ được quy định trong **Quy trình công nhận tín chỉ trong đào tạo đại học của Trường Đại học Công nghệ Thông tin**. Quy trình này bao gồm các nội dung chính:\n\n| Nội dung | Chi tiết |\n|----------|----------|\n| **Phạm vi áp dụng** | Sinh viên hệ chính quy, từ xa; không áp dụng cho chương trình liên kết |\n| **Điều kiện công nhận** | Học phần phải tương đương với CTĐT của trường, cù",
+      "correct": false
+    },
+    {
+      "id": 125,
+      "type": "authority_collision",
+      "query": "Học MOOC rồi xin công nhận tín chỉ thì khung đào tạo và công nhận tín chỉ khóa học MOOC của ĐHQG-HCM là văn bản nào?",
+      "expected_doc_numbers": [
+        "1537/QD-DHQG"
+      ],
+      "response": "\n\n### Khung Đào Tạo và Công Nhận Tín Chỉ Khóa Học MOOC của ĐHQG-HCM\n\nDựa trên các tài liệu có sẵn, **Quy định thí điểm công nhận, chuyển đổi tín chỉ các môn học/học phần giảng dạy theo hình thức MOOC đã học ở cấp trung học phổ thông trong đào tạo trình độ đại học tại ĐHQG-HCM** là văn bản chung điều chỉnh việc công nhận tín chỉ cho các khóa học MOOC tại ĐHQG-HCM.\n\nCác nội dung chính về khung đào tạo và công nhận tín chỉ MOOC bao gồm:\n\n#### 1. Công Bố Danh Mục Môn Học Được Công Nhận\nĐHQG-HCM công",
+      "correct": false
+    },
+    {
+      "id": 126,
+      "type": "workflow_boundary",
+      "query": "Mình chỉ cần văn bản về công nhận môn học theo hình thức MOOC, không phải toàn bộ quy định đào tạo MOOC.",
+      "expected_doc_numbers": [
+        "2217/DHQG-DT"
+      ],
+      "response": "\n\n### Tài liệu về Công nhận môn học theo hình thức MOOC tại ĐHQG-HCM\n\nDựa trên các thông tin được cung cấp, trường có các quy định và văn bản liên quan rõ ràng về việc công nhận môn học theo hình thức MOOC (Khóa học đại chúng mở trực tuyến) trong chương trình đào tạo đại học. Dưới đây là các điểm chính:\n\n- **Quy định về Công nhận, chuyển đổi tín chỉ:**\n  - Cơ sở đào tạo tiếp nhận Giấy chứng nhận hoàn thành môn học/học phần MOOC sẽ tổ chức xét công nhận, chuyển đổi tín chỉ cho người học theo quy ",
+      "correct": false
+    },
+    {
+      "id": 127,
+      "type": "admissions_boundary",
+      "query": "Ngành Truyền thông đa phương tiện của UIT đã được mở đào tạo bằng quyết định nào năm 2025?",
+      "expected_doc_numbers": [
+        "491/QD-DHCNTT"
+      ],
+      "response": "\n\n## Quyết định Mở Đào Tạo Ngành Truyền Thông Đa Phương Tiện\n\nDựa trên tài liệu có sẵn, tôi có thông tin như sau:\n\n### 1. Quyết định Mở Đào Tạo\n\nNgành **Truyền thông đa phương tiện** tại Trường Đại học Công nghệ Thông tin (ĐH CNTT - UIT) được mở đào tạo theo **Quyết định số 491/QĐ-ĐH CNTT ngày 21/04/2025** (từ filename tài liệu: `491-qd-dhcntt_21-04-2025_mo_dao_tao_nganh_truyen_thong_da_phuong_tien.pdf`).\n\n### 2. Thông Tin Chi Tiết về Ngành Đào Tạo\n\n| Thông tin | Nội dung |\n|-----------|--------",
+      "correct": false
+    },
+    {
+      "id": 128,
+      "type": "admissions_boundary",
+      "query": "Đề án mở ngành Khoa học dữ liệu của UIT gắn với quyết định nào, đừng lẫn sang Thương mại điện tử hay Truyền thông đa phương tiện.",
+      "expected_doc_numbers": [
+        "540/QD-DHCNTT"
+      ],
+      "response": "\n\n# Đề án mở ngành Khoa học dữ liệu của UIT\n\nDựa trên các tài liệu có sẵn, tôi xin cung cấp thông tin về Quyết định gắn liền với việc mở ngành đào tạo này:\n\n## Quyết định Mở ngành\n\nTheo Thông tin trong hồ sơ đề án:\n\n| Thông tin | Nội dung |\n|-----------|----------|\n| **Tên Quyết định** | Quyết định số 1021/QĐ-ĐHNCTT |\n| **Ngày ban hành** | 04 tháng 10 năm 2023 |\n| **Người ban hành** | Hiệu trưởng Trường Đại học Công nghệ Thông tin |\n| **Nội dung** |Quy định mở ngành đào tạo trình độ đại học, thạ",
+      "correct": false
+    },
+    {
+      "id": 129,
+      "type": "admissions_boundary",
+      "query": "Đề án mở ngành Thương mại điện tử đang được phê duyệt bởi mốc ĐHQG nào, không phải song ngành thương mại điện tử sau này.",
+      "expected_doc_numbers": [
+        "15/QD-DHQG"
+      ],
+      "response": "\n\nDựa trên thông tin từ các tài liệu được cung cấp, không có ghi nhận cụ thể về đề án mở ngành **độc lập** Thương mại điện tử (không phải song ngữ). Tài liệu duy nhất liên quan trực tiếp đến chương trình Thương mại điện tử là phê duyệt **chương trình đào tạo song ngành** (điều 1) dưới thẩm quyền của Trường Đại học Công nghệ thông tin (ĐHQG-HCM).\n\nCác quy trình phê duyệt mở ngành độc lập trong trường hợp chưa đủ điều kiện tự chủ thường do **Giám đốc ĐHQG-HCM** phê duyệt (theo quy định chung tại M",
+      "correct": false
+    },
+    {
+      "id": 130,
+      "type": "authority_collision",
+      "query": "Song ngành Thương mại điện tử tại Trường ĐH CNTT được ĐHQG-HCM phê duyệt riêng bằng quyết định nào?",
+      "expected_doc_numbers": [
+        "1681/QD-DHQG"
+      ],
+      "response": "\n\n### Hàm sinh trả lời\n\nĐào tạo song ngành ngành Thương mại điện tử (mã ngành 7340122) tại Trường Đại học Công nghệ Thông tin là một trong những chương trình được chính thức phê duyệt theo Đề án đào tạo song ngành. Theo nội dung quy định trong Điều 1 của tài liệu liên quan đến phê duyệt đề án, chương trình này được bắt đầu từ mã ngành 7340122 và được đề án đăng ký trong khuôn khổ đào tạo song ngành trình độ đại học [3].\n\nQuyết định phê duyệt cho chương trình đào tạo song ngành Thương mại điện tử",
+      "correct": false
+    },
+    {
+      "id": 131,
+      "type": "authority_collision",
+      "query": "Quy định đào tạo song ngành cấp ĐHQG-HCM nói chung thì không phải quyết định phê duyệt riêng ngành TMĐT đúng không?",
+      "expected_doc_numbers": [
+        "1195/QD-DHQG"
+      ],
+      "response": "\n\nDựa trên các tài liệu được cung cấp, có thể khẳng định rằng **Quy định đào tạo song ngành cấp ĐHQG-HCM nói chung không phải là quyết định phê duyệt riêng cho ngành Thương mại điện tử**. Đây là hai loại văn bản có phạm vi và chức năng khác nhau trong quy trình đào tạo diễn ra song ngành.\n\n### Phân định giữa Quy định chung và Quyết định cụ thể\n\n**1. Quy định chung cấp ĐHQG-HCM:**\nĐề tài \"Quy định đào tạo song ngành trình độ đại học hệ chính quy tại ĐHQG-HCM\" là văn bản khuôn khổ ban hành để xây ",
+      "correct": false
+    },
+    {
+      "id": 132,
+      "type": "local_vs_system",
+      "query": "Quy định mới về chương trình tài năng của UIT năm 2025 là bản nào, không phải bản cũ trước đó?",
+      "expected_doc_numbers": [
+        "1032/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy định mới về Chương trình Tài năng UIT 2025\n\nDựa trên các tài liệu cung cấp, quy định mới về Chương trình Tài năng (CTTN) của Đại học Công nghệ Thông tin (ĐHCNTT) trường([-](https://daa.uit.edu.vn/sites/daa/files/202512/1032-qd-dhcntt_3-9-2025_quy_dinh_dao_tao_chuong_trinh_tai_nang.pdf). Được ban hành kèm theo **Quyết định số 1032/QĐ-ĐHCNTT**, có ngày ký là **ngày 03 tháng 9 năm 2025**.\n\n#### Phân biệt với quy định cũ\nTài liệu mới này thay thế cho các quy định trước đó, có thể được nhận",
+      "correct": true
+    },
+    {
+      "id": 133,
+      "type": "local_vs_system",
+      "query": "Trước khi có bản chương trình tài năng 2025, UIT đang dùng quy định tài năng nào?",
+      "expected_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời\n\nTrước khi có bản quy định mới về đào tạo chương trình tài năng được ban hành trong năm 2025, Trường Đại học Công nghệ Thông tin (ĐHCNTT) đã áp dụng quy định được ban hành theo Quyết định số 191/QĐ-ĐHCNTT ngày 08 tháng 9 năm 2022. Theo nội dung trong Quy định đào tạo chương trình tài năng hiện có trên hệ thống, quy định trước đó này quy định những điều chung nhất về đào tạo Đại học chính quy chương trình tài năng của Trường ĐHCNTT thuộc ĐHQG-HCM và nằm trong khuôn khổ quy chế đào t",
+      "correct": false
+    },
+    {
+      "id": 134,
+      "type": "workflow_boundary",
+      "query": "Bài toán là phân công cán bộ coi thi cho đợt thi tập trung hệ chính quy, không phải tổ chức thi trên máy. Mình nên dẫn quy trình nào?",
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy trình Phân công Cán bộ Coi thi cho Thi tập trung Hệ chính quy\n\nĐối với bài toán phân công cán bộ coi thi cho **đợt thi tập trung hệ chính quy** (không phải thi trên máy), bạn nên áp dụng quy trình được quy định cụ thể sau:\n\n## 📋 Quy trình Áp dụng\n\nBạn nên sử dụng **Quy trình phân công cán bộ coi thi cho các đợt thi tập trung hệ đại học chính quy**. Quy trình này được ban hành kèm theo **Quyết định số: 672/QĐ-ĐHCNTT ngày 15 tháng 10 năm 2020** của Hiệu trưởng Trường Đại học Công nghệ Thôn",
+      "correct": true
+    },
+    {
+      "id": 135,
+      "type": "local_vs_system",
+      "query": "Khi sinh viên hỏi điều kiện làm khóa luận tốt nghiệp hệ chính quy, mình cần quy định KLTN chứ không phải quy trình nộp sau bảo vệ.",
+      "expected_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "response": "\n\n# Điều kiện làm Khóa luận tốt nghiệp (KLTN) - Hệ Chính quy\n\nDựa trên các quy định hiện hành của Trường Đại học Công nghệ Thông tin, đây là những yêu cầu quan trọng sinh viên cần nắm rõ để thực hiện khóa luận tốt nghiệp:\n\n## 1. Thời gian thực hiện\n\nThời gian thực hiện KLTN là **1 học kỳ chính (15 tuần)**. Trong trường hợp đặc biệt, sinh viên có thể làm đơn đề nghị Phòng Đào tạo Đại học (P.ĐTĐH) cho phép gia hạn thời gian thực hiện KLTN nếu có sự đồng ý của Cán bộ hướng dẫn (CBHD) và Khoa.\n\n## 2",
+      "correct": false
+    },
+    {
+      "id": 136,
+      "type": "catalog_boundary",
+      "query": "Cần phân loại danh mục ngành đào tạo trình độ đại học theo hệ thống mới của Bộ thì dùng văn bản 2022 nào?",
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "response": "\n\n### Văn bản Chỉ Đán cho Phân Loại Danh Mục Năm 2022\n\nĐể phân loại danh mục ngành đào tạo trình độ đại học theo hệ thống mới ban hành năm 2022, bạn cần sử dụng văn bản quy định chính thức sau:\n\n*   **Số thứ tự:** Thông tư số **09/2022/TT-BGDĐT** (kèm ngày 06 tháng 6 năm 2022).\n*   **Tên gọi:** THÔNG TƯ quy định **Danh mục thống kê ngành đào tạo của giáo dục đại học**.\n*   **Đối tượng áp dụng:** Quy định danh mục giáo dục, đào tạo cấp IV đối với các trình độ của giáo dục đại học (bao gồm đại học",
+      "correct": true
+    },
+    {
+      "id": 137,
+      "type": "catalog_boundary",
+      "query": "Nếu hỏi danh mục giáo dục đào tạo cấp IV cũ trước bản 2022 thì mốc 2017 nào còn liên quan?",
+      "expected_doc_numbers": [
+        "24/2017/TT-BGDDT"
+      ],
+      "response": "\n\n# Mốc 2017 liên quan đến Danh mục giáo dục, đào tạo cấp IV\n\nDựa trên các tài liệu có sẵn, có hai mốc 2017 quan trọng liên quan đến Danh mục giáo dục, đào tạo cấp IV:\n\n## 1. Thông tư 24/2017/TT-BGDĐT – Mẫu ban hành Danh mục cấp IV trình độ đại học\n\nThông tư số 24/2017/TT-BGDĐT ngày 10 tháng 10 năm 2017 bao gồm \"DANH MỤC GIÁO DỤC, ĐÀO TẠO CẤP IV TRÌNH ĐỘ ĐẠI HỌC\", được ban hành trước khi Thông tư 09/2022/TT-BGDĐT thay thế [4]. Đây là văn bản chi tiết hóa khung phân loại cấp IV của hệ thống giáo ",
+      "correct": true
+    },
+    {
+      "id": 138,
+      "type": "amendment_boundary",
+      "query": "Chuẩn chương trình đào tạo chung của Bộ trước khi có các chuẩn đặc thù như vi mạch bán dẫn thì nằm ở thông tư nào?",
+      "expected_doc_numbers": [
+        "17/2021/TT-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\n**Chuẩn chương trình đào tạo chung** được áp dụng trước khi có các chuẩn đặc thù như chuẩn về vi mạch bán dẫn được quy định trong **Thông tư số 17/2021/TT-BGDĐT** ban hành ngày 22 tháng 6 năm 2021 của Bộ trưởng Bộ Giáo dục và Đào tạo.\n\n#### 1. Cơ sở pháp lý\nTheo quy định trong Chuẩn chương trình đào tạo về vi mạch bán dẫn, soạn theo Quyết định số 1314/QĐ-BGDDT ngày 13 tháng 5/2025 của Bộ trưởng Bộ Giáo dục và Đào tạo:\n> \"Chuẩn CTĐT được xây dựng theo **Thông tư số 17/2021 / TT",
+      "correct": true
+    },
+    {
+      "id": 139,
+      "type": "amendment_boundary",
+      "query": "Chuẩn CTĐT vi mạch bán dẫn bản sau khi Bộ ban hành chuẩn mới nhất thì đang là mốc nào?",
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "response": "\n\n### Cập nhật Chuẩn CTĐT về vi mạch bán dẫn và Mốc thời gian hiện tại\n\nDựa trên các tài liệu được cung cấp, tôi xin cung cấp thông tin về Chuẩn chương trình đào tạo (CTĐT) về vi mạch bán dẫn mới nhất của Bộ Giáo dục và Đào tạo:\n\n#### 📌 Thời điểm ban hành và bản sửa đổi\n\n| Tên văn bản | Ngày ban hành | Số quyết định | Trạng thái |\n| :--- | :--- | :--- | :--- |\n| **Ban bản đầu tiên** | 13/05/2025 | 1314/QĐ-BGDDT | Đã được ban hành ✅ |\n| **Bản sửa đổi** | 10/2025 | 2101/QĐ-BGDDT | Đã được sửa đổi ",
+      "correct": true
+    },
+    {
+      "id": 140,
+      "type": "admissions_boundary",
+      "query": "Tuyển sinh 2026 đã có thông tư mới của Bộ thì đừng lấy nhầm quy chế tuyển sinh 2022. Mốc nào nên được ưu tiên?",
+      "expected_doc_numbers": [
+        "06/2026/TT-BGDDT"
+      ],
+      "response": "\n\n# Hướng dẫn Tuyển sinh 2026 - Ưu tiên Quy chế Nhập học Mới\n\n## 1. Quy định sau cùng không được sử dụng là gì?\n\nTuyệt đối **KHÔNG** sử dụng **Quy chế tuyển sinh 2022** cho năm 2026. Theo thông tin trong tài liệu, các quy định sau đây đã được cập nhật hoặc thay thế:\n\n| Lĩnh vực | Quy định cũ (CÀO LOẠI) | Quy định mới (DUYỆT) |\n|----------|------------------------|----------------------|\n| **Danh mục ngành đào tạo** | Danh mục có thể chưa cập nhật hoàn toàn | **Thông tư số 09/2022/TT-BGDĐT** về D",
+      "correct": false
+    },
+    {
+      "id": 141,
+      "type": "admissions_boundary",
+      "query": "Ở giai đoạn tuyển sinh 2022, trước các quyết định tuyển sinh sau này của ĐHQG-HCM, quy chế cấp Bộ là văn bản nào?",
+      "expected_doc_numbers": [
+        "03/2022/TT-BGDDT"
+      ],
+      "response": "\n\nDựa trên thông tin trong các tài liệu tham khảo, tôi xin cung cấp thông tin như sau:\n\n## Quy chế tuyển sinh cấp Bộ áp dụng trong giai đoạn 2022\n\nTheo các văn bản được lưu trữ tại Trường Đại học Công nghệ Thông tin, ĐHQG-HCM, **Quy chế tuyển sinh áp dụng hiện hành của Bộ** được tham chiếu trong quá trình tuyển sinh 2022 và các năm tiếp theo là:\n\n**\"Quy chế tuyển sinh hiện hành của Bộ Giáo dục và Đào tạo\"**\n\n### Điểm cần lưu ý:\n\nCác văn bản này chỉ trích dẫn đến quy chế của Bộ mà **không nêu rõ ",
+      "correct": false
+    },
+    {
+      "id": 142,
+      "type": "local_vs_system",
+      "query": "Nội dung cập nhật phụ lục văn bằng, bảng điểm, giấy xác nhận cuối 2024 ở UIT nằm ở thông báo nào?",
+      "expected_doc_numbers": [
+        "1192/TB-DHCNTT"
+      ],
+      "response": "\n\n### Nội dung cập nhật thông báo cuối năm 2024\n\nDựa trên các tài liệu được cung cấp, nội dung cập nhật về phụ lục văn bằng, bảng điểm và các loại giấy tờ xác nhận đối với hệ Đại học tại Trường Đại học Công nghệ Thông tin (UIT) vào cuối năm 2024 được nêu trong thông báo chính sau:\n\n- **Tên thông báo:** \"THÔNG BÁO Về việc từ ngữ sử dụng in trên phụ lục văn bằng , bằng điểm , các loại giấy xác nhận đối với hệ đại học\".\n- **Thời gian ban hành:** Thông báo này được cập nhật và thống nhất các từ ngữ ",
+      "correct": false
+    },
+    {
+      "id": 143,
+      "type": "notice_override",
+      "query": "Sinh viên hỏi về thông báo ngừng VPET và TOEIC Bách khoa thì cần lấy đúng thông báo ngừng, không phải mốc cho phép VPET lúc dịch.",
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "response": "\n\n### Thông báo về việc Ngừng sử dụng Kết quả thi VPET và 2 Kỹ năng Nói-Viết Bách Khoa\n\nTrường Đại học Công nghệ Thông tin (ĐHCNTT) đã ban hành thông báo ngừng sử dụng kết quả bài thi Versant Professional English Test (VPET) và kết quả 2 kỹ năng nói-viết tổ chức tại Đại học Bách khoa để xét đạt chuẩn đầu ra ngoại ngữ, làm điều kiện đăng ký xét tốt nghiệp.\n\n#### 1. Về việc Ngừng sử dụng kết quả bài thi VPET\n\n- **Căn cứ pháp lý:** Công văn số 1868/ĐHQG-ĐT ngày 23-11-2021 của Giám đốc Đại học Quốc ",
+      "correct": false
+    },
+    {
+      "id": 144,
+      "type": "notice_override",
+      "query": "Một câu hỏi nhắc “thời gian dịch” và “VPET” thì đừng trả thông báo ngừng năm 2022, cần trả mốc chấp nhận trước đó.",
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "response": "\n\n#時期:The Amount of Time the Test Was Available\n\n## Thông báo về việc sử dụng kết quả VPET trong thời gian dịch bệnh\n\nTừ các tài liệu có sẵn, tôi tìm thấy thông tin về việc công nhận kết quả thi **VPET (Versant Professional English Test)** trong thời gian dịch bệnh và giãn cách xã hội như sau:\n\n### 📋 Thời điểm chấp nhận\n\nThông báo cho phép sinh viên sử dụng kết quả bài thi VPET để xét công nhận chuẩn đầu ra ngoại ngữ trình độ Đại học trong thời gian dịch bệnh, giãn cách xã hội với thời điểm thực",
+      "correct": false
+    },
+    {
+      "id": 145,
+      "type": "authority_collision",
+      "query": "Bộ quy định về ứng dụng công nghệ thông tin trong đào tạo trực tuyến năm 2023 bằng thông tư nào?",
+      "expected_doc_numbers": [
+        "30/2023/TT-BGDDT"
+      ],
+      "response": "\n\n# Quy định về Ứng Dụng Công Nghệ Thông Tin trong Đào Tạo Trực tuyến Năm 2023\n\nTheo các tài liệu đã cung cấp, bộ quy định về **ứng dụng công nghệ thông tin trong đào tạo trực tuyến năm 2023** được ban hành bằng **Thông tư số 30/2023/TT-BGDĐT** có hiệu lực từ ngày **29 tháng 12 năm 2023**.\n\n## Nội dung chính\n\nThông tư này quy định các quy định cụ thể về:\n\n- Sự chuyên tiếp giữa ứng dụng công nghệ thông tin trong quản lý và tổ chức đào tạo trực tuyến\n- Việc quản lý cơ sở dữ liệu đào tạo theo thông",
+      "correct": true
+    },
+    {
+      "id": 146,
+      "type": "amendment_boundary",
+      "query": "Trước khi có quy định trực tuyến mới năm 2023, đào tạo từ xa ở bậc đại học đang chịu khung cũ nào của Bộ?",
+      "expected_doc_numbers": [
+        "10/2017/TT-BGDDT"
+      ],
+      "response": "\n\nDựa trên các văn bản cung cấp trong Context, tôi xin trình bày thông tin về khung pháp lý quy định đào tạo từ xa at bậc đại học trước thời điểm quy định trực tuyến mới năm 2023:\n\n## Khung Pháp Lý Trước Quy Định 2023\n\n### Thực Trạng Ban Hành\n\nTheo **Thông tư số 28/2023/TT-BGDĐT** ban hành về **Quy chế đào tạo từ xa trình độ đại học** (đang biên tập tại thời điểm gần đây nhất), hệ thống quy định cũ đã được thay thế như sau:\n\n| Thời kỳ | Văn bản đăng ký | Nội dung chủ yếu |\n|---------|-----------",
+      "correct": false
+    },
+    {
+      "id": 147,
+      "type": "amendment_boundary",
+      "query": "Sau đợt sửa đổi 2023, phần đào tạo từ xa không còn chỉ nhìn bản 2017 nữa. Bản sửa nào cần được ưu tiên?",
+      "expected_doc_numbers": [
+        "28/2023/TT-BGDDT"
+      ],
+      "response": "Xin lỗi, tôi không thể cung cấp câu trả lời cho câu hỏi đó dựa trên thông tin hiện có.[no-context]",
+      "correct": false
+    },
+    {
+      "id": 148,
+      "type": "authority_collision",
+      "query": "Nói đến phê duyệt thí điểm bộ phẩm chất năng lực sinh viên tốt nghiệp thì không nên trả chuẩn CTĐT của Bộ. Cần mốc ĐHQG-HCM nào?",
+      "expected_doc_numbers": [
+        "1658/QD-DHQG"
+      ],
+      "response": "\n\n###回数: Tác giả đề cập đến việc phê duyệt thí điểmBộ phẩm chất và năng lực sinh viên tốt nghiệp ĐHQG-HCM\n\nDựa trên thông tin có trong tài liệu, Tôi đã tìm thấy thông tin liên quan đến việc phê duyệt thí điểmBộ phẩm chất và năng lực sinh viên tốt nghiệp ĐHQG-HCM. Tuy nhiên, tôi không tìm thấy thông tin cụ thể về yêu cầu \"đáp ứng\" hoặc kế hoạch thực hiện minh bạch.\n\nDưới đây là các thông tin chi tiết:\n\n#### 1. **Việc phê duyệt thí điểmBộ phẩm chất và năng lực**\n\nTheo tài liệu:\n\n- **Điều 1**: Văn ",
+      "correct": false
+    },
+    {
+      "id": 149,
+      "type": "notice_override",
+      "query": "Từ sau 19/09/2022, câu hỏi về VPET, TOEIC Bách khoa và phôi văn bằng mới nên rơi vào thông báo nào?",
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nDựa trên thông tin trong tài liệu, các nội dung về việc **ngừng sử dụng chứng chỉ VPET, TOEIC tại ĐH BK** và **việc sử dụng phôi văn bằng mới** đều nằm trong **Thông báo số 119/TB-ĐHCNTT**.\n\nDưới đây là các nội dung cụ thể được nêu trong thông báo này:\n\n| Nội dung chính | Chi tiết |\n| :--- | :--- |\n| **Ngừng sử dụng VPET** | Trường ĐHCNTT ngừng cho phép sinh viên các khóa hiện còn đang đào tạo sử dụng kết quả bài thi Versant Professional English Test (VPET) để xét đạt chuẩn đầ",
+      "correct": true
+    },
+    {
+      "id": 150,
+      "type": "cohort_boundary",
+      "query": "Khóa của mình là 2015 nhưng thủ tục tốt nghiệp kéo dài tới giờ. Nếu đối chiếu đúng mốc sửa đổi sau cùng thì chuẩn tiếng Anh phải rơi vào văn bản nào?",
+      "expected_doc_numbers": [
+        "108/QD-DHCNTT"
+      ],
+      "response": "\n\nDựa trên thông tin từ các văn bản quy định hiện có và tình trạng khóa học của bạn (khóa 2015), việc xác định chuẩn tiếng Anh áp dụng cần căn cứ vào thời điểm ghi danh và các văn bản sửa đổi sau này dành cho sinh viên tuyển sinh trước năm 2017.\n\n**Văn bản quy định áp dụng chính (Khóa 2015):**\nVì bạn thuộc khóa sinh viên năm 2015 (phiên bảnительство 2015-2016), quy định trực tiếp áp dụng đầu tiên đối với nhóm sinh viên này là **Quyết định số 125/QĐ-ĐHCNTT-ĐTĐH ngày 18 tháng 09 năm 2015**.\n- Văn ",
+      "correct": false
+    },
+    {
+      "id": 151,
+      "type": "cohort_boundary",
+      "query": "Em nhập học năm 2016 và đang rà lại điều kiện ngoại ngữ để xét tốt nghiệp. Khóa em đang theo quyết định nào?",
+      "expected_doc_numbers": [
+        "128/QD-DHCNTT-DTDH"
+      ],
+      "response": "\n\n### Xác định Quyết định Áp dụng\nVới bạn nhập học năm **2016**, điều kiện ngoại ngữ xét tốt nghiệp được xác định dựa trên **Quyết định 128/QĐ-ĐHCNTT ngày 30 tháng 8 năm 2016** (Quy định Dạy và học tiếng ngoại ngữ đối với hệ Đại học chính quy của Trường Đại học Công nghệ Thông tin). Quyết định này trực tiếp quy định nội dung đào tạo ngoại ngữ cho sinh viên nhập học năm 2016 và là văn bản ban hành riêng cho cohort 2016, thay thế quy định tạm thời năm 2015 (Quyết định 125/QĐ-ĐHCNTT-ĐTĐH ngày 18 th",
+      "correct": false
+    },
+    {
+      "id": 152,
+      "type": "cohort_boundary",
+      "query": "Em vào trường năm 2017, giờ đang xét tốt nghiệp thì chuẩn tiếng Anh của khóa em theo quyết định nào?",
+      "expected_doc_numbers": [
+        "108/QD-DHCNTT"
+      ],
+      "response": "\n\n# Chuẩn tiếng Anh cho sinh viên vào trường năm 2017\n\nXin chào em! Em đã đăng ký học từ năm 2017, đây là thời gian có các quy định chuyển đổi giữa các văn bản khác nhau. Dưới đây là thông tin chi tiết về chuẩn tiếng Anh mà khóa của em phải tuân thủ:\n\n## ⚠️ Thông tin xác định quy định áp dụng\n\n**1. Tình trạng tương tác giữa các quy định:**\n\n- Khóa học năm 2017 thuộc giai đoạn **trước năm 2019**, theo đó sinh viên **có thể lựa chọn áp dụng** quy định mới được ban hành hoặc **quy định được ban hàn",
+      "correct": false
+    },
+    {
+      "id": 153,
+      "type": "cohort_boundary",
+      "query": "Một bạn vào trường năm 2018 hỏi điều kiện tiếng Anh để chốt tốt nghiệp hôm nay. Mốc nào đúng cho cohort nằm giữa nhóm 2017 và K2019?",
+      "expected_doc_numbers": [
+        "141/QD-DHCNTT"
+      ],
+      "response": "\n\n# Điều kiện Tiếng Anh để Tốt nghiệp - Sinh viên Khóa 2018\n\nChào bạn, đây là câu trả lời về yêu cầu ngoại ngữ để tốt nghiệp đối với sinh viên nhập học năm 2018:\n\n## Mốc Thời Gian Áp Dụng Quy Định\n\nSinh viên khóa 2018 nằm trong khoảng thời gian giữa quy định năm 2017 và khóa 2019. Theo quy định của Nhà trường:\n\n> *Các khóa tuyển sinh trước năm 2019 có thể lựa chọn áp dụng quy định này hoặc quy định được ban hành trước đó.* **[5]**\n\nĐiều này có nghĩa là bạn có thể áp dụng các quy định ngoại ngữ t",
+      "correct": false
+    },
+    {
+      "id": 154,
+      "type": "cohort_boundary",
+      "query": "Cần xác định đúng chuẩn ngoại ngữ cho sinh viên K2019 hệ chính quy, không lẫn với các khóa chuyển tiếp trước đó. Nên rơi vào văn bản nào?",
+      "expected_doc_numbers": [
+        "547/QD-DHCNTT"
+      ],
+      "response": "\n\n# Về Xác Định Chuẩn Ngoại ngữ Cho Sinh viên K2019\n\n## Văn bản/phạm vi áp dụng\n\nDựa trên các văn bản quy định hiện có, sinh viên khóa K2019 hệ chính quy tại Trường Đại học Công nghệ Thông tin (ĐHCNTT) nên áp dụng **Quy định đào tạo ngoại ngữ đối với hệ đại học chính quy**, do Hiệu trưởng ban hành:\n\n- **Quyết định số: 547/QĐ-ĐHCNTT**, ngày 30 tháng 08 năm 2019 [Reference ID 1]\n\n### Độ bao phủ của văn bản\nQuyết định số 547/QĐ-ĐHCNTT quy định áp dụng bắt buộc cho các khóa tuyển sinh từ năm 2019, b",
+      "correct": true
+    },
+    {
+      "id": 155,
+      "type": "cohort_boundary",
+      "query": "Mình là K2022 hệ chính quy, hỏi đúng chuẩn tiếng Anh của intake này chứ không hỏi bản dùng chung cho 2019-2021. Trả về mốc nào mới đúng?",
+      "expected_doc_numbers": [
+        "828/QD-DHCNTT"
+      ],
+      "response": "\n\n### Trích kiện chính về xác thực ngoại ngữ tiếng Anh cho sinh viên K2022\n\nBased on the available policy documents, here is the information relevant to your question regarding English proficiency standards for the **2022 regular intake cohort** (K2022 hệ chính quy).\n\n## **Các điểm quan trọng**\n\n### **1. Chỉ tiêu chuẩn giáo trình tiếng Anh (đầu vào/đầu ra)**\n\nĐối với các cohort tuyển sinh từ năm 2022 trở đi tại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG - HCM), Trường đã thống nhất:\n\n- **Ngừng",
+      "correct": false
+    },
+    {
+      "id": 156,
+      "type": "notice_override",
+      "query": "Trong giai đoạn dịch, nếu sinh viên nộp VPET để hoàn tất chuẩn đầu ra thì UIT đã mở ngoại lệ theo thông báo nào?",
+      "expected_doc_numbers": [
+        "101/TB-DHCNTT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nTrong giai đoạn dịch bệnh và giãn cách xã hội, trường Đại học Công nghệ Thông tin (ĐHCNTT) thuộc ĐHQG-HCM đã có thông báo cho phép sinh viên sử dụng kết quả bài thi **Versant Professional English Test (VPET)** để được công nhận chuẩn đầu ra ngoại ngữ trình độ đại học.\n\nDưới đây là chi tiết về thông báo và thời gian áp dụng:\n\n#### 1. Thông báo mở ngoại lệ\n\nThông báo được ban hành vào thời gian bệnh dịch pandemic với nội dung sau:\n\n- **Tên thông báo**: THÔNG BÁO Về việc sử dụng ",
+      "correct": false
+    },
+    {
+      "id": 157,
+      "type": "notice_override",
+      "query": "Hiện nay UIT còn chấp nhận chứng chỉ VPET hoặc TOEIC Bách khoa để xét chuẩn đầu ra không? Nếu không thì theo thông báo nào?",
+      "expected_doc_numbers": [
+        "119/TB-DHCNTT"
+      ],
+      "response": "\n\n### Câu trả lời\n\n**Hiện tại, Trường Đại học Công nghệ Thông tin (UIT) KHÔNG còn chấp nhận chứng chỉ VPET hay TOEIC Bách khoa để xét chuẩn đầu ra ngoại ngữ cho sinh viên tốt nghiệp.**\n\nDưới đây là thông tin chi tiết về các thay đổi chính sách:\n\n---\n\n#### 1. Về chứng chỉ VPET (Versant Professional English Test)\n\nTrường ĐHCNTT **ngừng cho phép** sinh viên tất cả các khóa hiện còn đang đào tạo sử dụng kết quả bài thi VPET để xét đạt chuẩn đầu ra ngoại ngữ, làm điều kiện đăng ký xét tốt nghiệp **kể",
+      "correct": false
+    },
+    {
+      "id": 158,
+      "type": "notice_override",
+      "query": "UIT còn chấp nhận IELTS Indicator hoặc TOEFL iBT Home Edition để xét chuẩn ngoại ngữ không?",
+      "expected_doc_numbers": [
+        "153/TB-DHCNTT"
+      ],
+      "response": "\n\n# Câu trả lời\n\nDựa trên các tài liệu trong hệ thống, tôi xin cung cấp thông tin hoàn toàn chính xác về một vấn đề quan trọng này:\n\n## 📋 Trước tiên\n\n❌ **UIT KHÔNG CHẤP NHẬN** IELTS Indicator hoặc TOEFL iBT Home Edition để xét chuẩn ngoại ngữ.\n\n## 📄 Chi tiết thông báo\n\nTheo Thông báo của Trường Đại học Công nghệ Thông tin thuộc Đại học Quốc gia Thành phố Hồ Chí Minh, có nội dung chi tiết như sau:\n\n### 🚫 Ngừng sử dụng\n\nTrường ngừng cho phép sinh viên sử dụng kết quả bài thi ngoại ngữ quốc tế được",
+      "correct": false
+    },
+    {
+      "id": 159,
+      "type": "notice_override",
+      "query": "Sinh viên CTCLC định hướng Nhật hỏi riêng về NAT-TEST cho chuẩn quá trình. Đây là ngoại lệ chương trình nào chứ không phải quy định tiếng Anh diện rộng?",
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "response": "\n\nDựa trên các quy định hiện hành, việc sử dụng chứng chỉ **NAT-TEST** cho **chuẩn quá trình tiếng Nhật** tại **Trường Đại học Công nghệ Thông tin** thực sự là một quy định đặc thù dành riêng cho chương trình **Công nghệ Thông tin Việt Nhật (CTCLC)** hay còn gọi là **CTCLC định hướng Nhật Bản**, chứ không phải là quy định tiếng Anh diện rộng áp dụng cho toàn trường.\n\nDưới đây là chi tiết về quy định này và sự khác biệt so với quy chuẩn chung:\n\n### 1. Quy định đặc thù dành cho sinh viên CLC định ",
+      "correct": false
+    },
+    {
+      "id": 160,
+      "type": "notice_override",
+      "query": "Từ cuối năm 2024, phụ lục văn bằng và giấy xác nhận của UIT phải ghi theo thông báo nào?",
+      "expected_doc_numbers": [
+        "1192/TB-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời về quy định ghi trên phụ lục văn bằng và giấy xác nhận của UIT\n\nDựa trên thông tin được cung cấp từ các tài liệu chính thức, Trường Đại học Công nghệ Thông tin có các quy định sau liên quan đến nội dung và từ ngữ ghi trên phụ lục văn bằng, bằng điểm và giấy xác nhận.\n\n### 1. Quy định về từ ngữ sử dụng trên văn bằng\n\nTrường Đại học Công nghệ Thông tin đã thông báo thống nhất các từ ngữ sử dụng in trên phụ lục văn bằng, bằng điểm và các loại giấy xác nhận đối với hệ đại học theo Quyế",
+      "correct": false
+    },
+    {
+      "id": 161,
+      "type": "notice_override",
+      "query": "Từ sau năm 2022, nếu sinh viên mang VNU-EPT ra đối sánh chuẩn ngoại ngữ thì ĐHQG-HCM hướng dẫn theo mốc công văn nào?",
+      "expected_doc_numbers": [
+        "671/DHQG-DT"
+      ],
+      "response": "\n\n# Trả lời về việc đối sánh chuẩn ngoại ngữ với chứng chỉ VNU-EPT từ năm 2022\n\n## Cơ sở pháp lý chủ đạo\n\nĐối với việc sử dụng chứng chỉ **VNU-EPT** để công nhận chuẩn đầu vào/đầu ra tiếng Anh tại ĐHQG-HCM từ năm 2022 trở đi, trường Đại học Quốc gia Thành phố Hồ Chí Minh căn cứ theo:\n\n- **Thông báo số 255/TB-ĐHQG ngày 21/02/2022** về kết luận cuộc họp của Ban Giám đốc ĐHQG-HCM với Trung tâm Khảo thí và Đánh giá Chất lượng đào tạo về kỳ thi chứng chỉ tiếng Anh ĐHQG-HCM (VNU-EPT)\n\nTheo văn bản này",
+      "correct": false
+    },
+    {
+      "id": 162,
+      "type": "notice_override",
+      "query": "Sinh viên CTCLC định hướng Nhật muốn dùng NAT-TEST để đáp ứng chuẩn quá trình thì phải xem thông báo nào của UIT?",
+      "expected_doc_numbers": [
+        "35/TB-DHCNTT"
+      ],
+      "response": "\n\n### Về việc sử dụng NAT-TEST để đáp ứng chuẩn quá trình tiếng Nhật cho sinh viên CLC\n\nDựa trên các văn bản quy định hiện hành, sinh viên chương trình **CLC định hướng Nhật Bản** muốn sử dụng chứng chỉ NAT-TEST để đáp ứng chuẩn quá trình tiếng Nhật cần tham khảo thông báo chính thức sau của Trường Đại học Công nghệ Thông tin (ĐHCNTT):\n\n**Thông báo về việc công nhận chứng chỉ NAT-TEST cho chuẩn quá trình tiếng Nhật**\n\nThông báo này quy định cụ thể về điều kiện công nhận chứng chỉ NAT-TEST để xét",
+      "correct": false
+    },
+    {
+      "id": 163,
+      "type": "amendment_boundary",
+      "query": "Trước lần cập nhật cuối năm 2023, UIT tổ chức thi tập trung theo quyết định nào?",
+      "expected_doc_numbers": [
+        "1139/QD-DHCNTT"
+      ],
+      "response": "\n\nDựa trên các tài liệu có sẵn, tôi có thể cung cấp thông tin về quyết định tổ chức thi tập trung của UIT trước khi có sự cập nhật vào năm 2023.\n\n## Quyết định tổ chức thi tập trung trước năm 2023\n\nTheo tài liệu **Quyết định số 1139/QĐ-ĐHCNTT ngày 20 tháng 12 năm 2022**, UIT đã ban hành quy định về việc **Tổ chức thi các môn học hệ đại học chính quy** [1](https://daa.uit.edu.vn/sites/daa/files/202309/1139_qd-dhcntt_20-12-2022_to_chuc_thi_cac_mon_hoc_he_dai_hoc_chinh_quy.pdf).\n\n### Một số nội dun",
+      "correct": true
+    },
+    {
+      "id": 164,
+      "type": "amendment_boundary",
+      "query": "Hiện nay UIT đang áp dụng quyết định nào về tổ chức thi tập trung?",
+      "expected_doc_numbers": [
+        "1376/QD-DHCNTT"
+      ],
+      "response": "\n\n## Quyết định về Tổ chức Thi Tập trung tại UIT\n\nDựa trên thông tin từ các tài liệu của Trường Đại học Công nghệ Thông tin, UIT đang áp dụng các quy định sau về tổ chức thi tập trung:\n\n### 1. Quy định chính về tổ chức thi\n\n**Quyết định số 1139/QĐ-ĐHCNTT ngày 20 tháng 12 năm 2022** am Quốc quy định chi tiết về tổ chức thi các môn học hệ đại học chính quy của Trường Đại học Công nghệ Thông tin. Điều này bao gồm:\n\n- **Phạm vi áp dụng**: Hệ đại học chính quy (các chương trình đào tạo đại học chính ",
+      "correct": false
+    },
+    {
+      "id": 165,
+      "type": "amendment_boundary",
+      "query": "Nếu cần tra chuẩn ngoại ngữ áp dụng vào khoảng tháng 5/2024 cho hệ chính quy ở UIT thì xem quyết định nào?",
+      "expected_doc_numbers": [
+        "364/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quyết định áp dụng cho chuẩn ngoại ngữ UIT vào tháng 5/2024 (Hệ chính quy)\n\nĐối với thời điểm tháng 5/2024, văn bản quy định chuẩn ngoại ngữ có hiệu lực áp dụng cho sinh viên hệ chính quy tại Trường Đại học Công nghệ Thông tin (UIT) là **Quyết định số 828/QĐ-ĐHCNTT ngày 04 tháng 10 năm 2022** của Hiệu trưởng Trường, được sửa đổi, bổ sung để quy định về đào tạo ngoại ngữ đến khóa tuyển sinh năm 2022 và các khóa sau đó. Quyết định này thay thế Quy định do Quyết định 547/QĐ-ĐHCNTT ngày 30 thá",
+      "correct": false
+    },
+    {
+      "id": 166,
+      "type": "amendment_boundary",
+      "query": "Sau đợt cập nhật tháng 6/2024, chuẩn ngoại ngữ mới nhất cho hệ chính quy ở UIT nằm ở quyết định nào?",
+      "expected_doc_numbers": [
+        "560/QD-DHCNTT"
+      ],
+      "response": "\n\n# Tìm kiếm về Chuẩn ngoại ngữ Sau Cập nhật Tháng 6/2024\n\nTheo các tài liệu được cung cấp trong ngữ cảnh, thông tin cụ thể về đợt cập nhật chuẩn ngoại ngữ vào **tháng 6 năm 2024** cho hệ chính quy của Trường Đại học Công nghệ Thông tin (UIT) **không được tìm thấy**. Các văn bản hiện có không ghi nhận một quyết định nào ban hành vào thời điểm này liên quan trực tiếp đến việc cập nhật lại quy định ngữ mới nhất sau mốc tháng 6/2024.\n\nTuy nhiên, dựa trên các tài liệu có sẵn, văn bản gần đây nhất về",
+      "correct": false
+    },
+    {
+      "id": 167,
+      "type": "admissions_boundary",
+      "query": "Quy chế tuyển sinh đại học chính quy riêng của UIT hiện nay là quyết định nào?",
+      "expected_doc_numbers": [
+        "354/QD-DHCNTT"
+      ],
+      "response": "\n\n# Thông tin về Quy chế Tuyển sinh Đại học chính quy của UIT\n\n## Quyết định ban hành\n\nTheo các tài liệu được cung cấp, **Quy chế Tuyển sinh trình độ đại học** của Trường Đại học Công nghệ Thông tin (ĐHCNTT) được **ban hành kèm theo Quyết định số 954/QĐ-ĐHCNTT, ngày 14 tháng Năm 2023** của Hiệu trưởng Trường Đại học Công nghệ Thông tin.\n\nQuy chế này đơn vị phạm vi điều chỉnh các nội dung liên quan đến tuyển sinh trình độ đại học tại UIT, bao gồm:\n\n## Phạm vi điều chỉnh\n\nQuy chế quy định về:\n- Qu",
+      "correct": false
+    },
+    {
+      "id": 168,
+      "type": "admissions_boundary",
+      "query": "Sau khi ĐHQG-HCM đổi quy chế tuyển sinh năm 2022, các trường thành viên đang áp dụng quyết định nào ở cấp ĐHQG?",
+      "expected_doc_numbers": [
+        "707/QD-DHQG"
+      ],
+      "response": "\n\n### Answer\n\nDựa trên thông tin từ các tài liệu, sau khi ĐHQG-HCM thay đổi quy chế tuyển sinh năm 2022, các trường thành viên đang áp dụng các quyết định cấp ĐHQG-HCM sau:\n\n---\n\n## 📌 Quyết định Chính Về Quy Chế Tuyển Sinh Trình Độ Đại Học\n\n**Quyết định số 213/QĐ-ĐHQG ngày 30 tháng 9 năm 2022** của Giám đốc Đại học Quốc gia Thành phố Hồ Chí Minh về việc ban hành Quy chế đào tạo đại học.\n\n- Quyết định này **thay thế** Quyết định số 262/QĐ-ĐHQG ngày 20 tháng 4 năm 2017\n- **Các trường thành viên áp",
+      "correct": false
+    },
+    {
+      "id": 169,
+      "type": "admissions_boundary",
+      "query": "Trước khi ĐHQG-HCM đổi quy chế tuyển sinh năm 2022 thì áp dụng quyết định nào?",
+      "expected_doc_numbers": [
+        "836/QD-DHQG"
+      ],
+      "response": "\n\n### Về Quyết định Áp dụng Trước Khi Đổi Quy chế Tuyển sinh Năm 2022\n\nDựa trên thông tin trong các tài liệu đã cung cấp, có thể mạnh dạn nêu rõ các quyết định trước khi có hiệu lực vào năm 2022 liên quan đến công tác chọn sinh như sau:\n\n### 1. Quyết Định Về Quy Chế Đào Tạo Đại Học\n\nCăn cứ vào **Quyết định số 262 / QĐ-ĐHQG ngày 20 tháng 4 năm 2017** của Giám đốc Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) về việc ban hành Quy chế đào tạo đại học, đã được sửa đổi bởi **Quyết định số 170 / Q",
+      "correct": false
+    },
+    {
+      "id": 170,
+      "type": "admissions_boundary",
+      "query": "Trước chu kỳ tuyển sinh 2026, việc xác định chỉ tiêu tuyển sinh ở cấp Bộ được hướng dẫn theo thông tư nào?",
+      "expected_doc_numbers": [
+        "03/2022/TT-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nTrước chu kỳ tuyển sinh 2026, việc xác định chỉ tiêu tuyển sinh ở cấp Bộ được hướng dẫn theo **Thông tư quy định về việc xác định chỉ tiêu tuyển sinh đại học, thạc sĩ, tiến sĩ và chỉ tiêu tuyển sinh cao đẳng ngành Giáo dục Mầm non**, do Bộ Giáo dục và Đào tạo ban hành.\n\nCăn cứ vào các văn bản chính sách trong hệ thống, cụ thể:\n\n**1. Thông tư về xác định chỉ tiêu tuyển sinh (áp dụng từ năm 2022)**\n\nTheo Thông tư của Bộ trưởng Bộ Giáo dục và Đào tạo ban hành ngày **04 tháng 3 nă",
+      "correct": false
+    },
+    {
+      "id": 171,
+      "type": "admissions_boundary",
+      "query": "Tuyển sinh đại học năm 2026 ở cấp Bộ đang áp dụng thông tư nào mới nhất?",
+      "expected_doc_numbers": [
+        "06/2026/TT-BGDDT"
+      ],
+      "response": "\n\n# Quy định về Tuyển sinh Đại học năm 2026\n\nDựa trên các tài liệu có sẵn, tôi xin cung cấp thông tin về các văn bản pháp lý liên quan đến tuyển sinh đại học:\n\n## Văn bản Mới Nhất Liên Quan\n\n### 1. Luật Giáo dục Đại học Hiệu lực từ 2026\n*Căn cứ theo Luật Giáo dục đại học (đã được sửa đổi, bổ sung)* có hiệu lực thi hành từ **ngày 01 tháng 01 năm 2026** - bao gồm các điều khoản với hiệu lực từ ngày 01 tháng 7 năm 2026 [3].\n\nCho đến gặp cần chính xác hơn cho tuyển sinh đại học năm 2026, cần tham kh",
+      "correct": false
+    },
+    {
+      "id": 172,
+      "type": "admissions_boundary",
+      "query": "Ngành Truyền thông đa phương tiện của UIT được phép mở đào tạo theo quyết định nào năm 2025?",
+      "expected_doc_numbers": [
+        "491/QD-DHCNTT"
+      ],
+      "response": "\n\n### Ngành Truyền thông đa phương tiện của UIT được mở đào tạo theo Quyết định số 491/QĐ-ĐHCNTT:\n\nThuật ngữ **\"Truyền thông đa phương tiện\"** tại Trường Đại học Công nghệ Thông tin (UIT) được phép mở đào tạo theo **Quyết định số 491/QĐ-ĐHCNTT ngày 21 tháng 04 năm 2025**.\n\n#### Chi tiết về ngành đào tạo:\n\n| Tiêu chí | Nội dung |\n|----------|---------|\n| **Mã ngành** | 7320104 |\n| **Tên ngành đào tạo** | Truyền thông đa phương tiện |\n| **Trình độ đào tạo** | Đại học |\n| **Loại văn bằng** | Cử nhâ",
+      "correct": true
+    },
+    {
+      "id": 173,
+      "type": "admissions_boundary",
+      "query": "Đề án mở ngành Khoa học dữ liệu của UIT gắn với quyết định nào?",
+      "expected_doc_numbers": [
+        "540/QD-DHCNTT"
+      ],
+      "response": "\n\n### Xét vai trò và Lời đầu tiên\nDựa trên các tài liệu cung cấp, Đề án mở ngành Khoa học dữ liệu của Trường Đại học Công nghệ Thông tin (UIT) được ban hành và thực hiện gắn liền với quy định mở ngành đào tạo theo **Quyết định số 1021/QĐ-ĐHCNTT ngày 04 tháng 10 năm 2023** của Hiệu trưởng Trường Đại học Công nghệ Thông tin.\n\n### Chi tiết về Quyết định và Chương trình\nQuyết định này quy định về mở ngành đào tạo trình độ đại học, thạc sĩ và tiến sĩ tại trường, bao gồm các nội dung về điều kiện, trì",
+      "correct": false
+    },
+    {
+      "id": 174,
+      "type": "local_vs_system",
+      "query": "Trước khi UIT ban hành bản chương trình tài năng năm 2025, chương trình tài năng của trường đang theo quyết định nào?",
+      "expected_doc_numbers": [
+        "131/QD-DHCNTT"
+      ],
+      "response": "\n\n### Trả lời\n\nTrước khi UIT ban hành bản quy định Chương trình Tài năng năm 2025, trường đang tuân theo **Quyết định số 191/QĐ-ĐHCNTT ngày 08 tháng 9 năm 2022** của Hiệu trưởng Trường Đại học Công nghệ Thông tin.\n\nCụ thể, các thông tin liên quan được đề cập như sau:\n\n*   **Quy định hiện hành năm 2025:** Quyết định số 1032/QĐ-ĐHCNTT ngày 03 tháng 9 năm 2025 của Hiệu trưởng Trường ĐHCNTT, có hiệu lực thi hành từ học kỳ 1 năm học 2026 - 2027. Từ thời điểm này, các quy định trước đây trái với quy đ",
+      "correct": false
+    },
+    {
+      "id": 175,
+      "type": "amendment_boundary",
+      "query": "Hiện nay chuẩn chương trình đào tạo vi mạch bán dẫn ở cấp Bộ đang theo quyết định sửa đổi nào?",
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "response": "\n\n### Chuẩn chương trình đào tạo về vi mạch bán dẫn\n\nHiện nay, **Chuẩn chương trình đào tạo về vi mạch bán dẫn trình độ đại học, thạc sĩ** được chính thức ban hành kèm theo **Quyết định số 1314/QĐ-BGDĐT ngày 13 tháng 5 năm 2025** của Bộ trưởng Bộ Giáo dục và Đào tạo, áp dụng cho các cơ sở giáo dục đại học tham gia thực hiện Chương trình \"Phát triển nguồn nhân lực ngành công nghiệp bán dẫn đến năm 2030, định hướng đến năm 2050\" theo Quyết định số 1017/QĐ-TTg ngày 21/9/2024 của Thủ tướng Chính phủ",
+      "correct": false
+    },
+    {
+      "id": 176,
+      "type": "local_vs_system",
+      "query": "Sinh viên hệ đào tạo từ xa của UIT hiện đang học theo quy chế nào của trường?",
+      "expected_doc_numbers": [
+        "507/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy chế áp dụng cho sinh viên Hệ đào tạo từ xa UIT\n\nSinh viên hệ đào tạo từ xa (ĐTTX) của **Trường Đại học Công nghệ Thông tin (ĐHCNTT)** thuộc **Đại học Quốc gia TP. HCM** hiện đang học theo quy chế đào tạo từ xa trình độ đại học do chính trường ban hành.\n\n#### 1. Cơ sở quy định\nQuy chế này được xây dựng dựa trên cơ sở pháp lý của quy chế đào tạo đại học hiện hành để điều chỉnh, quản lý các hoạt động đào tạo từ xa tại ĐHCNTT. Theo đó, quy định này quy định về:\n\n*   Những quy định chung\n* ",
+      "correct": false
+    },
+    {
+      "id": 177,
+      "type": "local_vs_system",
+      "query": "Nếu hỏi chung về việc tổ chức dạy và học trực tuyến hoặc blended learning ở UIT thì nên xem quyết định nào?",
+      "expected_doc_numbers": [
+        "196/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quyết định và Tài liệu Tham chiếu\n\nNếu bạn hỏi chung về việc tổ chức dạy và học trực tuyến hoặc blended learning (kết hợp trực tuyến và trực tiếp) tại Trường Đại học Công nghệ Thông tin - ĐHQG-HCM (UIT), bạn nên xem các tài liệu sau đây:\n\n---\n\n## 📋 Quyết định Chính\n\n**Quyết định số 196/QĐ-ĐHCNTT ngày 16 tháng 03 năm 2023** của Hiệu trưởng Trường Đại học Công nghệ Thông tin về ban hành *Quy định dạy và học theo phương thức trực tuyến và phương thức kết hợp*.\n\nTài liệu này quy định chi tiết ",
+      "correct": true
+    },
+    {
+      "id": 178,
+      "type": "local_vs_system",
+      "query": "Riêng việc đánh giá kết quả học tập theo hình thức trực tuyến ở UIT thì áp dụng quyết định nào?",
+      "expected_doc_numbers": [
+        "1141/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy định về đánh giá kết quả học tập trực tuyến tại UIT\n\n## Quy định áp dụng\n\nTại **Trường Đại học Công nghệ Thông tin (UIT)**, quy định về đánh giá kết quả học tập theo hình thức trực tuyến được quản lý bằng các văn bản sau:\n\n### 1. Quy định cấp trường (UIT)\nUIT đã ban hành **Quy định tổ chức đánh giá kết quả học tập theo hình thức trực tuyến** cụ thể cho trường, được ban hành kèm theo Quyết định số có nội dung chi tiết về:\n\n- **Phạm vi điều chỉnh**: Bao gồm thiết bị và hệ thống thi trực tu",
+      "correct": false
+    },
+    {
+      "id": 179,
+      "type": "local_vs_system",
+      "query": "UIT hiện tổ chức thi trên máy tính theo quyết định nào?",
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "response": "\n\nTheo tài liệu đã cung cấp, Trường Đại học Công nghệ Thông tin (UIT) hiện tổ chức thi trên máy tính chủ yếu dựa theo **Quyết định số 135/QĐ-ĐHCNTT** do Hiệu trưởng Trường ban hành.\n\nCụ thể, Quyết định này ban hành kèm theo văn bản là **\"Quy định về tổ chức thi trên máy tính của Trường Đại học Công nghệ Thông tin\"**, có các điều khoản quy định như sau:\n*   Quy định này áp dụng đối với các môn học được tổ chức thi theo hình thức thi trên máy tính tại phòng máy tính của Trường (khối đại học).\n*   ",
+      "correct": true
+    },
+    {
+      "id": 180,
+      "type": "local_vs_system",
+      "query": "UIT có quy định nội bộ nào về mở ngành đào tạo?",
+      "expected_doc_numbers": [
+        "1021/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy định Nội bộ về Mở Ngành Đào tạo tại UIT\n\n## Quy định Tổng quát\n\nTrước hết, UIT có quy định nội bộ được ban hành trên cơ sở pháp lý của ĐHQG-HCM và Luật Giáo dục đại học. Quy định này được trình bày chi tiết trong các văn bản dưới đây:\n\n### 1. Quyết định Quy định mở ngành đào tạo (ĐHQG-HCM)\nUIT áp dụng **Quyết định số 540/QĐ-ĐHQG quy định mở ngành đào tạo trình độ đại học, thạc sĩ, tiến sĩ**, có hiệu lực từ ngày 09 tháng 05 năm 2023 của ĐHQG-HCM. Quyết định này thống nhất quy trình và điề",
+      "correct": false
+    },
+    {
+      "id": 181,
+      "type": "local_vs_system",
+      "query": "Sinh viên xin công nhận tín chỉ tại UIT cần quy trình nội bộ của trường chứ không hỏi chính sách MOOC cấp trên. Mốc nào mới đúng?",
+      "expected_doc_numbers": [
+        "412/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy Trình Công Nhận Tín Chỉ Tại UIT\n\nQuy trình công nhận tín chỉ tại **Trường Đại học Công nghệ Thông tin (UIT)** có quy định cụ thể theo **Quyết định số A12/QĐ-ĐHCNTT ngày 27/03/2025** của Hiệu trưởng, đảm bảo tính minh bạch và công bằng trong việc công nhận tín chỉ từ các cơ sở giáo dục trong nước, nước ngoài, bao gồm cả các khóa học **MOOCs do ĐHQG-HCM tổ chức**. Quy trình này dành cho sinh viên hệ chính quy và từ xa, không áp dụng cho sinh viên các chương trình liên kết.\n\n#### 1. Mục Đ",
+      "correct": false
+    },
+    {
+      "id": 182,
+      "type": "local_vs_system",
+      "query": "Quản lý chương trình liên kết đào tạo với nước ngoài bậc đại học ở UIT hiện phải bám theo quy định nội bộ nào của trường?",
+      "expected_doc_numbers": [
+        "451/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy định Quản lý Chương trình Liên kết Đào tạo với Nước ngoài Bậc Đại học tại UIT\n\nQuản lý chương trình liên kết đào tạo với nước ngoài bậc đại học tại Trường Đại học Công nghệ Thông tin (ĐHCNTT - UIT) hiện đang thực hiện theo **Quyết định số A51/QĐ-ĐHCNTT** ngày 10 tháng 4 năm 2025 của Hiệu trưởng Trường, kèm theo văn bản:\n\n## **Quy định tổ chức, quản lý chương trình liên kết đào tạo với nước ngoài trình độ đại học tại Trường Đại học Công nghệ Thông tin**\n\nVăn bản này được cập nhật và ban h",
+      "correct": false
+    },
+    {
+      "id": 183,
+      "type": "workflow_boundary",
+      "query": "Một khoa muốn làm quy trình đánh giá và cập nhật CTĐT ở UIT thì phải xem quyết định nào?",
+      "expected_doc_numbers": [
+        "185/QD-DHCNTT"
+      ],
+      "response": "\n\n# Quy định về Quy trình đánh giá và cập nhật CTĐT\n\n## Quyết định cần tham khảo\n\nĐối với công tác đánh giá và cập nhật chương trình đào tạo (CTĐT) tại Trường Đại học Công nghệ Thông tin (ĐHCNTT), **Khoa** cần tham khảo và làm theo các quy định dựa trên **Quyết định số 185/QĐ-ĐHCNTT ngày 30 tháng 3 năm 2018** của Hiệu trưởng Trường Đại học Công nghệ Thông tin. Quyết định này ban hành kèm theo **Quy định về Quy trình đánh giá, Cập nhật Chương trình đào tạo trình độ Đại học / Sau đại học**.\n\n## Nộ",
+      "correct": true
+    },
+    {
+      "id": 184,
+      "type": "local_vs_system",
+      "query": "Quy định riêng của UIT về giảng viên và trợ giảng môn học là quyết định nào?",
+      "expected_doc_numbers": [
+        "975/QD-DHCNTT"
+      ],
+      "response": "\n\n### Thông tin về Quy định Giảng viên và Trợ giảng môn học tại UIT\n\nQuy định riêng của Trường Đại học Công nghệ Thông tin (ĐH CNTT) về giảng viên và trợ giảng môn học được ban hành cụ thể dưới dạng một văn bản pháp lý nội bộ dựa trên thông tin trong tài liệu. Các nội dung chính bao gồm:\n\n*   **Tên Quyết định:** Quy định về giảng viên giảng và trợ giảng môn học.\n*   **Số quyết định:** Ban hành kèm theo **Quyết định số 915 / QĐ-ĐHCNTT**.\n*   **Thời gian ban hành:** Ngày **08 tháng 08 năm 2025**.\n",
+      "correct": false
+    },
+    {
+      "id": 185,
+      "type": "local_vs_system",
+      "query": "UIT hiện áp dụng quyết định nào về liêm chính học thuật?",
+      "expected_doc_numbers": [
+        "851/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quyết định đang áp dụng về Liêm chính học thuật\n\nHiện tại, Trường Đại học Công nghệ Thông tin (UIT) đang áp dụng quy định về Liêm chính học thuật được ban hành kèm theo **Quyết định số 851/QĐ-ĐHCNTT** có hiệu lực từ năm **2024**.\n\nQuyết định này quy định cách thức quản lý, kiểm soát và xử lý các vấn đề liên quan đến liêm chính học thuật (LCHT) trong quá trình học tập, đào tạo và nghiên cứu khoa học tại trường. Nội dung quy định xác định phạm vi áp dụng đối với viên chức, người lao động và ",
+      "correct": true
+    },
+    {
+      "id": 186,
+      "type": "local_vs_system",
+      "query": "Điều kiện làm khóa luận tốt nghiệp hệ chính quy ở UIT được quy định tại quyết định nào?",
+      "expected_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "response": "\n\n# Điều kiện làm khóa luận tốt nghiệp hệ chính quy đã được quy định trong các tài liệu sau:\n\n## ✅ Quyết định适用的 Darstellung văn bản\n\n| Quyết định | Ngày ban hành | Nội dung liên quan |\n|------------|---------------|-------------------|\n| **Quyết định số: 159/QĐ-ĐHCNTT** | 05/03/2024 | Quy định về khóa luận tốt nghiệp cho bậc đại học hệ chính quy |\n\n---\n\n## 📋 Nội dung chi tiết về điều kiện\n\n### 1. Điều kiện cơ bản (chuyển từ Quy chế đào tạo)\n\nTheo **Quy chế đào tạo đại học hệ chính quy**, sinh v",
+      "correct": true
+    },
+    {
+      "id": 187,
+      "type": "workflow_boundary",
+      "query": "Nếu sinh viên hỏi quy định chung về khóa luận tốt nghiệp hệ chính quy ở UIT thì xem quyết định nào?",
+      "expected_doc_numbers": [
+        "159/QD-DHCNTT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nQuy định chung về khóa luận tốt nghiệp hệ chính quy tại Trường Đại học Công nghệ Thông tin được quy định cụ thể qua các văn bản sau:\n\n**1. Quy định về quy trình nộp khóa luận tốt nghiệp sau khi bảo vệ**\nQuy trình nộp khóa luận tốt nghiệp sau khi bảo vệ trước Hội đồng bảo vệ khóa luận tốt nghiệp được ban hành kèm theo **Quyết định số: 583 / QĐ-ĐHCNTT , ngày 12 tháng 6 năm 2023** của Hiệu trưởng Trường Đại học Công nghệ Thông tin. Quy trình này áp dụng cho sinh viên hệ chính quy",
+      "correct": false
+    },
+    {
+      "id": 188,
+      "type": "workflow_boundary",
+      "query": "Sau khi đã bảo vệ xong, câu hỏi về bước nộp khóa luận phải đổ vào quy trình riêng nào chứ không quay lại quy định làm khóa luận ban đầu?",
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "response": "\n\n### Quy trình nộp khóa luận sau khi bảo vệ có quy định riêng\n\n**Có, sau khi bảo vệ khóa luận tốt nghiệp (KLTN), sinh viên phải tuân theo một quy trình nộp báo cáo riêng biệt**, không quay lại quy định làm khóa luận ban đầu. Thông tin chi tiết như sau:\n\n---\n\n## 1. Văn bản quy định riêng cho nộp báo cáo sau bảo vệ\n\nTheo tài liệu từ Trường Đại học Công nghệ Thông tin, có tồn tại quy trình riêng được ban hành với Quyết định **số 583 / QĐ-ĐHCNTT**, ngày **12 tháng 6 năm 2023** của Hiệu trưởng Trườn",
+      "correct": true
+    },
+    {
+      "id": 189,
+      "type": "catalog_boundary",
+      "query": "Danh mục thống kê ngành đào tạo hiện hành của Bộ được ban hành theo thông tư nào?",
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "response": "\n\nDanh mục thống kê ngành đào tạo hiện hành của Bộ Giáo dục và Đào tạo được quy định và ban hành dựa trên văn bản pháp quy cơ bản sau:\n\n**Thông tư số 09/2022/TT-BGDĐT**\n*   **Tên đề văn:** Thông tư Quy định Danh mục thống kê ngành đào tạo của giáo dục đại học.\n*   **Thời gian ban hành:** Ngày 06 tháng 6 năm 2022.\n*   **Thời điểm có hiệu lực:** Thông tư có hiệu lực thi hành kể từ ngày 22 tháng 7 năm 2022.\n*   **Nội dung chính:** Thông tư quy định việc xây dựng, ban hành, sử dụng và cập nhật Danh ",
+      "correct": true
+    },
+    {
+      "id": 190,
+      "type": "catalog_boundary",
+      "query": "Nếu cần tra hệ danh mục ngành đào tạo cũ trước năm 2022 thì xem thông tư nào?",
+      "expected_doc_numbers": [
+        "24/2017/TT-BGDDT"
+      ],
+      "response": "\n\n### Câu hỏi cần tra cứu danh mục ngành đào tạo cũ trước năm 2022\n\nTrước năm 2022, việc tra cứu hệ danh mục ngành đào tạo (danh mục giáo dục, đào tạo cấp IV) được quy định bởi các Thông tư của **Bộ Giáo dục và Đào tạo** được ban hành từ năm 2017 và đã được thay thế bởi các quy định mới từ năm 2022.\n\nDưới đây là các tài liệu tham khảo cụ thể cho mỗi trình độ đào tạo:\n\n#### 1. Danh mục ngành đào tạo trình độ Đại học\n- Trước năm 2022, danh mục được ban hành theo **Thông tư số 24/2017/TT-BGDĐT** ng",
+      "correct": true
+    },
+    {
+      "id": 191,
+      "type": "authority_collision",
+      "query": "Chuẩn chương trình đào tạo trình độ đại học chung ở cấp Bộ hiện nằm ở thông tư nào?",
+      "expected_doc_numbers": [
+        "17/2021/TT-BGDDT"
+      ],
+      "response": "\n\n### **Thông tư quy định về Chuẩn chương trình đào tạo trình độ đại học**\n\nTheo quy định hiện hành của Bộ Giáo dục và Đào tạo, chuẩn chương trình đào tạo trình độ đại học chung ở cấp Bộ được quy định trong **Thông tư số 17/2021/TT-BGDĐT** do Bộ trưởng Bộ Giáo dục và Đào tạo ban hành ngày 22 tháng 6 năm 2021. Thông tư này quy định về chuẩn chương trình đào tạo, quy trình xây dựng, thẩm định và ban hành chương trình đào tạo các trình độ của giáo dục đại học.\n\nThông tư này có hiệu lực thi hành kể ",
+      "correct": true
+    },
+    {
+      "id": 192,
+      "type": "authority_collision",
+      "query": "Chuẩn riêng cho chương trình kỹ sư tài năng hoặc thạc sĩ tài năng lĩnh vực STEM được ban hành theo quyết định nào?",
+      "expected_doc_numbers": [
+        "2627/QD-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nChuẩn chương trình đào tạo kỹ sư tài năng hoặc thạc sĩ tài năng thuộc các lĩnh vực STEM được ban hành theo **Quyết định số 2627/QĐ-BGDDT ngày 17 tháng 9 năm 2025** của Bộ trưởng Bộ Giáo dục và Đào tạo.\n\n**Chi tiết nội dung:**\n\n**1. Tên văn bản ban hành**\nChuẩn chương trình đào tạo kỹ sư, thạc sĩ tài năng thuộc các lĩnh vực khoa học, công nghệ, kỹ thuật và toán (STEM) do Bộ Giáo dục và Đào tạo ban hành kèm theo Quyết định số 2627/QĐ-BGDDT ngày 17/9/2025.\n\n**2. Các lĩnh vực STEM",
+      "correct": true
+    },
+    {
+      "id": 193,
+      "type": "amendment_boundary",
+      "query": "Sau lần sửa đổi gần nhất, chuẩn CTĐT vi mạch bán dẫn hiện hành ở cấp Bộ là quyết định nào?",
+      "expected_doc_numbers": [
+        "2101/QD-BGDDT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nPhân tích các tài liệu trong ngữ cảnh, thông tin về bản sửa đổi gần nhất đối với Chuẩn Chương trình đào tạo (CTĐT) về Vi mạch bán dẫn như sau:\n\n#### Quyết định ban hành chuẩn CTĐT\nChuẩn chương trình đào tạo về vi mạch bán dẫn trình độ đại học, thạc sĩ được **ban hành kèm theo Quyết định số 1314/QĐ-BGDDT ngày 13 tháng 5 năm 2025** của Bộ trưởng Bộ Giáo dục và Đào tạo [1].\n\n#### Quyết định sửa đổi gần nhất\nSau lần ban hành ban đầu, Chuẩn CTĐT đã được **sửa đổi thông qua Quyết đị",
+      "correct": false
+    },
+    {
+      "id": 194,
+      "type": "local_vs_system",
+      "query": "Nếu hỏi về tổ chức dạy và học trực tuyến hoặc blended learning ở UIT, chưa tính phần đánh giá kết quả học tập, thì xem quyết định nào?",
+      "expected_doc_numbers": [
+        "196/QD-DHCNTT"
+      ],
+      "response": "\n\n### Câu trả lời\n\nNếu bạn tìm kiếm về quy định tổ chức dạy và học trực tuyến hoặc blended learning (dạy học kết hợp) tại Trường Đại học Công nghệ Thông tin (UIT), trừ các phần về đánh giá kết quả học tập, thì **Quyết định số 196/QD-ĐHCNTT dated 16/03/2023** là văn bản chính liên quan.\n\n### Chi tiết về quyết định\n\nVăn bản **\"Quy định dạy và học theo phương thức trực tuyến và phương thức dạy học kết hợp\"** (Quyết định số 196/QD-ĐHCNTT ngày 16/3/2023) bao gồm các nội dung chính sau:\n\n#### 1. Phươn",
+      "correct": true
+    },
+    {
+      "id": 195,
+      "type": "workflow_boundary",
+      "query": "UIT hiện tổ chức thi trên máy tính theo quyết định nào?",
+      "expected_doc_numbers": [
+        "135/QD-DHCNTT"
+      ],
+      "response": "\n\nTheo tài liệu đã cung cấp, Trường Đại học Công nghệ Thông tin (UIT) hiện tổ chức thi trên máy tính chủ yếu dựa theo **Quyết định số 135/QĐ-ĐHCNTT** do Hiệu trưởng Trường ban hành.\n\nCụ thể, Quyết định này ban hành kèm theo văn bản là **\"Quy định về tổ chức thi trên máy tính của Trường Đại học Công nghệ Thông tin\"**, có các điều khoản quy định như sau:\n*   Quy định này áp dụng đối với các môn học được tổ chức thi theo hình thức thi trên máy tính tại phòng máy tính của Trường (khối đại học).\n*   ",
+      "correct": true
+    },
+    {
+      "id": 196,
+      "type": "workflow_boundary",
+      "query": "Sau khi đã bảo vệ khóa luận xong, sinh viên phải theo quy trình nào để nộp khóa luận?",
+      "expected_doc_numbers": [
+        "583/QD-DHCNTT"
+      ],
+      "response": "\n\nDựa trên **Quy trình nộp khóa luận tốt nghiệp sau khi bảo vệ trước Hội đồng bảo vệ khóa luận tốt nghiệp của Trường Đại học Công nghệ Thông tin** (Ban hành kèm Quyết định số 583/QĐ-ĐHCNTT), quy trình nộp báo cáo khóa luận tốt nghiệp (KLTN) được thực hiện qua các bước cụ thể sau:\n\nQuy trình này bắt đầu sau thời điểm bảo vệ (`t`), cụ thể là từ sau ngày `t+1`, và phải tuân thủ nghiêm ngặt các mốc thời gian để đảm bảo tính hợp lệ. Sinh viên đã bảo vệ có kết quả Đạt (kể cả trường hợp cần chỉnh sửa) ",
+      "correct": true
+    },
+    {
+      "id": 197,
+      "type": "workflow_boundary",
+      "query": "Nếu cần hỏi riêng về việc công nhận môn học theo hình thức MOOC thì nên xem quyết định nào?",
+      "expected_doc_numbers": [
+        "2217/DHQG-DT"
+      ],
+      "response": "\n\nDựa trên các tài liệu được cung cấp, nếu bạn cần tìm hiểu về việc công nhận môn học theo hình thức MOOC (học trực tuyến mở) tại Đại học Quốc gia Thành phố Hồ Chí Minh (ĐHQG-HCM) và Trường Đại học Công nghệ Thông tin (UIT), bạn nên xem xét các quyết định và văn bản dưới đây tùy thuộc vào trường hợp cụ thể của bạn:\n\n### 1. Đối với trường hợp sinh viên Trung học phổ thông (THPT)\nNếu bạn là học sinh cấp 3 đã hoàn thành các môn học MOOC và muốn ghi nhận tín chỉ để học tại đại học, văn bản liên quan",
+      "correct": false
+    },
+    {
+      "id": 198,
+      "type": "workflow_boundary",
+      "query": "Việc phân công cán bộ coi thi cho đợt thi tập trung ở UIT được thực hiện theo quyết định nào?",
+      "expected_doc_numbers": [
+        "672/QD-DHCNTT"
+      ],
+      "response": "\n\n## Phân công Cán bộ coi thi Đợt Thi Tập trung tại UIT\n\nViệc phân công cán bộ coi thi cho các đợt thi tập trung hệ đại học chính quy tại Trường Đại học Công nghệ Thông tin (UIT) chịu sự điều chỉnh của **Quy định tổ chức thi các môn học hệ đại học chính quy** và **Quy trình phân công cán bộ coi thi**.\n\n### Căn cứ pháp lý\n\n**Căn cứ chính:** Quyết định số **672/QĐ-ĐHCNTT** ngày **15 tháng 10 năm 2020** của Hiệu trưởng Trường Đại học Công nghệ Thông tin ban hành \"Quy trình phân công cán bộ coi thi ",
+      "correct": true
+    },
+    {
+      "id": 199,
+      "type": "catalog_boundary",
+      "query": "Sau năm 2022, nếu cần phân loại ngành đào tạo theo hệ danh mục mới của Bộ thì xem thông tư nào?",
+      "expected_doc_numbers": [
+        "09/2022/TT-BGDDT"
+      ],
+      "response": "\n\n### Tóm tắt quy định về Danh mục thống kê ngành đào tạo\n\n**Sau năm 2022**, nếu cần phân loại ngành đào tạo theo quy định mới nhất của Bộ Giáo dục và Đào tạo, bạn cần tham khảo **Thông tư số 09/2022/TT-BGDĐT ngày 06 tháng 6 năm 2022**.\n\nĐây là văn bản đã thay thế cho các thông tư quy định về danh mục ngành trước đó (như Thông tư số 24/2017/TT-BGDĐT và số 25/2017/TT-BGDĐT). Thông tư số 09/2022/TT-BGDĐT có hiệu lực thi hành kể từ ngày **22 tháng 07 năm 2022**.\n\nCụ thể, Thông tư này quy định:\n*   ",
+      "correct": true
+    }
+  ]
+}
