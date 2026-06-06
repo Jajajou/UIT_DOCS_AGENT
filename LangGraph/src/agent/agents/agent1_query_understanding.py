@@ -69,6 +69,26 @@ def _last_human_text(messages: List[AnyMessage]) -> str:
     return ""
 
 
+def _build_conversation_context(messages: List[AnyMessage], current_query: str, max_prior: int = 4) -> str:
+    """Build conversation context string from prior turns (excluding current query)."""
+    from langchain_core.messages import AIMessage
+    prior = []
+    for msg in messages:
+        role = getattr(msg, "type", None) or ("human" if isinstance(msg, HumanMessage) else "ai")
+        text = _content_to_text(getattr(msg, "content", ""))
+        if not text:
+            continue
+        if text == current_query:
+            continue
+        if role in ("human", "ai", "assistant"):
+            label = "Người dùng" if role == "human" else "Trợ lý"
+            prior.append(f"{label}: {text[:300]}")
+    prior = prior[-max_prior:]
+    if not prior:
+        return ""
+    return "Lịch sử hội thoại:\n" + "\n".join(prior) + "\n\n"
+
+
 # ============================================================================
 # Agent 1 Node
 # ============================================================================
@@ -109,9 +129,10 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         # Call LLM directly, strip think tags, parse manually
         llm_json = llm.bind(response_format={"type": "json_object"})
 
+        conversation_context = _build_conversation_context(state.get("messages", []), query)
         msgs = [
                 SystemMessage(content=PROMPTS["query_understanding_system"]),
-                HumanMessage(content=f"Phân tích câu hỏi sau:\n\n{query}")
+                HumanMessage(content=f"{conversation_context}Phân tích câu hỏi sau:\n\n{query}")
                 ]
 
         raw_response = llm_json.invoke(input=msgs)

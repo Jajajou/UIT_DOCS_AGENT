@@ -315,6 +315,15 @@ LangGraph/data/
 # Local infra scripts (contain secrets)
 deploy_vast.sh
 start_vast.sh
+poll_vast.sh
+test_ssh.sh
+
+# Vast.ai session artifacts
+vast_*.json
+vast_*.txt
+
+# Eval batch inputs (generated, not source)
+LangGraph/tests/eval/gemini_batch_input.jsonl
 
 # Temporary latex and update scripts
 update_latex.py

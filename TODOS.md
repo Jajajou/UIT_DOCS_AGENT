@@ -1,50 +1,30 @@
-# Project TODOs
+# Project TODOs — 2026-06-06
 
-## Evaluation & Metrics
-- [x] **fix(eval): Pre-fetch and cache document metadata for TDCE**
-  - **Why**: Currently `temporal_evaluation.py` relies on a live `psycopg2` connection to calculate Authority Resolution. This makes the experiment fragile and hard to reproduce.
-  - **Context**: We need to script a one-time export of metadata (authority_level, document_type, effective_date) for all documents referenced in the 100 test pairs and save it to a JSON lookup file.
-  - **Depends on**: Existing Postgres DB being reachable one last time.
+## Status: THESIS-READY (acc@1 = 0.815)
 
-## Eval Redesign (Defense Prep) — 2026-05-12
+All P0/P1 tasks from May 12 are DONE.
 
-### P0 — Run immediately
+## Completed
 
-- [ ] **Run run10** with cohort filter fix (is_empty removed from qdrant_cohort_client.py)
-  - Expect cohort_boundary to improve from 0.32
-  - Command: `cd LangGraph && python tests/eval/temporal_evaluation.py --pairs tests/eval/eval_pairs_v5.json`
-  - Save as 1205_run10.json
+- [x] Run ablation study: BM25, Gemini no-RAG, Naive RAG, Full System
+- [x] Reach 80% accuracy milestone (v0.5.0.0)
+- [x] Push to 81.5% (0605_thinking_eval_run2)
+- [x] Add MRR@3 metric to eval pipeline
+- [x] Fix Qdrant cohort filter (is_empty bug)
+- [x] Fix reranker 400 truncation
+- [x] Temporal decay + point-in-time precision in reranker
+- [x] Cohort boost in reranker
+- [x] Clean thinking prompt for agent3
+- [x] Add education_system field
+- [x] Chapter 3 design evolution section (design doc written)
 
-- [ ] **Run ablation baseline** (USE_METADATA_ROUTING=false, same 200 pairs)
-  - Required to prove temporal routing contributes — without it, 0.540 is uninterpretable
-  - Command: `USE_METADATA_ROUTING=false python tests/eval/temporal_evaluation.py --pairs tests/eval/eval_pairs_v5.json`
-  - Save as 1205_baseline.json
-  - Compare per-category delta: routing ON vs OFF = thesis contribution table
+## Optional (not blocking thesis)
 
-### P1 — Metric improvements
+- [ ] LLM-as-judge eval (30 pairs, reference-grounded) — qualitative case study
+- [ ] Commit `LangGraph/src/agent/agents/agent1_query_understanding.py`
+- [ ] Update CLAUDE.md project status section
 
-- [ ] **Add MRR@3** to temporal_evaluation.py
-  - Partial credit for rank 2/3 (1/2, 1/3); fixes single-label binary penalty
-  - File: `LangGraph/tests/eval/temporal_evaluation.py`
+## Known Weak Points (for thesis defense prep)
 
-- [ ] **Drop cascade from primary thesis table**
-  - cascade_hit_rate always ~0.05 (2-3 hits in 200 pairs), not meaningful
-  - Keep in JSON output, exclude from reported table
-  - Replace with ablation_delta column
-
-### P2 — Qualitative evidence
-
-- [ ] **LLM-as-judge eval (30 pairs, reference-grounded)**
-  - Pick 5 pairs from each TDCE category
-  - Manually find correct doc excerpt per query (ground truth, ~2-3h work)
-  - Run full pipeline → get system answer
-  - Judge: [query] + [correct doc excerpt] + [system answer] → binary temporally correct?
-  - Use Claude Sonnet as judge
-  - Frame as "qualitative case study" in thesis, not statistical claim
-  - Estimated effort: 4-5 hours total
-
-### Known bugs fixed 2026-05-12
-
-- [x] `qdrant_cohort_client.py`: removed `{"is_empty": {"key": "cohort_years"}}` from Qdrant filter
-  - Was matching all 1689 untagged chunks → cohort filter was no-op
-  - 200/1889 Qdrant points have cohort_years; filter now correctly restricts to those
+- **amendment_boundary** = 0.69 (13/42 fail) — temporal amendment chain sometimes retrieves older doc
+- **admissions_boundary** = 0.68 (6/19 fail) — DHQG-level vs UIT-level authority confusion
