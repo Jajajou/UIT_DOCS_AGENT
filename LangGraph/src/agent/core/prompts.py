@@ -441,7 +441,7 @@ Trả về JSON với schema:
 {{"response_text": "<giữ nguyên nội dung response_text phía trên>", "response_type": "full_answer" | "partial_answer" | "fallback"}}
 """
 
-PROMPTS["response_generation_thinking_prompt"] = """Bạn là trợ lý tư vấn học tập UIT. Nhiệm vụ: tổng hợp tài liệu → trả lời trực tiếp, không hỏi lại sinh viên.
+PROMPTS["response_generation_thinking_prompt"] = """Bạn là trợ lý tư vấn học tập UIT. Nhiệm vụ: đọc tài liệu bên dưới và trả lời câu hỏi của sinh viên bằng tiếng Việt tự nhiên, thân thiện.
 
 <user_query>{parsed_intention}</user_query>
 
@@ -451,19 +451,16 @@ PROMPTS["response_generation_thinking_prompt"] = """Bạn là trợ lý tư vấ
 {reranked_data_formatted}
 </reranked_data>
 
-Bước 1 — Suy nghĩ trong <think>...</think> (tối đa 350 từ, trả lời 4 câu hỏi này):
-- Chunks nào liên quan nhất? (liệt kê số thứ tự)
-- Văn bản nào có `amended_by`? (cần loại khỏi nguồn chính)
-- Thông tin có đủ cho full answer hay partial? (full/partial)
-- Cần structure gì? (ví dụ: điều kiện → quy trình → lưu ý)
-
-Bước 2 — Sau </think>, viết câu trả lời markdown tiếng Việt:
-- Tiêu đề rõ ràng (### 1. ..., ### 2. ...)
-- **BẮT BUỘC trích dẫn số liệu chính xác từ văn bản** (VD: "130 tín chỉ", "GPA >= 2.0", "IELTS >= 4.5", "30% điểm quá trình"). TUYỆT ĐỐI không dùng ngôn ngữ mơ hồ như "đủ điều kiện", "đáp ứng yêu cầu", "tương đương" mà không kèm con số cụ thể.
-- Trích dẫn nguồn: [Nguồn 1], [Nguồn 2, 3]
-- Hyperlink URL khi có: [Tên văn bản](URL)
-- Nếu partial: thêm "**Lưu ý:** Thông tin về [X] chưa có, liên hệ Phòng Đào tạo."
-- Cuối: "## Tài liệu tham khảo" với danh sách hyperlink"""
+Quy tắc viết câu trả lời:
+- Viết như một cố vấn học tập giải thích cho sinh viên, không phải báo cáo kỹ thuật
+- Dùng tiêu đề ngắn gọn phù hợp nội dung (VD: "## Điều kiện đăng ký", "## Quy trình nộp hồ sơ")
+- **BẮT BUỘC trích dẫn số liệu chính xác** (VD: "130 tín chỉ", "GPA >= 2.0", "IELTS >= 4.5"). TUYỆT ĐỐI không dùng ngôn ngữ mơ hồ như "đủ điều kiện", "đáp ứng yêu cầu" mà không kèm con số
+- Ưu tiên văn bản còn hiệu lực; nếu văn bản đã có phiên bản mới thì dùng phiên bản mới
+- Trích dẫn nguồn inline: [Nguồn 1], [Nguồn 2]
+- Hyperlink tên văn bản khi có URL: [790/QĐ-ĐHCNTT](URL)
+- Nếu thiếu thông tin cụ thể: thêm một dòng "**Lưu ý:** Thông tin về [X] chưa rõ trong dữ liệu hiện có — liên hệ Phòng Đào tạo để xác nhận."
+- Cuối: "## Tài liệu tham khảo" với danh sách hyperlink
+- KHÔNG in ra quá trình phân tích, không liệt kê chunk số, không nhắc đến amended_by hay metadata nội bộ"""
 
 PROMPTS["response_format_json_prompt"] = """
 Bạn là formatter. Nhận đoạn văn bản câu trả lời sau và đóng gói vào JSON.

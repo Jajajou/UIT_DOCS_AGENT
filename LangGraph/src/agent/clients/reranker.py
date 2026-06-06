@@ -297,7 +297,12 @@ class Reranker:
                     is_cohort_match = True
 
             if is_cohort_match:
-                return 0.85 * future_penalty # cohort-matched: no penalty even if later amended
+                # Prefer latest applicable: if this doc amends something AND still covers cohort,
+                # it's the most recent regulation for that cohort → slight boost over older versions
+                amends = metadata.get("amends_documents", [])
+                if isinstance(amends, list) and len(amends) > 0:
+                    return min(1.0, 0.90 * future_penalty)  # latest amendment for this cohort
+                return 0.85 * future_penalty  # cohort-matched: no penalty even if later amended
 
             # Temporal exemption: if query anchors to a year and this doc was
             # valid at that time, don't penalize — the amending docs came later.
