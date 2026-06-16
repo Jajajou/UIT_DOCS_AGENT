@@ -31,8 +31,9 @@ llm_thinker = init_chat_model(
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
     model=settings.agent3_llm_model,
-    streaming=True,
+    streaming=False,
     temperature=settings.agent3_temperature,
+).bind(
     max_tokens=6000,
     extra_body={
         "enable_thinking": True,
