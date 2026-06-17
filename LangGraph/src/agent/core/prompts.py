@@ -297,7 +297,7 @@ Nhiệm vụ của bạn là phân tích câu hỏi của sinh viên và trích 
 
 1. **Phân tích Ý định (Parsed Intention):** Rephrase câu hỏi thành một câu khẳng định rõ ràng, tập trung vào thực thể và hành động pháp lý.
 2. **Trích xuất Cohort (query_cohort_year):**
-   - Tìm năm nhập học (K22 -> 2022, khóa 2017 -> 2017).
+   - Tìm năm nhập học (K17 -> 2022, K18 -> 2023, khóa 2017 -> 2017). UIT: Kn = 2005 + n (K1=2006 là khóa đầu tiên).
    - Nếu không thấy, để null.
 3. **Xác định Loại Query (query_type):**
    - `COHORT`: Hỏi về quy định cho một khóa cụ thể.
@@ -308,7 +308,7 @@ Nhiệm vụ của bạn là phân tích câu hỏi của sinh viên và trích 
 5. **Phát hiện Cần Thông Tin Sinh Viên (needs_student_context):**
    - `true` khi query_type là COHORT nhưng query_cohort_year là null — tức câu hỏi liên quan đến "của tôi", "khóa tôi", "sinh viên như tôi" mà KHÔNG đề cập khóa cụ thể.
    - `true` khi câu hỏi dùng đại từ ngôi thứ nhất kèm thông tin mang tính cá nhân: "ngành tôi", "chương trình của tôi", "tôi cần bao nhiêu tín chỉ" mà không rõ khóa.
-   - `false` khi khóa đã rõ (K22, 2017...) hoặc câu hỏi mang tính tổng quát không phụ thuộc khóa.
+   - `false` khi khóa đã rõ (K17, 2022...) hoặc câu hỏi mang tính tổng quát không phụ thuộc khóa.
 6. **Tuning Parameter:**
    - Chọn `suggested_mode`, `suggested_top_k`, `suggested_chunk_top_k` dựa trên độ phức tạp.
 </instructions>
@@ -351,9 +351,9 @@ Example 1 — GENERAL factual:
 User: "Số tín chỉ tốt nghiệp ngành KHMT là bao nhiêu?"
 {"parsed_intention":"Hỏi số tín chỉ tối thiểu tốt nghiệp ngành Khoa học máy tính","extracted_entities":["Khoa học máy tính","tín chỉ tốt nghiệp"],"extracted_topics":["quy chế đào tạo","điều kiện tốt nghiệp"],"confidence":0.95,"confidence_reason":"Query rõ ràng, cụ thể.","query_cohort_year":null,"query_authority_scope":null,"query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"local","suggested_top_k":5,"suggested_chunk_top_k":20,"tuning_reason":"Factual đơn giản, local đủ."}
 
-Example 2 — COHORT (K22):
-User: "Quy định ngoại ngữ đầu ra cho sinh viên K22 là gì?"
-{"parsed_intention":"Chuẩn đầu ra ngoại ngữ cho sinh viên nhập học 2022","extracted_entities":["ngoại ngữ đầu ra","K22"],"extracted_topics":["quy chế đào tạo","chuẩn đầu ra"],"confidence":0.92,"confidence_reason":"Rõ khóa và loại thông tin.","query_cohort_year":2022,"query_authority_scope":null,"query_type":"COHORT","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":true,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":60,"tuning_reason":"Cohort query cần chunk_top_k cao để recall tốt khi lọc metadata."}
+Example 2 — COHORT (K17):
+User: "Quy định ngoại ngữ đầu ra cho sinh viên K17 là gì?"
+{"parsed_intention":"Chuẩn đầu ra ngoại ngữ cho sinh viên nhập học 2022","extracted_entities":["ngoại ngữ đầu ra","K17"],"extracted_topics":["quy chế đào tạo","chuẩn đầu ra"],"confidence":0.92,"confidence_reason":"Rõ khóa và loại thông tin.","query_cohort_year":2022,"query_authority_scope":null,"query_type":"COHORT","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":true,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":60,"tuning_reason":"Cohort query cần chunk_top_k cao để recall tốt khi lọc metadata."}
 
 Example 3 — AMENDMENT với số hiệu:
 User: "Quyết định 108 có bị sửa đổi chưa?"

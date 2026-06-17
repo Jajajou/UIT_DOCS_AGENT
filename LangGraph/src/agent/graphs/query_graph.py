@@ -605,7 +605,7 @@ def request_context(state: QueryState) -> Dict[str, Any]:
 
     missing = []
     if cohort_year is None:
-        missing.append("khóa học (ví dụ: 2022, K22)")
+        missing.append("khóa học (ví dụ: 2022, K17)")
     if edu_system is None:
         missing.append("hệ đào tạo (chinh_quy / lien_thong / tu_xa)")
 
