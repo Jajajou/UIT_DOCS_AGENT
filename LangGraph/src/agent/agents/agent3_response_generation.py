@@ -11,13 +11,13 @@ import re
 import time as _t
 from typing import Any, Dict, List, Tuple
 from datetime import datetime
-from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
+from langchain_core.messages import AIMessage
+from openai import OpenAI
 from agent.core.prompts import PROMPTS
 from agent.states.query_state import (
     QueryState,
     ResponseGeneration,
 )
-from langchain.chat_models import init_chat_model
 from agent.config import get_attr_safe, settings
 from agent.utils import strip_think_tags, get_url
 
@@ -26,19 +26,11 @@ from agent.utils import strip_think_tags, get_url
 # Configuration
 # ============================================================================
 
-llm_thinker = init_chat_model(
-    model_provider="openai",
+# Use raw openai client — LangChain adapter strips the `reasoning` field
+# that vLLM --reasoning-parser qwen3 returns in additional_kwargs
+_openai_client = OpenAI(
     api_key=settings.openai_api_key,
     base_url=settings.openai_base_url,
-    model=settings.agent3_llm_model,
-    streaming=False,
-    temperature=settings.agent3_temperature,
-).bind(
-    max_tokens=6000,
-    extra_body={
-        "enable_thinking": True,
-        "thinking_token_budget": 1024,
-    },
 )
 
 
@@ -290,46 +282,41 @@ def _format_reranked_data(
 
 def _extract_references(
     reranked_chunks: List[Tuple[Dict[str, Any], float]],
-    min_score: float = 0.4
+    min_score: float = 0.4,
+    top_n: int = 10,
 ) -> List[Dict[str, Any]]:
-    """Extract references from reranked chunks."""
-    references = []
-    seen_sources = set()
-    
-    for chunk, score in reranked_chunks:
-        if score < min_score:
-            continue
-        
-        file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
-        if not file_source or file_source in seen_sources:
-            continue
+    """Extract references preserving 1-1 mapping with chunk indices in the prompt.
 
-        seen_sources.add(file_source)
-        
+    Each entry at position i corresponds to [Nguon i+1] cited by the LLM.
+    No score filtering or dedup here — the LLM sees chunks 1..N and may cite
+    any of them. Filtering low-score chunks would shift indices and break
+    citation numbering.
+    """
+    references = []
+
+    for chunk, score in reranked_chunks[:top_n]:
+        file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
         meta = chunk.get("metadata", {})
         doc_num = meta.get("document_number")
 
-        # Use document number as title if available, otherwise filename
         if doc_num:
             title = doc_num
-        else:
+        elif file_source:
             title = file_source.split("/")[-1] if "/" in file_source else file_source
-        
-        # Get excerpt
+        else:
+            title = "Tài liệu UIT"
+
         content = chunk.get("content", "")
         excerpt = content[:200] + "..." if len(content) > 200 else content
-        
+
         resolved_url = get_url(file_source) if file_source else None
         references.append({
             "title": title,
-            "url": resolved_url or file_source,
+            "url": resolved_url or file_source or "",
             "relevance": float(score),
-            "excerpt": excerpt
+            "excerpt": excerpt,
         })
-    
-    # Sort by relevance
-    references.sort(key=lambda x: x["relevance"], reverse=True)
-    
+
     return references
 
 
@@ -449,17 +436,95 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
 
         human_content = parsed_intention
 
-        # Call 1: thinking pass — free text answer with CoT
-        thinking_msgs = [
-            SystemMessage(content=thinking_prompt),
-            HumanMessage(content=human_content)
-        ]
+        # Call 1: thinking pass — stream token-by-token so LangGraph forwards
+        # chunks via SSE. Raw openai client preserves `reasoning` delta field
+        # that vLLM --reasoning-parser qwen3 emits; LangChain adapter strips it.
+        from langgraph.config import get_stream_writer
+        _write = get_stream_writer()
+
+        # Enable thinking only for complex queries (COHORT/AMENDMENT need temporal reasoning)
+        query_type = state.get("query_type", "GENERAL")
+        needs_thinking = query_type in ("COHORT", "AMENDMENT")
+
         _t1 = _t.perf_counter()
-        raw_thinking = llm_thinker.invoke(input=thinking_msgs)
+        stream = _openai_client.chat.completions.create(
+            model=settings.agent3_llm_model,
+            messages=[
+                {"role": "system", "content": thinking_prompt},
+                {"role": "user", "content": human_content},
+            ],
+            max_tokens=6000,
+            temperature=settings.agent3_temperature,
+            extra_body={
+                "enable_thinking": needs_thinking,
+                "thinking_token_budget": 512,
+            },
+            stream=True,
+        )
+
+        reasoning_parts: List[str] = []
+        content_parts: List[str] = []
+        _in_think_block = False
+        _think_buf = ""
+        for chunk in stream:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta is None:
+                continue
+            # vLLM reasoning-parser emits reasoning tokens in delta.reasoning
+            r_token = (getattr(delta, "model_extra", {}) or {}).get("reasoning") or ""
+            c_token = delta.content or ""
+            if r_token:
+                reasoning_parts.append(r_token)
+                _write({"type": "reasoning", "content": r_token})
+            if c_token:
+                # Intercept <think>...</think> in content stream — redirect to reasoning
+                _think_buf += c_token
+                while True:
+                    if _in_think_block:
+                        end = _think_buf.find("</think>")
+                        if end != -1:
+                            reasoning_chunk = _think_buf[:end]
+                            if reasoning_chunk:
+                                reasoning_parts.append(reasoning_chunk)
+                                _write({"type": "reasoning", "content": reasoning_chunk})
+                            _think_buf = _think_buf[end + 8:]
+                            _in_think_block = False
+                        else:
+                            if _think_buf:
+                                reasoning_parts.append(_think_buf)
+                                _write({"type": "reasoning", "content": _think_buf})
+                            _think_buf = ""
+                            break
+                    else:
+                        start = _think_buf.find("<think>")
+                        if start != -1:
+                            before = _think_buf[:start]
+                            if before:
+                                content_parts.append(before)
+                                _write({"type": "token", "content": before})
+                            _think_buf = _think_buf[start + 7:]
+                            _in_think_block = True
+                        else:
+                            if _think_buf:
+                                content_parts.append(_think_buf)
+                                _write({"type": "token", "content": _think_buf})
+                            _think_buf = ""
+                            break
+        # Flush remaining buffer
+        if _think_buf:
+            if _in_think_block:
+                reasoning_parts.append(_think_buf)
+                _write({"type": "reasoning", "content": _think_buf})
+            else:
+                content_parts.append(_think_buf)
+                _write({"type": "token", "content": _think_buf})
+
         print(f"[TIMING] agent3_call1_thinking: {_t.perf_counter() - _t1:.2f}s")
-        thinking_content = raw_thinking.content if hasattr(raw_thinking, "content") else str(raw_thinking)
+
+        reasoning = "".join(reasoning_parts)
+        thinking_content = "".join(content_parts)
         response_text = strip_think_tags(thinking_content).strip()
-        print(f"[AGENT 3] Call 1 done, response length: {len(response_text)} chars")
+        print(f"[AGENT 3] Call 1 done, response length: {len(response_text)} chars, reasoning: {len(reasoning)} chars")
 
         # Classify response_type deterministically — no LLM Call 2 needed
         response_type_classified = _classify_response_type(response_text)
@@ -520,7 +585,7 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
             "response_type": response_type,
             "references": references_list,
             "final_answer": final_answer,
-            "messages": [AIMessage(content=final_answer)],
+            "messages": [AIMessage(content=f"<think>{reasoning}</think>{final_answer}" if reasoning else final_answer)],
             "error": "",
             "logs": ["Agent 3 generated response"]
         }

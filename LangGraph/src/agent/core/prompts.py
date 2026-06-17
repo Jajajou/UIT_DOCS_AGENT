@@ -305,7 +305,11 @@ Nhiệm vụ của bạn là phân tích câu hỏi của sinh viên và trích 
    - `GENERAL`: Các câu hỏi chung khác.
 4. **Phát hiện Historical (query_is_historical):**
    - `true` nếu câu hỏi có các mốc thời gian trong quá khứ ("trước năm 2025", "thời điểm 2020", "quy chế cũ").
-5. **Tuning Parameter:**
+5. **Phát hiện Cần Thông Tin Sinh Viên (needs_student_context):**
+   - `true` khi query_type là COHORT nhưng query_cohort_year là null — tức câu hỏi liên quan đến "của tôi", "khóa tôi", "sinh viên như tôi" mà KHÔNG đề cập khóa cụ thể.
+   - `true` khi câu hỏi dùng đại từ ngôi thứ nhất kèm thông tin mang tính cá nhân: "ngành tôi", "chương trình của tôi", "tôi cần bao nhiêu tín chỉ" mà không rõ khóa.
+   - `false` khi khóa đã rõ (K22, 2017...) hoặc câu hỏi mang tính tổng quát không phụ thuộc khóa.
+6. **Tuning Parameter:**
    - Chọn `suggested_mode`, `suggested_top_k`, `suggested_chunk_top_k` dựa trên độ phức tạp.
 </instructions>
 
@@ -362,6 +366,14 @@ User: "Quy định dạy và học trực tuyến của trường UIT hiện nay
 Example 5 — SYSTEM authority (ministry/ĐHQG level):
 User: "Khung pháp lý của Bộ GDĐT về đào tạo từ xa hiện đang theo thông tư nào?"
 {"parsed_intention":"Thông tư Bộ GDĐT quy định đào tạo từ xa hiện hành","extracted_entities":["Bộ GDĐT","đào tạo từ xa","thông tư"],"extracted_topics":["quy định đào tạo từ xa cấp Bộ"],"confidence":0.91,"confidence_reason":"Rõ ràng hỏi về văn bản cấp Bộ.","query_cohort_year":null,"query_authority_scope":"system","query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"mix","suggested_top_k":8,"suggested_chunk_top_k":30,"tuning_reason":"System authority scope — ưu tiên TT-BGDĐT/QĐ-ĐHQG hơn văn bản nội bộ UIT."}
+
+Example 6 — COHORT nhưng thiếu khóa (needs_student_context=true, HITL trigger):
+User: "Điều kiện tốt nghiệp của tôi là gì?"
+{"parsed_intention":"Điều kiện tốt nghiệp áp dụng cho sinh viên người hỏi","extracted_entities":["điều kiện tốt nghiệp"],"extracted_topics":["quy chế đào tạo","tốt nghiệp"],"confidence":0.60,"confidence_reason":"Câu hỏi cá nhân nhưng thiếu khóa — không thể lọc chính xác.","query_cohort_year":null,"query_authority_scope":null,"query_type":"COHORT","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":true,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":60,"tuning_reason":"COHORT query thiếu khóa — cần hỏi lại sinh viên."}
+
+Example 7 — dùng "tôi" nhưng đủ thông tin (needs_student_context=false):
+User: "Tôi học K21, tôi cần bao nhiêu tín chỉ để tốt nghiệp?"
+{"parsed_intention":"Số tín chỉ tốt nghiệp áp dụng cho sinh viên K21","extracted_entities":["K21","tín chỉ tốt nghiệp"],"extracted_topics":["quy chế đào tạo","điều kiện tốt nghiệp"],"confidence":0.92,"confidence_reason":"Khóa rõ ràng, câu hỏi cụ thể.","query_cohort_year":2021,"query_authority_scope":null,"query_type":"COHORT","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":60,"tuning_reason":"Cohort rõ, filter theo cohort_year."}
 </examples>
 """
 
@@ -450,6 +462,11 @@ PROMPTS["response_generation_thinking_prompt"] = """Bạn là trợ lý tư vấ
 <reranked_data>
 {reranked_data_formatted}
 </reranked_data>
+
+**GROUNDING (BẮT BUỘC):**
+- CHỈ dùng thông tin có trong <reranked_data>. TUYỆT ĐỐI KHÔNG bịa, không suy diễn, không dùng kiến thức ngoài tài liệu.
+- Mọi con số (tín chỉ, GPA, điểm, năm, ngày tháng) phải lấy NGUYÊN VĂN từ tài liệu. Không làm tròn, không ước chừng.
+- Nếu <reranked_data> không có thông tin đủ để trả lời → trả lời "Tôi không tìm thấy thông tin cụ thể về [X] trong dữ liệu hiện có."
 
 Quy tắc viết câu trả lời:
 - Viết như một cố vấn học tập giải thích cho sinh viên, không phải báo cáo kỹ thuật

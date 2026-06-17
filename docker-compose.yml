@@ -54,6 +54,16 @@ services:
     networks:
       - uit_network
 
+  docs_static:
+    image: nginx:alpine
+    container_name: docs_static
+    ports: ["9700:80"]
+    volumes:
+      - ./firecrawl/data/daa:/usr/share/nginx/html/daa:ro
+      - ./nginx-docs.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - uit_network
+
 networks:
   uit_network:
     name: uit_network
