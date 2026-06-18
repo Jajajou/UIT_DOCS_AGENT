@@ -7,8 +7,10 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Any, Dict, Literal, Optional
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables — try LangGraph/.env first, then cwd .env
+_THIS_DIR = Path(__file__).parents[2]  # LangGraph/
+load_dotenv(_THIS_DIR / ".env")
+load_dotenv()  # fallback: cwd .env (does not override already-set vars)
 
 # --- Context-local configuration for thread-safety ---
 # This allows overriding settings per-request without global mutation
