@@ -229,22 +229,76 @@ def normalize_docnum(v) -> str | None:
     return v
 
 
-def strip_think_tags(content: str) -> str:
-    """Strip Qwen3 chain-of-thought thinking block before parsing.
+# --- thinking-strip internals (ported from Odysseus text_helpers.py) ---
+_THINK_CLOSED_RE = re.compile(r"<think(?:ing)?>[\s\S]*?</think(?:ing)?>\s*", re.IGNORECASE)
+_THINK_TAG_RE = re.compile(r"</?think(?:ing)?[^>]*>\s*", re.IGNORECASE)
+_THINK_OPEN_RE = re.compile(r"<think(?:ing)?>[\s\S]*$", re.IGNORECASE)
+_THINK_ATTR_RE = re.compile(r"<think(?:ing)?\s+[^>]*>", re.IGNORECASE)
+_THINK_ATTR_CLOSE_RE = re.compile(r"</think(?:ing)?\s+[^>]*>", re.IGNORECASE)
+_QWEN_THINKING_RE = re.compile(
+    r"^Thinking Process:.*?(?=\n\n#|\n\n\*\*|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+_PROMPT_ECHO_RES = (
+    re.compile(r"^The user asks:.*?(?=\n\n#|\n\n\*\*[A-Z]|\Z)", re.DOTALL),
+    re.compile(r"^We need to.*?(?=\n\n#|\n\n\*\*[A-Z]|\Z)", re.DOTALL),
+)
+_REASONING_PREFIX_RE = re.compile(
+    r"^\s*(?:"
+    r"the user (?:wants|is|asks|needs|wrote|said|told|messaged|requested)|"
+    r"i (?:need|should|have|'ll|will|am going)(?: to)? (?:write|draft|reply|respond|read|check|look|review|consider|think|provide|generate|produce|craft|compose|acknowledge|summarize|answer|give|keep|aim|make|address|focus|use|just|simply|analyze|format|create|build|note|decide)|"
+    r"let me (?:think|look|see|check|read|review|consider|draft|write|analyze|format|summarize|create|produce|craft|note|extract|identify|figure)|"
+    r"looking at (?:the|this|that)|"
+    r"(?:okay|alright|hmm|right|so|well|first|next|now)[,.]?\s+(?:the|i|let|so|now|this|here)|"
+    r"based on (?:the|this|what|context)|"
+    r"to (?:draft|write|reply|respond|summarize|answer)"
+    r")\b",
+    re.IGNORECASE,
+)
 
-    Handles two formats:
-    - <think>...</think>answer  (full tags)
-    - thinking text...</think>answer  (no opening tag — vllm Qwen3.5-9B behavior)
+
+def _strip_reasoning_prose(text: str) -> str:
+    if not text or not text.strip():
+        return text
+    paragraphs = re.split(r"\n\s*\n", text.strip())
+    if len(paragraphs) <= 1:
+        return text
+    first_keep = 0
+    for i, p in enumerate(paragraphs):
+        if _REASONING_PREFIX_RE.match(p):
+            first_keep = i + 1
+        else:
+            break
+    if first_keep == 0:
+        return text
+    keep = paragraphs[first_keep:]
+    return "\n\n".join(keep).strip() if keep else text
+
+
+def strip_think_tags(content: str, *, prose: bool = False, prompt_echo: bool = True) -> str:
+    """Strip <think> blocks from model output.
+
+    Handles: closed tags, nested, dangling unclosed, attribute-style tags,
+    Qwen 'Thinking Process:' prefix, prompt echo, and opt-in prose heuristic.
     """
-    # Full tags present
-    stripped = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
-    if stripped != content.strip():
-        return stripped
-    # Only closing tag — strip everything up to and including </think>
-    close_idx = content.find("</think>")
-    if close_idx != -1:
-        return content[close_idx + 8:].strip()
-    return content.strip()
+    if not content:
+        return ""
+    text = _THINK_ATTR_RE.sub("<think>", content)
+    text = _THINK_ATTR_CLOSE_RE.sub("</think>", text)
+    prev = None
+    out = text
+    while prev != out:
+        prev = out
+        out = _THINK_CLOSED_RE.sub("", out)
+    out = _THINK_OPEN_RE.sub("", out)
+    out = _THINK_TAG_RE.sub("", out)
+    if prompt_echo:
+        out = _QWEN_THINKING_RE.sub("", out)
+        for _re in _PROMPT_ECHO_RES:
+            out = _re.sub("", out)
+    if prose:
+        out = _strip_reasoning_prose(out)
+    return out.strip()
 
 
 def content_to_text(content: Any) -> str:
