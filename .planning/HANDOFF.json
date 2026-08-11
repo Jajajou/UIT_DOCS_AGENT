@@ -1,29 +1,30 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-27T13:48:02.826Z",
-  "phase": "06",
-  "phase_name": "post-phase05-bug-fixes",
-  "phase_dir": ".planning/phases/06-post-phase05-bug-fixes",
-  "plan": 1,
-  "task": 4,
-  "total_tasks": 4,
+  "timestamp": "2026-08-11T15:58:35.000Z",
+  "phase": "none",
+  "phase_name": "mineru-batch-ocr-quality-scan",
+  "phase_dir": ".planning",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Fix validation_retry_count infinite loop", "status": "done", "commit": "6f58b82"},
-    {"id": 2, "name": "Fix content 300->800, top_n 15->10 in agent3", "status": "done", "commit": "d92caf0"},
-    {"id": 3, "name": "Route COHORT/AMENDMENT through temporal enrichment", "status": "done", "commit": "ba76cf1"},
-    {"id": 4, "name": "Specificity directive + think budget 150->350", "status": "done", "commit": "4b5a381"}
+    {"id": 1, "name": "Spot-check 4 files from ctsv/daa OCR batch for garbage-token bug", "status": "done", "progress": "1/4 files (523_qd_dhcntt30_8_2021-85fa0d1d.md) has garbage-loop bug in rowspan table (SV #24-32 missing); other 3 clean"},
+    {"id": 2, "name": "Grep full output dir for repeat-loop pattern", "status": "done", "progress": "171/1236 files match regex pattern; not all are true positives (markdown table separators, base64, LaTeX cause false matches)"}
   ],
-  "remaining_tasks": [],
-  "blockers": [],
-  "human_actions_pending": [
-    {"action": "Run eval to measure phase05+06 combined impact", "context": "Eval pending before rethink — now pipeline fixed", "blocking": false}
+  "remaining_tasks": [
+    {"id": 3, "name": "Filter false positives from 171-file match list to get accurate garbage-loop count", "status": "not_started"},
+    {"id": 4, "name": "Verify whether batch ran on patched MinerU server (tie_word_embeddings + logits_processors fix) or unpatched", "status": "not_started"},
+    {"id": 5, "name": "Decide/execute rerun of confirmed-garbage files through patched server", "status": "not_started"}
   ],
+  "blockers": [
+    {"description": "Batch ran on port 8080, different instance than the one where root cause was confirmed fixed (instance 47343687, since destroyed)", "type": "technical", "workaround": "need to check current port-8080 server's config.json for the patch before deciding next step"}
+  ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "COHORT/AMENDMENT route through enrich_with_temporal_metadata", "rationale": "Expiration warnings dead without it; filter safe since cohort_year=null for AMENDMENT"},
-    {"decision": "Agent4 stays Qwen3-4B — defer upgrade to after eval"}
+    {"decision": "Did not start fix/rerun this session — stopped at diagnosis due to context limit (~75%)", "rationale": "avoid starting new work with insufficient context budget to finish safely", "phase": "none"}
   ],
-  "uncommitted_files": ["STATE.md", "LangGraph/scripts/*", "LangGraph/src/agent/clients/amendment_chain_client.py", "LangGraph/src/agent/utils.py", "LangGraph/tests/eval/temporal_evaluation.py"],
-  "next_action": "Run eval: cd LangGraph && source ../.venv/bin/activate && python tests/eval/temporal_evaluation.py",
-  "context_notes": "Phase06 DONE. Vast.ai ssh2.vast.ai:11674 A100 LIVE: 8000=embed, 8001=reranker, 8002=Qwen3.5-9B. 10 pre-existing unrelated test failures."
+  "uncommitted_files": ["LangGraph/src/agent/agents/agent1_query_understanding.py", "LangGraph/src/agent/agents/agent3_response_generation.py", "LangGraph/src/agent/config.yaml", "LangGraph/src/agent/core/prompts.py", "LangGraph/src/agent/graphs/query_graph.py", "LangGraph/src/agent/states/query_state.py"],
+  "next_action": "Check port-8080 MinerU server's config.json for tie_word_embeddings/logits_processors patch (see feedback_mineru_garbage_output_root_cause memory), then filter the 171 regex matches for true garbage-loop positives",
+  "context_notes": "Root cause of garbage-loop bug already diagnosed and fixed on a prior (now-destroyed) instance — see memory feedback_mineru_garbage_output_root_cause. This session found the SAME symptom recurring in a batch OCR run (ctsv/daa docs), suggesting the batch used an unpatched server. Not yet confirmed. Estimated 11-14% of 1236 files affected (upper bound before false-positive filtering)."
 }
