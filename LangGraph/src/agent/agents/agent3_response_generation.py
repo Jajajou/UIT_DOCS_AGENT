@@ -259,19 +259,20 @@ def _format_reranked_data(
             lines.append(f"{i}. (score: {score:.2f}) {desc[:200]}...")
         lines.append("")
     
-    # Format chunks
-    if reranked_chunks:
+    # Format chunks — skip metadata-only points (content empty = Qdrant backfill artifacts)
+    real_chunks = [(chunk, score) for chunk, score in reranked_chunks if chunk.get("content", "").strip()]
+    if real_chunks:
         lines.append("**Text Chunks (theo độ liên quan):**")
-        for i, (chunk, score) in enumerate(reranked_chunks[:top_n], 1):
+        for i, (chunk, score) in enumerate(real_chunks[:top_n], 1):
             content = chunk.get("content", "")
             meta = chunk.get("metadata", {})
             file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
             doc_num = meta.get("document_number")
-            
+
             lines.append(f"{i}. (score: {score:.2f})")
             if doc_num:
                 lines.append(f"   Document: {doc_num}")
-            lines.append(f"   Content: {content[:800]}...")
+            lines.append(f"   Content: {content[:800]}")
             if file_source:
                 resolved = get_url(file_source)
                 lines.append(f"   Source: {resolved or file_source}")
@@ -295,6 +296,8 @@ def _extract_references(
     references = []
 
     for chunk, score in reranked_chunks[:top_n]:
+        if not chunk.get("content", "").strip():
+            continue  # skip metadata-only Qdrant backfill artifacts
         file_source = chunk.get("file_path", "") or chunk.get("file_source", "")
         meta = chunk.get("metadata", {})
         doc_num = meta.get("document_number")
@@ -442,9 +445,8 @@ def agent3_generate_response(state: QueryState) -> Dict[str, Any]:
         from langgraph.config import get_stream_writer
         _write = get_stream_writer()
 
-        # Enable thinking only for complex queries (COHORT/AMENDMENT need temporal reasoning)
-        query_type = state.get("query_type", "GENERAL")
-        needs_thinking = query_type in ("COHORT", "AMENDMENT")
+        # Always enable thinking — without it Qwen3 leaks CoT as visible content
+        needs_thinking = True
 
         _t1 = _t.perf_counter()
         stream = _openai_client.chat.completions.create(

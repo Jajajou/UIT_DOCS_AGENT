@@ -6,7 +6,7 @@ mineru_ocr:
   skip_repeat: True
   # Remote OCR service URL (official MinerU Docker on 3060, reachable via Tailscale).
   # Set to null to run OCR locally on Mac (MLX).
-  api_url: "http://localhost:8000"       # Vast.ai A100 tunnel (mineru-api)
+  api_url: "http://localhost:8080"       # Vast.ai tunnel (mineru-api), see reference_mineru_deploy_live memory
   vlm_server_url: null  # null = use hybrid-auto-engine on server GPU (no separate vllm needed)
 
 # Query Confidence Thresholds

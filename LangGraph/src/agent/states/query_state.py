@@ -33,6 +33,10 @@ class QueryUnderstanding(BaseModel):
     parsed_intention: str = Field(
         description="Ý định rõ ràng của user sau khi phân tích, có thể là rephrase của query gốc"
     )
+    query_rewrites: List[str] = Field(
+        default_factory=list,
+        description="1-2 cách diễn đạt lại câu hỏi bằng từ ngữ khác (đồng nghĩa/cách nói khác) để tăng recall retrieval"
+    )
     extracted_entities: List[str] = Field(
         default_factory=list,
         description="Các thực thể quan trọng được trích xuất từ query (tên phòng ban, quy chế, học bổng...)"
@@ -213,6 +217,7 @@ class QueryState(TypedDict):
     # ============ Agent 1: Query Understanding + Parameter Tuning ============
     # Agent 1 Output
     parsed_intention: NotRequired[Optional[str]]
+    query_rewrites: NotRequired[List[str]]
     extracted_entities: NotRequired[List[str]]
     extracted_topics: NotRequired[List[str]]
     query_confidence: NotRequired[float]

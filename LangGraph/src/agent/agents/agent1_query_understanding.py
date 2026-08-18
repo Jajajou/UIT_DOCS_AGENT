@@ -149,6 +149,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         
         # Extract values safely
         parsed_intention = get_attr_safe(understanding,"parsed_intention")
+        query_rewrites = get_attr_safe(understanding, "query_rewrites", []) or []
         extracted_entities = get_attr_safe(understanding,"extracted_entities")
         extracted_topics = get_attr_safe(understanding,"extracted_topics")
         concept_id = get_attr_safe(understanding, "concept_id")
@@ -177,6 +178,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
 
         # Log results
         print(f"[AGENT 1] Parsed Intention: {parsed_intention}")
+        print(f"[AGENT 1] Query Rewrites: {query_rewrites}")
         print(f"[AGENT 1] Entities: {extracted_entities}")
         print(f"[AGENT 1] Topics: {extracted_topics}")
         print(f"[AGENT 1] Confidence: {query_confidence:.2f}")
@@ -196,6 +198,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
         return {
             "query": query,
             "parsed_intention": parsed_intention,
+            "query_rewrites": query_rewrites,
             "extracted_entities": extracted_entities,
             "extracted_topics": extracted_topics,
             "concept_id": concept_id,
@@ -227,6 +230,7 @@ def agent1_understand_query(state: QueryState) -> Dict[str, Any]:
             "error": error_msg,
             "status_message": "Error in query understanding",
             "query": query,
+            "query_rewrites": [],
             "query_confidence": 0.0,
             "query_is_historical": False,
             "retrieval_mode": settings.retrieval.default_mode,

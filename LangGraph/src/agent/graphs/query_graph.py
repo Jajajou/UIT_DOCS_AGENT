@@ -193,7 +193,57 @@ def retrieve_data(state: QueryState) -> Dict[str, Any]:
         entities = result["data"]["entities"]
         relationships = result["data"]["relationships"]
         chunks = result["data"]["chunks"]
-        
+
+        # Multi-query rewrite retrieval: retrieve with alternate phrasings (Agent 1
+        # generated) to catch docs using different wording for the same concept.
+        # Capped at 2 rewrites to bound latency/cost.
+        rewrites = (state.get("query_rewrites") or [])[:2]
+        if rewrites:
+            existing_entity_names = {e.get("entity_name") or e.get("name") for e in entities}
+            existing_rel_keys = {
+                (r.get("src_id") or r.get("source"), r.get("tgt_id") or r.get("target"))
+                for r in relationships
+            }
+            existing_chunk_ids = {
+                c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+                for c in chunks
+            }
+            added_entities = added_rels = added_chunks = 0
+            for rewrite_query in rewrites:
+                try:
+                    rw_result = api_client.query_data(
+                        query_text=rewrite_query,
+                        mode=mode,
+                        top_k=top_k,
+                        chunk_top_k=chunk_top_k,
+                        max_entity_tokens=max_entity_tokens,
+                        max_relation_tokens=max_relation_tokens,
+                        max_total_tokens=max_total_tokens
+                    )
+                except Exception as _rw_e:
+                    print(f"[RETRIEVE] Rewrite query failed, skipping: {_rw_e}")
+                    continue
+
+                for e in rw_result["data"]["entities"]:
+                    name = e.get("entity_name") or e.get("name")
+                    if name not in existing_entity_names:
+                        entities.append(e)
+                        existing_entity_names.add(name)
+                        added_entities += 1
+                for r in rw_result["data"]["relationships"]:
+                    key = (r.get("src_id") or r.get("source"), r.get("tgt_id") or r.get("target"))
+                    if key not in existing_rel_keys:
+                        relationships.append(r)
+                        existing_rel_keys.add(key)
+                        added_rels += 1
+                for c in rw_result["data"]["chunks"]:
+                    c_id = c.get("doc_id") or c.get("id") or c.get("metadata", {}).get("doc_id")
+                    if c_id not in existing_chunk_ids:
+                        chunks.append(c)
+                        existing_chunk_ids.add(c_id)
+                        added_chunks += 1
+            print(f"[RETRIEVE] Rewrites added {added_entities} entities, {added_rels} relationships, {added_chunks} chunks")
+
         # Inject direct lookup chunks and canonical chunks
         all_injected = direct_chunks + canonical_chunks
         if all_injected:

@@ -311,6 +311,8 @@ Nhiệm vụ của bạn là phân tích câu hỏi của sinh viên và trích 
    - `false` khi khóa đã rõ (K17, 2022...) hoặc câu hỏi mang tính tổng quát không phụ thuộc khóa.
 6. **Tuning Parameter:**
    - Chọn `suggested_mode`, `suggested_top_k`, `suggested_chunk_top_k` dựa trên độ phức tạp.
+7. **Query Rewrites (query_rewrites):**
+   - Viết lại câu hỏi 1-2 cách khác dùng từ đồng nghĩa/cách diễn đạt khác (vd "học bổng" <-> "trợ cấp", "tốt nghiệp" <-> "ra trường"), giữ nguyên ý định gốc. Dùng để tăng recall khi tài liệu dùng từ ngữ khác câu hỏi.
 </instructions>
 
 <authority_rules>
@@ -329,6 +331,7 @@ Nhiệm vụ của bạn là phân tích câu hỏi của sinh viên và trích 
 Trả về JSON duy nhất:
 {
   "parsed_intention": "...",
+  "query_rewrites": ["...", "..."],
   "extracted_entities": ["..."],
   "extracted_topics": ["..."],
   "confidence": 0.0-1.0,
@@ -349,7 +352,7 @@ Trả về JSON duy nhất:
 </output_format><examples>
 Example 1 — GENERAL factual:
 User: "Số tín chỉ tốt nghiệp ngành KHMT là bao nhiêu?"
-{"parsed_intention":"Hỏi số tín chỉ tối thiểu tốt nghiệp ngành Khoa học máy tính","extracted_entities":["Khoa học máy tính","tín chỉ tốt nghiệp"],"extracted_topics":["quy chế đào tạo","điều kiện tốt nghiệp"],"confidence":0.95,"confidence_reason":"Query rõ ràng, cụ thể.","query_cohort_year":null,"query_authority_scope":null,"query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"local","suggested_top_k":5,"suggested_chunk_top_k":20,"tuning_reason":"Factual đơn giản, local đủ."}
+{"parsed_intention":"Hỏi số tín chỉ tối thiểu tốt nghiệp ngành Khoa học máy tính","query_rewrites":["Số tín chỉ ra trường ngành Khoa học máy tính là bao nhiêu?","Điều kiện tín chỉ để hoàn thành chương trình KHMT?"],"extracted_entities":["Khoa học máy tính","tín chỉ tốt nghiệp"],"extracted_topics":["quy chế đào tạo","điều kiện tốt nghiệp"],"confidence":0.95,"confidence_reason":"Query rõ ràng, cụ thể.","query_cohort_year":null,"query_authority_scope":null,"query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"local","suggested_top_k":5,"suggested_chunk_top_k":20,"tuning_reason":"Factual đơn giản, local đủ."}
 
 Example 2 — COHORT (K17):
 User: "Quy định ngoại ngữ đầu ra cho sinh viên K17 là gì?"
@@ -373,7 +376,11 @@ User: "Điều kiện tốt nghiệp của tôi là gì?"
 
 Example 7 — dùng "tôi" nhưng đủ thông tin (needs_student_context=false):
 User: "Tôi học K21, tôi cần bao nhiêu tín chỉ để tốt nghiệp?"
-{"parsed_intention":"Số tín chỉ tốt nghiệp áp dụng cho sinh viên K21","extracted_entities":["K21","tín chỉ tốt nghiệp"],"extracted_topics":["quy chế đào tạo","điều kiện tốt nghiệp"],"confidence":0.92,"confidence_reason":"Khóa rõ ràng, câu hỏi cụ thể.","query_cohort_year":2021,"query_authority_scope":null,"query_type":"COHORT","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":60,"tuning_reason":"Cohort rõ, filter theo cohort_year."}
+{"parsed_intention":"Số tín chỉ tốt nghiệp áp dụng cho sinh viên K21","extracted_entities":["K21","tín chỉ tốt nghiệp"],"extracted_topics":["quy chế đào tạo","điều kiện tốt nghiệp"],"confidence":0.92,"confidence_reason":"Khóa rõ ràng, câu hỏi cụ thể.","query_cohort_year":2021,"query_authority_scope":null,"query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":null,"needs_student_context":false,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":60,"tuning_reason":"Cohort rõ, filter theo cohort_year."}
+
+Example 8 — hỏi quy chế/văn bản hiện hành (cần hybrid để tìm đúng doc):
+User: "Hệ chính quy đang áp dụng quy chế đào tạo nào?"
+{"parsed_intention":"Xác định quy chế đào tạo hiện hành cho hệ chính quy tại UIT","extracted_entities":["hệ chính quy","quy chế đào tạo"],"extracted_topics":["quy chế đào tạo","văn bản pháp lý hiện hành"],"confidence":0.93,"confidence_reason":"Hỏi về văn bản quy chế cụ thể — cần tìm đúng tên doc, không chỉ nội dung.","query_cohort_year":null,"query_authority_scope":"local","query_type":"GENERAL","query_document_ref":null,"query_is_historical":false,"education_system":"chinh_quy","needs_student_context":false,"suggested_mode":"hybrid","suggested_top_k":10,"suggested_chunk_top_k":40,"tuning_reason":"Hỏi về tên/số hiệu quy chế hiện hành — hybrid kết hợp entity graph + chunk để tìm đúng doc 1393/QĐ-ĐHCNTT."}
 </examples>
 """
 
