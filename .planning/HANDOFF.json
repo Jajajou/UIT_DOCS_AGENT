@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-08-11T15:58:35.000Z",
+  "timestamp": "2026-08-11T23:30:00.000Z",
   "phase": "none",
   "phase_name": "mineru-batch-ocr-quality-scan",
   "phase_dir": ".planning",
@@ -10,21 +10,22 @@
   "status": "paused",
   "completed_tasks": [
     {"id": 1, "name": "Spot-check 4 files from ctsv/daa OCR batch for garbage-token bug", "status": "done", "progress": "1/4 files (523_qd_dhcntt30_8_2021-85fa0d1d.md) has garbage-loop bug in rowspan table (SV #24-32 missing); other 3 clean"},
-    {"id": 2, "name": "Grep full output dir for repeat-loop pattern", "status": "done", "progress": "171/1236 files match regex pattern; not all are true positives (markdown table separators, base64, LaTeX cause false matches)"}
+    {"id": 2, "name": "Grep full output dir for repeat-loop pattern", "status": "done", "progress": "superseded by id 3 below (regex refined)"},
+    {"id": 4, "name": "Verify whether batch ran on patched MinerU server (tie_word_embeddings + logits_processors fix) or unpatched", "status": "done", "progress": "Confirmed patched: SSH -p 58426 root@1.208.108.242 tunnel (8080->8000) live and reachable (curl /docs = 200). /root/mineru_model/config.json has tie_word_embeddings:true. /root/mineru_vl_server.py has repetition_penalty=1.1-1.2 (not the broken logits_processors path) across all sampling params. Server IS the patched one from feedback_mineru_garbage_output_root_cause."},
+    {"id": 4b, "name": "Determine whether the 1236-file batch that produced the matches ran BEFORE or AFTER server was patched", "status": "done", "progress": "Remote config.json/mineru_vl_server.py mtime = 2026-08-11 10:09:04 UTC (patch time). Ran broad garbage-loop regex over all 1236 local .md files bucketed by local file mtime vs that cutoff: 236 pre-patch matches, 0 post-patch matches. Confirms all garbage-loop occurrences are STALE pre-patch data -- server is not currently reproducing the bug."},
+    {"id": 3, "name": "Filter false positives to get accurate garbage-loop count", "status": "done", "progress": "Refined detector (regex: same 1-20 char chunk repeated 8+ times; excludes markdown table separators/dot-leaders, base64-like short alnum runs, and legit big <td>/<tr> HTML tables) found 85 true-positive garbage-loop files out of 1236. Full list saved to .planning/artifacts/mineru_garbage_loop_files.txt (one relative path per line, sorted)."}
   ],
   "remaining_tasks": [
-    {"id": 3, "name": "Filter false positives from 171-file match list to get accurate garbage-loop count", "status": "not_started"},
-    {"id": 4, "name": "Verify whether batch ran on patched MinerU server (tie_word_embeddings + logits_processors fix) or unpatched", "status": "not_started"},
-    {"id": 5, "name": "Decide/execute rerun of confirmed-garbage files through patched server", "status": "not_started"}
+    {"id": 5, "name": "Rerun the 85 confirmed-garbage files through the patched server", "status": "not_started", "note": "Use .planning/artifacts/mineru_garbage_loop_files.txt as the input list. Original PDFs are in firecrawl/data/ per feedback_pdf_source memory -- map each .md filename back to its source PDF before resubmitting to the patched MinerU server (SSH -p 58426 root@1.208.108.242, tunnel 8080->8000)."}
   ],
-  "blockers": [
-    {"description": "Batch ran on port 8080, different instance than the one where root cause was confirmed fixed (instance 47343687, since destroyed)", "type": "technical", "workaround": "need to check current port-8080 server's config.json for the patch before deciding next step"}
-  ],
+  "blockers": [],
   "human_actions_pending": [],
   "decisions": [
-    {"decision": "Did not start fix/rerun this session — stopped at diagnosis due to context limit (~75%)", "rationale": "avoid starting new work with insufficient context budget to finish safely", "phase": "none"}
+    {"decision": "Confirmed port-8080 tunnel's remote server has the tie_word_embeddings + repetition_penalty patch (mtime 2026-08-11 10:09:04 UTC)", "rationale": "resolves prior blocker about which server instance ran the batch", "phase": "none"},
+    {"decision": "Bucketed all 1236 local .md files by mtime vs the 10:09:04 UTC patch cutoff and re-ran the garbage-loop regex per bucket: 236 pre-patch hits, 0 post-patch hits -- concluded the bug is fully stale, no new investigation needed, just a rerun", "rationale": "local file mtimes span 2026-05-27 to 2026-08-11 22:32, straddling the patch time, so this was the only way to separate old garbage from a possible live recurrence", "phase": "none"},
+    {"decision": "Refined the false-positive filter and produced the final 85-file true-positive list", "rationale": "original 171-file count (and my own broader 236) included markdown table separators, base64-like tokens, and legitimate large HTML tables (<td>/<tr> repeated many times is normal for big student-list tables, not a bug)", "phase": "none"}
   ],
   "uncommitted_files": ["LangGraph/src/agent/agents/agent1_query_understanding.py", "LangGraph/src/agent/agents/agent3_response_generation.py", "LangGraph/src/agent/config.yaml", "LangGraph/src/agent/core/prompts.py", "LangGraph/src/agent/graphs/query_graph.py", "LangGraph/src/agent/states/query_state.py"],
-  "next_action": "Check port-8080 MinerU server's config.json for tie_word_embeddings/logits_processors patch (see feedback_mineru_garbage_output_root_cause memory), then filter the 171 regex matches for true garbage-loop positives",
-  "context_notes": "Root cause of garbage-loop bug already diagnosed and fixed on a prior (now-destroyed) instance — see memory feedback_mineru_garbage_output_root_cause. This session found the SAME symptom recurring in a batch OCR run (ctsv/daa docs), suggesting the batch used an unpatched server. Not yet confirmed. Estimated 11-14% of 1236 files affected (upper bound before false-positive filtering)."
+  "next_action": "Rerun the 85 files listed in .planning/artifacts/mineru_garbage_loop_files.txt through the patched MinerU server. Need to locate each file's source PDF in firecrawl/data/, resubmit via the patched instance (port-8080 tunnel), and replace the corresponding .md output in data/MinerU2.5_final_cleaned/. Verify each rerun output no longer matches the garbage-loop regex before overwriting.",
+  "context_notes": "Root cause of garbage-loop bug already diagnosed and fixed on a prior (now-destroyed) instance -- see memory feedback_mineru_garbage_output_root_cause. Current Vast.ai instance (deployed 2026-08-11, SSH -p 58426 root@1.208.108.242 -L 8080:localhost:8000, see memory reference_mineru_deploy_live) carries the fix as of 10:09:04 UTC today. This session closed out the open question from last session: all 85 confirmed garbage-loop files are pre-patch stale data, zero post-patch recurrences found, so this is a straightforward rerun job, not a new bug hunt. Remaining work is purely mechanical: map 85 .md filenames to source PDFs and resubmit. Separately, unrelated thread still sitting: an UNCOMMITTED 6-file diff implementing the query_rewrites multi-query retrieval feature (agent1/agent3/config/prompts/query_graph/query_state), functionally complete but not eval'd or committed -- untouched again this session."
 }
